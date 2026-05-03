@@ -28,7 +28,7 @@ seec0de has two modes — switch between them with the tabs at the top.
    - *"sort a list of numbers"*
    - *"create a class with inheritance"*
    - *"read a file & process each line"*
-3. hit **generate** for an instant offline result, or **✨ ai generate** for a polished ai-written version.
+3. hit **generate** for an instant offline result, or **ai generate** for a polished ai-written version.
 4. flip through the tabs to see pseudocode & each language side by side, all with proper syntax colouring.
 
 **ai generate** uses google gemini & needs a free api key from [google ai studio](https://aistudio.google.com). click "ai settings" in the left panel to add yours.
@@ -49,12 +49,12 @@ things seec0de recognises out of the box (no api key needed):
 
 anything else gives you a clean skeleton with your instruction as a comment.
 
-### 📖 explain mode — paste it, understand it
+### explain mode — paste it, understand it
 
-1. switch to the **📖 explain** tab.
+1. switch to the **explain** tab.
 2. choose the language from the dropdown.
 3. paste or type code into the editor.
-4. **highlight any chunk of code** with your mouse — floating **explain** & **✨ ai explain** buttons appear.
+4. **highlight any chunk of code** with your mouse — floating **explain** & **ai explain** buttons appear.
 5. click one. the right sidebar shows:
    - a short **summary** of what the code does overall.
    - a **line-by-line breakdown** in plain english.
