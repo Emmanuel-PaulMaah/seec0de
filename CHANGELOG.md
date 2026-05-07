@@ -20,6 +20,21 @@ Section conventions:
 
 ---
 
+## [2.0.0] - 2026-05-07
+### Changed
+- **Unified single-workspace layout.** The middle panel now hosts both generated code and pasted code. Instructions stay on the left, explanations on the right — no more switching between separate "Code" and "Explain" pages.
+- The middle panel gained a **read-only ↔ editable** toggle (lock/unlock button on the tab bar). Switch to editable to paste your own code into any language tab; highlight a selection to get explanations.
+- Keyword glossary tooltips now work in both read-only and editable modes.
+
+### Removed
+- The top-of-window mode tabs (`⟨/⟩ Code` / `📖 Explain`). Both flows are now reachable from the same screen.
+- `ModeSelector` and `PasteCodePanel` components (functionality merged into `CodePanel`).
+
+### Fixed
+- `npm run dev` no longer 404s at `http://localhost:9000/`. The webpack config now uses `publicPath: '/'` in development so webpack-dev-server serves `index.html` at the root, while still using `'./'` in production for Electron's `file://` loader.
+
+---
+
 ## [1.0.0] - 2026-05-07
 ### Added
 - Initial packaged release of seec0de (Windows NSIS installer + portable `.exe`).

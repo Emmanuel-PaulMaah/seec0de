@@ -19,9 +19,9 @@ that's it. the app opens in its own window.
 
 ## what you can do
 
-seec0de has two modes — switch between them with the tabs at the top.
+one workspace, three panels: **instructions on the left, code in the middle, explanations on the right**. no mode switching — everything is on screen at once.
 
-### ⟨/⟩ code mode — describe it, see it
+### ⟨/⟩ describe → see code
 
 1. pick the languages you care about (python, javascript, java, c++, c#, go, rust, typescript).
 2. type what you want in plain english. examples:
@@ -29,7 +29,7 @@ seec0de has two modes — switch between them with the tabs at the top.
    - *"create a class with inheritance"*
    - *"read a file & process each line"*
 3. hit **generate** for an instant offline result, or **ai generate** for a polished ai-written version.
-4. flip through the tabs to see pseudocode & each language side by side, all with proper syntax colouring.
+4. flip through the tabs in the middle panel to see pseudocode & each language side by side, all with proper syntax colouring.
 
 **ai generate** uses google gemini & needs a free api key from [google ai studio](https://aistudio.google.com). click "ai settings" in the left panel to add yours.
 
@@ -49,23 +49,22 @@ things seec0de recognises out of the box (no api key needed):
 
 anything else gives you a clean skeleton with your instruction as a comment.
 
-### explain mode — paste it, understand it
+### 🔓 read-only ↔ editable — paste your own code
 
-1. switch to the **explain** tab.
-2. choose the language from the dropdown.
-3. paste or type code into the editor.
-4. **highlight any chunk of code** with your mouse — floating **explain** & **ai explain** buttons appear.
-5. click one. the right sidebar shows:
-   - a short **summary** of what the code does overall.
-   - a **line-by-line breakdown** in plain english.
+the middle panel has a **lock toggle** in the top-right of the tab bar.
 
-### keyword glossary
+- **read-only** (default): the editor displays the generated code without letting you change it. perfect for studying.
+- **editable**: click the lock to unlock. now you can paste or type your own code into any language tab. **highlight any chunk** of code with your mouse — floating **explain** & **ai explain** buttons appear. click one to get a plain-english breakdown in the right sidebar.
+
+flip the lock as often as you like. your edits are kept until the next time you generate.
+
+### 🔍 keyword glossary
 
 click any highlighted keyword in the code to see:
 - a clear **definition** for that language
 - a tiny **example** showing it in use
 
-covers 15–20 keywords per language, including the language-specific ones (rust's `match`, go's `defer`, python's `with`, & more).
+covers 15–20 keywords per language, including the language-specific ones (rust's `match`, go's `defer`, python's `with`, & more). works in both read-only & editable mode.
 
 ---
 
@@ -80,7 +79,3 @@ python · javascript · java · c++ · c# · go · rust · typescript
 - students learning their first language
 - developers picking up a new language & wanting to see familiar concepts in unfamiliar syntax
 - anyone who finds a snippet online & wants to know what it actually does
-
----
-
-for technical details, architecture, & how to extend seec0de, see [dev-doc.md](dev-doc.md).
