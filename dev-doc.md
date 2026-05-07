@@ -187,3 +187,194 @@ Add entries to the `glossary` object for any language in `languages.js`:
   example: 'code example showing usage'
 },
 ```
+
+---
+
+## Packaging (Windows installer)
+
+Seec0de is packaged with **electron-builder**. The Windows pipeline produces an NSIS installer and a portable `.exe`.
+
+### Build it
+
+```bash
+npm run dist:win
+```
+
+This runs:
+1. `npm run build:renderer` — Webpack production build of the React renderer into `dist/`.
+2. `electron-builder --win` — bundles `src/main/`, `dist/`, and `package.json` with Electron and emits artifacts to `release/`.
+
+### Output artifacts
+
+After a successful build, `release/` contains:
+
+| File | Purpose |
+|---|---|
+| `seec0de Setup 1.0.0.exe` | NSIS installer — user picks install location, creates Start-menu/desktop shortcuts, registers an uninstaller. |
+| `seec0de 1.0.0.exe` | Portable single-file build — runs without installation. |
+| `win-unpacked/` | Raw unpacked app folder; `seec0de.exe` inside runs the app directly. |
+| `latest.yml` / `*.blockmap` | Auto-update metadata (only used if you wire up an update feed). |
+
+### Configuration
+
+The `build` field in `package.json` controls electron-builder:
+
+```json
+"build": {
+  "appId": "com.emmanuelpaulmaah.seec0de",
+  "productName": "seec0de",
+  "files": ["src/main/**/*", "dist/**/*", "package.json"],
+  "directories": { "output": "release" },
+  "win": { "target": ["nsis", "portable"] },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "perMachine": false
+  }
+}
+```
+
+### Webpack production behaviour
+
+`webpack.renderer.js` is exported as a function so it picks up `--mode production`:
+- Disables source maps in production.
+- Sets `output.publicPath: './'` so the packaged renderer resolves assets relative to `file://…/dist/index.html` (Electron loads via `loadFile` in production — see `src/main/main.js`).
+
+### Dev vs. production loading
+
+`src/main/main.js` switches based on `app.isPackaged`:
+
+```js
+const isDev = !app.isPackaged;
+if (isDev) {
+  mainWindow.loadURL('http://localhost:9000');
+} else {
+  mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
+}
+```
+
+### Code signing
+
+The current build is **unsigned**. We pass `CSC_IDENTITY_AUTO_DISCOVERY=false` so electron-builder doesn't look for a certificate. SmartScreen will warn users on first launch — that's expected without an EV/OV code-signing cert.
+
+To sign in the future, set `CSC_LINK` (path/URL to `.pfx`) and `CSC_KEY_PASSWORD` env vars before running `dist:win`.
+
+### App icon
+
+Currently the default Electron icon is used. To brand it:
+1. Place a 256×256 `.ico` at `build/icon.ico`.
+2. Add `"icon": "build/icon.ico"` under `build.win` in `package.json`.
+
+### Known Windows gotcha — winCodeSign symlinks
+
+On a first build, electron-builder downloads `winCodeSign-2.6.0.7z`, which contains macOS `.dylib` **symbolic links**. Windows refuses to create symlinks without admin rights or Developer Mode, so 7-Zip exits with code 2 and electron-builder retries forever.
+
+Workaround (one-time, already applied on this machine):
+
+```powershell
+# 1. Pre-extract the cache without symlinks
+& "node_modules\7zip-bin\win\x64\7za.exe" x -bd -snl `
+  "$env:LOCALAPPDATA\electron-builder\Cache\winCodeSign\<random>.7z" `
+  "-o$env:LOCALAPPDATA\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0" -y
+
+# 2. Stub the two missing dylibs so future checks pass
+New-Item -ItemType File -Force `
+  "$env:LOCALAPPDATA\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\darwin\10.12\lib\libcrypto.dylib", `
+  "$env:LOCALAPPDATA\electron-builder\Cache\winCodeSign\winCodeSign-2.6.0\darwin\10.12\lib\libssl.dylib"
+```
+
+Permanent fixes (pick one):
+- Enable **Windows Developer Mode** (Settings → Privacy & Security → For developers).
+- Run the build shell as Administrator.
+- Skip the cache entirely by signing through a different toolchain.
+
+### Cross-platform builds
+
+- **macOS** `.dmg` / `.zip` can only be produced on macOS, and a distributable build needs an Apple Developer cert + notarization.
+- **Linux** `AppImage` / `deb` can be produced on Windows or Linux. Add a `linux` target block to the `build` config and a `dist:linux` script if needed.
+
+### Versioning & release hygiene
+
+- Bump `version` in `package.json` before each release; the version is embedded in artifact filenames and the installer.
+- Add `release/` to `.gitignore` — installers are large (~90 MB each) and should not be committed.
+
+---
+
+## Auto-updates (push code changes without re-downloading)
+
+Seec0de uses **`electron-updater`** with **GitHub Releases** as the update feed. Once a user has installed the NSIS build (`seec0de Setup x.y.z.exe`), every subsequent launch checks GitHub for a newer version, downloads it in the background, and prompts to restart.
+
+> The portable `.exe` cannot self-update — it has no install location to write to. Users must be on the NSIS installer build for auto-update to work.
+
+### One-time setup
+
+1. **Create a GitHub Personal Access Token** with `repo` scope (classic token) at https://github.com/settings/tokens.
+2. Expose it to the build shell as `GH_TOKEN` (electron-builder reads this automatically):
+
+   ```powershell
+   $env:GH_TOKEN = "ghp_xxx..."
+   ```
+
+   Add it to your user environment variables to avoid setting it every session.
+
+### The release workflow
+
+Every time you want to ship a code change to installed users:
+
+```powershell
+# 1. Make your code changes & commit them
+git add .
+git commit -m "fix: whatever you changed"
+
+# 2. Bump the version (semver — patch / minor / major)
+npm version patch        # 1.0.0 -> 1.0.1
+# or: npm version minor  # 1.0.0 -> 1.1.0
+# or: npm version major  # 1.0.0 -> 2.0.0
+
+# 3. Build & publish to GitHub Releases
+npm run release:win
+
+# 4. Push the version-bump commit & tag
+git push --follow-tags
+```
+
+`npm run release:win` runs `electron-builder --win --publish always`, which:
+
+1. Builds the renderer & packages the app.
+2. Creates (or reuses) a **draft release** on GitHub tagged `v<version>`.
+3. Uploads `seec0de Setup <version>.exe`, `latest.yml`, and the `.blockmap` files.
+
+After the script finishes, open the draft release on GitHub and click **Publish release**. As soon as it's published, every running copy of seec0de will pick it up on its next launch.
+
+### How the client-side update flow works
+
+`src/main/main.js` calls `autoUpdater.checkForUpdatesAndNotify()` after the window is created (production builds only). The flow:
+
+```
+launch → check latest.yml on GitHub
+       → if newer version: download in background (delta via blockmap when possible)
+       → on download complete: dialog "Restart now / Later"
+       → "Restart now" → autoUpdater.quitAndInstall()
+```
+
+Update logs land in `%APPDATA%\seec0de\logs\main.log` on the user's machine — useful for debugging "did the update actually run?".
+
+### Delta updates
+
+electron-builder writes a `.blockmap` next to each installer. When a user already has version N installed and version N+1 ships, the updater downloads only the changed blocks instead of the full ~90 MB installer. No extra config required — it works automatically as long as you publish the `.blockmap` files (which `--publish always` does).
+
+### Quick sanity check before shipping
+
+1. `npm run dist:win` (no publish) and install the resulting `.exe` locally.
+2. Bump the version, run `npm run release:win`, publish the draft on GitHub.
+3. Re-launch the locally-installed app. Within ~30 seconds you should see the "update ready" dialog.
+
+### Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| `HttpError: 404` on publish | `GH_TOKEN` missing or lacks `repo` scope. |
+| Installed app never sees the update | You forgot to **publish** the draft release on GitHub. |
+| `Error: Could not find latest.yml` in `main.log` | Release was published but `latest.yml` wasn't uploaded — re-run `release:win`. |
+| Update detected but install fails | App was launched from a path it can't write to (e.g. portable build). Use the NSIS installer. |
+| `repository` field warning from electron-builder | Optional, but you can add `"repository": "https://github.com/Emmanuel-PaulMaah/seec0de"` to `package.json` to silence it. |
