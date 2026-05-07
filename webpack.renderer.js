@@ -1,20 +1,25 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-module.exports = {
-  mode: 'development',
-  entry: './src/renderer/index.jsx',
-  target: 'web',
-  devtool: 'source-map',
-  devServer: {
-    port: 9000,
-    hot: true,
-    static: path.join(__dirname, 'public'),
-  },
-  output: {
-    path: path.join(__dirname, 'dist'),
-    filename: 'renderer.js',
-  },
+module.exports = (env, argv) => {
+  const isProd = argv && argv.mode === 'production';
+  return {
+    mode: isProd ? 'production' : 'development',
+    entry: './src/renderer/index.jsx',
+    target: 'web',
+    devtool: isProd ? false : 'source-map',
+    devServer: {
+      port: 9000,
+      hot: true,
+      static: path.join(__dirname, 'public'),
+    },
+    output: {
+      path: path.join(__dirname, 'dist'),
+      filename: 'renderer.js',
+      // production: relative path so Electron's file:// loader resolves assets correctly.
+      // development: '/' so webpack-dev-server serves index.html and bundles at the root URL.
+      publicPath: isProd ? './' : '/',
+    },
   resolve: {
     extensions: ['.js', '.jsx', '.json'],
   },
@@ -40,9 +45,10 @@ module.exports = {
       },
     ],
   },
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './src/renderer/index.html',
-    }),
-  ],
+    plugins: [
+      new HtmlWebpackPlugin({
+        template: './src/renderer/index.html',
+      }),
+    ],
+  };
 };
