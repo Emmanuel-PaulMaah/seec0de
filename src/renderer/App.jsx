@@ -1,21 +1,16 @@
 import React, { useState, useCallback } from 'react';
 import TitleBar from './components/TitleBar';
-import ModeSelector from './components/ModeSelector';
 import InstructionPanel from './components/InstructionPanel';
 import CodePanel from './components/CodePanel';
 import ExplanationSidebar from './components/ExplanationSidebar';
-import PasteCodePanel from './components/PasteCodePanel';
 import { generateCode } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI } from './engine/aiService';
 
 export default function App() {
-  const [mode, setMode] = useState('instruct');
   const [selectedLanguages, setSelectedLanguages] = useState(['python', 'javascript']);
   const [instruction, setInstruction] = useState('');
   const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
-  const [pastedCode, setPastedCode] = useState('');
-  const [pasteLanguage, setPasteLanguage] = useState('javascript');
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -37,6 +32,18 @@ export default function App() {
       setAiLoading(false);
     }
   }, [instruction, selectedLanguages, aiLoading]);
+
+  const handleCodeChange = useCallback((tab, value) => {
+    setGeneratedCode((prev) => {
+      if (tab === 'pseudocode') {
+        return { ...prev, pseudocode: value };
+      }
+      return {
+        ...prev,
+        code: { ...prev.code, [tab]: value },
+      };
+    });
+  }, []);
 
   const handleSelectionExplain = useCallback((code, language) => {
     if (!code.trim()) return;
@@ -70,37 +77,25 @@ export default function App() {
   return (
     <div style={styles.container}>
       <TitleBar />
-      <ModeSelector mode={mode} onModeChange={setMode} />
 
       <div style={styles.workspace}>
-        {mode === 'instruct' ? (
-          <>
-            <InstructionPanel
-              instruction={instruction}
-              onInstructionChange={setInstruction}
-              onGenerate={handleGenerate}
-              onAiGenerate={handleAiGenerate}
-              aiLoading={aiLoading}
-              selectedLanguages={selectedLanguages}
-              onToggleLanguage={toggleLanguage}
-            />
-            <CodePanel
-              generatedCode={generatedCode}
-              selectedLanguages={selectedLanguages}
-            />
-          </>
-        ) : (
-          <PasteCodePanel
-            code={pastedCode}
-            onCodeChange={setPastedCode}
-            language={pasteLanguage}
-            onLanguageChange={setPasteLanguage}
-            onSelectionExplain={handleSelectionExplain}
-            onAiExplain={handleAiExplain}
-            aiLoading={aiLoading}
-          />
-        )}
-
+        <InstructionPanel
+          instruction={instruction}
+          onInstructionChange={setInstruction}
+          onGenerate={handleGenerate}
+          onAiGenerate={handleAiGenerate}
+          aiLoading={aiLoading}
+          selectedLanguages={selectedLanguages}
+          onToggleLanguage={toggleLanguage}
+        />
+        <CodePanel
+          generatedCode={generatedCode}
+          selectedLanguages={selectedLanguages}
+          onCodeChange={handleCodeChange}
+          onSelectionExplain={handleSelectionExplain}
+          onAiExplain={handleAiExplain}
+          aiLoading={aiLoading}
+        />
         <ExplanationSidebar explanation={explanation} />
       </div>
     </div>
