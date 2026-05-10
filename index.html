@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>seec0de — write natural instructions, see code</title>
+  <meta name="description" content="seec0de is a desktop learning tool. Write instructions in plain English, see pseudocode and real code in 8 languages side by side. Paste any snippet, get a line-by-line explanation. Free, offline-first, with optional AI." />
+  <meta name="theme-color" content="#0a0a0a" />
+
+  <meta property="og:title" content="seec0de — natural instructions → code, in 8 languages" />
+  <meta property="og:description" content="A desktop learning tool that turns plain English into pseudocode and real code, side by side. Built for people who want to understand programming, not just copy it." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://emmanuel-paulmaah.github.io/seec0de/" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23007acc'/><text x='50%25' y='58%25' font-family='Inter,Arial,sans-serif' font-size='15' font-weight='700' text-anchor='middle' fill='white'>⟨/⟩</text></svg>" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ---------- design tokens ---------- */
+    :root {
+      --bg:        #0a0a0a;
+      --bg-elev:   #111111;
+      --bg-elev-2: #161616;
+      --bg-input:  #060606;
+      --border:    #1c1c1c;
+      --border-strong: #262626;
+      --text:      #ededed;
+      --text-2:    #b8b8b8;
+      --text-3:    #8a8a8a;
+      --text-4:    #5e5e5e;
+      --accent:    #007acc;
+      --accent-2:  #1a8ad4;
+      --accent-soft: rgba(0, 122, 204, 0.14);
+      --keyword:   #569cd6;
+      --string:    #ce9178;
+      --fn:        #dcdcaa;
+      --comment:   #6a9955;
+      --type:      #4ec9b0;
+      --num:       #b5cea8;
+
+      --shadow-sm: 0 2px 6px rgba(0,0,0,0.35);
+      --shadow-md: 0 12px 36px rgba(0,0,0,0.45);
+      --shadow-lg: 0 30px 80px rgba(0,0,0,0.55);
+
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-xl: 20px;
+
+      --maxw: 1120px;
+
+      --t-fast: 120ms cubic-bezier(.4,0,.2,1);
+      --t-base: 220ms cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ---------- reset ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+    img, svg { display: block; max-width: 100%; }
+    h1, h2, h3, p { margin: 0; }
+
+    /* ---------- ambient backdrop ---------- */
+    .backdrop {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(900px 480px at 18% -10%, rgba(0, 122, 204, 0.18), transparent 60%),
+        radial-gradient(700px 400px at 90% 10%, rgba(78, 201, 176, 0.10), transparent 60%),
+        radial-gradient(800px 600px at 50% 110%, rgba(0, 122, 204, 0.08), transparent 60%);
+    }
+    .grid-overlay {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 80%);
+    }
+
+    /* ---------- layout ---------- */
+    .container {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative; z-index: 1;
+    }
+    main { position: relative; z-index: 1; }
+    section { padding: 96px 0; }
+
+    /* ---------- top nav ---------- */
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10, 10, 10, 0.72);
+      backdrop-filter: saturate(140%) blur(14px);
+      -webkit-backdrop-filter: saturate(140%) blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; gap: 24px;
+      padding: 14px 0;
+    }
+    .brand {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-weight: 700; letter-spacing: 0.5px;
+    }
+    .brand-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 7px;
+      background: linear-gradient(135deg, var(--accent), #00bcd4);
+      color: white; font-size: 12px; font-weight: 800;
+      box-shadow: 0 4px 12px rgba(0,122,204,0.4);
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 22px;
+      margin-left: auto;
+      font-size: 14px; color: var(--text-3);
+    }
+    .nav-links a { transition: color var(--t-fast); }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+
+    @media (max-width: 720px) {
+      .nav-links a.hide-sm { display: none; }
+    }
+
+    /* ---------- buttons ---------- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 10px 18px;
+      border-radius: var(--r-md);
+      border: 1px solid transparent;
+      font-size: 14px; font-weight: 600;
+      transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
+      will-change: transform;
+    }
+    .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 122, 204, 0.32), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(0, 122, 204, 0.42), inset 0 1px 0 rgba(255,255,255,0.18); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.03);
+      border-color: var(--border-strong);
+      color: var(--text);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: #333; }
+    .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 13px; }
+
+    /* ---------- hero ---------- */
+    .hero { padding: 88px 0 72px; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(0, 122, 204, 0.30);
+      font-size: 12px; font-weight: 600; letter-spacing: 0.4px;
+      color: #79c2ff;
+    }
+    .eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 10px #4ade80;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.55; transform: scale(0.85); }
+    }
+
+    h1.headline {
+      font-size: clamp(40px, 6.5vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin: 18px 0 18px;
+      max-width: 18ch;
+    }
+    .headline .grad {
+      background: linear-gradient(135deg, #79c2ff 0%, #4ec9b0 50%, #dcdcaa 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .lede {
+      font-size: clamp(16px, 1.6vw, 19px);
+      color: var(--text-2);
+      max-width: 60ch;
+      line-height: 1.55;
+    }
+    .hero-actions {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      margin-top: 28px;
+    }
+    .hero-meta {
+      display: flex; flex-wrap: wrap; gap: 14px;
+      margin-top: 18px;
+      font-size: 13px; color: var(--text-4);
+    }
+    .hero-meta .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    /* ---------- mock app preview ---------- */
+    .preview {
+      margin-top: 64px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      background: linear-gradient(180deg, #0e0e0e, #0a0a0a);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+    }
+    .preview::after {
+      /* subtle inner border highlight */
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      border-radius: var(--r-xl);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .preview-titlebar {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+      height: 36px;
+      background: #0e0e0e;
+      border-bottom: 1px solid var(--border);
+      padding: 0 12px;
+    }
+    .traffic { display: flex; gap: 6px; }
+    .traffic span { width: 11px; height: 11px; border-radius: 50%; background: #2a2a2a; }
+    .traffic span:nth-child(1) { background: #ff5f57; }
+    .traffic span:nth-child(2) { background: #febc2e; }
+    .traffic span:nth-child(3) { background: #28c840; }
+    .preview-title {
+      font-size: 11px; color: var(--text-3); letter-spacing: 1.5px;
+      display: inline-flex; gap: 6px; align-items: center;
+    }
+    .preview-title .pill-mini {
+      font-size: 9.5px; padding: 2px 6px; border-radius: 999px;
+      background: var(--accent); color: #fff; letter-spacing: 0.4px;
+    }
+    .preview-body {
+      display: grid;
+      grid-template-columns: 240px 1fr 240px;
+      min-height: 360px;
+    }
+    @media (max-width: 880px) {
+      .preview-body { grid-template-columns: 1fr; }
+      .preview-side { display: none; }
+    }
+    .preview-side {
+      background: #0c0c0c;
+      border-right: 1px solid var(--border);
+      padding: 14px 14px;
+      font-size: 12px;
+      color: var(--text-3);
+    }
+    .preview-side.right { border-right: none; border-left: 1px solid var(--border); }
+    .side-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-4); margin-bottom: 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .chip {
+      font-size: 11px; padding: 3px 9px; border-radius: 999px;
+      background: var(--bg-elev-2); border: 1px solid var(--border);
+      color: var(--text-3);
+    }
+    .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .instruction-box {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--text-2);
+      min-height: 70px;
+    }
+    .preview-mid {
+      display: flex; flex-direction: column;
+      background: var(--bg);
+    }
+    .tabs {
+      display: flex; gap: 0;
+      background: #0e0e0e; border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 8px 14px; font-size: 11.5px; color: var(--text-3);
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); background: var(--bg); }
+    .editor {
+      padding: 14px 18px; flex: 1;
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text-2);
+      overflow: hidden;
+      white-space: pre;
+    }
+    .kw { color: var(--keyword); }
+    .st { color: var(--string); }
+    .fn { color: var(--fn); }
+    .cm { color: var(--comment); font-style: italic; }
+    .ty { color: var(--type); }
+    .nm { color: var(--num); }
+    .explain {
+      font-size: 11.5px; color: var(--text-3); line-height: 1.55;
+    }
+    .explain b { color: var(--text); font-weight: 600; display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; }
+    .explain p { margin: 0 0 10px; }
+
+    /* ---------- features grid ---------- */
+    .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
+    .section-head .kicker {
+      font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px;
+    }
+    .section-head h2 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700; letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+    .section-head p { color: var(--text-2); font-size: 16px; }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+    @media (max-width: 880px) { .features { grid-template-columns: 1fr; } }
+
+    .card {
+      position: relative;
+      padding: 28px;
+      border-radius: var(--r-lg);
+      background: linear-gradient(180deg, rgba(255,255,255,0.022), rgba(255,255,255,0.008));
+      border: 1px solid var(--border);
+      transition: transform var(--t-base), border-color var(--t-base), background var(--t-base);
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--border-strong); background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012)); }
+    .card-icon {
+      width: 38px; height: 38px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      color: #79c2ff;
+      margin-bottom: 18px;
+    }
+    .card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .card p { color: var(--text-3); font-size: 14px; line-height: 1.6; }
+
+    /* ---------- languages strip ---------- */
+    .lang-strip {
+      padding: 56px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
+    }
+    .lang-row {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+      margin-top: 22px;
+    }
+    .lang {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 13px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 13px; color: var(--text-2);
+      font-family: 'JetBrains Mono', Consolas, monospace;
+    }
+    .lang::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--clr, var(--accent));
+    }
+    .lang-strip h3 {
+      text-align: center; font-size: 13px; color: var(--text-4);
+      letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
+    }
+
+    /* ---------- how it works ---------- */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      counter-reset: step;
+    }
+    @media (max-width: 880px) { .steps { grid-template-columns: 1fr; } }
+    .step {
+      counter-increment: step;
+      padding: 28px;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      position: relative;
+    }
+    .step::before {
+      content: '0' counter(step);
+      font-family: 'JetBrains Mono', Consolas, monospace;
+      font-size: 13px; font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    .step h3 { font-size: 17px; font-weight: 600; margin: 10px 0 8px; }
+    .step p { color: var(--text-3); font-size: 14px; }
+
+    /* ---------- final CTA ---------- */
+    .cta-box {
+      margin: 0 auto;
+      max-width: 820px;
+      padding: 56px 40px;
+      border-radius: var(--r-xl);
+      text-align: center;
+      background:
+        radial-gradient(600px 200px at 50% -20%, rgba(0,122,204,0.30), transparent 70%),
+        linear-gradient(180deg, #111, #0c0c0c);
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-md);
+    }
+    .cta-box h2 {
+      font-size: clamp(26px, 3.5vw, 38px);
+      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px;
+    }
+    .cta-box p { color: var(--text-2); margin-bottom: 26px; }
+    .cta-actions {
+      display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    }
+    .cta-note {
+      margin-top: 16px; font-size: 12px; color: var(--text-4);
+    }
+
+    /* ---------- footer ---------- */
+    footer {
+      padding: 48px 0 56px;
+      border-top: 1px solid var(--border);
+      color: var(--text-4);
+      font-size: 13px;
+    }
+    .foot {
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
+    }
+    .foot a:hover { color: var(--text-2); }
+    .foot-links { display: inline-flex; gap: 18px; flex-wrap: wrap; }
+
+    /* ---------- accessibility helpers ---------- */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--accent-2);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition: none !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="sr-only">Skip to main content</a>
+
+  <div class="backdrop" aria-hidden="true"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand" aria-label="seec0de home">
+        <span class="brand-mark" aria-hidden="true">⟨/⟩</span>
+        <span>seec0de</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features" class="hide-sm">Features</a>
+        <a href="#languages" class="hide-sm">Languages</a>
+        <a href="#how" class="hide-sm">How it works</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener">GitHub</a>
+        <a class="btn btn-primary btn-sm" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/latest" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============== HERO ============== -->
+    <section class="hero">
+      <div class="container">
+        <span class="eyebrow"><span class="dot" aria-hidden="true"></span> v2.1.0 — now with in-app updates</span>
+
+        <h1 class="headline">
+          Write natural instructions, <span class="grad">see real code.</span>
+        </h1>
+
+        <p class="lede">
+          A desktop learning tool for people who want to <em>understand</em> programming, not just copy it.
+          Type what you want in plain English &amp; watch pseudocode and 8 real languages render side by side.
+          Or paste any snippet to get a line-by-line explanation.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/latest" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download for Windows
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.83-.26.83-.58v-2c-3.34.73-4.04-1.41-4.04-1.41-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .1-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .3z"/></svg>
+            View source
+          </a>
+        </div>
+
+        <p class="hero-meta">
+          <span class="pill">⊞ Windows installer + portable</span>
+          <span class="pill">8 languages</span>
+          <span class="pill">Works offline · AI optional</span>
+        </p>
+
+        <!-- ============ MOCK APP PREVIEW ============ -->
+        <div class="preview" role="img" aria-label="Screenshot of seec0de showing the three-panel layout: instruction on the left, generated Python code in the middle, explanation on the right.">
+          <div class="preview-titlebar">
+            <div class="traffic" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="preview-title">SEEC0DE <span class="pill-mini">v2.1.0</span></div>
+            <div></div>
+          </div>
+
+          <div class="preview-body">
+            <aside class="preview-side">
+              <div class="side-label">Languages</div>
+              <div class="chips">
+                <span class="chip on">Python</span>
+                <span class="chip">JavaScript</span>
+                <span class="chip">Rust</span>
+                <span class="chip">Go</span>
+                <span class="chip">Java</span>
+              </div>
+              <div class="side-label">Instruction</div>
+              <div class="instruction-box">sort a list of numbers from smallest to largest</div>
+            </aside>
+
+            <div class="preview-mid">
+              <div class="tabs">
+                <span class="tab">⤷ Pseudocode</span>
+                <span class="tab active">Python</span>
+                <span class="tab">JavaScript</span>
+                <span class="tab">Rust</span>
+              </div>
+              <pre class="editor"><span class="cm"># sort a list of numbers from smallest to largest</span>
+<span class="kw">def</span> <span class="fn">sort_numbers</span>(numbers: <span class="ty">list</span>) -&gt; <span class="ty">list</span>:
+    <span class="kw">return</span> <span class="fn">sorted</span>(numbers)
+
+
+numbers = [<span class="nm">42</span>, <span class="nm">7</span>, <span class="nm">19</span>, <span class="nm">3</span>, <span class="nm">88</span>, <span class="nm">15</span>]
+result  = <span class="fn">sort_numbers</span>(numbers)
+
+<span class="fn">print</span>(<span class="st">"sorted:"</span>, result)
+<span class="cm"># → sorted: [3, 7, 15, 19, 42, 88]</span></pre>
+            </div>
+
+            <aside class="preview-side right">
+              <div class="side-label">Explanation</div>
+              <div class="explain">
+                <p><b>Summary</b>Defines a reusable function that returns a new sorted list from any input list of numbers, without mutating the original.</p>
+                <p><b>Line by line</b>Uses Python's built-in <code style="color: var(--keyword)">sorted()</code> which runs Timsort — fast on real-world data &amp; stable, so equal items keep their order.</p>
+                <p style="color: var(--text-4); font-size: 10.5px;">Click any keyword to open the glossary.</p>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FEATURES ============== -->
+    <section id="features">
+      <div class="container">
+        <header class="section-head">
+          <div class="kicker">What you can do</div>
+          <h2>One workspace. Three flows. Zero context-switching.</h2>
+          <p>Instructions on the left, code in the middle, explanations on the right — everything visible at once, the way learning actually works.</p>
+        </header>
+
+        <div class="features">
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <h3>Describe → see code</h3>
+            <p>Type an instruction in plain English. Get pseudocode &amp; up to eight real languages instantly, side by side. Optional Gemini-powered AI generation when you want a polished version.</p>
+          </article>
+
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </div>
+            <h3>Paste → see explanation</h3>
+            <p>Flip the lock, paste any snippet, then highlight a chunk. A floating <strong>Explain</strong> button reveals a line-by-line breakdown in the right sidebar — instantly, or with AI.</p>
+          </article>
+
+          <article class="card">
+            <div class="card-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <h3>Click any keyword</h3>
+            <p>Every keyword links to a built-in glossary with a clear definition &amp; tiny example for that language — including the language-specific ones (Rust's <code>match</code>, Go's <code>defer</code>, Python's <code>with</code>).</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== LANGUAGES ============== -->
+    <section id="languages" class="lang-strip" style="padding-block: 56px;">
+      <div class="container">
+        <h3>Languages out of the box</h3>
+        <div class="lang-row" aria-label="Supported languages">
+          <span class="lang" style="--clr:#3776ab">Python</span>
+          <span class="lang" style="--clr:#f7df1e">JavaScript</span>
+          <span class="lang" style="--clr:#3178c6">TypeScript</span>
+          <span class="lang" style="--clr:#f89820">Java</span>
+          <span class="lang" style="--clr:#00599c">C++</span>
+          <span class="lang" style="--clr:#9b4f96">C#</span>
+          <span class="lang" style="--clr:#00add8">Go</span>
+          <span class="lang" style="--clr:#ce422b">Rust</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== HOW IT WORKS ============== -->
+    <section id="how">
+      <div class="container">
+        <header class="section-head">
+          <div class="kicker">How it works</div>
+          <h2>Set up once. Learn for years.</h2>
+          <p>seec0de runs entirely on your machine. No accounts, no telemetry. AI features are opt-in &amp; use your own free Google Gemini key.</p>
+        </header>
+
+        <div class="steps">
+          <article class="step">
+            <h3>Install the app</h3>
+            <p>Download the Windows installer from GitHub Releases. Run it once — Start menu shortcut, auto-updates from then on.</p>
+          </article>
+          <article class="step">
+            <h3>Pick languages, type intent</h3>
+            <p>Choose the languages you care about, write what you want in plain English, hit <strong>Generate</strong>. Pseudocode &amp; code appear instantly.</p>
+          </article>
+          <article class="step">
+            <h3>Read, paste, explore</h3>
+            <p>Flip between language tabs, click keywords for definitions, or unlock the editor to paste your own code &amp; have it explained line by line.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FINAL CTA ============== -->
+    <section style="padding-block: 64px 96px;">
+      <div class="container">
+        <div class="cta-box">
+          <h2>Get the latest seec0de.</h2>
+          <p>Free, open source, ~91&nbsp;MB Windows installer. Updates land automatically once installed.</p>
+          <div class="cta-actions">
+            <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/latest" rel="noopener">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download v2.1.0
+            </a>
+            <a class="btn btn-ghost" href="https://github.com/Emmanuel-PaulMaah/seec0de/blob/main/CHANGELOG.md" rel="noopener">
+              Read changelog
+            </a>
+          </div>
+          <p class="cta-note">First install? Windows SmartScreen may warn you — click <em>More info → Run anyway</em>. The installer isn't code-signed yet.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container foot">
+      <div>
+        <span class="brand" style="font-size: 13px;">
+          <span class="brand-mark" aria-hidden="true" style="width:20px;height:20px;font-size:10px;">⟨/⟩</span>
+          <span>seec0de</span>
+        </span>
+        <span style="margin-left: 12px;">© 2026 Emmanuel Paulmaah</span>
+      </div>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener">GitHub</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/blob/main/CHANGELOG.md" rel="noopener">Changelog</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/issues" rel="noopener">Issues</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
