@@ -220,7 +220,9 @@ const styles = {
   tab: {
     background: 'none',
     border: 'none',
-    borderBottom: '2px solid transparent',
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
     fontSize: 12,
     padding: '8px 16px',
