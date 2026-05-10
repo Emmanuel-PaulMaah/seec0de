@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Loader } from 'lucide-react';
 import ApiKeySettings from './ApiKeySettings';
+import AboutSettings from './AboutSettings';
 import { hasApiKey } from '../engine/aiService';
 
 const LANGUAGE_OPTIONS = [
@@ -30,6 +31,7 @@ export default function InstructionPanel({
   return (
     <div style={styles.panel}>
       <ApiKeySettings />
+      <AboutSettings />
 
       <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
         <div style={styles.section}>
