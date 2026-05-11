@@ -20,6 +20,22 @@ Section conventions:
 
 ---
 
+## [2.2.0] - 2026-05-11
+### Added
+- **File explorer.** New left sidebar with a VS-Code-style file tree. Open any folder via the title-bar toggle or the "Open folder" button; create files and folders, refresh, or close the workspace from the panel header. The chosen folder is remembered between launches. Deletes go to the OS recycle bin (via `shell.trashItem`) instead of a hard `rm`.
+- **Multi-file editing.** File tabs now sit alongside the Pseudocode/language tabs in the middle panel. Files open in Monaco, are always editable, show a dirty indicator (`•`) when modified, and save with Ctrl+S. Closing a single tab leaves the others intact.
+- **Explained terminal.** New collapsible terminal at the bottom of the window (toggle in the title bar or with Ctrl+`). Each command becomes a card with a one-line explanation, stdout/stderr, exit status, and duration. `cd` and `clear` are handled client-side so the cwd persists across commands. Up/Down arrows walk the prompt history (last 50 entries, persisted in `localStorage`). Built-in explanations cover common filesystem builtins, npm/pnpm/yarn, git, docker, node, python, go, cargo, dotnet, and PowerShell `Verb-Noun` cmdlets.
+- **Run button** in the code panel. Runs the active editor source through a sandboxed temp directory and pushes the result into the terminal. Supports JavaScript (`node`), TypeScript (`tsx` / `ts-node`), Python (`python` / `python3` / `py`), C (`gcc` / `clang` / `cl`), and C++ (`g++` / `clang++` / `cl`). Missing toolchains return a one-line install hint instead of crashing. Hard 15-second timeout per compile + execute phase, 1 MB output cap per stream.
+- Title-bar toggles for the file-explorer and terminal panels (with keyboard shortcut Ctrl+` for the terminal).
+
+### Changed
+- Main process now registers three new IPC handler groups (`fs:*`, `term:*`, `runner:*`) and exposes them to the renderer via `window.seecode.fs`, `window.seecode.terminal`, and `window.seecode.runner`.
+
+### Fixed
+- Footer copyright on the GitHub Pages landing page used the wrong capitalisation ("Paulmaah" → "PaulMaah").
+
+---
+
 ## [2.1.0] - 2026-05-10
 ### Added
 - **In-app update pill.** When a new release is downloaded in the background, a small "Update vX.Y.Z ready" pill appears in the title bar. Click it to see the changelog for the new version (pulled live from the GitHub release notes) and a "Restart & install" button — no more blocking modal dialog.
