@@ -6,6 +6,25 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('seecode', {
+  fs: {
+    openFolderDialog: () => ipcRenderer.invoke('fs:open-folder-dialog'),
+    readDir:    (p)            => ipcRenderer.invoke('fs:read-dir', p),
+    readFile:   (p)            => ipcRenderer.invoke('fs:read-file', p),
+    writeFile:  (p, content)   => ipcRenderer.invoke('fs:write-file', p, content),
+    createFile: (p)            => ipcRenderer.invoke('fs:create-file', p),
+    createDir:  (p)            => ipcRenderer.invoke('fs:create-dir', p),
+    rename:     (oldP, newP)   => ipcRenderer.invoke('fs:rename', oldP, newP),
+    delete:     (p)            => ipcRenderer.invoke('fs:delete', p),
+    pathExists: (p)            => ipcRenderer.invoke('fs:path-exists', p),
+  },
+  terminal: {
+    home:      ()              => ipcRenderer.invoke('term:home'),
+    exec:      (payload)       => ipcRenderer.invoke('term:exec', payload),
+    resolveCd: (payload)       => ipcRenderer.invoke('term:resolve-cd', payload),
+  },
+  runner: {
+    run: (payload) => ipcRenderer.invoke('runner:run', payload),
+  },
   updates: {
     // One-shot: fetch the current updater status.
     // Returns { appVersion, status, info, lastChecked, error, releaseNotes }.

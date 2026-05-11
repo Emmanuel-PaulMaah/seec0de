@@ -3,6 +3,9 @@ const path = require('path');
 const https = require('https');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
+const { registerFileServiceHandlers } = require('./fileService');
+const { registerTerminalServiceHandlers } = require('./terminalService');
+const { registerRunnerServiceHandlers } = require('./runnerService');
 
 // Pipe electron-updater logs to a file you can inspect on the user's machine
 // (Windows: %USERPROFILE%\AppData\Roaming\seec0de\logs\main.log)
@@ -190,6 +193,9 @@ ipcMain.handle('update:install-now', () => {
 });
 
 app.whenReady().then(() => {
+  registerFileServiceHandlers();
+  registerTerminalServiceHandlers();
+  registerRunnerServiceHandlers();
   createWindow();
   setupAutoUpdates();
 });
