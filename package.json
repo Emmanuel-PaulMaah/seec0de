@@ -1,6 +1,6 @@
 {
   "name": "seec0de",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Write natural instructions, see pseudocode & code. Paste code, see explanations.",
   "main": "src/main/main.js",
   "author": "Emmanuel Paulmaah",
