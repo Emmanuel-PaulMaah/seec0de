@@ -5,47 +5,75 @@ import CodePanel from './components/CodePanel';
 import ExplanationSidebar from './components/ExplanationSidebar';
 import FileExplorer from './components/FileExplorer';
 import TerminalPanel from './components/TerminalPanel';
+import OnboardingModal from './components/OnboardingModal';
+import SettingsDrawer from './components/SettingsDrawer';
 import { generateCode } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI } from './engine/aiService';
+import { loadSettings } from './engine/settings';
 
-const STORAGE_KEY_FOLDER   = 'seec0de.lastFolder';
-const STORAGE_KEY_TERMINAL = 'seec0de.terminalVisible';
+// Persist a couple of small bits of session state outside settings.json:
+//   - lastFolder              → path of the last opened folder (file explorer)
+//   - terminalSessionVisible  → whether the bottom terminal was last open
+// Settings.showTerminal/showFileExplorer act as the *default* for fresh
+// installs; once the user toggles them in a session, the per-session
+// keys take over so we don't fight their last action.
+const STORAGE_KEY_FOLDER          = 'seec0de.lastFolder';
+const STORAGE_KEY_TERMINAL_OPEN   = 'seec0de.terminalVisible';
+const STORAGE_KEY_EXPLORER_OPEN   = 'seec0de.explorerVisible';
 
 export default function App() {
-  const [selectedLanguages, setSelectedLanguages] = useState(['python', 'javascript']);
+  // ---- settings + onboarding -------------------------------------------
+  // Single source of truth for user preferences. Loaded once on mount;
+  // re-loaded when the SettingsDrawer reports a change.
+  const [settings, setSettings] = useState(() => loadSettings());
+  const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // ---- generator state -------------------------------------------------
+  // selectedLanguages = the practical language followed by every comparison
+  // language. Recomputed whenever settings change.
+  const [selectedLanguages, setSelectedLanguages] = useState(() => deriveLanguages(loadSettings()));
   const [instruction, setInstruction] = useState('');
   const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  // ---- file manager state ------------------------------------------------
+  useEffect(() => {
+    setSelectedLanguages(deriveLanguages(settings));
+  }, [settings.practicalLanguage, settings.comparisonLanguages]);
+
+  // ---- file manager state ----------------------------------------------
   const [rootPath, setRootPath] = useState(() => localStorage.getItem(STORAGE_KEY_FOLDER));
   const [openFiles, setOpenFiles] = useState([]);
   const [activePath, setActivePath] = useState(null);
-  const [explorerVisible, setExplorerVisible] = useState(true);
-  const [refreshKey] = useState(0);
+  const [explorerVisible, setExplorerVisible] = useState(() => initialPanelVisible(
+    STORAGE_KEY_EXPLORER_OPEN, loadSettings().showFileExplorer,
+  ));
 
-  // ---- terminal state ----------------------------------------------------
-  const [terminalVisible, setTerminalVisible] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_TERMINAL);
-    return saved === null ? false : saved === '1';
-  });
-  // Imperative handle for the TerminalPanel: { runCommand, pushEntry }.
+  // ---- terminal state --------------------------------------------------
+  const [terminalVisible, setTerminalVisible] = useState(() => initialPanelVisible(
+    STORAGE_KEY_TERMINAL_OPEN, loadSettings().showTerminal,
+  ));
   const terminalApi = useRef(null);
-  // Track whether a code run is in progress, so the Run button can show a spinner.
   const [runLoading, setRunLoading] = useState(false);
 
+  // ---- persistence -----------------------------------------------------
   useEffect(() => {
     if (rootPath) localStorage.setItem(STORAGE_KEY_FOLDER, rootPath);
-    else localStorage.removeItem(STORAGE_KEY_FOLDER);
+    else          localStorage.removeItem(STORAGE_KEY_FOLDER);
   }, [rootPath]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_TERMINAL, terminalVisible ? '1' : '0');
+    localStorage.setItem(STORAGE_KEY_TERMINAL_OPEN, terminalVisible ? '1' : '0');
   }, [terminalVisible]);
 
-  // Ctrl+` to toggle terminal — same as VS Code.
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EXPLORER_OPEN, explorerVisible ? '1' : '0');
+  }, [explorerVisible]);
+
+  // ---- keyboard shortcuts ---------------------------------------------
+  // Ctrl+`  → toggle terminal (matches VS Code).
   useEffect(() => {
     const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === '`') {
@@ -57,7 +85,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // ---- file actions ------------------------------------------------------
+  // ---- file actions ----------------------------------------------------
   const handlePickFolder = useCallback(async () => {
     const picked = await window.seecode.fs.openFolderDialog();
     if (picked) setRootPath(picked);
@@ -117,6 +145,7 @@ export default function App() {
     }
   }, [activePath, openFiles]);
 
+  // Ctrl+S → save active file.
   useEffect(() => {
     const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
@@ -130,8 +159,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [activePath, handleSaveActiveFile]);
 
-  // ---- generator flows ---------------------------------------------------
-
+  // ---- generator flows -------------------------------------------------
   const handleGenerate = useCallback(() => {
     if (!instruction.trim()) return;
     const result = generateCode(instruction, selectedLanguages);
@@ -160,17 +188,16 @@ export default function App() {
     });
   }, []);
 
-  const handleSelectionExplain = useCallback((code, language) => {
-    if (!code.trim()) return;
-    const result = explainCode(code, language);
+  const handleSelectionExplain = useCallback((selectedCode, language) => {
+    const result = explainCode(selectedCode, language);
     setExplanation(result);
   }, []);
 
-  const handleAiExplain = useCallback(async (code, language) => {
-    if (!code.trim() || aiLoading) return;
+  const handleAiExplain = useCallback(async (selectedCode, language) => {
+    if (aiLoading) return;
     setAiLoading(true);
     try {
-      const result = await explainCodeWithAI(code, language);
+      const result = await explainCodeWithAI(selectedCode, language);
       setExplanation(result);
     } catch (err) {
       setExplanation({ summary: `AI Error: ${err.message}`, lineByLine: [] });
@@ -179,9 +206,7 @@ export default function App() {
     }
   }, [aiLoading]);
 
-  // ---- run code ----------------------------------------------------------
-  // Called by CodePanel's Run button. `payload` carries language + source
-  // (and optionally a filename for nicer terminal output).
+  // ---- run code --------------------------------------------------------
   const handleRunCode = useCallback(async (payload) => {
     if (!payload || !payload.source || runLoading) return;
     setRunLoading(true);
@@ -211,14 +236,22 @@ export default function App() {
     }
   }, [runLoading]);
 
-  const toggleLanguage = useCallback((lang) => {
-    setSelectedLanguages((prev) => {
-      if (prev.includes(lang)) {
-        if (prev.length <= 1) return prev;
-        return prev.filter((l) => l !== lang);
-      }
-      return [...prev, lang];
-    });
+  // ---- onboarding / settings handlers ----------------------------------
+  const handleOnboardingComplete = useCallback(() => {
+    const next = loadSettings();
+    setSettings(next);
+    setShowOnboarding(false);
+  }, []);
+
+  const handleSettingsChange = useCallback((next) => {
+    setSettings(next);
+  }, []);
+
+  const handleRerunOnboarding = useCallback(() => {
+    // SettingsDrawer has already flipped onboardingComplete=false in the
+    // store; we just reflect that here and surface the modal.
+    setSettings(loadSettings());
+    setShowOnboarding(true);
   }, []);
 
   return (
@@ -228,6 +261,7 @@ export default function App() {
         onToggleExplorer={() => setExplorerVisible((v) => !v)}
         terminalVisible={terminalVisible}
         onToggleTerminal={() => setTerminalVisible((v) => !v)}
+        onOpenSettings={() => setShowSettings(true)}
       />
 
       <div style={styles.body}>
@@ -239,7 +273,7 @@ export default function App() {
               onCloseFolder={handleCloseFolder}
               onOpenFile={handleOpenFile}
               activeFilePath={activePath}
-              refreshKey={refreshKey}
+              refreshKey={0}
             />
           )}
           <InstructionPanel
@@ -248,8 +282,9 @@ export default function App() {
             onGenerate={handleGenerate}
             onAiGenerate={handleAiGenerate}
             aiLoading={aiLoading}
-            selectedLanguages={selectedLanguages}
-            onToggleLanguage={toggleLanguage}
+            practicalLanguage={settings.practicalLanguage}
+            comparisonLanguages={settings.comparisonLanguages}
+            onOpenSettings={() => setShowSettings(true)}
           />
           <CodePanel
             generatedCode={generatedCode}
@@ -276,8 +311,38 @@ export default function App() {
           apiRef={terminalApi}
         />
       </div>
+
+      <OnboardingModal
+        open={showOnboarding}
+        initialSettings={settings}
+        onComplete={handleOnboardingComplete}
+      />
+
+      <SettingsDrawer
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        onSettingsChange={handleSettingsChange}
+        onRerunOnboarding={handleRerunOnboarding}
+      />
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// helpers
+
+function deriveLanguages(settings) {
+  const practical = settings?.practicalLanguage || 'python';
+  const comparisons = (settings?.comparisonLanguages || []).filter((c) => c !== practical);
+  return [practical, ...comparisons];
+}
+
+// Read the per-session "is this panel open" key, falling back to the
+// settings default for fresh installs.
+function initialPanelVisible(storageKey, defaultFromSettings) {
+  const saved = localStorage.getItem(storageKey);
+  if (saved === null) return !!defaultFromSettings;
+  return saved === '1';
 }
 
 const styles = {

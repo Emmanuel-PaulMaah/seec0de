@@ -1,3 +1,17 @@
+/* ---------------------------------------------------------------------------
+ * seec0de · global stylesheet
+ *
+ * Style direction (per ui-ux-pro-max design system, "AI-Native UI"):
+ *   - Minimal chrome, dark, premium developer-tool feel.
+ *   - Inter for everything UI (300/400/500/600/700 weights).
+ *   - Smooth, never-jarring transitions (150–250ms, ease-out).
+ *   - Respect prefers-reduced-motion (no decorative motion for those users).
+ *   - Keep the existing VS-Code-inspired colour tokens; layer semantic ones
+ *     on top so components don't reach for raw hex.
+ * ------------------------------------------------------------------------- */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -5,63 +19,145 @@
 }
 
 :root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #0e0e0e;
-  --bg-tertiary: #151515;
-  --bg-input: #060606;
-  --border: #1a1a1a;
-  --text-primary: #cccccc;
+  /* Surfaces — darkest at the back, slightly lighter as you elevate. */
+  --bg-primary:     #0a0a0a;
+  --bg-secondary:   #0e0e0e;
+  --bg-tertiary:    #151515;
+  --bg-elevated:    #181818;   /* drawers, modals, popovers */
+  --bg-input:       #060606;
+
+  /* Borders — quiet by default, slightly stronger on focus. */
+  --border:         #1a1a1a;
+  --border-strong:  #262626;
+  --border-focus:   #2f6fed;
+
+  /* Text — primary readable, secondary for labels, muted for hints. */
+  --text-primary:   #e6e6e6;
   --text-secondary: #969696;
-  --text-muted: #6a6a6a;
-  --accent: #007acc;
-  --accent-hover: #1a8ad4;
-  --keyword-highlight: #569cd6;
-  --string-highlight: #ce9178;
+  --text-muted:     #6a6a6a;
+
+  /* Brand / accents. */
+  --accent:         #2f6fed;   /* primary blue (matches AI-Native palette) */
+  --accent-hover:   #3b7eff;
+  --accent-soft:    rgba(47, 111, 237, 0.16);
+
+  /* Semantic accents — used by Pseudocode badge, Run button, errors. */
+  --algorithm:      #b48dff;   /* pseudocode = "the algorithm" */
+  --algorithm-soft: rgba(180, 141, 255, 0.14);
+  --success:        #22c55e;
+  --success-soft:   rgba(34, 197, 94, 0.14);
+  --danger:         #ef4444;
+  --danger-soft:    rgba(239, 68, 68, 0.12);
+
+  /* Editor syntax tokens (left untouched from v1.x). */
+  --keyword-highlight:  #569cd6;
+  --string-highlight:   #ce9178;
   --function-highlight: #dcdcaa;
-  --comment-highlight: #6a9955;
-  --number-highlight: #b5cea8;
-  --type-highlight: #4ec9b0;
+  --comment-highlight:  #6a9955;
+  --number-highlight:   #b5cea8;
+  --type-highlight:     #4ec9b0;
+
+  /* Scrollbars. */
   --scrollbar-thumb: #2a2a2a;
   --scrollbar-track: #0a0a0a;
+
+  /* Motion tokens — reuse these instead of hard-coding durations. */
+  --motion-fast:    120ms;
+  --motion-base:    180ms;
+  --motion-slow:    240ms;
+  --ease-out:       cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Modal / drawer chrome. */
+  --scrim:          rgba(0, 0, 0, 0.55);
+  --shadow-lg:      0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
 html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';   /* cleaner Inter variants */
   background: var(--bg-primary);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
+::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
 
 button {
   font-family: inherit;
   cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-out),
+              color      var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out),
+              opacity    var(--motion-fast) var(--ease-out),
+              transform  var(--motion-fast) var(--ease-out);
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 input, textarea {
   font-family: inherit;
 }
 
+/* ---------------------------------------------------------------------------
+ * Focus rings — visible, on-brand, and only when keyboard navigating
+ * (not on every mouse click). Matches WCAG focus-visible guidance.
+ * ------------------------------------------------------------------------- */
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Animation primitives.
+ * ------------------------------------------------------------------------- */
+
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes seec0de-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes seec0de-pop-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes seec0de-slide-in-right {
+  from { transform: translateX(24px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* Honour the OS-level reduce-motion preference. We zero out *decorative*
+ * motion (modal slides, fades) but keep functional indicators (the spinner)
+ * because removing them would harm clarity. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Spinner stays — it conveys "still working." */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
 }

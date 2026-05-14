@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Lock, Unlock, Sparkles, Loader, X, Save, Play } from 'lucide-react';
+import { Lock, Unlock, Sparkles, Loader, X, Save, Play, Lightbulb } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
 
 // Languages currently supported by runnerService.js. Keep in sync.
 const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
+
 const DEFAULT_FILENAME_FOR_LANG = {
   javascript: 'main.js',
   typescript: 'main.ts',
@@ -16,26 +17,24 @@ const DEFAULT_FILENAME_FOR_LANG = {
 };
 
 const LANGUAGE_MONACO_MAP = {
-  python: 'python',
-  javascript: 'javascript',
-  java: 'java',
-  cpp: 'cpp',
-  csharp: 'csharp',
-  go: 'go',
-  rust: 'rust',
-  typescript: 'typescript',
+  python: 'python', javascript: 'javascript', java: 'java', cpp: 'cpp',
+  csharp: 'csharp', go: 'go', rust: 'rust', typescript: 'typescript', c: 'c',
 };
 
 const LANGUAGE_LABELS = {
-  python: 'Python',
-  javascript: 'JavaScript',
-  java: 'Java',
-  cpp: 'C++',
-  csharp: 'C#',
-  go: 'Go',
-  rust: 'Rust',
-  typescript: 'TypeScript',
+  python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
+  csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C',
 };
+
+// CodePanel — the middle column. Hosts the generator output (pseudocode +
+// language tabs), open-file tabs, the Run button, and the editor itself.
+//
+// Pedagogy notes:
+//   - The Pseudocode tab is visually elevated (algorithm-purple accent +
+//     small lightbulb glyph) and shows a "read this first" hint above the
+//     editor. This is the lesson; languages are syntax-views of it.
+//   - The practical language is the second tab. Comparison languages
+//     follow. File tabs sit after a divider.
 
 export default function CodePanel({
   generatedCode,
@@ -64,8 +63,6 @@ export default function CodePanel({
   const editorRef = useRef(null);
 
   // ---- which view are we showing? ---------------------------------------
-  // If a file tab is active, the file editor takes over. Otherwise we show
-  // the pseudocode/language tabs from the generator.
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
   const showingFile = !!fileTab;
 
@@ -79,7 +76,7 @@ export default function CodePanel({
   if (showingFile) {
     value = fileTab.content || '';
     monacoLang = fileInfo(fileTab.path).monaco;
-    isReadOnly = false; // files are always editable
+    isReadOnly = false;
   } else if (isPseudocode) {
     value = generatedCode.pseudocode || '';
     monacoLang = 'plaintext';
@@ -103,9 +100,7 @@ export default function CodePanel({
       if (selectedText.trim()) {
         setSelection(selectedText);
         const coords = editor.getScrolledVisiblePosition(e.selection.getEndPosition());
-        if (coords) {
-          setBtnPos({ top: coords.top + 30, left: coords.left + 40 });
-        }
+        if (coords) setBtnPos({ top: coords.top + 30, left: coords.left + 40 });
       } else {
         clearSelection();
       }
@@ -147,8 +142,6 @@ export default function CodePanel({
     onCodeChange?.(generatedDisplayTab, next);
   }, [editable, generatedDisplayTab, onCodeChange, showingFile, fileTab, onFileContentChange]);
 
-  // The "language for explanation" is generator-tab when not showing a file,
-  // and the file's detected language otherwise.
   const explainLanguage = showingFile ? fileInfo(fileTab.path).run || 'plaintext' : generatedDisplayTab;
 
   const handleExplain = useCallback(() => {
@@ -172,10 +165,10 @@ export default function CodePanel({
   let runFilename = null;
   if (showingFile) {
     const info = fileInfo(fileTab.path);
-    runLanguage = info.run;            // null if extension isn't runnable
+    runLanguage = info.run;
     runFilename = basename(fileTab.path);
   } else if (!isPseudocode) {
-    runLanguage = generatedDisplayTab; // 'python', 'javascript', etc.
+    runLanguage = generatedDisplayTab;
     runFilename = DEFAULT_FILENAME_FOR_LANG[generatedDisplayTab] || null;
   }
   const canRun = !!onRunCode && !!runLanguage && RUNNABLE.has(runLanguage) && (value || '').trim().length > 0;
@@ -204,17 +197,34 @@ export default function CodePanel({
         <div style={styles.tabList}>
           {generatedTabs.map((tab) => {
             const isActive = !showingFile && generatedDisplayTab === tab;
+            const isPseudo = tab === 'pseudocode';
             return (
               <button
                 key={`gen:${tab}`}
-                style={{ ...styles.tab, ...(isActive ? styles.activeTab : {}) }}
+                style={{
+                  ...styles.tab,
+                  ...(isActive ? styles.activeTab : {}),
+                  ...(isPseudo && isActive ? styles.activeAlgorithmTab : {}),
+                }}
                 onClick={() => handleActivateGenerated(tab)}
+                title={isPseudo ? 'The algorithm — language-agnostic' : `Same algorithm, written in ${LANGUAGE_LABELS[tab] || tab}`}
               >
-                {tab === 'pseudocode' ? 'Pseudocode' : (LANGUAGE_LABELS[tab] || tab)}
+                {isPseudo && (
+                  <Lightbulb
+                    size={12}
+                    style={{
+                      marginRight: 6,
+                      color: isActive ? 'var(--algorithm)' : 'var(--text-muted)',
+                    }}
+                  />
+                )}
+                <span>{isPseudo ? 'Pseudocode' : (LANGUAGE_LABELS[tab] || tab)}</span>
               </button>
             );
           })}
+
           {openFiles.length > 0 && <span style={styles.tabDivider} />}
+
           {openFiles.map((f) => {
             const isActive = showingFile && activePath === f.path;
             return (
@@ -233,6 +243,7 @@ export default function CodePanel({
                   style={styles.fileTabClose}
                   onClick={(e) => { e.stopPropagation(); onCloseFile?.(f.path); }}
                   title="Close file"
+                  aria-label={`Close ${basename(f.path)}`}
                 >
                   <X size={11} />
                 </button>
@@ -240,6 +251,7 @@ export default function CodePanel({
             );
           })}
         </div>
+
         <div style={styles.tabActions}>
           {canRun && (
             <button
@@ -258,7 +270,7 @@ export default function CodePanel({
             <button
               style={{ ...styles.lockBtn, ...(fileTab.dirty ? styles.lockBtnActive : {}) }}
               onClick={() => onSaveActiveFile?.()}
-              title="Save (Ctrl+S)"
+              title="Save (Ctrl + S)"
               disabled={!fileTab.dirty}
             >
               <Save size={12} />
@@ -278,6 +290,18 @@ export default function CodePanel({
           )}
         </div>
       </div>
+
+      {/* Pseudocode-only banner: makes the lesson explicit. */}
+      {isPseudocode && (generatedCode.pseudocode || '').trim().length > 0 && (
+        <div style={styles.algoBanner}>
+          <Lightbulb size={12} color="var(--algorithm)" />
+          <span style={styles.algoBannerStrong}>Algorithm — read this first.</span>
+          <span style={styles.algoBannerHint}>
+            Every language tab is the same idea written in different syntax.
+          </span>
+        </div>
+      )}
+
       <div style={styles.editorWrap}>
         <Editor
           key={showingFile ? `file:${activePath}` : `gen:${generatedDisplayTab}`}
@@ -348,6 +372,8 @@ const styles = {
     alignItems: 'stretch',
   },
   tab: {
+    display: 'inline-flex',
+    alignItems: 'center',
     background: 'none',
     border: 'none',
     borderBottomWidth: 2,
@@ -355,14 +381,19 @@ const styles = {
     borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
     fontSize: 12,
-    padding: '8px 16px',
+    padding: '8px 14px',
     whiteSpace: 'nowrap',
-    transition: 'color 0.15s, border-color 0.15s',
+    transition: 'color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
   activeTab: {
     color: 'var(--text-primary)',
     borderBottomColor: 'var(--accent)',
     background: 'var(--bg-primary)',
+  },
+  // Pseudocode tab uses a different accent so the learner registers it as
+  // "the lesson" rather than "another language."
+  activeAlgorithmTab: {
+    borderBottomColor: 'var(--algorithm)',
   },
   tabDivider: {
     width: 1,
@@ -399,16 +430,15 @@ const styles = {
     alignItems: 'center',
   },
   lockBtn: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
     background: 'transparent',
     border: '1px solid var(--border)',
-    borderRadius: 3,
+    borderRadius: 6,
     color: 'var(--text-secondary)',
     fontSize: 11,
     padding: '4px 10px',
     margin: '6px 8px',
-    cursor: 'pointer',
     whiteSpace: 'nowrap',
   },
   lockBtnActive: {
@@ -416,6 +446,25 @@ const styles = {
     borderColor: 'var(--accent)',
     color: '#ffffff',
   },
+
+  algoBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '6px 14px',
+    background: 'var(--algorithm-soft)',
+    borderBottom: '1px solid var(--border)',
+    fontSize: 11.5,
+    color: 'var(--text-secondary)',
+  },
+  algoBannerStrong: {
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+  },
+  algoBannerHint: {
+    color: 'var(--text-muted)',
+  },
+
   editorWrap: {
     flex: 1,
     position: 'relative',
@@ -430,24 +479,23 @@ const styles = {
   explainBtn: {
     background: 'var(--accent)',
     border: 'none',
-    borderRadius: 3,
+    borderRadius: 6,
     color: '#ffffff',
     fontSize: 12,
     padding: '4px 10px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-    cursor: 'pointer',
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
   },
   aiExplainBtn: {
-    background: '#1a6b3c',
+    background: 'var(--success)',
   },
   runBtn: {
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
-    background: '#1a6b3c',
+    background: 'var(--success)',
     border: 'none',
-    borderRadius: 3,
+    borderRadius: 6,
     color: '#fff',
     fontSize: 11,
     fontWeight: 600,
