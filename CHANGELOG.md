@@ -20,6 +20,25 @@ Section conventions:
 
 ---
 
+## [2.3.0] - 2026-05-12
+### Added
+- **Onboarding flow** for new installs. A two-step modal (skippable at any point) asks (1) "have you coded before?" and (2) "which language do you want to actually build in?" — picked from the runnable set: Python, JavaScript, TypeScript, C, C++. An optional third step accepts a Gemini API key. Answers are persisted in `localStorage` under `seec0de.settings`.
+- **Practical language vs. comparison languages model.** The chosen practical language drives the **Run** button, the default new-file extension, and the first language tab. A small set of comparison languages (default: one paired with the practical language) appears alongside, so the learner sees the same algorithm rendered in different syntax — pseudocode is the lesson, languages are the views.
+- **Settings drawer** (gear icon, top-right). Right-side overlay with five sections: **Languages** (practical + up to three comparisons), **AI** (Gemini key with show/hide toggle and inline save state), **Workspace** (default visibility for the file explorer + terminal), **About & Updates** (version, last-checked time, "Check now", "Restart & install"), and **Onboarding** ("Rerun onboarding"). Replaces the inline `ApiKeySettings` and `AboutSettings` blocks that used to live in the left panel.
+- **Pseudocode tab is visually elevated.** It now uses the dedicated *algorithm* accent (purple) instead of the generic blue, carries a small lightbulb glyph, and shows a one-line banner above the editor — *"Algorithm — read this first. Every language tab is the same idea written in different syntax."*
+- **Settings store** at `src/renderer/engine/settings.js` — a single, schema-versioned source of truth for user preferences. Migrations live there.
+- **Premium look-and-feel pass.** Inter font (300/400/500/600/700), unified motion tokens (`--motion-fast/base/slow`, `--ease-out`), semantic colour tokens (`--algorithm`, `--success`, `--danger`, `--accent-soft`), keyboard-only focus rings, modal scrim with backdrop blur, slide-in/pop-in animations that respect `prefers-reduced-motion`, and consistent 6 px corner radius across drawers/cards/buttons.
+
+### Changed
+- **InstructionPanel** no longer hosts the language-picker chips or the inline AI/About settings. It now shows only the question (instruction textarea) and the two ways to answer it (Generate / AI Generate), plus a passive read-out of which languages will be generated (clickable to open Settings). Languages are managed in Settings.
+- **Default panel visibility** for fresh installs: file explorer **off**, terminal **off**. (Existing users keep their last toggle state via per-session `localStorage` keys; the settings defaults only apply on first launch or after a clear.) The toggle is overridable per-session and the per-install default lives in Settings → Workspace.
+- TitleBar gained a **gear icon** (Settings) on the right and reorganised the panel toggles on the left so each side balances.
+
+### Removed
+- `src/renderer/components/ApiKeySettings.jsx` and `src/renderer/components/AboutSettings.jsx` — both consolidated into the new SettingsDrawer. The legacy `localStorage` key for the API key (`seec0de_gemini_key`) is preserved so nothing on existing machines breaks.
+
+---
+
 ## [2.2.0] - 2026-05-11
 ### Added
 - **File explorer.** New left sidebar with a VS-Code-style file tree. Open any folder via the title-bar toggle or the "Open folder" button; create files and folders, refresh, or close the workspace from the panel header. The chosen folder is remembered between launches. Deletes go to the OS recycle bin (via `shell.trashItem`) instead of a hard `rm`.
