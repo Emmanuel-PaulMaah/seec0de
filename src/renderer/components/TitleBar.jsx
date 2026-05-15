@@ -1,10 +1,16 @@
 import React from 'react';
-import { PanelLeft, PanelLeftClose, Terminal as TermIcon, Settings as SettingsIcon } from 'lucide-react';
+import {
+  PanelLeft, PanelLeftClose, Terminal as TermIcon,
+  Settings as SettingsIcon,
+} from 'lucide-react';
 import UpdatePill from './UpdatePill';
 
 // Top chrome. Houses the workspace toggles on the left, the brand in the
 // centre, and the update pill + settings gear on the right. Stays as a
 // drag region by default; interactive elements opt out via WebkitAppRegion.
+//
+// The live-preview toggle lives on the panel itself (collapse / expand
+// rail beside the editor) — there's no duplicate eye button up here.
 
 export default function TitleBar({
   explorerVisible = false,
@@ -15,7 +21,7 @@ export default function TitleBar({
 }) {
   return (
     <div style={styles.titleBar}>
-      {/* Left side: panel toggles */}
+      {/* Left side: workspace panel toggles */}
       <div style={styles.side}>
         {onToggleExplorer && (
           <ToolBtn
@@ -104,7 +110,7 @@ const styles = {
   },
   logo: {
     fontSize: 11,
-    color: 'var(--accent)',
+    color: 'var(--text-secondary)',
     fontFamily: 'Consolas, "Courier New", monospace',
   },
   title: {
@@ -126,7 +132,7 @@ const styles = {
     transition: 'background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)',
   },
   toggleBtnActive: {
-    background: 'var(--accent-soft)',
-    color: 'var(--accent)',
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-primary)',
   },
 };

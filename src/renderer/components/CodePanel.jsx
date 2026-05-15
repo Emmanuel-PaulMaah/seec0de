@@ -53,9 +53,12 @@ export default function CodePanel({
   // runner props
   onRunCode,
   runLoading = false,
+  // generator-tab state lifted to App so the live-preview panel can read
+  // the same active tab without duplicating it.
+  activeGeneratedTab = 'pseudocode',
+  onActivateGeneratedTab,
 }) {
   const generatedTabs = ['pseudocode', ...selectedLanguages];
-  const [activeGeneratedTab, setActiveGeneratedTab] = useState('pseudocode');
   const [editable, setEditable] = useState(false);
   const [tooltip, setTooltip] = useState(null);
   const [selection, setSelection] = useState(null);
@@ -180,7 +183,7 @@ export default function CodePanel({
 
   const handleActivateGenerated = (tab) => {
     onActivatePath?.(null);
-    setActiveGeneratedTab(tab);
+    onActivateGeneratedTab?.(tab);
     setTooltip(null);
     clearSelection();
   };
@@ -387,11 +390,13 @@ const styles = {
   },
   activeTab: {
     color: 'var(--text-primary)',
-    borderBottomColor: 'var(--accent)',
+    borderBottomColor: 'var(--text-primary)',
     background: 'var(--bg-primary)',
   },
-  // Pseudocode tab uses a different accent so the learner registers it as
-  // "the lesson" rather than "another language."
+  // Pseudocode tab keeps its dedicated algorithm accent — that mark is
+  // pedagogical (it tells the learner "this tab is the lesson, not just
+  // another language"), not chrome decoration, so it survives the neutral
+  // theme pass.
   activeAlgorithmTab: {
     borderBottomColor: 'var(--algorithm)',
   },
@@ -442,9 +447,9 @@ const styles = {
     whiteSpace: 'nowrap',
   },
   lockBtnActive: {
-    background: 'var(--accent)',
-    borderColor: 'var(--accent)',
-    color: '#ffffff',
+    background: 'var(--bg-elevated)',
+    borderColor: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
   },
 
   algoBanner: {
@@ -477,10 +482,10 @@ const styles = {
     gap: 4,
   },
   explainBtn: {
-    background: 'var(--accent)',
-    border: 'none',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 6,
-    color: '#ffffff',
+    color: 'var(--text-primary)',
     fontSize: 12,
     padding: '4px 10px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
@@ -488,15 +493,16 @@ const styles = {
     alignItems: 'center',
   },
   aiExplainBtn: {
-    background: 'var(--success)',
+    background: 'var(--bg-tertiary)',
+    borderColor: 'var(--text-secondary)',
   },
   runBtn: {
     display: 'inline-flex',
     alignItems: 'center',
-    background: 'var(--success)',
-    border: 'none',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontSize: 11,
     fontWeight: 600,
     padding: '4px 10px',

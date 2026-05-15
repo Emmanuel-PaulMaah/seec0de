@@ -1,5 +1,8 @@
 import React from 'react';
-import { Sparkles, Loader, Settings as SettingsIcon, Wand2 } from 'lucide-react';
+import {
+  Sparkles, Loader, Settings as SettingsIcon, Wand2,
+  ChevronLeft, ChevronRight, MessageSquareCode,
+} from 'lucide-react';
 import { hasApiKey } from '../engine/aiService';
 
 // InstructionPanel — the first column of the workspace.
@@ -14,6 +17,10 @@ import { hasApiKey } from '../engine/aiService';
 // The languages strip at the top is now a passive read-out, not a
 // control. It tells the learner which languages will appear as tabs in
 // the next column, and links to Settings to change that.
+//
+// v2.4: The whole panel is collapsible. Collapsed, it becomes a 32 px
+// vertical rail showing a chevron + "INSTRUCTION" so the learner can
+// re-summon it without losing screen real-estate to the live preview.
 
 const LANGUAGE_LABELS = {
   python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
@@ -33,19 +40,52 @@ export default function InstructionPanel({
   practicalLanguage,
   comparisonLanguages = [],
   onOpenSettings,
+  collapsed = false,
+  onToggleCollapsed,
 }) {
   const aiReady = hasApiKey();
 
+  // ---- collapsed rail (32 px) ------------------------------------------
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        style={styles.rail}
+        onClick={onToggleCollapsed}
+        title="Show instruction panel"
+        aria-label="Show instruction panel"
+      >
+        <ChevronRight size={12} />
+        <MessageSquareCode size={14} style={{ marginTop: 6 }} />
+        <span style={styles.railText}>INSTRUCTION</span>
+      </button>
+    );
+  }
+
+  // ---- expanded panel --------------------------------------------------
   return (
     <div style={styles.panel}>
       <div style={styles.inner}>
 
-        {/* Header — gentle context label, no controls */}
+        {/* Header — gentle context label, with collapse control */}
         <div style={styles.header}>
-          <div style={styles.headerLabel}>Instruction</div>
-          <p style={styles.headerHint}>
-            Describe what you want the program to do, in plain English.
-          </p>
+          <div style={styles.headerText}>
+            <div style={styles.headerLabel}>Instruction</div>
+            <p style={styles.headerHint}>
+              Describe what you want the program to do, in plain English.
+            </p>
+          </div>
+          {onToggleCollapsed && (
+            <button
+              type="button"
+              style={styles.collapseBtn}
+              onClick={onToggleCollapsed}
+              title="Collapse instruction panel"
+              aria-label="Collapse instruction panel"
+            >
+              <ChevronLeft size={14} />
+            </button>
+          )}
         </div>
 
         {/* Read-out: which languages will be generated */}
@@ -118,6 +158,30 @@ export default function InstructionPanel({
 }
 
 const styles = {
+  rail: {
+    width: 32,
+    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    paddingTop: 14,
+    background: 'var(--bg-secondary)',
+    borderRight: '1px solid var(--border)',
+    color: 'var(--text-secondary)',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)',
+  },
+  railText: {
+    writingMode: 'vertical-rl',
+    transform: 'rotate(180deg)',
+    fontSize: 10,
+    letterSpacing: 1.5,
+    color: 'var(--text-muted)',
+    marginTop: 8,
+  },
+
   panel: {
     width: 320,
     flexShrink: 0,
@@ -137,6 +201,12 @@ const styles = {
 
   header: {
     display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  headerText: {
+    flex: 1,
+    display: 'flex',
     flexDirection: 'column',
     gap: 4,
   },
@@ -151,6 +221,16 @@ const styles = {
     fontSize: 12,
     color: 'var(--text-muted)',
     lineHeight: 1.5,
+  },
+  collapseBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    padding: 4,
+    borderRadius: 4,
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
   },
 
   langStrip: {
@@ -182,9 +262,10 @@ const styles = {
     borderRadius: 999,
   },
   langStripChipPractical: {
-    background: 'var(--accent-soft)',
-    borderColor: 'var(--accent)',
+    background: 'var(--bg-elevated)',
+    borderColor: 'var(--text-secondary)',
     color: 'var(--text-primary)',
+    fontWeight: 600,
   },
   langStripPlus: {
     color: 'var(--text-muted)',
@@ -221,17 +302,18 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'var(--accent)',
-    border: '1px solid var(--accent)',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 6,
-    color: '#ffffff',
+    color: 'var(--text-primary)',
     fontSize: 13,
     fontWeight: 600,
     padding: '9px 0',
   },
   aiBtn: {
-    background: 'var(--success)',
-    borderColor: 'var(--success)',
+    background: 'var(--bg-elevated)',
+    borderColor: 'var(--border-strong)',
+    color: 'var(--text-primary)',
   },
   disabledBtn: {
     background: 'var(--bg-tertiary)',
@@ -244,9 +326,12 @@ const styles = {
   subtleLink: {
     background: 'transparent',
     border: 'none',
-    color: 'var(--accent)',
+    color: 'var(--text-secondary)',
     fontSize: 11.5,
     textAlign: 'left',
     padding: 0,
+    textDecoration: 'underline',
+    textDecorationColor: 'var(--border-strong)',
+    textUnderlineOffset: 3,
   },
 };

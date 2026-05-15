@@ -1,43 +1,57 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import TitleBar from './components/TitleBar';
 import InstructionPanel from './components/InstructionPanel';
 import CodePanel from './components/CodePanel';
 import ExplanationSidebar from './components/ExplanationSidebar';
 import FileExplorer from './components/FileExplorer';
 import TerminalPanel from './components/TerminalPanel';
+import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer from './components/SettingsDrawer';
 import { generateCode } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI } from './engine/aiService';
 import { loadSettings } from './engine/settings';
+import { fileInfo, basename } from './engine/fileLanguage';
 
-// Persist a couple of small bits of session state outside settings.json:
-//   - lastFolder              → path of the last opened folder (file explorer)
-//   - terminalSessionVisible  → whether the bottom terminal was last open
-// Settings.showTerminal/showFileExplorer act as the *default* for fresh
-// installs; once the user toggles them in a session, the per-session
-// keys take over so we don't fight their last action.
-const STORAGE_KEY_FOLDER          = 'seec0de.lastFolder';
-const STORAGE_KEY_TERMINAL_OPEN   = 'seec0de.terminalVisible';
-const STORAGE_KEY_EXPLORER_OPEN   = 'seec0de.explorerVisible';
+// Per-session UI state lives in localStorage so the layout the user shaped
+// last time comes back the next time. Settings.showTerminal/showFileExplorer
+// act as the *default* for fresh installs; once the user toggles, the
+// per-session keys take over so we don't fight their last action.
+const STORAGE_KEY_FOLDER             = 'seec0de.lastFolder';
+const STORAGE_KEY_TERMINAL_OPEN      = 'seec0de.terminalVisible';
+const STORAGE_KEY_EXPLORER_OPEN      = 'seec0de.explorerVisible';
+const STORAGE_KEY_PREVIEW_OPEN       = 'seec0de.previewVisible';
+const STORAGE_KEY_INSTRUCTION_COLLAPSED = 'seec0de.instructionCollapsed';
+const STORAGE_KEY_EXPLANATION_COLLAPSED = 'seec0de.explanationCollapsed';
+
+// Languages the runner service can actually execute. Mirrors runnerService.js.
+const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
+
+const DEFAULT_FILENAME_FOR_LANG = {
+  javascript: 'main.js',
+  typescript: 'main.ts',
+  python:     'main.py',
+  c:          'main.c',
+  cpp:        'main.cpp',
+};
 
 export default function App() {
   // ---- settings + onboarding -------------------------------------------
-  // Single source of truth for user preferences. Loaded once on mount;
-  // re-loaded when the SettingsDrawer reports a change.
   const [settings, setSettings] = useState(() => loadSettings());
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
 
   // ---- generator state -------------------------------------------------
-  // selectedLanguages = the practical language followed by every comparison
-  // language. Recomputed whenever settings change.
   const [selectedLanguages, setSelectedLanguages] = useState(() => deriveLanguages(loadSettings()));
   const [instruction, setInstruction] = useState('');
   const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+
+  // Lifted from CodePanel so the LivePreviewPanel can read the same active
+  // tab without prop-drilling editor state up on every keystroke.
+  const [activeGeneratedTab, setActiveGeneratedTab] = useState('pseudocode');
 
   useEffect(() => {
     setSelectedLanguages(deriveLanguages(settings));
@@ -51,12 +65,30 @@ export default function App() {
     STORAGE_KEY_EXPLORER_OPEN, loadSettings().showFileExplorer,
   ));
 
-  // ---- terminal state --------------------------------------------------
+  // ---- panel visibility ------------------------------------------------
   const [terminalVisible, setTerminalVisible] = useState(() => initialPanelVisible(
     STORAGE_KEY_TERMINAL_OPEN, loadSettings().showTerminal,
   ));
+  // Live preview is the headline feature post-v2.4 — defaults ON unless
+  // the user has explicitly hidden it before.
+  const [previewVisible, setPreviewVisible] = useState(() => initialPanelVisible(
+    STORAGE_KEY_PREVIEW_OPEN, true,
+  ));
+  // Sidebars default expanded but can be collapsed to a 32 px rail to
+  // give the editor + preview more room.
+  const [instructionCollapsed, setInstructionCollapsed] = useState(
+    () => localStorage.getItem(STORAGE_KEY_INSTRUCTION_COLLAPSED) === '1'
+  );
+  const [explanationCollapsed, setExplanationCollapsed] = useState(
+    () => localStorage.getItem(STORAGE_KEY_EXPLANATION_COLLAPSED) === '1'
+  );
+
+  // ---- runner state ----------------------------------------------------
   const terminalApi = useRef(null);
   const [runLoading, setRunLoading] = useState(false);
+  // Each run produces a fresh object (never mutated); LivePreviewPanel
+  // pushes it into its Console tab via reference identity check.
+  const [runnerOutput, setRunnerOutput] = useState(null);
 
   // ---- persistence -----------------------------------------------------
   useEffect(() => {
@@ -71,6 +103,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_EXPLORER_OPEN, explorerVisible ? '1' : '0');
   }, [explorerVisible]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_PREVIEW_OPEN, previewVisible ? '1' : '0');
+  }, [previewVisible]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_INSTRUCTION_COLLAPSED, instructionCollapsed ? '1' : '0');
+  }, [instructionCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EXPLANATION_COLLAPSED, explanationCollapsed ? '1' : '0');
+  }, [explanationCollapsed]);
 
   // ---- keyboard shortcuts ---------------------------------------------
   // Ctrl+`  → toggle terminal (matches VS Code).
@@ -191,7 +235,10 @@ export default function App() {
   const handleSelectionExplain = useCallback((selectedCode, language) => {
     const result = explainCode(selectedCode, language);
     setExplanation(result);
-  }, []);
+    // If the explanation panel is collapsed, pop it open so the user
+    // actually sees what they asked for. (Same pattern as run→preview.)
+    if (explanationCollapsed) setExplanationCollapsed(false);
+  }, [explanationCollapsed]);
 
   const handleAiExplain = useCallback(async (selectedCode, language) => {
     if (aiLoading) return;
@@ -199,42 +246,77 @@ export default function App() {
     try {
       const result = await explainCodeWithAI(selectedCode, language);
       setExplanation(result);
+      if (explanationCollapsed) setExplanationCollapsed(false);
     } catch (err) {
       setExplanation({ summary: `AI Error: ${err.message}`, lineByLine: [] });
     } finally {
       setAiLoading(false);
     }
-  }, [aiLoading]);
+  }, [aiLoading, explanationCollapsed]);
+
+  // ---- live preview source --------------------------------------------
+  // Whatever the editor is showing right now is also what the live preview
+  // renders. Computed from authoritative state (openFiles + generatedCode +
+  // activePath + activeGeneratedTab) so updates flow naturally as the user
+  // types — no extra plumbing through CodePanel.
+  const livePreview = useMemo(() => {
+    if (activePath) {
+      const file = openFiles.find((f) => f.path === activePath);
+      if (!file) return { code: '', language: 'plaintext', filename: null };
+      const info = fileInfo(file.path);
+      return {
+        code: file.content || '',
+        language: info.run || info.monaco || 'plaintext',
+        filename: basename(file.path),
+      };
+    }
+    const tabs = ['pseudocode', ...selectedLanguages];
+    const tab = tabs.includes(activeGeneratedTab) ? activeGeneratedTab : 'pseudocode';
+    if (tab === 'pseudocode') {
+      return { code: generatedCode.pseudocode || '', language: 'plaintext', filename: null };
+    }
+    return {
+      code: (generatedCode.code || {})[tab] || '',
+      language: tab,
+      filename: DEFAULT_FILENAME_FOR_LANG[tab] || null,
+    };
+  }, [activePath, openFiles, activeGeneratedTab, selectedLanguages, generatedCode]);
 
   // ---- run code --------------------------------------------------------
-  const handleRunCode = useCallback(async (payload) => {
+  // Runner output flows into the LivePreviewPanel's Console tab — the
+  // bottom terminal stays reserved for typed shell commands.
+  const handleRunCode = useCallback(async (payloadOverride) => {
+    const payload = payloadOverride || (
+      RUNNABLE.has(livePreview.language)
+        ? { language: livePreview.language, source: livePreview.code, filename: livePreview.filename }
+        : null
+    );
     if (!payload || !payload.source || runLoading) return;
+
     setRunLoading(true);
-    setTerminalVisible(true);
+    if (!previewVisible) setPreviewVisible(true);
+
     try {
       const result = await window.seecode.runner.run(payload);
-      const explanation = result.error
-        ? result.error
-        : `Ran ${payload.language}${payload.filename ? ' · ' + payload.filename : ''} with ${result.tool || 'system runtime'}.`;
-      terminalApi.current?.pushEntry({
+      setRunnerOutput({
         command: result.command || `run ${payload.language}`,
-        explanation,
         stdout: result.stdout || '',
-        stderr: result.stderr || '',
+        stderr: result.stderr || (result.error ? `[seec0de] ${result.error}\n` : ''),
         exitCode: result.exitCode ?? -1,
         durationMs: result.durationMs ?? 0,
       });
     } catch (err) {
-      terminalApi.current?.pushEntry({
+      setRunnerOutput({
         command: `run ${payload.language}`,
-        explanation: 'Runner failed before producing output.',
+        stdout: '',
         stderr: `[seec0de] ${err.message}\n`,
         exitCode: -1,
+        durationMs: 0,
       });
     } finally {
       setRunLoading(false);
     }
-  }, [runLoading]);
+  }, [livePreview, runLoading, previewVisible]);
 
   // ---- onboarding / settings handlers ----------------------------------
   const handleOnboardingComplete = useCallback(() => {
@@ -248,8 +330,6 @@ export default function App() {
   }, []);
 
   const handleRerunOnboarding = useCallback(() => {
-    // SettingsDrawer has already flipped onboardingComplete=false in the
-    // store; we just reflect that here and surface the modal.
     setSettings(loadSettings());
     setShowOnboarding(true);
   }, []);
@@ -276,6 +356,7 @@ export default function App() {
               refreshKey={0}
             />
           )}
+
           <InstructionPanel
             instruction={instruction}
             onInstructionChange={setInstruction}
@@ -285,7 +366,10 @@ export default function App() {
             practicalLanguage={settings.practicalLanguage}
             comparisonLanguages={settings.comparisonLanguages}
             onOpenSettings={() => setShowSettings(true)}
+            collapsed={instructionCollapsed}
+            onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
           />
+
           <CodePanel
             generatedCode={generatedCode}
             selectedLanguages={selectedLanguages}
@@ -301,8 +385,25 @@ export default function App() {
             onSaveActiveFile={handleSaveActiveFile}
             onRunCode={handleRunCode}
             runLoading={runLoading}
+            activeGeneratedTab={activeGeneratedTab}
+            onActivateGeneratedTab={setActiveGeneratedTab}
           />
-          <ExplanationSidebar explanation={explanation} />
+
+          <LivePreviewPanel
+            visible={previewVisible}
+            onToggle={() => setPreviewVisible((v) => !v)}
+            code={livePreview.code}
+            language={livePreview.language}
+            filename={livePreview.filename}
+            runnerOutput={runnerOutput}
+            runLoading={runLoading}
+          />
+
+          <ExplanationSidebar
+            explanation={explanation}
+            collapsed={explanationCollapsed}
+            onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
+          />
         </div>
 
         <TerminalPanel
