@@ -20,6 +20,28 @@ Section conventions:
 
 ---
 
+## [2.4.0] - 2026-05-15
+
+### Added
+- **Live Preview panel** (right-side, collapsible). HTML/CSS/JavaScript render instantly into a sandboxed iframe and update as you type (~250ms debounce) — same FreeCodeCamp/CodeSandbox cause→effect feel. Includes a **Preview** tab (visual render) and a **Console** tab that captures `console.log/info/warn/error/debug` from the iframe plus stdout/stderr from the runner. Manual refresh, clear-console, and an inline Run button live in the panel header.
+- **Run output now lands in the Live Preview's Console tab** instead of the bottom terminal. The bottom terminal stays available for typed shell commands; the Console becomes the single home for execution feedback. The panel auto-opens when a run starts.
+
+### Changed
+- **Instruction panel is collapsible.** Chevron in the header collapses it to a 32 px vertical rail with an "INSTRUCTION" label; click the rail to expand again. State persists per-install.
+- **Explanation panel is collapsible.** Same treatment — collapses to a 32 px rail with an "EXPLANATION" label. Auto-opens when a new explanation arrives so the user actually sees what they asked for.
+- **Live Preview panel uses the same collapse pattern.** Expanded, the panel header shows a `>` (chevron-right) to collapse it. Collapsed, it becomes a 32 px rail showing `<` (chevron-left) above the eye icon and a vertical "PREVIEW" label — symmetrical with the Instruction and Explanation rails, so all three side panels behave identically.
+- **Active generator tab is lifted to the App level** so the Live Preview can read the same source the editor is showing without re-piping it on every keystroke.
+- **Neutral monochrome theme for chrome controls.** Buttons, toggles, and tab indicators no longer use the blue `--accent` or green `--success` fills. They now sit on `--bg-tertiary` / `--bg-elevated` with `--border-strong` outlines and `--text-primary` text, so the whole UI reads as one cohesive surface. The pseudocode tab keeps its dedicated `--algorithm` purple — that mark is pedagogical, not chrome.
+
+### Removed
+- **Run button inside the Live Preview panel.** Two Run affordances (one in the editor toolbar, one in the panel header) confused the "where do I click to run?" question. The panel is now strictly an output surface; Run lives only in the editor toolbar (`CodePanel`).
+- **Eye-icon toggle in the title bar (next to Settings).** Hiding/showing the Live Preview is now done from the panel itself via the same collapse rail used by the Instruction and Explanation panels — one canonical place to toggle each side panel, no duplicate control up top.
+
+### Docs
+- New internal doc: [`docs/preview-console.md`](docs/preview-console.md) explaining how the iframe sandbox, console capture, runner integration, and refresh model all fit together.
+
+---
+
 ## [2.3.0] - 2026-05-12
 ### Added
 - **Onboarding flow** for new installs. A two-step modal (skippable at any point) asks (1) "have you coded before?" and (2) "which language do you want to actually build in?" — picked from the runnable set: Python, JavaScript, TypeScript, C, C++. An optional third step accepts a Gemini API key. Answers are persisted in `localStorage` under `seec0de.settings`.
