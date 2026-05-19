@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check } from 'lucide-react';
 import { basename, joinPath } from '../engine/fileLanguage';
 
 // A small recursive file tree. Keeps state per-folder (open/closed + entries)
@@ -13,6 +13,12 @@ import { basename, joinPath } from '../engine/fileLanguage';
 //   activeFilePath    string | null           -- highlighted in the tree
 //   refreshKey        number                  -- bump to force a refresh
 
+// What kind of inline-input row we're showing under the header. Electron
+// disables `window.prompt()` by default (it returns null and the call
+// looks dead), so we render our own input instead of relying on it.
+const NEW_FILE   = 'file';
+const NEW_FOLDER = 'folder';
+
 export default function FileExplorer({
   rootPath,
   onPickFolder,
@@ -23,6 +29,9 @@ export default function FileExplorer({
 }) {
   const [tree, setTree] = useState({});      // path -> { entries, open }
   const [error, setError] = useState(null);
+  const [creating, setCreating] = useState(null); // null | 'file' | 'folder'
+  const [draftName, setDraftName] = useState('');
+  const draftRef = useRef(null);
 
   const loadDir = useCallback(async (dirPath) => {
     try {
@@ -46,6 +55,12 @@ export default function FileExplorer({
     loadDir(rootPath);
   }, [rootPath, refreshKey, loadDir]);
 
+  // Auto-focus the inline name input when it appears so the user can
+  // type immediately without a second click.
+  useEffect(() => {
+    if (creating && draftRef.current) draftRef.current.focus();
+  }, [creating]);
+
   const toggleDir = useCallback(async (dirPath) => {
     const node = tree[dirPath];
     if (!node || !node.entries) {
@@ -59,32 +74,51 @@ export default function FileExplorer({
     }));
   }, [tree, loadDir]);
 
-  const handleNewFile = useCallback(async () => {
-    if (!rootPath) return;
-    const name = window.prompt('New file name:');
-    if (!name) return;
-    try {
-      await window.seecode.fs.createFile(joinPath(rootPath, name));
-      await loadDir(rootPath);
-    } catch (err) {
-      setError(err.message);
-    }
-  }, [rootPath, loadDir]);
+  const startCreate = useCallback((kind) => {
+    setError(null);
+    setDraftName('');
+    setCreating(kind);
+  }, []);
 
-  const handleNewFolder = useCallback(async () => {
-    if (!rootPath) return;
-    const name = window.prompt('New folder name:');
-    if (!name) return;
-    try {
-      await window.seecode.fs.createDir(joinPath(rootPath, name));
-      await loadDir(rootPath);
-    } catch (err) {
-      setError(err.message);
+  const cancelCreate = useCallback(() => {
+    setCreating(null);
+    setDraftName('');
+  }, []);
+
+  const commitCreate = useCallback(async () => {
+    if (!rootPath || !creating) return;
+    const name = draftName.trim();
+    if (!name) { cancelCreate(); return; }
+    // Disallow path separators — keep new entries at the root for simplicity.
+    if (/[\\/]/.test(name)) {
+      setError('Name cannot contain "/" or "\\". Create nested items by opening a folder first.');
+      return;
     }
-  }, [rootPath, loadDir]);
+    try {
+      const target = joinPath(rootPath, name);
+      if (creating === NEW_FILE) {
+        await window.seecode.fs.createFile(target);
+      } else {
+        await window.seecode.fs.createDir(target);
+      }
+      await loadDir(rootPath);
+      cancelCreate();
+      if (creating === NEW_FILE) onOpenFile?.(target);
+    } catch (err) {
+      setError(err.message || 'Failed to create.');
+    }
+  }, [rootPath, creating, draftName, loadDir, cancelCreate, onOpenFile]);
+
+  const onDraftKey = useCallback((e) => {
+    if (e.key === 'Enter')      { e.preventDefault(); commitCreate(); }
+    else if (e.key === 'Escape'){ e.preventDefault(); cancelCreate(); }
+  }, [commitCreate, cancelCreate]);
 
   const handleRefresh = useCallback(() => {
-    if (rootPath) loadDir(rootPath);
+    if (rootPath) {
+      setError(null);
+      loadDir(rootPath);
+    }
   }, [rootPath, loadDir]);
 
   if (!rootPath) {
@@ -108,10 +142,10 @@ export default function FileExplorer({
       <div style={styles.header}>
         <span style={styles.headerLabel} title={rootPath}>{basename(rootPath) || rootPath}</span>
         <div style={styles.headerActions}>
-          <button style={styles.iconBtn} onClick={handleNewFile} title="New file">
+          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title="New file">
             <Plus size={12} />
           </button>
-          <button style={styles.iconBtn} onClick={handleNewFolder} title="New folder">
+          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title="New folder">
             <FolderPlus size={12} />
           </button>
           <button style={styles.iconBtn} onClick={handleRefresh} title="Refresh">
@@ -122,6 +156,32 @@ export default function FileExplorer({
           </button>
         </div>
       </div>
+
+      {creating && (
+        <div style={styles.draftRow}>
+          {creating === NEW_FOLDER
+            ? <Folder size={13} style={styles.draftIcon} />
+            : <File size={13} style={styles.draftIcon} />}
+          <input
+            ref={draftRef}
+            type="text"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            onKeyDown={onDraftKey}
+            onBlur={commitCreate}
+            placeholder={creating === NEW_FOLDER ? 'new-folder' : 'new-file.py'}
+            style={styles.draftInput}
+            aria-label={creating === NEW_FOLDER ? 'New folder name' : 'New file name'}
+          />
+          <button style={styles.draftConfirm} onMouseDown={(e) => e.preventDefault()} onClick={commitCreate} title="Create (Enter)">
+            <Check size={11} />
+          </button>
+          <button style={styles.draftCancel} onMouseDown={(e) => e.preventDefault()} onClick={cancelCreate} title="Cancel (Esc)">
+            <X size={11} />
+          </button>
+        </div>
+      )}
+
       {error && <div style={styles.error}>{error}</div>}
       <div style={styles.tree}>
         <TreeNode
@@ -249,6 +309,51 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  draftRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '6px 8px',
+    background: 'var(--bg-elevated)',
+    borderBottom: '1px solid var(--border)',
+  },
+  draftIcon: {
+    color: 'var(--text-secondary)',
+    flexShrink: 0,
+  },
+  draftInput: {
+    flex: 1,
+    minWidth: 0,
+    background: 'var(--bg-input)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 3,
+    color: 'var(--text-primary)',
+    fontSize: 12,
+    padding: '3px 6px',
+    outline: 'none',
+    fontFamily: 'inherit',
+  },
+  draftConfirm: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-primary)',
+    padding: 3,
+    borderRadius: 3,
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+  draftCancel: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    padding: 3,
+    borderRadius: 3,
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
   },
   emptyState: {
     padding: 16,

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   Sparkles, Loader, Settings as SettingsIcon, Wand2,
-  ChevronLeft, ChevronRight, MessageSquareCode,
+  ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
 } from 'lucide-react';
 import { hasApiKey } from '../engine/aiService';
+import { pickSuggestions } from '../engine/codeGenerator';
 
 // InstructionPanel — the first column of the workspace.
 //
@@ -44,6 +45,30 @@ export default function InstructionPanel({
   onToggleCollapsed,
 }) {
   const aiReady = hasApiKey();
+
+  // ---- suggestions -----------------------------------------------------
+  // A random handful of "I want to learn X" chips. Clicking one fills the
+  // textarea AND fires Generate so the learner sees a real example in one
+  // tap — no guessing what to type. `seed` is bumped by the shuffle
+  // button to re-roll without remounting.
+  const [seed, setSeed] = useState(0);
+  const suggestions = useMemo(() => pickSuggestions(4), [seed]);
+
+  const handleSuggestion = useCallback((text) => {
+    onInstructionChange(text);
+    // Pass the text directly so the parent's handleGenerate doesn't
+    // race the controlled-input state update.
+    onGenerate?.(text);
+  }, [onInstructionChange, onGenerate]);
+
+  const handleGenerateClick = useCallback(() => {
+    // Plain "Generate" button — let the parent read its own `instruction` state.
+    onGenerate?.();
+  }, [onGenerate]);
+
+  const handleAiGenerateClick = useCallback(() => {
+    onAiGenerate?.();
+  }, [onAiGenerate]);
 
   // ---- collapsed rail (32 px) ------------------------------------------
   if (collapsed) {
@@ -111,6 +136,36 @@ export default function InstructionPanel({
           </span>
         </button>
 
+        {/* Suggestion chips — one-tap learner starters. Each clicks
+            straight through to Generate so the workspace fills with a
+            real, runnable example without anybody having to think up an
+            instruction. */}
+        <div style={styles.suggestionsHead}>
+          <span style={styles.suggestionsLabel}>Try one of these</span>
+          <button
+            type="button"
+            style={styles.shuffleBtn}
+            onClick={() => setSeed((s) => s + 1)}
+            title="Shuffle suggestions"
+            aria-label="Shuffle suggestions"
+          >
+            <Shuffle size={11} />
+          </button>
+        </div>
+        <div style={styles.suggestions}>
+          {suggestions.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              style={styles.suggestionChip}
+              onClick={() => handleSuggestion(s.instruction)}
+              title={s.instruction}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
         {/* The question */}
         <textarea
           style={styles.textarea}
@@ -122,7 +177,7 @@ export default function InstructionPanel({
 
         {/* Two paths to an answer */}
         <div style={styles.actions}>
-          <button style={styles.generateBtn} onClick={onGenerate} title="Use built-in templates (no AI required)">
+          <button style={styles.generateBtn} onClick={handleGenerateClick} title="Use built-in templates (no AI required)">
             <Wand2 size={13} />
             <span style={{ marginLeft: 6 }}>Generate</span>
           </button>
@@ -132,7 +187,7 @@ export default function InstructionPanel({
               ...styles.aiBtn,
               ...(aiLoading || !aiReady ? styles.disabledBtn : {}),
             }}
-            onClick={onAiGenerate}
+            onClick={handleAiGenerateClick}
             disabled={aiLoading || !aiReady}
             title={
               !aiReady
@@ -276,6 +331,46 @@ const styles = {
     color: 'var(--text-muted)',
     display: 'inline-flex',
     alignItems: 'center',
+  },
+
+  suggestionsHead: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  suggestionsLabel: {
+    fontSize: 10.5,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: 'var(--text-muted)',
+    fontWeight: 600,
+  },
+  shuffleBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    padding: 4,
+    borderRadius: 4,
+    display: 'inline-flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+  suggestions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  suggestionChip: {
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-strong)',
+    color: 'var(--text-secondary)',
+    fontSize: 11.5,
+    padding: '5px 10px',
+    borderRadius: 999,
+    cursor: 'pointer',
+    textAlign: 'left',
+    transition: 'background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)',
   },
 
   textarea: {

@@ -57,8 +57,14 @@ export default function CodePanel({
   // the same active tab without duplicating it.
   activeGeneratedTab = 'pseudocode',
   onActivateGeneratedTab,
+  // v2.4.1: when a folder is open the central panel becomes "your
+  // project". The pseudocode + comparison-language tabs are hidden so
+  // the file workspace doesn't have to fight them for screen real estate.
+  // Generate then writes directly into the open folder as a scratch file
+  // (handled in App.jsx) and opens that file as a tab.
+  folderOpen = false,
 }) {
-  const generatedTabs = ['pseudocode', ...selectedLanguages];
+  const generatedTabs = folderOpen ? [] : ['pseudocode', ...selectedLanguages];
   const [editable, setEditable] = useState(false);
   const [tooltip, setTooltip] = useState(null);
   const [selection, setSelection] = useState(null);
@@ -70,7 +76,8 @@ export default function CodePanel({
   const showingFile = !!fileTab;
 
   const generatedDisplayTab = generatedTabs.includes(activeGeneratedTab) ? activeGeneratedTab : 'pseudocode';
-  const isPseudocode = !showingFile && generatedDisplayTab === 'pseudocode';
+  const isPseudocode = !showingFile && !folderOpen && generatedDisplayTab === 'pseudocode';
+  const showEmptyState = folderOpen && !showingFile;
 
   let value = '';
   let monacoLang = 'plaintext';
@@ -280,7 +287,7 @@ export default function CodePanel({
               <span style={{ marginLeft: 4 }}>{fileTab.dirty ? 'Save' : 'Saved'}</span>
             </button>
           )}
-          {!showingFile && (
+          {!showingFile && !folderOpen && (
             <button
               style={{ ...styles.lockBtn, ...(editable ? styles.lockBtnActive : {}) }}
               onClick={() => { setEditable((e) => !e); clearSelection(); setTooltip(null); }}
@@ -306,23 +313,35 @@ export default function CodePanel({
       )}
 
       <div style={styles.editorWrap}>
-        <Editor
-          key={showingFile ? `file:${activePath}` : `gen:${generatedDisplayTab}`}
-          height="100%"
-          language={monacoLang}
-          value={value}
-          theme="vs-dark"
-          onMount={handleEditorMount}
-          onChange={handleChange}
-          options={{
-            readOnly: isReadOnly,
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-          }}
-        />
+        {showEmptyState ? (
+          <div style={styles.emptyWorkspace}>
+            <h3 style={styles.emptyTitle}>This folder is your workspace</h3>
+            <p style={styles.emptyText}>
+              Open a file from the explorer on the left, or type an instruction and hit <strong>Generate</strong>
+            </p>
+            <p style={styles.emptyHint}>
+              Highlight any code in a file to get a line-by-line explanation.
+            </p>
+          </div>
+        ) : (
+          <Editor
+            key={showingFile ? `file:${activePath}` : `gen:${generatedDisplayTab}`}
+            height="100%"
+            language={monacoLang}
+            value={value}
+            theme="vs-dark"
+            onMount={handleEditorMount}
+            onChange={handleChange}
+            options={{
+              readOnly: isReadOnly,
+              minimap: { enabled: false },
+              fontSize: 13,
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+            }}
+          />
+        )}
         {showExplainButtons && (
           <div style={{ ...styles.btnGroup, top: btnPos.top, left: btnPos.left }}>
             <button style={styles.explainBtn} onClick={handleExplain}>
@@ -408,7 +427,13 @@ const styles = {
   fileTab: {
     display: 'flex',
     alignItems: 'center',
-    borderBottom: '2px solid transparent',
+    // Longhand only — merging with `activeTab` (which sets
+    // `borderBottomColor`) would otherwise conflict with the shorthand
+    // `borderBottom` and trigger React's "removing a style property
+    // during rerender" warning.
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
+    borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
     fontSize: 12,
     whiteSpace: 'nowrap',
@@ -438,7 +463,12 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     background: 'transparent',
-    border: '1px solid var(--border)',
+    // Longhand: `lockBtnActive` overrides `borderColor` only, so the
+    // base must avoid the `border` shorthand to prevent the React
+    // "removing a style property during rerender" warning.
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'var(--border)',
     borderRadius: 6,
     color: 'var(--text-secondary)',
     fontSize: 11,
@@ -475,6 +505,37 @@ const styles = {
     position: 'relative',
     overflow: 'hidden',
   },
+
+  emptyWorkspace: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 28,
+    textAlign: 'center',
+    gap: 8,
+    background: 'var(--bg-primary)',
+    color: 'var(--text-secondary)',
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+    margin: 0,
+  },
+  emptyText: {
+    fontSize: 12.5,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.6,
+    maxWidth: 420,
+    margin: 0,
+  },
+  emptyHint: {
+    fontSize: 11.5,
+    color: 'var(--text-muted)',
+    margin: '4px 0 0',
+  },
   btnGroup: {
     position: 'absolute',
     zIndex: 10,
@@ -483,7 +544,12 @@ const styles = {
   },
   explainBtn: {
     background: 'var(--bg-elevated)',
-    border: '1px solid var(--border-strong)',
+    // Longhand: `aiExplainBtn` overrides only `borderColor`. Mixing it
+    // with a `border` shorthand here would trigger React's "removing a
+    // style property during rerender" warning when toggling variants.
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'var(--border-strong)',
     borderRadius: 6,
     color: 'var(--text-primary)',
     fontSize: 12,
