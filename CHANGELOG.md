@@ -16,6 +16,8 @@ Section conventions:
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-19
+
 ### Added
 - **Toolchain installer** in *Settings → Toolchains*. seec0de now probes PATH on settings open and shows a status row per language (Python, Node.js for JavaScript, `tsx` for TypeScript, a C compiler, a C++ compiler) with the detected tool's version. Missing tools get a one-line *why we need this*, the platform-correct install command, an **Install** button (drops the command into the bottom terminal and runs it so the learner watches the install happen), a **Copy** fallback, and a **Re-check toolchains** button to refresh the status after the install completes. Backed by a new `runner:check-toolchains` IPC and `seecode.runner.checkToolchains()` preload bridge.
 - **Suggestion chips** in the Instruction panel — a random handful of one-tap learner starters ("Print Hello, World!", "FizzBuzz from 1 to 20", "Check if a word is a palindrome", "Find prime numbers up to 50", …) with a Shuffle button to re-roll. Each chip fires Generate immediately so the workspace fills with a real, runnable example without anyone having to invent an instruction.
