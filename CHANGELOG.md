@@ -16,6 +16,11 @@ Section conventions:
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-05-19
+
+### Fixed
+- **Re-release of v2.5.0.** The v2.5.0 GitHub release artifacts were inadvertently built from the v2.4.0 source tree (the `v2.5.0` git tag was pushed against an older commit before the v2.5.0 feature commits landed on `main`). v2.5.1 is a non-destructive re-ship that delivers the full v2.5.0 feature set listed below to installed users via the auto-updater. No code changes vs. the intended v2.5.0 — same toolchain installer, folder-aware Generate, suggestion chips, 12 new templates, expanded glossaries, debounced auto-save, and the rest.
+
 ## [2.5.0] - 2026-05-19
 
 ### Added
