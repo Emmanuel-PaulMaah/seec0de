@@ -16,7 +16,26 @@ Section conventions:
 
 ## [Unreleased]
 
-<!-- Add entries here as you work; they'll move under the next version when it ships. -->
+### Added
+- **Toolchain installer** in *Settings → Toolchains*. seec0de now probes PATH on settings open and shows a status row per language (Python, Node.js for JavaScript, `tsx` for TypeScript, a C compiler, a C++ compiler) with the detected tool's version. Missing tools get a one-line *why we need this*, the platform-correct install command, an **Install** button (drops the command into the bottom terminal and runs it so the learner watches the install happen), a **Copy** fallback, and a **Re-check toolchains** button to refresh the status after the install completes. Backed by a new `runner:check-toolchains` IPC and `seecode.runner.checkToolchains()` preload bridge.
+- **Suggestion chips** in the Instruction panel — a random handful of one-tap learner starters ("Print Hello, World!", "FizzBuzz from 1 to 20", "Check if a word is a palindrome", "Find prime numbers up to 50", …) with a Shuffle button to re-roll. Each chip fires Generate immediately so the workspace fills with a real, runnable example without anyone having to invent an instruction.
+- **Folder-aware Generate.** When a folder is open, Generate writes the result as a real scratch file (`scratch-1.py`, `scratch-2.py`, …) in the open folder using the practical language and opens it as a file tab — no more in-memory generated tabs competing with on-disk files. The central editor becomes a clean *"this folder is your workspace"* empty state until a file is opened or generated.
+- **Inline new-file / new-folder input** in the file explorer. Electron disables `window.prompt()` by default (it returned `null` and the buttons looked dead), so the **+** / folder+ icons now reveal an inline named input with Enter / Esc / blur-to-commit semantics. Newly created files auto-open as a tab.
+- **Twelve new generator templates** with curated per-language code: FizzBuzz, palindrome check, prime sieve up to N, reverse string, word-frequency counter, list sort, factorial & Fibonacci, iterate-a-collection, class with inheritance, read/write a text file, fetch JSON from an HTTP API, plus a richer "hello world / greet" baseline. Each template includes pseudocode and idiomatic implementations across the runnable language set.
+- **Expanded language glossaries** in `languages.js`. The TypeScript glossary now covers the type system (`interface`, `type`, `enum`, `extends`, `implements`, `as`, `keyof`, `typeof`, `readonly`), visibility modifiers (`public` / `private` / `protected` / `abstract` / `static`), and async — each entry has a short definition and a worked example. Other language glossaries got matching depth.
+- **`experimental-features.md`** — a working brainstorm of 20 candidate future features (error-message translator, MRE generator, state visualiser, refactoring assistant, etc.) with one-line *what it teaches* notes. Not wired into the app yet — pure design doc.
+- **"beta" tag** in the title bar so users on `experimental-modes` builds know they're on a pre-release surface.
+
+### Changed
+- **AI codegen prompt rewritten** ([`aiService.js`](src/renderer/engine/aiService.js)) to forbid teaching comments. The code itself, with meaningful names, is the lesson; the separate Explainer panel handles natural-language explanations. The only comments the model may emit now are short SECTION-MARKER comments (`# --- setup ---`, `// === main ===`) and only when the program has 2+ distinct phases. No more duplicate-of-the-explainer commentary inside the source.
+- **Live Preview no longer renders standalone CSS.** The old CSS path injected a fake demo document (Heading One / button / list) under the user's styles, which competed with whatever real `.css` file the learner was editing. CSS now falls through to the placeholder *"CSS needs a document to style — open an HTML file that links to this stylesheet"*, same shape as the Java / Go / Rust placeholder.
+- **CodePanel** suppresses the in-memory pseudocode + comparison-language tabs when a folder is open, so the file workspace owns the central panel. The pseudocode banner, the "Lock" button, and the generated-tab strip are all hidden in folder mode.
+- **CodePanel button styles** (`fileTab`, `lockBtn`, `explainBtn`) switched from the `border` shorthand to longhand `borderWidth` / `borderStyle` / `borderColor`. The active-variant styles override only `borderBottomColor` / `borderColor`, and React would otherwise throw *"removing a style property during rerender"* warnings as the user toggled tabs / lock state.
+- **Landing page** download buttons deep-link to the `v2.4.0` installer asset URL directly rather than `releases/latest`, so a click goes straight to the `.exe` instead of through the GitHub releases page.
+- **Renderer window title** is now lowercase (`seec0de` instead of `Seec0de`) to match the brand everywhere else.
+
+### Fixed
+- **"New file" / "New folder" buttons no longer silently no-op.** Electron disables `window.prompt()` and the old handlers bailed when it returned `null`. Replaced with an inline input row.
 
 ---
 
