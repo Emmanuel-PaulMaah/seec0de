@@ -262,12 +262,66 @@ async function run({ language, source, filename }) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Toolchain detection — used by Settings → Toolchains so the user can see
+// which language compilers/interpreters are actually on PATH and get a
+// one-click install command for the missing ones.
+
+// Order matters: the first found tool is reported. Keep these in sync with
+// the runners above so the "installed?" view matches what Run will actually
+// pick when the user hits the Run button.
+const LANGUAGE_TOOLS = {
+  python:     IS_WINDOWS ? ['python', 'py', 'python3'] : ['python3', 'python'],
+  javascript: ['node'],
+  typescript: ['tsx', 'ts-node'],
+  c:          ['gcc', 'clang', 'cl'],
+  cpp:        ['g++', 'clang++', 'cl'],
+};
+
+async function probeVersion(tool) {
+  // `cl` (MSVC) doesn't support --version and writes its banner to stderr.
+  // We try a couple of common flags and capture whichever returns first.
+  const tryFlag = (flag) => new Promise((resolve) => {
+    const child = spawn(tool, [flag], { windowsHide: true });
+    let out = '';
+    child.stdout?.on('data', (b) => { out += b.toString('utf8'); });
+    child.stderr?.on('data', (b) => { out += b.toString('utf8'); });
+    child.on('close', () => resolve(out.trim().split(/\r?\n/)[0] || ''));
+    child.on('error', () => resolve(''));
+    setTimeout(() => { try { child.kill(); } catch { /* ignore */ } resolve(out); }, 2000);
+  });
+
+  const v1 = await tryFlag('--version');
+  if (v1) return v1;
+  return tryFlag('-v');
+}
+
+async function checkToolchains() {
+  const out = {};
+  for (const [lang, candidates] of Object.entries(LANGUAGE_TOOLS)) {
+    // eslint-disable-next-line no-await-in-loop
+    const tool = await firstAvailable(candidates);
+    if (!tool) {
+      out[lang] = { installed: false, tool: null, version: null };
+      continue;
+    }
+    // eslint-disable-next-line no-await-in-loop
+    const version = await probeVersion(tool);
+    out[lang] = { installed: true, tool, version: version || null };
+  }
+  return out;
+}
+
 function registerRunnerServiceHandlers() {
   ipcMain.handle('runner:run', async (_e, payload) => {
     try { return await run(payload || {}); }
     catch (err) {
       return mkResult({ error: err.message, stderr: `[seec0de] runner crashed: ${err.message}\n` });
     }
+  });
+  ipcMain.handle('runner:check-toolchains', async () => {
+    try { return await checkToolchains(); }
+    catch (err) { return { error: err.message }; }
   });
 }
 

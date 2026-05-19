@@ -2150,7 +2150,919 @@ console.log(\`Fib(10) = \${fibonacci(10)}\`);
 console.log("Stats:", computeStats([4, 7, 2, 9, 1, 5, 8, 3, 6]));`,
     },
   },
+  fizzbuzz: {
+    match: /\b(fizz\s*buzz|fizzbuzz)\b/i,
+    pseudocode: `PROGRAM FizzBuzz
+  FOR i FROM 1 TO 20
+    IF i MOD 15 == 0 THEN
+      DISPLAY "FizzBuzz"
+    ELSE IF i MOD 3 == 0 THEN
+      DISPLAY "Fizz"
+    ELSE IF i MOD 5 == 0 THEN
+      DISPLAY "Buzz"
+    ELSE
+      DISPLAY i
+    END IF
+  END FOR
+END PROGRAM`,
+    code: {
+      python: `def fizzbuzz(limit):
+    for i in range(1, limit + 1):
+        if i % 15 == 0:
+            print("FizzBuzz")
+        elif i % 3 == 0:
+            print("Fizz")
+        elif i % 5 == 0:
+            print("Buzz")
+        else:
+            print(i)
+
+if __name__ == "__main__":
+    fizzbuzz(20)`,
+      javascript: `function fizzbuzz(limit) {
+  for (let i = 1; i <= limit; i++) {
+    if (i % 15 === 0) console.log("FizzBuzz");
+    else if (i % 3 === 0) console.log("Fizz");
+    else if (i % 5 === 0) console.log("Buzz");
+    else console.log(i);
+  }
+}
+
+fizzbuzz(20);`,
+      typescript: `function fizzbuzz(limit: number): void {
+  for (let i = 1; i <= limit; i++) {
+    if (i % 15 === 0) console.log("FizzBuzz");
+    else if (i % 3 === 0) console.log("Fizz");
+    else if (i % 5 === 0) console.log("Buzz");
+    else console.log(i);
+  }
+}
+
+fizzbuzz(20);`,
+      java: `public class FizzBuzz {
+    public static void fizzbuzz(int limit) {
+        for (int i = 1; i <= limit; i++) {
+            if (i % 15 == 0) System.out.println("FizzBuzz");
+            else if (i % 3 == 0) System.out.println("Fizz");
+            else if (i % 5 == 0) System.out.println("Buzz");
+            else System.out.println(i);
+        }
+    }
+
+    public static void main(String[] args) {
+        fizzbuzz(20);
+    }
+}`,
+      cpp: `#include <iostream>
+using namespace std;
+
+void fizzbuzz(int limit) {
+    for (int i = 1; i <= limit; i++) {
+        if (i % 15 == 0) cout << "FizzBuzz" << endl;
+        else if (i % 3 == 0) cout << "Fizz" << endl;
+        else if (i % 5 == 0) cout << "Buzz" << endl;
+        else cout << i << endl;
+    }
+}
+
+int main() {
+    fizzbuzz(20);
+    return 0;
+}`,
+      c: `#include <stdio.h>
+
+void fizzbuzz(int limit) {
+    for (int i = 1; i <= limit; i++) {
+        if (i % 15 == 0) printf("FizzBuzz\\n");
+        else if (i % 3 == 0) printf("Fizz\\n");
+        else if (i % 5 == 0) printf("Buzz\\n");
+        else printf("%d\\n", i);
+    }
+}
+
+int main(void) {
+    fizzbuzz(20);
+    return 0;
+}`,
+      csharp: `using System;
+
+class FizzBuzz {
+    static void Run(int limit) {
+        for (int i = 1; i <= limit; i++) {
+            if (i % 15 == 0) Console.WriteLine("FizzBuzz");
+            else if (i % 3 == 0) Console.WriteLine("Fizz");
+            else if (i % 5 == 0) Console.WriteLine("Buzz");
+            else Console.WriteLine(i);
+        }
+    }
+
+    static void Main() {
+        Run(20);
+    }
+}`,
+      go: `package main
+
+import "fmt"
+
+func fizzbuzz(limit int) {
+    for i := 1; i <= limit; i++ {
+        switch {
+        case i%15 == 0:
+            fmt.Println("FizzBuzz")
+        case i%3 == 0:
+            fmt.Println("Fizz")
+        case i%5 == 0:
+            fmt.Println("Buzz")
+        default:
+            fmt.Println(i)
+        }
+    }
+}
+
+func main() {
+    fizzbuzz(20)
+}`,
+      rust: `fn fizzbuzz(limit: u32) {
+    for i in 1..=limit {
+        match (i % 3, i % 5) {
+            (0, 0) => println!("FizzBuzz"),
+            (0, _) => println!("Fizz"),
+            (_, 0) => println!("Buzz"),
+            _      => println!("{}", i),
+        }
+    }
+}
+
+fn main() {
+    fizzbuzz(20);
+}`,
+    },
+  },
+
+  palindrome: {
+    match: /\b(palindrome|reads?\s*the\s*same|reverse(d)?\s*equals?)\b/i,
+    pseudocode: `PROGRAM PalindromeCheck
+  FUNCTION isPalindrome(text)
+    SET cleaned TO lowercase letters of text only
+    SET reversed TO cleaned reversed
+    RETURN cleaned == reversed
+  END FUNCTION
+
+  FOR EACH word IN ["racecar", "hello", "Level", "A man a plan a canal Panama"]
+    DISPLAY word + " => " + isPalindrome(word)
+  END FOR
+END PROGRAM`,
+    code: {
+      python: `import re
+
+def is_palindrome(text):
+    cleaned = re.sub(r"[^a-z0-9]", "", text.lower())
+    return cleaned == cleaned[::-1]
+
+if __name__ == "__main__":
+    samples = ["racecar", "hello", "Level", "A man a plan a canal Panama"]
+    for word in samples:
+        print(f"{word!r} => {is_palindrome(word)}")`,
+      javascript: `function isPalindrome(text) {
+  const cleaned = text.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return cleaned === cleaned.split("").reverse().join("");
+}
+
+const samples = ["racecar", "hello", "Level", "A man a plan a canal Panama"];
+for (const word of samples) {
+  console.log(\`"\${word}" => \${isPalindrome(word)}\`);
+}`,
+      typescript: `function isPalindrome(text: string): boolean {
+  const cleaned = text.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return cleaned === cleaned.split("").reverse().join("");
+}
+
+const samples: string[] = ["racecar", "hello", "Level", "A man a plan a canal Panama"];
+for (const word of samples) {
+  console.log(\`"\${word}" => \${isPalindrome(word)}\`);
+}`,
+      java: `public class PalindromeCheck {
+    public static boolean isPalindrome(String text) {
+        String cleaned = text.toLowerCase().replaceAll("[^a-z0-9]", "");
+        return cleaned.equals(new StringBuilder(cleaned).reverse().toString());
+    }
+
+    public static void main(String[] args) {
+        String[] samples = {"racecar", "hello", "Level", "A man a plan a canal Panama"};
+        for (String word : samples) {
+            System.out.println("\\"" + word + "\\" => " + isPalindrome(word));
+        }
+    }
+}`,
+      cpp: `#include <iostream>
+#include <string>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+bool isPalindrome(const string& text) {
+    string cleaned;
+    for (char ch : text) {
+        if (isalnum(static_cast<unsigned char>(ch))) {
+            cleaned += tolower(static_cast<unsigned char>(ch));
+        }
+    }
+    string reversed(cleaned.rbegin(), cleaned.rend());
+    return cleaned == reversed;
+}
+
+int main() {
+    string samples[] = {"racecar", "hello", "Level", "A man a plan a canal Panama"};
+    for (const auto& word : samples) {
+        cout << "\\"" << word << "\\" => " << (isPalindrome(word) ? "true" : "false") << endl;
+    }
+    return 0;
+}`,
+      c: `#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdbool.h>
+
+bool is_palindrome(const char* text) {
+    char cleaned[256];
+    size_t n = 0;
+    for (size_t i = 0; text[i] && n < sizeof(cleaned) - 1; i++) {
+        unsigned char c = (unsigned char)text[i];
+        if (isalnum(c)) cleaned[n++] = (char)tolower(c);
+    }
+    cleaned[n] = '\\0';
+    for (size_t i = 0, j = (n == 0 ? 0 : n - 1); i < j; i++, j--) {
+        if (cleaned[i] != cleaned[j]) return false;
+    }
+    return true;
+}
+
+int main(void) {
+    const char* samples[] = {"racecar", "hello", "Level", "A man a plan a canal Panama"};
+    for (size_t i = 0; i < sizeof(samples) / sizeof(*samples); i++) {
+        printf("\\"%s\\" => %s\\n", samples[i], is_palindrome(samples[i]) ? "true" : "false");
+    }
+    return 0;
+}`,
+      csharp: `using System;
+using System.Linq;
+
+class PalindromeCheck {
+    static bool IsPalindrome(string text) {
+        var cleaned = new string(text.ToLower().Where(char.IsLetterOrDigit).ToArray());
+        return cleaned.SequenceEqual(cleaned.Reverse());
+    }
+
+    static void Main() {
+        string[] samples = { "racecar", "hello", "Level", "A man a plan a canal Panama" };
+        foreach (var word in samples) {
+            Console.WriteLine($"\\"{word}\\" => {IsPalindrome(word)}");
+        }
+    }
+}`,
+      go: `package main
+
+import (
+    "fmt"
+    "strings"
+    "unicode"
+)
+
+func isPalindrome(text string) bool {
+    var cleaned []rune
+    for _, r := range strings.ToLower(text) {
+        if unicode.IsLetter(r) || unicode.IsDigit(r) {
+            cleaned = append(cleaned, r)
+        }
+    }
+    for i, j := 0, len(cleaned)-1; i < j; i, j = i+1, j-1 {
+        if cleaned[i] != cleaned[j] {
+            return false
+        }
+    }
+    return true
+}
+
+func main() {
+    samples := []string{"racecar", "hello", "Level", "A man a plan a canal Panama"}
+    for _, word := range samples {
+        fmt.Printf("%q => %v\\n", word, isPalindrome(word))
+    }
+}`,
+      rust: `fn is_palindrome(text: &str) -> bool {
+    let cleaned: String = text
+        .to_lowercase()
+        .chars()
+        .filter(|c| c.is_alphanumeric())
+        .collect();
+    cleaned == cleaned.chars().rev().collect::<String>()
+}
+
+fn main() {
+    let samples = ["racecar", "hello", "Level", "A man a plan a canal Panama"];
+    for word in samples.iter() {
+        println!("{:?} => {}", word, is_palindrome(word));
+    }
+}`,
+    },
+  },
+
+  prime: {
+    match: /\b(prime|primes|prime\s*numbers?|sieve)\b/i,
+    pseudocode: `PROGRAM Primes
+  FUNCTION isPrime(n)
+    IF n < 2 THEN RETURN false
+    IF n < 4 THEN RETURN true
+    IF n MOD 2 == 0 THEN RETURN false
+    FOR i FROM 3 TO sqrt(n) STEP 2
+      IF n MOD i == 0 THEN RETURN false
+    END FOR
+    RETURN true
+  END FUNCTION
+
+  FUNCTION primesUpTo(limit)
+    SET result TO empty list
+    FOR n FROM 2 TO limit
+      IF isPrime(n) THEN APPEND n TO result
+    END FOR
+    RETURN result
+  END FUNCTION
+
+  DISPLAY primesUpTo(50)
+END PROGRAM`,
+    code: {
+      python: `from math import isqrt
+
+def is_prime(n):
+    if n < 2:
+        return False
+    if n < 4:
+        return True
+    if n % 2 == 0:
+        return False
+    for i in range(3, isqrt(n) + 1, 2):
+        if n % i == 0:
+            return False
+    return True
+
+def primes_up_to(limit):
+    return [n for n in range(2, limit + 1) if is_prime(n)]
+
+if __name__ == "__main__":
+    print(primes_up_to(50))`,
+      javascript: `function isPrime(n) {
+  if (n < 2) return false;
+  if (n < 4) return true;
+  if (n % 2 === 0) return false;
+  for (let i = 3; i * i <= n; i += 2) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
+function primesUpTo(limit) {
+  const result = [];
+  for (let n = 2; n <= limit; n++) {
+    if (isPrime(n)) result.push(n);
+  }
+  return result;
+}
+
+console.log(primesUpTo(50));`,
+      typescript: `function isPrime(n: number): boolean {
+  if (n < 2) return false;
+  if (n < 4) return true;
+  if (n % 2 === 0) return false;
+  for (let i = 3; i * i <= n; i += 2) {
+    if (n % i === 0) return false;
+  }
+  return true;
+}
+
+function primesUpTo(limit: number): number[] {
+  const result: number[] = [];
+  for (let n = 2; n <= limit; n++) {
+    if (isPrime(n)) result.push(n);
+  }
+  return result;
+}
+
+console.log(primesUpTo(50));`,
+      java: `import java.util.ArrayList;
+import java.util.List;
+
+public class Primes {
+    public static boolean isPrime(int n) {
+        if (n < 2) return false;
+        if (n < 4) return true;
+        if (n % 2 == 0) return false;
+        for (int i = 3; (long) i * i <= n; i += 2) {
+            if (n % i == 0) return false;
+        }
+        return true;
+    }
+
+    public static List<Integer> primesUpTo(int limit) {
+        List<Integer> result = new ArrayList<>();
+        for (int n = 2; n <= limit; n++) {
+            if (isPrime(n)) result.add(n);
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(primesUpTo(50));
+    }
+}`,
+      cpp: `#include <iostream>
+#include <vector>
+using namespace std;
+
+bool isPrime(int n) {
+    if (n < 2) return false;
+    if (n < 4) return true;
+    if (n % 2 == 0) return false;
+    for (int i = 3; (long long)i * i <= n; i += 2) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+vector<int> primesUpTo(int limit) {
+    vector<int> result;
+    for (int n = 2; n <= limit; n++) {
+        if (isPrime(n)) result.push_back(n);
+    }
+    return result;
+}
+
+int main() {
+    auto primes = primesUpTo(50);
+    cout << "[";
+    for (size_t i = 0; i < primes.size(); i++) {
+        cout << primes[i] << (i + 1 < primes.size() ? ", " : "");
+    }
+    cout << "]" << endl;
+    return 0;
+}`,
+      c: `#include <stdio.h>
+#include <stdbool.h>
+
+bool is_prime(int n) {
+    if (n < 2) return false;
+    if (n < 4) return true;
+    if (n % 2 == 0) return false;
+    for (int i = 3; (long long)i * i <= n; i += 2) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+int main(void) {
+    const int limit = 50;
+    printf("[");
+    bool first = true;
+    for (int n = 2; n <= limit; n++) {
+        if (is_prime(n)) {
+            if (!first) printf(", ");
+            printf("%d", n);
+            first = false;
+        }
+    }
+    printf("]\\n");
+    return 0;
+}`,
+      csharp: `using System;
+using System.Collections.Generic;
+
+class Primes {
+    static bool IsPrime(int n) {
+        if (n < 2) return false;
+        if (n < 4) return true;
+        if (n % 2 == 0) return false;
+        for (int i = 3; (long)i * i <= n; i += 2) {
+            if (n % i == 0) return false;
+        }
+        return true;
+    }
+
+    static List<int> PrimesUpTo(int limit) {
+        var result = new List<int>();
+        for (int n = 2; n <= limit; n++) {
+            if (IsPrime(n)) result.Add(n);
+        }
+        return result;
+    }
+
+    static void Main() {
+        Console.WriteLine("[" + string.Join(", ", PrimesUpTo(50)) + "]");
+    }
+}`,
+      go: `package main
+
+import "fmt"
+
+func isPrime(n int) bool {
+    if n < 2 {
+        return false
+    }
+    if n < 4 {
+        return true
+    }
+    if n%2 == 0 {
+        return false
+    }
+    for i := 3; i*i <= n; i += 2 {
+        if n%i == 0 {
+            return false
+        }
+    }
+    return true
+}
+
+func primesUpTo(limit int) []int {
+    result := make([]int, 0)
+    for n := 2; n <= limit; n++ {
+        if isPrime(n) {
+            result = append(result, n)
+        }
+    }
+    return result
+}
+
+func main() {
+    fmt.Println(primesUpTo(50))
+}`,
+      rust: `fn is_prime(n: u32) -> bool {
+    if n < 2 { return false; }
+    if n < 4 { return true; }
+    if n % 2 == 0 { return false; }
+    let mut i = 3u32;
+    while i.saturating_mul(i) <= n {
+        if n % i == 0 { return false; }
+        i += 2;
+    }
+    true
+}
+
+fn primes_up_to(limit: u32) -> Vec<u32> {
+    (2..=limit).filter(|n| is_prime(*n)).collect()
+}
+
+fn main() {
+    println!("{:?}", primes_up_to(50));
+}`,
+    },
+  },
+
+  reverse: {
+    match: /\b(reverse(?!d\s*equals)|backwards|flip\s*a\s*string|invert\s*string)\b/i,
+    pseudocode: `PROGRAM ReverseString
+  FUNCTION reverse(text)
+    SET result TO empty string
+    FOR i FROM LENGTH(text) - 1 DOWN TO 0
+      APPEND text[i] TO result
+    END FOR
+    RETURN result
+  END FUNCTION
+
+  DISPLAY reverse("hello world")
+END PROGRAM`,
+    code: {
+      python: `def reverse(text):
+    return text[::-1]
+
+if __name__ == "__main__":
+    sample = "hello world"
+    print(f"{sample!r} -> {reverse(sample)!r}")`,
+      javascript: `function reverse(text) {
+  return text.split("").reverse().join("");
+}
+
+const sample = "hello world";
+console.log(\`"\${sample}" -> "\${reverse(sample)}"\`);`,
+      typescript: `function reverse(text: string): string {
+  return text.split("").reverse().join("");
+}
+
+const sample = "hello world";
+console.log(\`"\${sample}" -> "\${reverse(sample)}"\`);`,
+      java: `public class ReverseString {
+    public static String reverse(String text) {
+        return new StringBuilder(text).reverse().toString();
+    }
+
+    public static void main(String[] args) {
+        String sample = "hello world";
+        System.out.println("\\"" + sample + "\\" -> \\"" + reverse(sample) + "\\"");
+    }
+}`,
+      cpp: `#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+string reverseString(string text) {
+    reverse(text.begin(), text.end());
+    return text;
+}
+
+int main() {
+    string sample = "hello world";
+    cout << "\\"" << sample << "\\" -> \\"" << reverseString(sample) << "\\"" << endl;
+    return 0;
+}`,
+      c: `#include <stdio.h>
+#include <string.h>
+
+void reverse_in_place(char* text) {
+    size_t n = strlen(text);
+    for (size_t i = 0, j = (n == 0 ? 0 : n - 1); i < j; i++, j--) {
+        char tmp = text[i];
+        text[i] = text[j];
+        text[j] = tmp;
+    }
+}
+
+int main(void) {
+    char sample[] = "hello world";
+    char original[64];
+    strcpy(original, sample);
+    reverse_in_place(sample);
+    printf("\\"%s\\" -> \\"%s\\"\\n", original, sample);
+    return 0;
+}`,
+      csharp: `using System;
+using System.Linq;
+
+class ReverseString {
+    static string Reverse(string text) {
+        return new string(text.Reverse().ToArray());
+    }
+
+    static void Main() {
+        string sample = "hello world";
+        Console.WriteLine($"\\"{sample}\\" -> \\"{Reverse(sample)}\\"");
+    }
+}`,
+      go: `package main
+
+import "fmt"
+
+func reverse(text string) string {
+    runes := []rune(text)
+    for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+        runes[i], runes[j] = runes[j], runes[i]
+    }
+    return string(runes)
+}
+
+func main() {
+    sample := "hello world"
+    fmt.Printf("%q -> %q\\n", sample, reverse(sample))
+}`,
+      rust: `fn reverse(text: &str) -> String {
+    text.chars().rev().collect()
+}
+
+fn main() {
+    let sample = "hello world";
+    println!("{:?} -> {:?}", sample, reverse(sample));
+}`,
+    },
+  },
+
+  count: {
+    match: /\b(count|occurrences?|frequency|frequencies|word\s*count|tally|histogram)\b/i,
+    pseudocode: `PROGRAM WordCount
+  FUNCTION countWords(text)
+    SET counts TO empty map
+    FOR EACH word IN split(text)
+      INCREMENT counts[lowercase(word)]
+    END FOR
+    RETURN counts
+  END FUNCTION
+
+  SET text TO "the quick brown fox jumps over the lazy dog the fox"
+  DISPLAY countWords(text)
+END PROGRAM`,
+    code: {
+      python: `from collections import Counter
+
+def count_words(text):
+    return Counter(word.lower() for word in text.split())
+
+if __name__ == "__main__":
+    text = "the quick brown fox jumps over the lazy dog the fox"
+    counts = count_words(text)
+    for word, n in counts.most_common():
+        print(f"{word}: {n}")`,
+      javascript: `function countWords(text) {
+  const counts = new Map();
+  for (const word of text.toLowerCase().split(/\\s+/)) {
+    if (!word) continue;
+    counts.set(word, (counts.get(word) || 0) + 1);
+  }
+  return counts;
+}
+
+const text = "the quick brown fox jumps over the lazy dog the fox";
+const counts = countWords(text);
+for (const [word, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+  console.log(\`\${word}: \${n}\`);
+}`,
+      typescript: `function countWords(text: string): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const word of text.toLowerCase().split(/\\s+/)) {
+    if (!word) continue;
+    counts.set(word, (counts.get(word) ?? 0) + 1);
+  }
+  return counts;
+}
+
+const text = "the quick brown fox jumps over the lazy dog the fox";
+const counts = countWords(text);
+for (const [word, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+  console.log(\`\${word}: \${n}\`);
+}`,
+      java: `import java.util.*;
+
+public class WordCount {
+    public static Map<String, Integer> countWords(String text) {
+        Map<String, Integer> counts = new LinkedHashMap<>();
+        for (String word : text.toLowerCase().split("\\\\s+")) {
+            if (word.isEmpty()) continue;
+            counts.merge(word, 1, Integer::sum);
+        }
+        return counts;
+    }
+
+    public static void main(String[] args) {
+        String text = "the quick brown fox jumps over the lazy dog the fox";
+        countWords(text).entrySet().stream()
+            .sorted((a, b) -> b.getValue() - a.getValue())
+            .forEach(e -> System.out.println(e.getKey() + ": " + e.getValue()));
+    }
+}`,
+      cpp: `#include <iostream>
+#include <map>
+#include <sstream>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+using namespace std;
+
+map<string, int> countWords(const string& text) {
+    map<string, int> counts;
+    istringstream iss(text);
+    string word;
+    while (iss >> word) {
+        for (auto& c : word) c = tolower((unsigned char)c);
+        counts[word]++;
+    }
+    return counts;
+}
+
+int main() {
+    string text = "the quick brown fox jumps over the lazy dog the fox";
+    auto counts = countWords(text);
+    vector<pair<string, int>> pairs(counts.begin(), counts.end());
+    sort(pairs.begin(), pairs.end(), [](auto& a, auto& b){ return a.second > b.second; });
+    for (auto& [w, n] : pairs) cout << w << ": " << n << endl;
+    return 0;
+}`,
+      c: `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_WORDS 64
+#define MAX_LEN 32
+
+int main(void) {
+    const char* text = "the quick brown fox jumps over the lazy dog the fox";
+    char words[MAX_WORDS][MAX_LEN];
+    int counts[MAX_WORDS] = {0};
+    int unique = 0;
+
+    char buf[256];
+    strncpy(buf, text, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\\0';
+
+    char* tok = strtok(buf, " ");
+    while (tok) {
+        for (char* p = tok; *p; p++) *p = (char)tolower((unsigned char)*p);
+        int found = 0;
+        for (int i = 0; i < unique; i++) {
+            if (strcmp(words[i], tok) == 0) { counts[i]++; found = 1; break; }
+        }
+        if (!found && unique < MAX_WORDS) {
+            strncpy(words[unique], tok, MAX_LEN - 1);
+            words[unique][MAX_LEN - 1] = '\\0';
+            counts[unique++] = 1;
+        }
+        tok = strtok(NULL, " ");
+    }
+
+    for (int i = 0; i < unique; i++) printf("%s: %d\\n", words[i], counts[i]);
+    return 0;
+}`,
+      csharp: `using System;
+using System.Linq;
+
+class WordCount {
+    static void Main() {
+        string text = "the quick brown fox jumps over the lazy dog the fox";
+        var counts = text.ToLower()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .GroupBy(w => w)
+            .Select(g => new { Word = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count);
+        foreach (var item in counts) Console.WriteLine($"{item.Word}: {item.Count}");
+    }
+}`,
+      go: `package main
+
+import (
+    "fmt"
+    "sort"
+    "strings"
+)
+
+func countWords(text string) map[string]int {
+    counts := map[string]int{}
+    for _, word := range strings.Fields(strings.ToLower(text)) {
+        counts[word]++
+    }
+    return counts
+}
+
+func main() {
+    text := "the quick brown fox jumps over the lazy dog the fox"
+    counts := countWords(text)
+    type pair struct { word string; n int }
+    pairs := make([]pair, 0, len(counts))
+    for w, n := range counts { pairs = append(pairs, pair{w, n}) }
+    sort.Slice(pairs, func(i, j int) bool { return pairs[i].n > pairs[j].n })
+    for _, p := range pairs { fmt.Printf("%s: %d\\n", p.word, p.n) }
+}`,
+      rust: `use std::collections::HashMap;
+
+fn count_words(text: &str) -> HashMap<String, u32> {
+    let mut counts = HashMap::new();
+    for word in text.to_lowercase().split_whitespace() {
+        *counts.entry(word.to_string()).or_insert(0) += 1;
+    }
+    counts
+}
+
+fn main() {
+    let text = "the quick brown fox jumps over the lazy dog the fox";
+    let counts = count_words(text);
+    let mut pairs: Vec<_> = counts.iter().collect();
+    pairs.sort_by(|a, b| b.1.cmp(a.1));
+    for (word, n) in pairs {
+        println!("{}: {}", word, n);
+    }
+}`,
+    },
+  },
 };
+
+// Curated suggestion chips shown in the Instruction panel. Each label is
+// a single-tap learner-friendly idea; the `instruction` text is what
+// actually gets fed into generateCode(), guaranteed to match one of the
+// templates above so the learner always gets a real, runnable example.
+// Note: each `instruction` is hand-tuned to hit its target template's
+// matcher without colliding with broader matchers earlier in TEMPLATES
+// (the `hello` template, for example, greedily matches "print" and
+// "display", so suggestion strings avoid those words unless they're
+// genuinely meant for hello).
+export const SUGGESTIONS = [
+  { label: 'Print "Hello, World!"',            instruction: 'say hello world and greet a user by name' },
+  { label: 'FizzBuzz from 1 to 20',            instruction: 'fizzbuzz from 1 to 20' },
+  { label: 'Check if a word is a palindrome',  instruction: 'check whether a word is a palindrome' },
+  { label: 'Find prime numbers up to 50',      instruction: 'find all prime numbers up to 50' },
+  { label: 'Reverse a string',                 instruction: 'reverse a string' },
+  { label: 'Count word occurrences',           instruction: 'count occurrences of each word in a sentence' },
+  { label: 'Sort a list of numbers',           instruction: 'sort a list of numbers from smallest to largest' },
+  { label: 'Factorial & Fibonacci',            instruction: 'calculate the factorial of 10 and fibonacci numbers' },
+  { label: 'Iterate through a list',           instruction: 'iterate through items in a collection one by one' },
+  { label: 'Build a counter class',            instruction: 'create a class that represents an inheritance hierarchy with shared behaviour' },
+  { label: 'Read & write a text file',         instruction: 'read a text file line by line and save the result back to a new file' },
+  { label: 'Fetch data from an HTTP API',      instruction: 'fetch JSON from a REST endpoint' },
+];
+
+// Pick `n` random suggestions without replacement. Deterministic shuffle
+// is overkill — we just want variety on each app open.
+export function pickSuggestions(n = 4) {
+  const pool = [...SUGGESTIONS];
+  const out = [];
+  while (pool.length && out.length < n) {
+    const idx = Math.floor(Math.random() * pool.length);
+    out.push(pool.splice(idx, 1)[0]);
+  }
+  return out;
+}
 
 export function generateCode(instruction, selectedLanguages) {
   const lower = instruction.toLowerCase();
@@ -2159,32 +3071,36 @@ export function generateCode(instruction, selectedLanguages) {
     if (template.match.test(lower)) {
       const code = {};
       for (const lang of selectedLanguages) {
-        code[lang] = template.code[lang] || `// ${instruction}\n// (Code for ${lang} not yet available)`;
+        code[lang] = template.code[lang] || `// (Code for ${lang} not yet available)`;
       }
       return { pseudocode: template.pseudocode, code };
     }
   }
 
-  // Default fallback
-  const pseudocode = `PROGRAM CustomTask\n  // ${instruction}\n  \n  FUNCTION execute()\n    // TODO: Implement the logic for:\n    // "${instruction}"\n    DISPLAY "Task completed"\n  END FUNCTION\n  \n  CALL execute()\nEND PROGRAM`;
+  // Default fallback — neutral scaffold using section markers only.
+  // The instruction text is preserved as the pseudocode header so the
+  // learner still sees what they asked for, but no language-level
+  // explanatory comments are baked into the generated source.
+  const pseudocode = `PROGRAM CustomTask\n  // ${instruction}\n\n  FUNCTION execute()\n    DISPLAY "Task completed"\n  END FUNCTION\n\n  CALL execute()\nEND PROGRAM`;
 
   const code = {};
   for (const lang of selectedLanguages) {
-    code[lang] = getDefaultCode(lang, instruction);
+    code[lang] = getDefaultCode(lang);
   }
   return { pseudocode, code };
 }
 
-function getDefaultCode(lang, instruction) {
+function getDefaultCode(lang) {
   const defaults = {
-    python: `# ${instruction}\n\ndef execute():\n    """TODO: Implement the logic"""\n    print("Task completed")\n\nif __name__ == "__main__":\n    execute()`,
-    javascript: `// ${instruction}\n\nfunction execute() {\n  // TODO: Implement the logic\n  console.log("Task completed");\n}\n\nexecute();`,
-    java: `// ${instruction}\n\npublic class CustomTask {\n    public static void execute() {\n        // TODO: Implement the logic\n        System.out.println("Task completed");\n    }\n\n    public static void main(String[] args) {\n        execute();\n    }\n}`,
-    cpp: `// ${instruction}\n#include <iostream>\nusing namespace std;\n\nvoid execute() {\n    // TODO: Implement the logic\n    cout << "Task completed" << endl;\n}\n\nint main() {\n    execute();\n    return 0;\n}`,
-    csharp: `// ${instruction}\nusing System;\n\nclass CustomTask {\n    static void Execute() {\n        // TODO: Implement the logic\n        Console.WriteLine("Task completed");\n    }\n\n    static void Main(string[] args) {\n        Execute();\n    }\n}`,
-    go: `// ${instruction}\npackage main\n\nimport "fmt"\n\nfunc execute() {\n    // TODO: Implement the logic\n    fmt.Println("Task completed")\n}\n\nfunc main() {\n    execute()\n}`,
-    rust: `// ${instruction}\n\nfn execute() {\n    // TODO: Implement the logic\n    println!("Task completed");\n}\n\nfn main() {\n    execute();\n}`,
-    typescript: `// ${instruction}\n\nfunction execute(): void {\n  // TODO: Implement the logic\n  console.log("Task completed");\n}\n\nexecute();`,
+    python: `def execute():\n    print("Task completed")\n\nif __name__ == "__main__":\n    execute()`,
+    javascript: `function execute() {\n  console.log("Task completed");\n}\n\nexecute();`,
+    typescript: `function execute(): void {\n  console.log("Task completed");\n}\n\nexecute();`,
+    java: `public class CustomTask {\n    public static void execute() {\n        System.out.println("Task completed");\n    }\n\n    public static void main(String[] args) {\n        execute();\n    }\n}`,
+    cpp: `#include <iostream>\nusing namespace std;\n\nvoid execute() {\n    cout << "Task completed" << endl;\n}\n\nint main() {\n    execute();\n    return 0;\n}`,
+    c: `#include <stdio.h>\n\nvoid execute(void) {\n    printf("Task completed\\n");\n}\n\nint main(void) {\n    execute();\n    return 0;\n}`,
+    csharp: `using System;\n\nclass CustomTask {\n    static void Execute() {\n        Console.WriteLine("Task completed");\n    }\n\n    static void Main(string[] args) {\n        Execute();\n    }\n}`,
+    go: `package main\n\nimport "fmt"\n\nfunc execute() {\n    fmt.Println("Task completed")\n}\n\nfunc main() {\n    execute()\n}`,
+    rust: `fn execute() {\n    println!("Task completed");\n}\n\nfn main() {\n    execute();\n}`,
   };
-  return defaults[lang] || `// ${instruction}\n// TODO: Implement`;
+  return defaults[lang] || `// (No default scaffold for ${lang})`;
 }

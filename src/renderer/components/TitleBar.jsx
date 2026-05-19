@@ -48,7 +48,7 @@ export default function TitleBar({
       {/* Centre: brand */}
       <div style={styles.center}>
         <span style={styles.logo}>⟨/⟩</span>
-        <span style={styles.title}>seec0de</span>
+        <span style={styles.title}>seec0de beta</span>
       </div>
 
       {/* Right side: update pill + settings */}

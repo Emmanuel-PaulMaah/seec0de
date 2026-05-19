@@ -23,7 +23,12 @@ import {
 //   - The pseudocode tab gets its own friendly placeholder, since
 //     "rendering" pseudocode doesn't make sense.
 
-const PREVIEWABLE = new Set(['html', 'css', 'javascript']);
+// CSS used to live here but standalone CSS has no DOM to apply to, so we
+// were injecting a fake demo document (Heading One / button / list) under
+// the user's styles. That demo competes with the user's actual project
+// and confuses people editing real .css files — so CSS now falls through
+// to the placeholder ("pair with HTML"), same as Java/Go/Rust.
+const PREVIEWABLE = new Set(['html', 'javascript']);
 const RUNNABLE    = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
 const DEBOUNCE_MS = 250;
 const MAX_LOG_ENTRIES = 200;
@@ -75,19 +80,6 @@ function buildSrcDoc(language, code) {
       return code.replace(/<html([^>]*)>/i, `<html$1><head>${stub}</head>`);
     }
     return `<!DOCTYPE html><html><head>${stub}</head><body>${code}</body></html>`;
-  }
-
-  if (language === 'css') {
-    return `<!DOCTYPE html><html><head>${stub}<style>${code}</style></head><body>
-      <div style="padding:24px;font:14px Inter,system-ui,sans-serif;color:#333;background:#fff;min-height:100vh">
-        <p style="color:#888;margin-bottom:14px;font-size:12px">CSS-only preview — sample elements below show your styles applied.</p>
-        <h1>Heading One</h1>
-        <h2>Heading Two</h2>
-        <p>This is a paragraph with <a href="#">a link</a> and <strong>bold text</strong>.</p>
-        <button>Button</button>
-        <ul><li>List item one</li><li>List item two</li></ul>
-      </div>
-    </body></html>`;
   }
 
   if (language === 'javascript') {
@@ -333,8 +325,13 @@ function PlaceholderView({ language, runnable, runLoading }) {
           Press <b>Run</b> in the editor toolbar above. Output will land in the
           <b> Console</b> tab.
         </>)}
-        {!isPseudo && !runnable && (<>
-          Live preview supports HTML, CSS, and JavaScript out of the box.
+        {!isPseudo && !runnable && language === 'css' && (<>
+          CSS needs a document to style. Open an <b>HTML file</b> that
+          links to this stylesheet and you'll see your styles applied
+          live. The file itself is fully editable here.
+        </>)}
+        {!isPseudo && !runnable && language !== 'css' && (<>
+          Live preview supports HTML and JavaScript out of the box.
           Other languages (Java, Go, Rust, C#…) can still be edited — they
           just don't render here.
         </>)}

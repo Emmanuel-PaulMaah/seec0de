@@ -12,7 +12,7 @@ import { generateCode } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI } from './engine/aiService';
 import { loadSettings } from './engine/settings';
-import { fileInfo, basename } from './engine/fileLanguage';
+import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
 // last time comes back the next time. Settings.showTerminal/showFileExplorer
@@ -35,6 +35,30 @@ const DEFAULT_FILENAME_FOR_LANG = {
   c:          'main.c',
   cpp:        'main.cpp',
 };
+
+// File extensions used when Generate writes scratch files into an open
+// folder. Covers every language the generator supports; falls back to
+// `.txt` for anything unknown.
+const EXT_FOR_LANG = {
+  python: 'py',  javascript: 'js', typescript: 'ts',
+  java:   'java', cpp: 'cpp', c: 'c',
+  csharp: 'cs',   go: 'go', rust: 'rs',
+};
+
+// Build a filename like "scratch-1.py" / "scratch-2.py" that doesn't
+// collide with anything already on disk. Async because we check existence
+// against the OS via the fs bridge.
+async function uniqueScratchPath(rootPath, language) {
+  const ext = EXT_FOR_LANG[language] || 'txt';
+  for (let n = 1; n < 1000; n++) {
+    const candidate = joinPath(rootPath, `scratch-${n}.${ext}`);
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await window.seecode.fs.pathExists(candidate);
+    if (!exists) return candidate;
+  }
+  // Fall back to a timestamp if 1000 scratches somehow exist.
+  return joinPath(rootPath, `scratch-${Date.now()}.${ext}`);
+}
 
 export default function App() {
   // ---- settings + onboarding -------------------------------------------
@@ -142,15 +166,32 @@ export default function App() {
   }, []);
 
   const handleOpenFile = useCallback(async (filePath) => {
+    // If the file is already open, just activate the tab — never re-read
+    // the file from disk. Previously we re-read unconditionally, which
+    // would silently overwrite unsaved edits when the user clicked the
+    // tab again (the async read landed AFTER their keystrokes). This is
+    // the bug behind "code i type into files disappears".
+    let alreadyOpen = false;
     setOpenFiles((prev) => {
-      if (prev.some((f) => f.path === filePath)) return prev;
+      if (prev.some((f) => f.path === filePath)) {
+        alreadyOpen = true;
+        return prev;
+      }
       return [...prev, { path: filePath, content: '', dirty: false, loading: true }];
     });
     setActivePath(filePath);
+    if (alreadyOpen) return;
     try {
       const { content } = await window.seecode.fs.readFile(filePath);
       setOpenFiles((prev) => prev.map((f) =>
-        f.path === filePath ? { path: filePath, content, dirty: false, loading: false } : f
+        // Guard: if the user typed in the brief window before the read
+        // resolved (f.dirty === true), keep their content; just flip the
+        // loading flag off. Disk wins only when the buffer is pristine.
+        f.path === filePath
+          ? (f.dirty
+              ? { ...f, loading: false }
+              : { path: filePath, content, dirty: false, loading: false })
+          : f
       ));
     } catch (err) {
       setOpenFiles((prev) => prev.map((f) =>
@@ -203,19 +244,108 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [activePath, handleSaveActiveFile]);
 
+  // ---- auto-save -------------------------------------------------------
+  // Any file with `dirty: true` is flushed to disk ~600ms after the last
+  // keystroke. This is the "permanence" the user expects: typing into a
+  // file means it is saved — they should never have to think about Ctrl+S
+  // again. We still keep the dirty marker visible until the save lands so
+  // the user sees the round-trip.
+  //
+  // Ref-tracked flight set prevents two concurrent writes for the same
+  // path; we always re-check the in-memory content after the write
+  // resolves and only clear the dirty flag if it still matches what we
+  // wrote (otherwise the user typed more — leave it dirty for the next
+  // pass).
+  const inFlightSaves = useRef(new Set());
+  useEffect(() => {
+    const dirtyFiles = openFiles.filter((f) => f.dirty && !f.loading);
+    if (dirtyFiles.length === 0) return undefined;
+
+    const timer = setTimeout(() => {
+      dirtyFiles.forEach((file) => {
+        if (inFlightSaves.current.has(file.path)) return;
+        inFlightSaves.current.add(file.path);
+        const snapshot = file.content;
+        window.seecode.fs.writeFile(file.path, snapshot)
+          .then(() => {
+            setOpenFiles((prev) => prev.map((f) =>
+              f.path === file.path && f.content === snapshot
+                ? { ...f, dirty: false }
+                : f
+            ));
+          })
+          .catch((err) => {
+            // Surface a quiet error in the explanation panel — don't
+            // wipe their content, just tell them something's wrong.
+            setExplanation({
+              summary: `Auto-save failed for ${file.path}: ${err.message}. Your changes are still in memory; try Ctrl+S.`,
+              lineByLine: [],
+            });
+          })
+          .finally(() => {
+            inFlightSaves.current.delete(file.path);
+          });
+      });
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [openFiles]);
+
   // ---- generator flows -------------------------------------------------
-  const handleGenerate = useCallback(() => {
-    if (!instruction.trim()) return;
-    const result = generateCode(instruction, selectedLanguages);
+  // `instructionOverride` lets the suggestion chips fire Generate
+  // immediately with their own text, bypassing the controlled-input
+  // round-trip delay (otherwise the click handler would race React's
+  // state update and read the stale `instruction`).
+  //
+  // Folder-open vs folder-closed split:
+  //   • No folder open → behaves like before: fills the in-memory
+  //     pseudocode + language tabs in the central editor.
+  //   • Folder open    → the central editor is "your project", so the
+  //     generator writes a real scratch file in the open folder (using
+  //     the practical language) and opens it as a file tab. No more
+  //     in-memory generated tabs competing with on-disk files.
+  const writeScratchFromResult = useCallback(async (result, language) => {
+    if (!rootPath) return;
+    const source = (result.code && result.code[language]) || '';
+    if (!source.trim()) return;
+    const target = await uniqueScratchPath(rootPath, language);
+    await window.seecode.fs.writeFile(target, source);
+    await handleOpenFile(target);
+  }, [rootPath, handleOpenFile]);
+
+  const handleGenerate = useCallback(async (instructionOverride) => {
+    const text = (typeof instructionOverride === 'string' ? instructionOverride : instruction).trim();
+    if (!text) return;
+    const language = settings.practicalLanguage || selectedLanguages[0] || 'python';
+    // When a folder is open we want the result on disk, not in the
+    // (now hidden) generated tabs. The practical language is what the
+    // learner is actually building in, so that's what we scaffold.
+    if (rootPath) {
+      const result = generateCode(text, [language]);
+      try {
+        await writeScratchFromResult(result, language);
+      } catch (err) {
+        setExplanation({ summary: `Couldn't create scratch file: ${err.message}`, lineByLine: [] });
+      }
+      return;
+    }
+    const result = generateCode(text, selectedLanguages);
     setGeneratedCode(result);
     setActivePath(null);
-  }, [instruction, selectedLanguages]);
+  }, [instruction, selectedLanguages, rootPath, settings.practicalLanguage, writeScratchFromResult]);
 
-  const handleAiGenerate = useCallback(async () => {
-    if (!instruction.trim() || aiLoading) return;
+  const handleAiGenerate = useCallback(async (instructionOverride) => {
+    const text = (typeof instructionOverride === 'string' ? instructionOverride : instruction).trim();
+    if (!text || aiLoading) return;
     setAiLoading(true);
     try {
-      const result = await generateCodeWithAI(instruction, selectedLanguages);
+      const language = settings.practicalLanguage || selectedLanguages[0] || 'python';
+      if (rootPath) {
+        const result = await generateCodeWithAI(text, [language]);
+        await writeScratchFromResult(result, language);
+        return;
+      }
+      const result = await generateCodeWithAI(text, selectedLanguages);
       setGeneratedCode(result);
       setActivePath(null);
     } catch (err) {
@@ -223,7 +353,7 @@ export default function App() {
     } finally {
       setAiLoading(false);
     }
-  }, [instruction, selectedLanguages, aiLoading]);
+  }, [instruction, selectedLanguages, aiLoading, rootPath, settings.practicalLanguage, writeScratchFromResult]);
 
   const handleCodeChange = useCallback((tab, value) => {
     setGeneratedCode((prev) => {
@@ -334,6 +464,19 @@ export default function App() {
     setShowOnboarding(true);
   }, []);
 
+  // Used by Settings → Toolchains "Install" buttons: pops the bottom
+  // terminal open (so the user actually sees it work), then pushes the
+  // install command into it as if they had typed it. Walks them through
+  // the link between Settings and the Terminal.
+  const handleRunInTerminal = useCallback((command) => {
+    if (!command) return;
+    setTerminalVisible(true);
+    // Give the terminal a tick to mount before we drive it.
+    setTimeout(() => {
+      terminalApi.current?.runCommand?.(command);
+    }, 60);
+  }, []);
+
   return (
     <div style={styles.container}>
       <TitleBar
@@ -387,6 +530,7 @@ export default function App() {
             runLoading={runLoading}
             activeGeneratedTab={activeGeneratedTab}
             onActivateGeneratedTab={setActiveGeneratedTab}
+            folderOpen={!!rootPath}
           />
 
           <LivePreviewPanel
@@ -424,6 +568,7 @@ export default function App() {
         onClose={() => setShowSettings(false)}
         onSettingsChange={handleSettingsChange}
         onRerunOnboarding={handleRerunOnboarding}
+        onRunInTerminal={handleRunInTerminal}
       />
     </div>
   );
