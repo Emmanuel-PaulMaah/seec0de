@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
+  Cpu, Play, Copy, Download,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
@@ -28,7 +29,57 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 // Visual direction: AI-Native UI. Slides in from the right, dimmed scrim
 // behind, generous whitespace, single-column, semantic icons (no emoji).
 
-export default function SettingsDrawer({ open, onClose, onSettingsChange, onRerunOnboarding }) {
+// Per-language install recipes for the "Toolchains" section. We show the
+// command, an "Install" button that pushes it into the bottom terminal,
+// and a "Copy" fallback for users who'd rather paste it themselves. The
+// commands are picked for Windows first because that's seec0de's primary
+// distribution target; macOS/Linux hints sit alongside as plain text.
+const INSTALL_RECIPES = {
+  python: {
+    label: 'Python',
+    why: 'Runs .py files. seec0de uses the first of `python`, `py`, or `python3` on PATH.',
+    win:   'winget install --id Python.Python.3.12 -e --source winget',
+    macos: 'brew install python',
+    linux: 'sudo apt install python3',
+  },
+  javascript: {
+    label: 'Node.js (for JavaScript)',
+    why: 'Runs .js files. seec0de looks for `node` on PATH.',
+    win:   'winget install --id OpenJS.NodeJS.LTS -e --source winget',
+    macos: 'brew install node',
+    linux: 'sudo apt install nodejs npm',
+  },
+  typescript: {
+    label: 'tsx (for TypeScript)',
+    why: 'Runs .ts files directly. Needs Node.js first; installs `tsx` globally.',
+    win:   'npm install -g tsx',
+    macos: 'npm install -g tsx',
+    linux: 'npm install -g tsx',
+  },
+  c: {
+    label: 'C compiler',
+    why: 'Compiles & runs .c files. seec0de looks for `gcc`, `clang`, then MSVC `cl`.',
+    win:   'winget install --id LLVM.LLVM -e --source winget',
+    macos: 'xcode-select --install',
+    linux: 'sudo apt install build-essential',
+  },
+  cpp: {
+    label: 'C++ compiler',
+    why: 'Compiles & runs .cpp files. seec0de looks for `g++`, `clang++`, then MSVC `cl`.',
+    win:   'winget install --id LLVM.LLVM -e --source winget',
+    macos: 'xcode-select --install',
+    linux: 'sudo apt install build-essential',
+  },
+};
+
+const PLATFORM_LABEL = (() => {
+  const p = (typeof navigator !== 'undefined' ? navigator.platform : '') || '';
+  if (/win/i.test(p)) return 'win';
+  if (/mac/i.test(p)) return 'macos';
+  return 'linux';
+})();
+
+export default function SettingsDrawer({ open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal }) {
   const [settings, setSettings] = useState(loadSettings());
   const [apiKey, setApiKey]     = useState(getSettingsApiKey());
   const [showKey, setShowKey]   = useState(false);
@@ -210,7 +261,12 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
             />
           </Section>
 
-          {/* ---- 4. About & Updates ----------------------------------- */}
+          {/* ---- 4. Toolchains ----------------------------------------- */}
+          <Section icon={<Cpu size={13} />} title="Toolchains">
+            <ToolchainPanel onRunInTerminal={onRunInTerminal} />
+          </Section>
+
+          {/* ---- 5. About & Updates ----------------------------------- */}
           <Section icon={<Info size={13} />} title="About & Updates">
             <UpdatePanel update={update} />
           </Section>
@@ -344,6 +400,171 @@ function UpdatePanel({ update }) {
           </button>
         )}
       </div>
+    </>
+  );
+}
+
+// ToolchainPanel — Settings → Toolchains.
+//
+// Probes the main process for which language compilers/interpreters are on
+// PATH, shows a status row per language (Python / Node / tsx / gcc / g++),
+// and offers a one-click "Install" button that drops the platform-correct
+// install command into the bottom terminal so the user can watch it run.
+//
+// Walkthrough flavour:
+//   1. Open Settings → Toolchains.
+//   2. Each missing tool shows its install command + Install / Copy buttons.
+//   3. Install pops the terminal and types the command in.
+//   4. When the install finishes (terminal exit code 0), the user clicks
+//      "Re-check toolchains" and the green checkmarks light up.
+//
+// We deliberately don't auto-poll the toolchains: the terminal already
+// gives honest feedback while an install runs, and polling masks the
+// "watch the install happen" moment we want learners to internalise.
+function ToolchainPanel({ onRunInTerminal }) {
+  const [status, setStatus] = useState(null);   // null = first load; {} = checked
+  const [checking, setChecking] = useState(true);
+  const [copiedLang, setCopiedLang] = useState(null);
+  const [installingLang, setInstallingLang] = useState(null);
+
+  const probe = useCallback(async () => {
+    setChecking(true);
+    try {
+      const result = await window.seecode.runner.checkToolchains();
+      setStatus(result && !result.error ? result : {});
+    } catch {
+      setStatus({});
+    } finally {
+      setChecking(false);
+    }
+  }, []);
+
+  useEffect(() => { probe(); }, [probe]);
+
+  const handleInstall = useCallback((langId) => {
+    const recipe = INSTALL_RECIPES[langId];
+    if (!recipe) return;
+    const command = recipe[PLATFORM_LABEL];
+    if (!command || !onRunInTerminal) return;
+    setInstallingLang(langId);
+    onRunInTerminal(command);
+  }, [onRunInTerminal]);
+
+  const handleCopy = useCallback(async (langId) => {
+    const recipe = INSTALL_RECIPES[langId];
+    if (!recipe) return;
+    const command = recipe[PLATFORM_LABEL];
+    if (!command) return;
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopiedLang(langId);
+      setTimeout(() => {
+        setCopiedLang((cur) => (cur === langId ? null : cur));
+      }, 1600);
+    } catch {
+      /* clipboard blocked — Copy is a fallback anyway */
+    }
+  }, []);
+
+  const handleRecheck = useCallback(() => {
+    setInstallingLang(null);
+    probe();
+  }, [probe]);
+
+  return (
+    <>
+      <p style={styles.fieldHint}>
+        seec0de's <b>Run</b> button needs the right compiler or interpreter on PATH.
+        Here's what's installed on this machine — and one-click install for what's missing.
+      </p>
+
+      <div style={toolchainStyles.list}>
+        {Object.entries(INSTALL_RECIPES).map(([langId, recipe]) => {
+          const row = status?.[langId];
+          const isInstalled = !!row?.installed;
+          const isLoading   = checking && !row;
+          const command     = recipe[PLATFORM_LABEL];
+
+          return (
+            <div key={langId} style={toolchainStyles.row}>
+              <div style={toolchainStyles.head}>
+                <span style={toolchainStyles.statusIcon}>
+                  {isLoading
+                    ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
+                    : isInstalled
+                      ? <CheckCircle2 size={12} style={{ color: TONE_COLOURS.success }} />
+                      : <AlertCircle size={12} style={{ color: TONE_COLOURS.error }} />}
+                </span>
+                <span style={toolchainStyles.label}>{recipe.label}</span>
+                {isInstalled && row?.version && (
+                  <span style={toolchainStyles.version} title={row.version}>
+                    {row.version.length > 36 ? row.version.slice(0, 33) + '…' : row.version}
+                  </span>
+                )}
+              </div>
+
+              <p style={toolchainStyles.why}>{recipe.why}</p>
+
+              {!isLoading && !isInstalled && command && (
+                <>
+                  <code style={toolchainStyles.cmd}>{command}</code>
+                  <div style={toolchainStyles.actions}>
+                    <button
+                      type="button"
+                      style={{
+                        ...toolchainStyles.installBtn,
+                        ...(!onRunInTerminal ? styles.disabled : {}),
+                      }}
+                      onClick={() => handleInstall(langId)}
+                      disabled={!onRunInTerminal}
+                      title={onRunInTerminal
+                        ? 'Run this in the bottom terminal'
+                        : 'Terminal is not available right now'}
+                    >
+                      <Play size={11} />
+                      <span style={{ marginLeft: 4 }}>Install</span>
+                    </button>
+                    <button
+                      type="button"
+                      style={toolchainStyles.copyBtn}
+                      onClick={() => handleCopy(langId)}
+                      title="Copy the command to clipboard"
+                    >
+                      {copiedLang === langId
+                        ? <Check size={11} />
+                        : <Copy size={11} />}
+                      <span style={{ marginLeft: 4 }}>
+                        {copiedLang === langId ? 'Copied' : 'Copy'}
+                      </span>
+                    </button>
+                  </div>
+                  {installingLang === langId && (
+                    <p style={toolchainStyles.installingNote}>
+                      <Download size={11} style={{ marginRight: 4, verticalAlign: -1 }} />
+                      Watch the bottom terminal. When it finishes (exit code 0), click
+                      <b> Re-check toolchains</b> below — the checkmark should light up.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        style={{ ...styles.ghostBtn, marginTop: 10, alignSelf: 'flex-start' }}
+        onClick={handleRecheck}
+        disabled={checking}
+        title="Probe PATH again for installed compilers and interpreters"
+      >
+        <RefreshCw
+          size={11}
+          style={checking ? { animation: 'spin 1s linear infinite' } : undefined}
+        />
+        <span style={{ marginLeft: 6 }}>Re-check toolchains</span>
+      </button>
     </>
   );
 }
@@ -617,5 +838,116 @@ const styles = {
     color: 'var(--text-muted)',
     textAlign: 'center',
     marginTop: 18,
+  },
+};
+
+// Toolchain row styles live in their own object so the main `styles` block
+// stays focused on the legacy settings sections. Keep the visual language
+// (border-radius, palette, font sizes) aligned with `styles.toggleRow` /
+// `styles.kvRow` for a single, cohesive Settings surface.
+const toolchainStyles = {
+  list: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  row: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    padding: '10px 12px',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    background: 'var(--bg-tertiary)',
+  },
+  head: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusIcon: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 14,
+    flexShrink: 0,
+  },
+  label: {
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+    flex: 1,
+  },
+  version: {
+    fontSize: 10.5,
+    color: 'var(--text-muted)',
+    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    maxWidth: 180,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  why: {
+    fontSize: 11,
+    color: 'var(--text-muted)',
+    lineHeight: 1.5,
+    margin: '2px 0 0',
+  },
+  cmd: {
+    display: 'block',
+    marginTop: 6,
+    padding: '6px 8px',
+    background: 'var(--bg-input)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 4,
+    color: 'var(--text-primary)',
+    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontSize: 11,
+    wordBreak: 'break-all',
+    whiteSpace: 'pre-wrap',
+  },
+  actions: {
+    display: 'flex',
+    gap: 6,
+    marginTop: 6,
+  },
+  installBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'var(--accent)',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'var(--accent)',
+    borderRadius: 6,
+    color: '#fff',
+    fontSize: 11.5,
+    fontWeight: 600,
+    padding: '5px 10px',
+    cursor: 'pointer',
+  },
+  copyBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'transparent',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'var(--border-strong)',
+    borderRadius: 6,
+    color: 'var(--text-secondary)',
+    fontSize: 11.5,
+    padding: '5px 10px',
+    cursor: 'pointer',
+  },
+  installingNote: {
+    fontSize: 11,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.5,
+    margin: '8px 0 0',
+    padding: '6px 8px',
+    background: 'var(--bg-input)',
+    border: '1px dashed var(--border-strong)',
+    borderRadius: 4,
   },
 };

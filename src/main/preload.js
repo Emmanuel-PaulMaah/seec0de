@@ -24,6 +24,9 @@ contextBridge.exposeInMainWorld('seecode', {
   },
   runner: {
     run: (payload) => ipcRenderer.invoke('runner:run', payload),
+    // Returns { python, javascript, typescript, c, cpp }, each
+    // { installed: bool, tool: string|null, version: string|null }.
+    checkToolchains: () => ipcRenderer.invoke('runner:check-toolchains'),
   },
   updates: {
     // One-shot: fetch the current updater status.
