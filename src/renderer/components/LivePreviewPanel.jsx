@@ -7,90 +7,36 @@ import {
 // LivePreviewPanel — the right-side "what does my code do?" surface.
 //
 // Two views:
-//   • Preview  — sandboxed iframe rendering HTML/CSS/JS as the user types.
-//                Inspired by FreeCodeCamp / CodeSandbox: changes appear live
-//                with a 250ms debounce; manual refresh forces a remount.
-//   • Console  — captures console.log/warn/error from the iframe via
-//                postMessage, plus stdout/stderr from the runner service
-//                (Python, C, C++, Node). One unified output surface so
-//                the bottom terminal can stay reserved for shell commands.
+//   • Preview  — sandboxed iframe rendering HTML as the user types. JS,
+//                CSS, and everything else fall through to a "press Run"
+//                placeholder, so all non-HTML output flows through the
+//                explicit Run button.
+//   • Console  — stdout/stderr from the runner service (JS, Python, C,
+//                C++…). Populated only by the Run button in CodePanel.
 //
 // Pedagogy notes:
-//   - For HTML/CSS/JS, "Run" is implicit — the iframe is always live. The
-//     learner sees cause→effect immediately, the FCC pattern.
-//   - For Python/C/C++, "Run" stays explicit (it has to spawn a process)
+//   - For HTML, "Run" is implicit — the iframe is always live. The
+//     learner sees cause→effect immediately.
+//   - For every other runnable language (JS, TS, Python, C, C++), "Run"
+//     is explicit: the user clicks the Run button in the editor toolbar
 //     and we auto-flip to the Console tab when output arrives.
 //   - The pseudocode tab gets its own friendly placeholder, since
 //     "rendering" pseudocode doesn't make sense.
 
-// CSS used to live here but standalone CSS has no DOM to apply to, so we
-// were injecting a fake demo document (Heading One / button / list) under
-// the user's styles. That demo competes with the user's actual project
-// and confuses people editing real .css files — so CSS now falls through
-// to the placeholder ("pair with HTML"), same as Java/Go/Rust.
-const PREVIEWABLE = new Set(['html', 'javascript']);
+// CSS isn't previewable on its own — pair with HTML.
+// JavaScript is intentionally NOT previewable: we want learners to use
+// the explicit Run button so output is a deliberate action, not a side-
+// effect of typing.
+const PREVIEWABLE = new Set(['html']);
 const RUNNABLE    = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
 const DEBOUNCE_MS = 250;
 const MAX_LOG_ENTRIES = 200;
 
-// Injected at the top of every previewed document so console.* in the
-// iframe lands back in our parent UI. Stringified so srcDoc carries it.
-const CONSOLE_CAPTURE = `(function(){
-  function safe(v){
-    try {
-      if (v === undefined) return 'undefined';
-      if (v === null) return 'null';
-      if (typeof v === 'function') return v.toString();
-      if (typeof v === 'object') {
-        try { return JSON.stringify(v, null, 2); }
-        catch { return String(v); }
-      }
-      return String(v);
-    } catch (e) { return '<unprintable>'; }
-  }
-  function send(level, args){
-    try {
-      parent.postMessage({
-        __seecode: true, kind: 'console', level: level,
-        args: Array.prototype.slice.call(args).map(safe),
-      }, '*');
-    } catch(e){}
-  }
-  ['log','info','warn','error','debug'].forEach(function(level){
-    var orig = console[level];
-    console[level] = function(){ send(level, arguments); if (orig) orig.apply(console, arguments); };
-  });
-  window.addEventListener('error', function(e){
-    send('error', [(e.message || 'Error') + (e.lineno ? ' (line ' + e.lineno + ')' : '')]);
-  });
-  window.addEventListener('unhandledrejection', function(e){
-    send('error', ['Unhandled promise rejection: ' + safe(e.reason)]);
-  });
-})();`.trim();
-
 function buildSrcDoc(language, code) {
-  const stub = `<script>${CONSOLE_CAPTURE}<\/script>`;
   if (!code) return null;
-
   if (language === 'html') {
-    if (/<head[^>]*>/i.test(code)) {
-      return code.replace(/<head([^>]*)>/i, `<head$1>${stub}`);
-    }
-    if (/<html[^>]*>/i.test(code)) {
-      return code.replace(/<html([^>]*)>/i, `<html$1><head>${stub}</head>`);
-    }
-    return `<!DOCTYPE html><html><head>${stub}</head><body>${code}</body></html>`;
+    return code;
   }
-
-  if (language === 'javascript') {
-    return `<!DOCTYPE html><html><head>${stub}<style>
-      body{font:14px Inter,system-ui,sans-serif;color:#333;background:#fff;padding:20px;margin:0}
-    </style></head><body><script>
-      try { ${code}\n }
-      catch(__e){ console.error(__e && __e.message ? __e.message : String(__e)); }
-    <\/script></body></html>`;
-  }
-
   return null;
 }
 
@@ -129,20 +75,10 @@ export default function LivePreviewPanel({
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [code, previewable]);
 
-  // Capture console messages from the iframe.
-  useEffect(() => {
-    const onMessage = (e) => {
-      const data = e.data;
-      if (!data || data.__seecode !== true || data.kind !== 'console') return;
-      setConsoleEntries((prev) => {
-        const id = ++idRef.current;
-        const next = [...prev, { id, ts: Date.now(), level: data.level, args: data.args || [] }];
-        return next.length > MAX_LOG_ENTRIES ? next.slice(-MAX_LOG_ENTRIES) : next;
-      });
-    };
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, []);
+  // Console output is no longer driven by the iframe — it's populated
+  // exclusively by the runner (Run button). The postMessage capture used
+  // to pipe in-iframe console.log calls here, but that conflated typing
+  // with running. Now Run is the only thing that produces console output.
 
   // When the language changes (different file/tab), drop old console output.
   useEffect(() => {
@@ -287,7 +223,7 @@ export default function LivePreviewPanel({
         )}
 
         {view === 'console' && (
-          <ConsoleView entries={consoleEntries} language={language} />
+          <ConsoleView entries={consoleEntries} />
         )}
       </div>
 
@@ -340,7 +276,7 @@ function PlaceholderView({ language, runnable, runLoading }) {
   );
 }
 
-function ConsoleView({ entries, language }) {
+function ConsoleView({ entries }) {
   const scrollRef = useRef(null);
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -352,9 +288,7 @@ function ConsoleView({ entries, language }) {
         <TermIcon size={20} color="var(--text-muted)" />
         <span style={styles.consoleEmptyTitle}>Console is quiet.</span>
         <span style={styles.consoleEmptyHint}>
-          {language === 'javascript' || language === 'html'
-            ? <>Anything you <code style={styles.kbd}>console.log()</code> in the preview lands here.</>
-            : <>Click <b>Run</b> to execute and see output here.</>}
+          Click <b>Run</b> in the editor toolbar to execute your code and see output here.
         </span>
       </div>
     );
@@ -557,15 +491,6 @@ const styles = {
     fontSize: 11.5,
     color: 'var(--text-muted)',
     maxWidth: 280,
-  },
-  kbd: {
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border)',
-    borderRadius: 3,
-    padding: '0px 5px',
-    fontSize: 10.5,
-    color: 'var(--text-primary)',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
   },
   consoleScroll: {
     flex: 1,
