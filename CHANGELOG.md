@@ -16,6 +16,23 @@ Section conventions:
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-05-20
+
+### Changed
+- **Single Generate button** in the Instruction panel ([`InstructionPanel.jsx`](src/renderer/components/InstructionPanel.jsx)) — was: Generate + AI Generate. The unified button auto-routes in [`App.jsx`](src/renderer/App.jsx): when a Gemini API key is present *and* `navigator.onLine === true`, it calls the AI; on any AI failure (network drop mid-call, quota, parse error) or when no key/offline, it silently falls back to the built-in offline template generator. The learner always gets *something*, the UI no longer asks them to pick a path.
+- **Single Explain button** in the Code panel ([`CodePanel.jsx`](src/renderer/components/CodePanel.jsx)) — was: Explain + AI Explain. The floating button that appears on text selection now applies the same auto-fallback (AI first when available, offline glossary explainer as the safety net). Shows a "Thinking…" spinner during AI calls.
+- **Console tab is now Run-driven only** ([`LivePreviewPanel.jsx`](src/renderer/components/LivePreviewPanel.jsx)). The iframe-side `console.*` capture (the `CONSOLE_CAPTURE` IIFE + parent `postMessage` listener) has been removed. Typing into the editor no longer produces Console entries. Run — invoked from the editor toolbar in `CodePanel` — is the single, explicit gesture that produces console output. Same mental model that already applied to Python/C/C++ now applies uniformly.
+- **JavaScript Preview tab no longer live-executes.** JS was removed from `PREVIEWABLE` and now falls through to the existing `PlaceholderView` ("Ready to run JavaScript — Press **Run** in the editor toolbar above. Output will land in the **Console** tab.") — identical placeholder Python, C, and C++ already showed. Run is the canonical way to execute JS.
+- **Line-by-line explanations render as a single-open accordion** ([`ExplanationSidebar.jsx`](src/renderer/components/ExplanationSidebar.jsx)). Each explained line is a collapsible card; everything starts collapsed; clicking a line opens its explanation and auto-closes whichever line was previously open. State (`openIndex`) resets to `-1` on every new explanation so the learner starts from a clean slate. Subtle "click a line to expand" hint sits next to the **Line by Line** heading.
+
+### Removed
+- **AI Generate button.** Consolidated into Generate.
+- **AI Explain button.** Consolidated into Explain.
+- **Live JavaScript preview.** The Live Preview panel no longer renders JS into a sandboxed iframe on every keystroke.
+- **Iframe `console.*` capture.** The `CONSOLE_CAPTURE` injected stub, the `__seecode`/`postMessage` bridge, and the parent `message` event listener are gone. Only `runnerOutput` populates the Console tab.
+- **`handleAiGenerate` / `handleAiExplain`** in `App.jsx`. Both flows live inside the unified `handleGenerate` / `handleSelectionExplain` callbacks now.
+- Dead style entries: `aiBtn` (InstructionPanel), `aiExplainBtn` (CodePanel), `kbd` (LivePreviewPanel).
+
 ## [2.5.1] - 2026-05-19
 
 ### Fixed
