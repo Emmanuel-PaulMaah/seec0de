@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Lock, Unlock, Sparkles, Loader, X, Save, Play, Lightbulb } from 'lucide-react';
+import { Lock, Unlock, Loader, X, Save, Play, Lightbulb } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
@@ -41,7 +41,6 @@ export default function CodePanel({
   selectedLanguages,
   onCodeChange,
   onSelectionExplain,
-  onAiExplain,
   aiLoading,
   // file-manager props
   openFiles = [],
@@ -156,17 +155,13 @@ export default function CodePanel({
 
   const handleExplain = useCallback(() => {
     if (selection && (showingFile || !isPseudocode)) {
+      // Single Explain entry-point — App decides whether to use AI
+      // (when online + API key present) or fall back to the offline
+      // line-by-line explainer.
       onSelectionExplain?.(selection, explainLanguage);
       clearSelection();
     }
   }, [selection, isPseudocode, showingFile, explainLanguage, onSelectionExplain, clearSelection]);
-
-  const handleAiExplain = useCallback(() => {
-    if (selection && (showingFile || !isPseudocode)) {
-      onAiExplain?.(selection, explainLanguage);
-      clearSelection();
-    }
-  }, [selection, isPseudocode, showingFile, explainLanguage, onAiExplain, clearSelection]);
 
   const showExplainButtons = (showingFile || (editable && !isPseudocode)) && selection && btnPos;
 
@@ -344,18 +339,15 @@ export default function CodePanel({
         )}
         {showExplainButtons && (
           <div style={{ ...styles.btnGroup, top: btnPos.top, left: btnPos.left }}>
-            <button style={styles.explainBtn} onClick={handleExplain}>
-              Explain
-            </button>
             <button
-              style={{ ...styles.explainBtn, ...styles.aiExplainBtn }}
-              onClick={handleAiExplain}
+              style={styles.explainBtn}
+              onClick={handleExplain}
               disabled={aiLoading}
+              title={aiLoading ? 'Thinking…' : 'Explain selected code'}
             >
               {aiLoading
-                ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
-                : <Sparkles size={12} />}
-              <span style={{ marginLeft: 4 }}>AI Explain</span>
+                ? <><Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 4 }}>Thinking…</span></>
+                : <span>Explain</span>}
             </button>
           </div>
         )}
@@ -544,12 +536,7 @@ const styles = {
   },
   explainBtn: {
     background: 'var(--bg-elevated)',
-    // Longhand: `aiExplainBtn` overrides only `borderColor`. Mixing it
-    // with a `border` shorthand here would trigger React's "removing a
-    // style property during rerender" warning when toggling variants.
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: 'var(--border-strong)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 6,
     color: 'var(--text-primary)',
     fontSize: 12,
@@ -557,10 +544,6 @@ const styles = {
     boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
     display: 'inline-flex',
     alignItems: 'center',
-  },
-  aiExplainBtn: {
-    background: 'var(--bg-tertiary)',
-    borderColor: 'var(--text-secondary)',
   },
   runBtn: {
     display: 'inline-flex',
