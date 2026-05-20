@@ -10,7 +10,7 @@ import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer from './components/SettingsDrawer';
 import { generateCode } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
-import { generateCodeWithAI, explainCodeWithAI } from './engine/aiService';
+import { generateCodeWithAI, explainCodeWithAI, hasApiKey } from './engine/aiService';
 import { loadSettings } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 
@@ -313,45 +313,46 @@ export default function App() {
     await handleOpenFile(target);
   }, [rootPath, handleOpenFile]);
 
+  // Single unified Generate flow. If we have an API key AND we're online,
+  // try the AI generator first; on any failure (or when offline/no key),
+  // silently fall back to the built-in template generator so the learner
+  // always gets *something*.
   const handleGenerate = useCallback(async (instructionOverride) => {
     const text = (typeof instructionOverride === 'string' ? instructionOverride : instruction).trim();
-    if (!text) return;
-    const language = settings.practicalLanguage || selectedLanguages[0] || 'python';
-    // When a folder is open we want the result on disk, not in the
-    // (now hidden) generated tabs. The practical language is what the
-    // learner is actually building in, so that's what we scaffold.
-    if (rootPath) {
-      const result = generateCode(text, [language]);
-      try {
-        await writeScratchFromResult(result, language);
-      } catch (err) {
-        setExplanation({ summary: `Couldn't create scratch file: ${err.message}`, lineByLine: [] });
-      }
-      return;
-    }
-    const result = generateCode(text, selectedLanguages);
-    setGeneratedCode(result);
-    setActivePath(null);
-  }, [instruction, selectedLanguages, rootPath, settings.practicalLanguage, writeScratchFromResult]);
-
-  const handleAiGenerate = useCallback(async (instructionOverride) => {
-    const text = (typeof instructionOverride === 'string' ? instructionOverride : instruction).trim();
     if (!text || aiLoading) return;
-    setAiLoading(true);
-    try {
-      const language = settings.practicalLanguage || selectedLanguages[0] || 'python';
+    const language = settings.practicalLanguage || selectedLanguages[0] || 'python';
+    const languagesForGen = rootPath ? [language] : selectedLanguages;
+
+    const applyResult = async (result) => {
       if (rootPath) {
-        const result = await generateCodeWithAI(text, [language]);
         await writeScratchFromResult(result, language);
-        return;
+      } else {
+        setGeneratedCode(result);
+        setActivePath(null);
       }
-      const result = await generateCodeWithAI(text, selectedLanguages);
-      setGeneratedCode(result);
-      setActivePath(null);
+    };
+
+    const canUseAi = hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
+
+    if (canUseAi) {
+      setAiLoading(true);
+      try {
+        const result = await generateCodeWithAI(text, languagesForGen);
+        await applyResult(result);
+        return;
+      } catch (err) {
+        // AI failed — fall through to the offline generator below.
+        console.warn('[seec0de] AI generate failed, falling back to offline:', err?.message || err);
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    try {
+      const result = generateCode(text, languagesForGen);
+      await applyResult(result);
     } catch (err) {
-      setExplanation({ summary: `AI Error: ${err.message}`, lineByLine: [] });
-    } finally {
-      setAiLoading(false);
+      setExplanation({ summary: `Couldn't generate: ${err.message}`, lineByLine: [] });
     }
   }, [instruction, selectedLanguages, aiLoading, rootPath, settings.practicalLanguage, writeScratchFromResult]);
 
@@ -362,25 +363,39 @@ export default function App() {
     });
   }, []);
 
-  const handleSelectionExplain = useCallback((selectedCode, language) => {
-    const result = explainCode(selectedCode, language);
-    setExplanation(result);
-    // If the explanation panel is collapsed, pop it open so the user
-    // actually sees what they asked for. (Same pattern as run→preview.)
-    if (explanationCollapsed) setExplanationCollapsed(false);
-  }, [explanationCollapsed]);
-
-  const handleAiExplain = useCallback(async (selectedCode, language) => {
+  // Single unified Explain flow. If we have an API key AND we're online,
+  // try the AI explainer first; on any failure (or when offline/no key),
+  // fall back to the built-in line-by-line explainer.
+  const handleSelectionExplain = useCallback(async (selectedCode, language) => {
     if (aiLoading) return;
-    setAiLoading(true);
-    try {
-      const result = await explainCodeWithAI(selectedCode, language);
+
+    const reveal = (result) => {
       setExplanation(result);
+      // If the explanation panel is collapsed, pop it open so the user
+      // actually sees what they asked for. (Same pattern as run→preview.)
       if (explanationCollapsed) setExplanationCollapsed(false);
+    };
+
+    const canUseAi = hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
+
+    if (canUseAi) {
+      setAiLoading(true);
+      try {
+        const result = await explainCodeWithAI(selectedCode, language);
+        reveal(result);
+        return;
+      } catch (err) {
+        console.warn('[seec0de] AI explain failed, falling back to offline:', err?.message || err);
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    try {
+      const result = explainCode(selectedCode, language);
+      reveal(result);
     } catch (err) {
-      setExplanation({ summary: `AI Error: ${err.message}`, lineByLine: [] });
-    } finally {
-      setAiLoading(false);
+      reveal({ summary: `Couldn't explain: ${err.message}`, lineByLine: [] });
     }
   }, [aiLoading, explanationCollapsed]);
 
@@ -504,7 +519,6 @@ export default function App() {
             instruction={instruction}
             onInstructionChange={setInstruction}
             onGenerate={handleGenerate}
-            onAiGenerate={handleAiGenerate}
             aiLoading={aiLoading}
             practicalLanguage={settings.practicalLanguage}
             comparisonLanguages={settings.comparisonLanguages}
@@ -518,7 +532,6 @@ export default function App() {
             selectedLanguages={selectedLanguages}
             onCodeChange={handleCodeChange}
             onSelectionExplain={handleSelectionExplain}
-            onAiExplain={handleAiExplain}
             aiLoading={aiLoading}
             openFiles={openFiles}
             activePath={activePath}

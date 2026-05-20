@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import {
-  Sparkles, Loader, Settings as SettingsIcon, Wand2,
+  Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
 } from 'lucide-react';
 import { hasApiKey } from '../engine/aiService';
@@ -36,7 +36,6 @@ export default function InstructionPanel({
   instruction,
   onInstructionChange,
   onGenerate,
-  onAiGenerate,
   aiLoading,
   practicalLanguage,
   comparisonLanguages = [],
@@ -62,13 +61,10 @@ export default function InstructionPanel({
   }, [onInstructionChange, onGenerate]);
 
   const handleGenerateClick = useCallback(() => {
-    // Plain "Generate" button — let the parent read its own `instruction` state.
+    // Single Generate button — the parent decides whether to use AI
+    // (when online + API key present) or fall back to offline templates.
     onGenerate?.();
   }, [onGenerate]);
-
-  const handleAiGenerateClick = useCallback(() => {
-    onAiGenerate?.();
-  }, [onAiGenerate]);
 
   // ---- collapsed rail (32 px) ------------------------------------------
   if (collapsed) {
@@ -175,35 +171,32 @@ export default function InstructionPanel({
           aria-label="Instruction for the program"
         />
 
-        {/* Two paths to an answer */}
+        {/* One button. Online + API key → AI; otherwise → offline templates. */}
         <div style={styles.actions}>
-          <button style={styles.generateBtn} onClick={handleGenerateClick} title="Use built-in templates (no AI required)">
-            <Wand2 size={13} />
-            <span style={{ marginLeft: 6 }}>Generate</span>
-          </button>
           <button
             style={{
               ...styles.generateBtn,
-              ...styles.aiBtn,
-              ...(aiLoading || !aiReady ? styles.disabledBtn : {}),
+              ...(aiLoading ? styles.disabledBtn : {}),
             }}
-            onClick={handleAiGenerateClick}
-            disabled={aiLoading || !aiReady}
+            onClick={handleGenerateClick}
+            disabled={aiLoading}
             title={
-              !aiReady
-                ? 'Add your Gemini API key in Settings to enable AI Generate'
-                : aiLoading ? 'AI is thinking…' : 'Generate with Gemini'
+              aiLoading
+                ? 'Thinking…'
+                : aiReady
+                  ? 'Generate with AI when online, otherwise use built-in templates'
+                  : 'Generate using built-in templates (add a Gemini key in Settings for AI)'
             }
           >
             {aiLoading
               ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 6 }}>Thinking…</span></>
-              : <><Sparkles size={13} /><span style={{ marginLeft: 6 }}>AI Generate</span></>}
+              : <><Wand2 size={13} /><span style={{ marginLeft: 6 }}>Generate</span></>}
           </button>
         </div>
 
         {!aiReady && (
           <button style={styles.subtleLink} onClick={onOpenSettings}>
-            Add a free Gemini key in Settings to unlock AI →
+            Add a free Gemini key in Settings for smarter AI generation →
           </button>
         )}
 
@@ -404,11 +397,6 @@ const styles = {
     fontSize: 13,
     fontWeight: 600,
     padding: '9px 0',
-  },
-  aiBtn: {
-    background: 'var(--bg-elevated)',
-    borderColor: 'var(--border-strong)',
-    color: 'var(--text-primary)',
   },
   disabledBtn: {
     background: 'var(--bg-tertiary)',
