@@ -1,16 +1,32 @@
-import React from 'react';
-import { MessageSquareText, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageSquareText, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 // ExplanationSidebar — the right-most column. Shows the result of the
 // "Explain" action (offline glossary or AI). Collapsible since v2.4 so
 // the live preview can claim more screen real-estate when explanations
 // aren't the focus.
+//
+// The line-by-line breakdown is rendered as a single-open accordion:
+// every line starts collapsed; clicking a line opens its explanation
+// and closes whichever was previously open. This stops the panel from
+// dumping every explanation at once and lets the learner focus on one
+// line at a time.
 
 export default function ExplanationSidebar({
   explanation,
   collapsed = false,
   onToggleCollapsed,
 }) {
+  // Index of the currently-open accordion item (-1 = all collapsed).
+  const [openIndex, setOpenIndex] = useState(-1);
+
+  // Whenever a fresh explanation arrives, collapse everything so the
+  // learner starts from a clean slate instead of inheriting whatever
+  // index happened to be open for the previous selection.
+  useEffect(() => {
+    setOpenIndex(-1);
+  }, [explanation]);
+
   // ---- collapsed rail (32 px) ------------------------------------------
   if (collapsed) {
     return (
@@ -52,14 +68,42 @@ export default function ExplanationSidebar({
 
           {explanation.lineByLine && explanation.lineByLine.length > 0 && (
             <>
-              <div style={styles.subLabel}>Line by Line</div>
+              <div style={styles.subLabelRow}>
+                <span style={styles.subLabel}>Line by Line</span>
+                <span style={styles.subLabelHint}>
+                  click a line to expand
+                </span>
+              </div>
               <div style={styles.lines}>
-                {explanation.lineByLine.map((item, i) => (
-                  <div key={i} style={styles.lineItem}>
-                    <pre style={styles.lineCode}>{item.line}</pre>
-                    <div style={styles.lineExplanation}>{item.explanation}</div>
-                  </div>
-                ))}
+                {explanation.lineByLine.map((item, i) => {
+                  const isOpen = openIndex === i;
+                  return (
+                    <div key={i} style={styles.lineItem}>
+                      <button
+                        type="button"
+                        style={{
+                          ...styles.lineHeader,
+                          ...(isOpen ? styles.lineHeaderOpen : {}),
+                        }}
+                        onClick={() => setOpenIndex(isOpen ? -1 : i)}
+                        aria-expanded={isOpen}
+                        title={isOpen ? 'Hide explanation' : 'Show explanation'}
+                      >
+                        <span style={styles.lineChevron}>
+                          {isOpen
+                            ? <ChevronDown size={12} />
+                            : <ChevronRight size={12} />}
+                        </span>
+                        <pre style={styles.lineCode}>{item.line}</pre>
+                      </button>
+                      {isOpen && (
+                        <div style={styles.lineExplanation}>
+                          {item.explanation}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
@@ -140,12 +184,23 @@ const styles = {
     flexDirection: 'column',
     gap: 8,
   },
+  subLabelRow: {
+    display: 'flex',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 4,
+  },
   subLabel: {
     fontSize: 11,
     textTransform: 'uppercase',
     color: 'var(--text-muted)',
     letterSpacing: 0.8,
-    marginTop: 4,
+  },
+  subLabelHint: {
+    fontSize: 10.5,
+    color: 'var(--text-muted)',
+    fontStyle: 'italic',
   },
   summary: {
     fontSize: 13,
@@ -157,29 +212,57 @@ const styles = {
   lines: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
+    gap: 6,
   },
   lineItem: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    border: '1px solid var(--border)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    background: 'var(--bg-input)',
+  },
+  lineHeader: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 6,
+    background: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    textAlign: 'left',
+    padding: '6px 8px',
+    cursor: 'pointer',
+    width: '100%',
+    transition: 'background var(--motion-fast) var(--ease-out)',
+  },
+  lineHeaderOpen: {
+    background: 'var(--bg-elevated)',
+    borderBottom: '1px solid var(--border)',
+  },
+  lineChevron: {
+    color: 'var(--text-muted)',
+    display: 'inline-flex',
+    alignItems: 'center',
+    paddingTop: 3,
+    flexShrink: 0,
   },
   lineCode: {
-    background: 'var(--bg-input)',
-    border: '1px solid var(--border)',
-    borderRadius: 3,
+    background: 'transparent',
+    border: 'none',
     color: 'var(--function-highlight)',
     fontSize: 12,
-    padding: '4px 8px',
+    padding: 0,
     overflow: 'auto',
     whiteSpace: 'pre-wrap',
     margin: 0,
+    flex: 1,
+    minWidth: 0,
   },
   lineExplanation: {
     fontSize: 12,
     color: 'var(--text-secondary)',
     lineHeight: 1.5,
-    paddingLeft: 8,
+    padding: '8px 10px 10px 26px',
   },
   placeholder: {
     flex: 1,
