@@ -324,7 +324,7 @@ export default function CodePanel({
             height="100%"
             language={monacoLang}
             value={value}
-            theme="vs-dark"
+            theme="hc-black"
             onMount={handleEditorMount}
             onChange={handleChange}
             options={{

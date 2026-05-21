@@ -39,8 +39,8 @@ const styles = {
   tooltip: {
     position: 'absolute',
     zIndex: 21,
-    background: '#151515',
-    border: '1px solid #2a2a2a',
+    background: '#000000',
+    border: '1px solid #3f3f3f',
     borderRadius: 4,
     padding: 10,
     maxWidth: 340,

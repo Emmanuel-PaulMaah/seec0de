@@ -19,17 +19,19 @@
 }
 
 :root {
-  /* Surfaces — darkest at the back, slightly lighter as you elevate. */
-  --bg-primary:     #0a0a0a;
-  --bg-secondary:   #0e0e0e;
-  --bg-tertiary:    #151515;
-  --bg-elevated:    #181818;   /* drawers, modals, popovers */
-  --bg-input:       #060606;
+  /* Surfaces — pure black throughout, matching VS Code "Dark High Contrast"
+     (hc-black). No elevation tint; depth is conveyed by borders instead. */
+  --bg-primary:     #000000;
+  --bg-secondary:   #000000;
+  --bg-tertiary:    #000000;
+  --bg-elevated:    #000000;   /* drawers, modals, popovers */
+  --bg-input:       #000000;
 
-  /* Borders — quiet by default, slightly stronger on focus. */
-  --border:         #1a1a1a;
-  --border-strong:  #262626;
-  --border-focus:   #2f6fed;
+  /* Borders — brighter than v1.x so panels remain distinguishable against
+     the pure-black surfaces (HC theme convention). */
+  --border:         #2b2b2b;
+  --border-strong:  #3f3f3f;
+  --border-focus:   #6fc3df;   /* VS Code hc-black contrastBorder */
 
   /* Text — primary readable, secondary for labels, muted for hints. */
   --text-primary:   #e6e6e6;
@@ -59,7 +61,7 @@
 
   /* Scrollbars. */
   --scrollbar-thumb: #2a2a2a;
-  --scrollbar-track: #0a0a0a;
+  --scrollbar-track: #000000;
 
   /* Motion tokens — reuse these instead of hard-coding durations. */
   --motion-fast:    120ms;
