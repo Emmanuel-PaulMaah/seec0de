@@ -1,3 +1,6 @@
+import { findTemplateMatch } from './codeGenerator';
+import { getTemplateSummary } from './templateSummaries';
+
 const PATTERNS = {
   comment: {
     python: /^\s*#(.*)$/,
@@ -88,6 +91,37 @@ function detectOverallPattern(code, language) {
   return `This code ${parts.join(', ')}.`;
 }
 
+// Render a short literal value for inclusion in a sentence. Long expressions
+// collapse to "a value" so we don't dump a 200-character ternary into prose.
+function shortLiteral(rhs) {
+  if (!rhs) return null;
+  const cleaned = rhs.replace(/;+\s*$/, '').trim();
+  if (!cleaned) return null;
+  if (cleaned.length > 60) return null;
+  return cleaned;
+}
+
+// Pull the parameter list out of "fn name(a, b, c)" / "def name(a, b)" etc.
+// Returns "" when nothing was captured. Used so the function-def explanation
+// can mention the actual parameters instead of just "a function".
+function extractParamList(line) {
+  const m = line.match(/\(([^)]*)\)/);
+  if (!m) return '';
+  return m[1].trim();
+}
+
+function describeParams(params) {
+  if (!params) return ' that takes no parameters';
+  const list = params
+    .split(',')
+    .map((p) => p.trim().replace(/[:=].*$/, '').replace(/^\.\.\./, '').trim())
+    .filter(Boolean);
+  if (list.length === 0) return ' that takes no parameters';
+  if (list.length === 1) return ` that takes one parameter (\`${list[0]}\`)`;
+  if (list.length <= 4) return ` that takes ${list.length} parameters (\`${list.join('`, `')}\`)`;
+  return ` that takes ${list.length} parameters`;
+}
+
 function explainLine(line, language) {
   const trimmed = line.trim();
   if (!trimmed) return null;
@@ -102,6 +136,11 @@ function explainLine(line, language) {
   // Import
   const importPattern = PATTERNS.importStatement[language];
   if (importPattern && importPattern.test(line)) {
+    const target = trimmed
+      .replace(/^[#]?\s*(import|from|require|using|use|include)\s*/i, '')
+      .replace(/[;{}<>"']/g, '')
+      .trim();
+    if (target) return `Imports \`${target}\` so its functions/types are available below.`;
     return `Imports a module or library for use in this program.`;
   }
 
@@ -110,7 +149,10 @@ function explainLine(line, language) {
   if (classPattern && classPattern.test(line)) {
     const match = line.match(classPattern);
     const name = match[match.length - 1] || match[1];
-    return `Defines a class named "${name}" — a blueprint for creating objects with shared properties and methods.`;
+    const extendsMatch = line.match(/\b(extends|:\s*public)\s+(\w+)/);
+    const parent = extendsMatch ? extendsMatch[2] : null;
+    if (parent) return `Defines class \`${name}\` that inherits from \`${parent}\` (it gets \`${parent}\`'s fields/methods and can override them).`;
+    return `Defines class \`${name}\` — a blueprint for objects that share these properties and methods.`;
   }
 
   // Function definition
@@ -119,31 +161,55 @@ function explainLine(line, language) {
     const match = line.match(funcPattern);
     const parts = match.filter(Boolean);
     const isAsync = /async/.test(line);
-    return `Defines ${isAsync ? 'an asynchronous ' : 'a '}function${parts.length > 1 ? ' named "' + parts[parts.length - 2] + '"' : ''} that can be called to perform a specific task.`;
+    const name = parts.length > 1 ? parts[parts.length - 2] : null;
+    const params = extractParamList(line);
+    const paramPhrase = describeParams(params);
+    if (name) {
+      return `Defines ${isAsync ? 'async ' : ''}function \`${name}\`${paramPhrase}.`;
+    }
+    return `Defines ${isAsync ? 'an asynchronous ' : 'a '}function${paramPhrase}.`;
   }
 
-  // Variable assignment
+  // Variable assignment — pull out the literal value where possible so the
+  // explanation reads "Stores [5, 3, 8] in `numbers`." instead of
+  // "Declares and assigns a variable."
   const varPattern = PATTERNS.variableAssign[language];
   if (varPattern && varPattern.test(line)) {
+    const match = line.match(varPattern);
+    let name, rhs;
     if (language === 'python') {
-      const match = line.match(varPattern);
-      return `Assigns a value to the variable "${match[1]}". In Python, variables don't need type declarations.`;
+      name = match[1];
+      rhs = match[2];
+    } else if (language === 'go') {
+      name = match[1];
+      rhs = match[2];
+    } else if (language === 'rust') {
+      name = match[2];
+      rhs = match[3];
+    } else {
+      // js/ts/java/cpp/csharp all have: keyword/type, name, rhs
+      name = match[2];
+      rhs = match[3];
     }
-    if (language === 'go') {
-      const match = line.match(varPattern);
-      return `Short variable declaration — creates variable "${match[1]}" with an inferred type.`;
-    }
-    if (language === 'rust') {
-      const isMut = /let\s+mut/.test(line);
-      return `Declares a ${isMut ? 'mutable' : 'immutable'} variable binding.`;
-    }
-    return `Declares and assigns a variable to store a value for later use.`;
+    const lit = shortLiteral(rhs);
+    const mutNote = language === 'rust' && /let\s+mut/.test(line) ? ' (mutable)' : '';
+    if (name && lit) return `Stores \`${lit}\` in \`${name}\`${mutNote}.`;
+    if (name) return `Computes a value and stores it in \`${name}\`${mutNote}.`;
+    return `Declares and assigns a variable.`;
   }
 
-  // Print/output
+  // Print/output — try to surface the actual argument so the line reads
+  // "Prints \"Hello, World!\" to the console." instead of "Outputs a value."
   const printPattern = PATTERNS.printStatement[language];
   if (printPattern && printPattern.test(line)) {
-    return `Outputs/prints a value to the console — used for displaying results or debugging.`;
+    let arg = '';
+    const parenMatch = line.match(/\(([\s\S]+)\)\s*;?\s*$/);
+    const shiftMatch = line.match(/<<\s*([^<;]+)/);
+    if (parenMatch) arg = parenMatch[1].trim();
+    else if (shiftMatch) arg = shiftMatch[1].trim();
+    const lit = shortLiteral(arg);
+    if (lit) return `Prints ${lit} to the console.`;
+    return `Outputs/prints a value to the console.`;
   }
 
   // Return statement
@@ -246,7 +312,16 @@ function explainLine(line, language) {
 }
 
 export function explainCode(code, language) {
-  const summary = detectOverallPattern(code, language);
+  // If the user clicked Explain on code that came verbatim from one of the
+  // built-in templates, swap the generic "this code uses loops, has
+  // functions" summary for the hand-written, context-aware one. The
+  // line-by-line still comes from the heuristic below — those two layers
+  // together give the offline Explain feature an AI-quality opener with
+  // structural detail underneath.
+  const match = findTemplateMatch(code);
+  const bespoke = match ? getTemplateSummary(match.templateName, match.language) : null;
+  const summary = bespoke || detectOverallPattern(code, language);
+
   const lines = code.split('\n');
   const lineByLine = [];
 

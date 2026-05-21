@@ -3064,6 +3064,25 @@ export function pickSuggestions(n = 4) {
   return out;
 }
 
+// Identifies whether a piece of source code matches one of the built-in
+// templates verbatim. Used by the offline explainer to swap its generic
+// summary for a hand-written one when it knows what the program is.
+//
+// Match is exact after stripping trailing whitespace; if the learner edits
+// the template even slightly we fall back to the heuristic explainer.
+export function findTemplateMatch(code) {
+  if (!code) return null;
+  const trimmed = String(code).replace(/\s+$/, '');
+  for (const [templateName, template] of Object.entries(TEMPLATES)) {
+    for (const [language, langCode] of Object.entries(template.code || {})) {
+      if (String(langCode).replace(/\s+$/, '') === trimmed) {
+        return { templateName, language };
+      }
+    }
+  }
+  return null;
+}
+
 export function generateCode(instruction, selectedLanguages) {
   const lower = instruction.toLowerCase();
 
