@@ -16,6 +16,22 @@ Section conventions:
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-05-22
+
+### Added
+- **Hand-written offline summaries for every built-in template.** New [`src/renderer/engine/templateSummaries.js`](src/renderer/engine/templateSummaries.js) ships 117 AI-quality, context-aware summaries (14 templates × 8–9 languages) keyed by `[templateName][language]`. When the learner clicks Explain on code that came verbatim from a generator template, the offline explainer opens with a one-sentence summary that names actual functions, variables, literals, and language idioms — e.g. *"Sorts `[64, 34, 25, 12, 22, 11, 90]` in place with adjacent-pair comparisons and a destructuring swap, breaking early via the `swapped` flag"* — instead of *"This code uses loops, contains function definitions."* Falls back to the heuristic summary the moment the learner edits the code.
+- **`findTemplateMatch(code)` export in [`codeGenerator.js`](src/renderer/engine/codeGenerator.js).** Iterates every template's per-language code and returns `{ templateName, language }` on an exact byte-match (after trimming trailing whitespace). Drives the new template-aware summary lookup in the offline explainer.
+
+### Changed
+- **UI surfaces are now pure black, matching VS Code's *Dark High Contrast* (`hc-black`).** All `--bg-*` tokens in [`global.css`](src/renderer/styles/global.css) (primary/secondary/tertiary/elevated/input) collapsed to `#000000`; borders bumped to `#2b2b2b` / `#3f3f3f` so panels stay distinguishable against the darker chrome; `--border-focus` switched to VS Code's `hc-black` contrast-border cyan (`#6fc3df`). Scrollbar track also pure black. Hard-coded `#151515` background in [`KeywordTooltip.jsx`](src/renderer/components/KeywordTooltip.jsx) matched to `#000000`.
+- **Monaco editor switched to the built-in `hc-black` theme** in [`CodePanel.jsx`](src/renderer/components/CodePanel.jsx) (was `vs-dark`). The code editor canvas, gutters, and syntax highlighting now match VS Code's *Dark High Contrast* exactly.
+- **Offline explainer line-by-line heuristic upgraded** in [`codeExplainer.js`](src/renderer/engine/codeExplainer.js) to surface real names/values instead of generic textbook definitions:
+  - Imports name the actual target (*"Imports `math` so its functions/types are available below"*).
+  - Class definitions detect inheritance (*"Defines class `Dog` that inherits from `Animal`"*).
+  - Function definitions list real parameters (*"Defines function `bubble_sort` that takes one parameter (`arr`)"*).
+  - Variable assignments include the literal RHS when short (*"Stores `[5, 3, 8, 1, 9, 2, 7, 4, 6]` in `numbers`"*) and flag `mut` for Rust.
+  - Print statements surface the actual argument (*"Prints `"Hello, World!"` to the console"*), handling both `()` calls and C++-style `<<`.
+
 ## [3.0.0] - 2026-05-20
 
 ### Changed
