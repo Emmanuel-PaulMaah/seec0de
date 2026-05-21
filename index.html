@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>seec0de — write natural instructions, see code</title>
-  <meta name="description" content="seec0de is a desktop learning tool. Write code and see it live: HTML/CSS/JS in a sandboxed preview, Python/JS/TS/C/C++ run with output in a built-in console. Pseudocode + 8 languages side by side, file explorer, explained terminal. Free, offline-first, with optional AI." />
+  <meta name="description" content="A desktop tool for learning to code. Type plain English to get pseudocode + 8 languages side by side. Run JS, TS, Python, C, C++ in-app. Live HTML preview. Works offline, AI optional." />
   <meta name="theme-color" content="#0a0a0a" />
 
   <meta property="og:title" content="seec0de — write code, see it happen" />
-  <meta property="og:description" content="Desktop learning tool with live HTML/CSS/JS preview, a built-in console, Run for Python/JS/TS/C/C++, pseudocode + 8 languages side by side, file explorer, and an explained terminal. Built for people who want to understand programming, not just copy it." />
+  <meta property="og:description" content="Type plain English, see pseudocode + 8 languages. Run Python, JS, TS, C, C++ in-app. Live HTML preview. One Generate button, one Explain button. Works offline, AI optional." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://emmanuel-paulmaah.github.io/seec0de/" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -511,20 +511,20 @@
     <!-- ============== HERO ============== -->
     <section class="hero">
       <div class="container">
-        <span class="eyebrow"><span class="dot" aria-hidden="true"></span> v2.4.0 — live preview, console &amp; collapsible panels</span>
+        <span class="eyebrow"><span class="dot" aria-hidden="true"></span> v3.0.0 — one Generate, one Explain, Run-only Console</span>
 
         <h1 class="headline">
           Write code, <span class="grad">see it happen.</span>
         </h1>
 
         <p class="lede">
-          A desktop learning tool for people who want to <em>understand</em> programming, not just copy it.
-          Type plain English to see pseudocode + 8 real languages side by side, or write HTML/CSS/JS and watch the
-          live preview update as you type. Run Python, JS, TS, C, or C++ and read the output in a built-in console.
+          A desktop tool for learning to code. Type plain English to see pseudocode + 8 real
+          languages side by side. Run Python, JS, TS, C, or C++ in-app. Live HTML preview.
+          Works offline; AI is optional.
         </p>
 
         <div class="hero-actions">
-          <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v2.4.0/seec0de-Setup-2.4.0.exe" rel="noopener">
+          <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.0.0/seec0de-Setup-3.0.0.exe" rel="noopener">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download for Windows
           </a>
@@ -537,15 +537,15 @@
         <p class="hero-meta">
           <span class="pill">⊞ Windows installer + portable</span>
           <span class="pill">8 languages · 5 runnable</span>
-          <span class="pill">Live HTML/CSS/JS preview</span>
+          <span class="pill">Live HTML preview</span>
           <span class="pill">Works offline · AI optional</span>
         </p>
 
         <!-- ============ MOCK APP PREVIEW ============ -->
-        <div class="preview" role="img" aria-label="Screenshot of seec0de showing the v2.4.0 layout: collapsible instruction rail on the left, code editor with Run button in the middle, and a Live Preview / Console panel on the right.">
+        <div class="preview" role="img" aria-label="Screenshot of seec0de v3.0.0: instruction rail on the left, code editor with Run button in the middle, Live Preview + Console on the right.">
           <div class="preview-titlebar">
             <div class="traffic" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="preview-title">SEEC0DE <span class="pill-mini">v2.4.0</span></div>
+            <div class="preview-title">SEEC0DE <span class="pill-mini">v3.0.0</span></div>
             <div></div>
           </div>
 
@@ -593,8 +593,9 @@
                 <button style="background:#efefef;color:#222;border:1px solid #ccc;border-radius:4px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:default;">say hello</button>
               </div>
               <div style="font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;color:var(--text-2);background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 10px;line-height:1.6;">
-                <div style="color:var(--text-4);">LOG&nbsp;&nbsp;hello!</div>
-                <div style="color:var(--text-4);">·&nbsp;&nbsp;&nbsp;&nbsp;updated 12ms ago</div>
+                <div style="color:var(--text-4);">·&nbsp;&nbsp;&nbsp;&nbsp;$ node main.js</div>
+                <div>OUT&nbsp;&nbsp;hello!</div>
+                <div style="color:var(--text-4);">·&nbsp;&nbsp;&nbsp;&nbsp;✓ exit 0 · 42ms</div>
               </div>
               <p style="color: var(--text-4); font-size: 10.5px; margin-top:10px;">Click a keyword in the editor to open the glossary.</p>
             </aside>
@@ -608,8 +609,8 @@
       <div class="container">
         <header class="section-head">
           <div class="kicker">What you can do</div>
-          <h2>One workspace. Many flows. Zero context-switching.</h2>
-          <p>Instruction on the left, code &amp; tabs in the middle, live preview + console on the right, file explorer and explained terminal underneath. Every panel collapses to a 32 px rail so you keep only what you need.</p>
+          <h2>One workspace. Everything in reach.</h2>
+          <p>Instruction, code, live preview, and explanation — all side by side. Every panel collapses when you want more room.</p>
         </header>
 
         <div class="features">
@@ -618,15 +619,15 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
             </div>
             <h3>Describe → see code</h3>
-            <p>Type an instruction in plain English. Get pseudocode &amp; up to eight real languages instantly, side by side. Optional Gemini-powered AI generation when you want a polished version.</p>
+            <p>Type plain English. Hit <strong>Generate</strong>. One button — uses AI when you're online with a key, falls back to built-in templates otherwise.</p>
           </article>
 
           <article class="card">
             <div class="card-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </div>
-            <h3>Live preview, as you type</h3>
-            <p>Write HTML, CSS, or JavaScript and watch a sandboxed iframe re-render with a 250 ms debounce — the FreeCodeCamp / CodeSandbox cause→effect feel. Manual refresh, full sandbox, no leaks.</p>
+            <h3>Live HTML preview</h3>
+            <p>Edit an <code>.html</code> file and watch it render as you type. Everything else flows through Run, so output is always a deliberate gesture.</p>
           </article>
 
           <article class="card">
@@ -634,15 +635,15 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
             </div>
             <h3>Run · Python, JS, TS, C, C++</h3>
-            <p>Hit <strong>Run</strong> in the editor toolbar. Output lands in the right-hand Console tab — alongside captured <code>console.log/warn/error</code> from the iframe — so cause &amp; effect sit side by side. Missing toolchain? You get an install hint, not a crash.</p>
+            <p>Hit <strong>Run</strong> in the editor toolbar. Output lands in the Console tab. Missing a toolchain? You get a one-line install hint, not a crash.</p>
           </article>
 
           <article class="card">
             <div class="card-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
             </div>
-            <h3>Paste → see explanation</h3>
-            <p>Every file tab is editable. Paste any snippet, highlight a chunk, hit the floating <strong>Explain</strong> button and a line-by-line breakdown opens in the right rail — instantly, or with AI.</p>
+            <h3>Select → see explanation</h3>
+            <p>Highlight any chunk of code, click <strong>Explain</strong>. A line-by-line breakdown opens in the right panel as a collapsible accordion — focus on one line at a time.</p>
           </article>
 
           <article class="card">
@@ -650,15 +651,15 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </div>
             <h3>File explorer &amp; explained terminal</h3>
-            <p>Open any folder, create &amp; edit files with Monaco, switch between them as tabs. The bottom terminal turns every command into a card with a one-line explanation, stdout/stderr, exit code &amp; duration — covers npm, git, docker, python, cargo, dotnet, PowerShell cmdlets, more.</p>
+            <p>Open any folder. Edit files in Monaco tabs with auto-save. The terminal explains every command — npm, git, docker, python, PowerShell — with exit code and duration.</p>
           </article>
 
           <article class="card">
             <div class="card-icon" aria-hidden="true">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </div>
-            <h3>Onboarding &amp; settings drawer</h3>
-            <p>First launch walks new coders through experience level, a <em>practical</em> language, and (optional) Gemini key. Everything lives in a tidy right-side Settings drawer afterwards — languages, AI, workspace defaults, updates, re-run onboarding.</p>
+            <h3>Onboarding &amp; settings</h3>
+            <p>First launch picks your language and (optional) Gemini key. After that, everything lives in a tidy Settings drawer — including a one-click toolchain installer.</p>
           </article>
         </div>
       </div>
@@ -679,12 +680,12 @@
           <span class="lang" style="--clr:#00add8">Go</span>
           <span class="lang" style="--clr:#ce422b">Rust</span>
           <span class="lang" style="--clr:#e34f26">HTML 👁</span>
-          <span class="lang" style="--clr:#264de4">CSS 👁</span>
+          <span class="lang" style="--clr:#264de4">CSS</span>
         </div>
         <p style="text-align:center;color:var(--text-4);font-size:12px;margin-top:14px;letter-spacing:0.3px;">
-          <span style="color:var(--text-3);">▶</span> runnable via toolchain &nbsp;·&nbsp;
-          <span style="color:var(--text-3);">👁</span> live-previewable in the iframe &nbsp;·&nbsp;
-          every keyword links to a built-in glossary
+          <span style="color:var(--text-3);">▶</span> runnable &nbsp;·&nbsp;
+          <span style="color:var(--text-3);">👁</span> live preview &nbsp;·&nbsp;
+          every keyword has a glossary popup
         </p>
       </div>
     </section>
@@ -695,21 +696,21 @@
         <header class="section-head">
           <div class="kicker">How it works</div>
           <h2>Set up once. Learn for years.</h2>
-          <p>seec0de runs entirely on your machine. No accounts, no telemetry. AI features are opt-in &amp; use your own free Google Gemini key. Updates land automatically once installed.</p>
+          <p>Runs on your machine. No accounts, no telemetry. AI is optional and uses your own free Gemini key. Auto-updates when installed.</p>
         </header>
 
         <div class="steps">
           <article class="step">
             <h3>Install &amp; onboard</h3>
-            <p>Grab the Windows installer from Releases. A skippable two-step onboarding asks your experience level and the one <em>practical</em> language you want to build in — then sets sensible defaults.</p>
+            <p>Grab the Windows installer. A quick onboarding picks your language and (optional) Gemini key.</p>
           </article>
           <article class="step">
             <h3>Describe, write, run</h3>
-            <p>Type an instruction for pseudocode + comparison languages, or just write your own HTML/CSS/JS and watch the live preview render. Hit <strong>Run</strong> to execute Python, JS, TS, C, or C++ — output streams into the Console tab.</p>
+            <p>Type plain English to generate code, or write your own. Edit HTML and see it render live. Hit <strong>Run</strong> for Python, JS, TS, C, or C++.</p>
           </article>
           <article class="step">
             <h3>Read, explain, explore</h3>
-            <p>Click any keyword for a glossary popup, highlight a chunk to get a line-by-line explanation in the right rail, or pop the file explorer &amp; explained terminal open from the title bar. Collapse anything you don't need.</p>
+            <p>Click any keyword for a glossary popup. Highlight code and click <strong>Explain</strong> for a line-by-line breakdown.</p>
           </article>
         </div>
       </div>
@@ -720,11 +721,11 @@
       <div class="container">
         <div class="cta-box">
           <h2>Get the latest seec0de.</h2>
-          <p>Free, open source, ~91&nbsp;MB Windows installer. Updates land automatically once installed.</p>
+          <p>Free, open source, Windows installer. Auto-updates once installed.</p>
           <div class="cta-actions">
-            <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v2.4.0/seec0de-Setup-2.4.0.exe" rel="noopener">
+            <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.0.0/seec0de-Setup-3.0.0.exe" rel="noopener">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download v2.4.0
+              Download v3.0.0
             </a>
             <a class="btn btn-ghost" href="https://github.com/Emmanuel-PaulMaah/seec0de/blob/main/CHANGELOG.md" rel="noopener">
               Read changelog
