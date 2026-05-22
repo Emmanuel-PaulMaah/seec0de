@@ -16,7 +16,9 @@ Section conventions:
 
 ## [Unreleased]
 
-## [3.1.0] - 2026-05-22
+## [3.1.1] - 2026-05-22
+
+> Re-ship of the intended v3.1.0 release. The v3.1.0 build/publish failed before the GitHub release artifacts were finalised, so the version was bumped to v3.1.1 and re-shipped. No code differences vs. the intended v3.1.0 — same feature set listed below. The v3.1.0 GitHub release and tag have been removed.
 
 ### Added
 - **Hand-written offline summaries for every built-in template.** New [`src/renderer/engine/templateSummaries.js`](src/renderer/engine/templateSummaries.js) ships 117 AI-quality, context-aware summaries (14 templates × 8–9 languages) keyed by `[templateName][language]`. When the learner clicks Explain on code that came verbatim from a generator template, the offline explainer opens with a one-sentence summary that names actual functions, variables, literals, and language idioms — e.g. *"Sorts `[64, 34, 25, 12, 22, 11, 90]` in place with adjacent-pair comparisons and a destructuring swap, breaking early via the `swapped` flag"* — instead of *"This code uses loops, contains function definitions."* Falls back to the heuristic summary the moment the learner edits the code.
