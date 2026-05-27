@@ -191,7 +191,7 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
       <div style={styles.scroll} ref={scrollRef}>
         {entries.length === 0 && (
           <div style={styles.empty}>
-            Run a shell command — common ones get a one-line explanation.
+            Run a shell command, get a one-line explanation.
             <br />Try: <code style={styles.kbd}>git status</code>, <code style={styles.kbd}>npm install</code>, <code style={styles.kbd}>dir</code>, <code style={styles.kbd}>Get-Process</code>.
           </div>
         )}
@@ -427,13 +427,14 @@ const styles = {
   runBtn: {
     display: 'flex',
     alignItems: 'center',
-    background: 'var(--accent)',
-    border: 'none',
-    borderRadius: 3,
-    color: '#fff',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 6,
+    color: 'var(--text-primary)',
     fontSize: 11,
     padding: '4px 10px',
     fontFamily: 'Inter, sans-serif',
     fontWeight: 600,
-  },
+    whiteSpace: 'nowrap',
+  }
 };
