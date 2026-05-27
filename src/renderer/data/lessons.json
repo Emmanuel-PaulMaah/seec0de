@@ -1,0 +1,46 @@
+{
+  "tracks": [
+    {
+      "id": "starter",
+      "name": "Starter Track",
+      "description": "The fundamentals of programming, step by step.",
+      "lessons": [
+        {
+          "id": "variables",
+          "title": "1. Variables",
+          "instruction": "Create a variable named 'score', set it to 10, then print it.",
+          "goal": "Learn how to store and retrieve data.",
+          "exercise": "Try changing the value of 'score' to 20 and run the code again."
+        },
+        {
+          "id": "conditions",
+          "title": "2. Conditions",
+          "instruction": "Check if a variable 'age' is 18 or older. If it is, print 'Access granted', otherwise print 'Access denied'. Set age to 20 first.",
+          "goal": "Learn how to make decisions in code.",
+          "exercise": "Change 'age' to 15 and see the output change."
+        },
+        {
+          "id": "loops",
+          "title": "3. Loops",
+          "instruction": "Create a loop that prints the numbers from 1 to 5.",
+          "goal": "Learn how to repeat actions.",
+          "exercise": "Modify the loop to print numbers from 1 to 10."
+        },
+        {
+          "id": "functions",
+          "title": "4. Functions",
+          "instruction": "Define a function named 'greet' that takes a name and prints 'Hello, ' followed by the name. Call it with 'Alice'.",
+          "goal": "Learn how to group code into reusable blocks.",
+          "exercise": "Call the function again with your own name."
+        },
+        {
+          "id": "lists",
+          "title": "5. Lists",
+          "instruction": "Create a list of colors: 'red', 'green', 'blue'. Print the second color in the list.",
+          "goal": "Learn how to store collections of data.",
+          "exercise": "Add 'yellow' to the list and print the whole list."
+        }
+      ]
+    }
+  ]
+}

@@ -3083,6 +3083,21 @@ export function findTemplateMatch(code) {
   return null;
 }
 
+// True when the natural-language instruction matches one of the built-in
+// generator templates. Used by the unified Generate flow in App.jsx to
+// short-circuit the AI call: if we already have a hand-tuned offline
+// template for what the learner asked for (typically because they tapped
+// a suggestion chip), there's no upside to a network round-trip — the
+// offline output is the canonical lesson for that prompt.
+export function matchesTemplate(instruction) {
+  if (!instruction) return false;
+  const lower = String(instruction).toLowerCase();
+  for (const template of Object.values(TEMPLATES)) {
+    if (template.match.test(lower)) return true;
+  }
+  return false;
+}
+
 export function generateCode(instruction, selectedLanguages) {
   const lower = instruction.toLowerCase();
 

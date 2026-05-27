@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import {
   Eye, Terminal as TermIcon, RefreshCw,
   ChevronLeft, ChevronRight, Trash2, Code2, FileCode2,
+  AlertTriangle, Wrench, X as CloseIcon, Sparkles,
 } from 'lucide-react';
+import { translateError } from '../engine/errorTranslator';
+import { explainErrorWithAI, hasApiKey } from '../engine/aiService';
 
 // LivePreviewPanel — the right-side "what does my code do?" surface.
 //
@@ -63,9 +66,24 @@ export default function LivePreviewPanel({
   const [consoleEntries, setConsoleEntries] = useState([]);
   const [debouncedCode, setDebouncedCode] = useState(code);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  // Error-translator cards. Recomputed whenever a runner result lands
+  // with a non-zero exit code + stderr we recognise. A single stderr can
+  // contain many distinct errors (compilers and chained exceptions love
+  // this), so we store them as an array and let the user dismiss them
+  // one at a time.
+  const [errorTranslations, setErrorTranslations] = useState([]);
+  const [dismissedTitles, setDismissedTitles] = useState(() => new Set());
+  // AI fallback state: when the offline translator finds zero matches for
+  // a failed run AND the user has an API key + connection, we ask Gemini
+  // to explain the error in the same {title, plain, fixes} shape so the
+  // existing card component can render it unchanged.
+  const [aiExplainLoading, setAiExplainLoading] = useState(false);
   const idRef = useRef(0);
   const debounceRef = useRef(null);
   const lastRunnerRef = useRef(null);
+  // Monotonic counter so a late AI response from a previous run can't
+  // overwrite the current run's state if the user re-runs quickly.
+  const runIdRef = useRef(0);
 
   // Debounce live updates while typing.
   useEffect(() => {
@@ -83,6 +101,12 @@ export default function LivePreviewPanel({
   // When the language changes (different file/tab), drop old console output.
   useEffect(() => {
     setConsoleEntries([]);
+    setErrorTranslations([]);
+    setDismissedTitles(new Set());
+    setAiExplainLoading(false);
+    // Bump the run id so any in-flight AI explain from the previous file
+    // is ignored when it eventually resolves.
+    runIdRef.current += 1;
   }, [language, filename]);
 
   // When the language changes to one that can't be previewed, swing the
@@ -112,12 +136,65 @@ export default function LivePreviewPanel({
       push(ok ? 'meta' : 'stderr', `${ok ? '✓' : '✗'} exit ${runnerOutput.exitCode ?? '?'} · ${ms}ms`);
       return out.length > MAX_LOG_ENTRIES ? out.slice(-MAX_LOG_ENTRIES) : out;
     });
+    // Error Message Translator: every failed run gets a fresh set of
+    // cards covering every error we recognise in the stderr (not just the
+    // first one). Dismissals are reset per-run so a fix attempt that
+    // still errors still surfaces the translation.
+    const failed = (runnerOutput.exitCode ?? 0) !== 0;
+    const runLang = runnerOutput.language || language;
+    const runId = ++runIdRef.current; // claim this run's slot
+
+    if (failed && runnerOutput.stderr) {
+      const offline = translateError(runnerOutput.stderr, runLang);
+      setErrorTranslations(offline);
+
+      // Offline translator didn't recognise this error — fall back to AI
+      // if the user has a key and a connection. The raw stderr is still
+      // visible in the console below regardless, so an AI failure here is
+      // silent (best-effort enhancement, not a hard requirement).
+      const canUseAi =
+        offline.length === 0 &&
+        hasApiKey() &&
+        (typeof navigator === 'undefined' || navigator.onLine);
+
+      if (canUseAi) {
+        setAiExplainLoading(true);
+        explainErrorWithAI(runnerOutput.stderr, code, runLang)
+          .then((result) => {
+            // Drop the response if a newer run has started in the
+            // meantime (user re-ran, switched files, etc.).
+            if (runId !== runIdRef.current) return;
+            if (!result || (!result.title && !result.plain)) return;
+            setErrorTranslations([{ ...result, source: 'ai' }]);
+          })
+          .catch((err) => {
+            if (runId !== runIdRef.current) return;
+            console.warn('[seec0de] AI error explain failed:', err?.message || err);
+          })
+          .finally(() => {
+            if (runId !== runIdRef.current) return;
+            setAiExplainLoading(false);
+          });
+      } else {
+        setAiExplainLoading(false);
+      }
+    } else {
+      setErrorTranslations([]);
+      setAiExplainLoading(false);
+    }
+    setDismissedTitles(new Set());
     setView('console');
-  }, [runnerOutput]);
+  }, [runnerOutput, language, code]);
 
   const srcDoc = useMemo(
     () => (previewable ? buildSrcDoc(language, debouncedCode) : null),
     [language, debouncedCode, previewable]
+  );
+
+  // Filter out cards the user has already dismissed in this run.
+  const visibleTranslations = useMemo(
+    () => errorTranslations.filter((t) => !dismissedTitles.has(t.title)),
+    [errorTranslations, dismissedTitles]
   );
 
   const handleRefresh = useCallback(() => {
@@ -173,7 +250,13 @@ export default function LivePreviewPanel({
             <button
               type="button"
               style={styles.iconBtn}
-              onClick={() => setConsoleEntries([])}
+              onClick={() => {
+                setConsoleEntries([]);
+                setErrorTranslations([]);
+                setDismissedTitles(new Set());
+                setAiExplainLoading(false);
+                runIdRef.current += 1;
+              }}
               title="Clear console"
               aria-label="Clear console"
             >
@@ -223,7 +306,36 @@ export default function LivePreviewPanel({
         )}
 
         {view === 'console' && (
-          <ConsoleView entries={consoleEntries} />
+          <div style={styles.consoleStack}>
+            {(visibleTranslations.length > 0 || aiExplainLoading) && (
+              <div style={styles.errCardList}>
+                {visibleTranslations.length > 1 && (
+                  <div style={styles.errCardListHeader}>
+                    <AlertTriangle size={11} color="var(--danger)" />
+                    <span>{visibleTranslations.length} errors translated</span>
+                  </div>
+                )}
+                {visibleTranslations.map((t, i) => (
+                  <ErrorTranslatorCard
+                    key={`${t.title}-${i}`}
+                    translation={t}
+                    indexLabel={visibleTranslations.length > 1 ? `${i + 1}/${visibleTranslations.length}` : null}
+                    onDismiss={() => {
+                      setDismissedTitles((prev) => {
+                        const next = new Set(prev);
+                        next.add(t.title);
+                        return next;
+                      });
+                    }}
+                  />
+                ))}
+                {aiExplainLoading && visibleTranslations.length === 0 && (
+                  <AiExplainSkeleton />
+                )}
+              </div>
+            )}
+            <ConsoleView entries={consoleEntries} />
+          </div>
         )}
       </div>
 
@@ -254,12 +366,10 @@ function PlaceholderView({ language, runnable, runLoading }) {
       </h3>
       <p style={styles.placeholderText}>
         {isPseudo && (<>
-          Switch to a <b>language tab</b> to see the same algorithm rendered in
-          syntax — and, for HTML/CSS/JS, watch it run live here.
+          Switch to a <b>language tab</b>
         </>)}
         {!isPseudo && runnable && (<>
-          Press <b>Run</b> in the editor toolbar above. Output will land in the
-          <b> Console</b> tab.
+          Press <b>Run</b> in the editor toolbar above.
         </>)}
         {!isPseudo && !runnable && language === 'css' && (<>
           CSS needs a document to style. Open an <b>HTML file</b> that
@@ -268,12 +378,94 @@ function PlaceholderView({ language, runnable, runLoading }) {
         </>)}
         {!isPseudo && !runnable && language !== 'css' && (<>
           Live preview supports HTML and JavaScript out of the box.
-          Other languages (Java, Go, Rust, C#…) can still be edited — they
-          just don't render here.
+          Other languages (Java, Go, Rust, C#…) can still be edited but don't render here.
         </>)}
       </p>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Error Message Translator card.
+//
+// Renders above the Console scroll when the most recent run failed with a
+// stderr we recognise. The original error is still visible below (we never
+// hide stderr) — this card is a parallel "what does that mean?" layer.
+
+function ErrorTranslatorCard({ translation, indexLabel, onDismiss }) {
+  const fromAi = translation.source === 'ai';
+  return (
+    <div style={styles.errCard}>
+      <div style={styles.errHeader}>
+        <AlertTriangle size={14} color="var(--danger)" />
+        {indexLabel && <span style={styles.errIndex}>{indexLabel}</span>}
+        <span style={styles.errTitle}>{translation.title}</span>
+        {fromAi && (
+          <span style={styles.errAiBadge} title="Explained by AI — offline translator didn't recognise this error">
+            <Sparkles size={9} />
+            <span>AI</span>
+          </span>
+        )}
+        <button
+          type="button"
+          style={styles.errDismiss}
+          onClick={onDismiss}
+          title="Hide this translation"
+          aria-label="Hide this translation"
+        >
+          <CloseIcon size={12} />
+        </button>
+      </div>
+      <p style={styles.errPlain}>{renderInline(translation.plain)}</p>
+      {translation.fixes && translation.fixes.length > 0 && (
+        <div style={styles.errFixes}>
+          <div style={styles.errFixesLabel}>
+            <Wrench size={11} />
+            <span>{fromAi ? 'Suggested fixes' : 'Common fixes'}</span>
+          </div>
+          <ul style={styles.errFixList}>
+            {translation.fixes.map((fix, i) => (
+              <li key={i} style={styles.errFixItem}>{renderInline(fix)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Placeholder card shown while the AI fallback is in flight. Matches the
+// shape of ErrorTranslatorCard so the layout doesn't jump when the real
+// card lands.
+function AiExplainSkeleton() {
+  return (
+    <div style={styles.errCard}>
+      <div style={styles.errHeader}>
+        <Sparkles size={14} color="var(--border-focus)" />
+        <span style={styles.errTitle}>Asking AI…</span>
+      </div>
+    </div>
+  );
+}
+
+// Render the small subset of markdown we use in translator strings:
+// `code` becomes a styled <code> span, **bold** becomes <strong>. Anything
+// else passes through as plain text. Keeps the card light without pulling
+// in a markdown dependency.
+function renderInline(text) {
+  if (!text) return null;
+  // Split on a single regex that captures `code` or **bold**.
+  const parts = String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={i} style={styles.inlineCode}>{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
 }
 
 function ConsoleView({ entries }) {
@@ -465,6 +657,129 @@ const styles = {
     lineHeight: 1.6,
     maxWidth: 320,
     margin: 0,
+  },
+
+  consoleStack: {
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+
+  // ---- Error Message Translator cards --------------------------------
+  errCardList: {
+    flexShrink: 0,
+    maxHeight: '55%',
+    overflowY: 'auto',
+    padding: '4px 0',
+    borderBottom: '1px solid var(--border)',
+    background: 'rgba(255, 80, 80, 0.03)',
+  },
+  errCardListHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 12px 2px',
+    fontSize: 10.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: 'var(--text-muted)',
+  },
+  errCard: {
+    flexShrink: 0,
+    margin: 8,
+    padding: '10px 12px 12px',
+    borderRadius: 6,
+    background: 'rgba(255, 80, 80, 0.06)',
+    border: '1px solid rgba(255, 80, 80, 0.35)',
+    color: 'var(--text-primary)',
+  },
+  errIndex: {
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: 0.5,
+    padding: '1px 6px',
+    borderRadius: 999,
+    background: 'rgba(255, 80, 80, 0.18)',
+    color: 'var(--danger)',
+    border: '1px solid rgba(255, 80, 80, 0.4)',
+  },
+  errAiBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 3,
+    fontSize: 9.5,
+    fontWeight: 600,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    padding: '1px 6px 1px 5px',
+    borderRadius: 999,
+    background: 'rgba(111, 195, 223, 0.12)',
+    color: 'var(--border-focus)',
+    border: '1px solid rgba(111, 195, 223, 0.4)',
+  },
+  errHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  errTitle: {
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+    lineHeight: 1.4,
+  },
+  errDismiss: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    padding: 4,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: 3,
+  },
+  errPlain: {
+    margin: '0 0 10px',
+    fontSize: 12,
+    lineHeight: 1.55,
+    color: 'var(--text-secondary)',
+  },
+  errFixes: {
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    paddingTop: 8,
+  },
+  errFixesLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    fontSize: 10.5,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: 'var(--text-muted)',
+    marginBottom: 6,
+  },
+  errFixList: {
+    margin: 0,
+    paddingLeft: 18,
+  },
+  errFixItem: {
+    fontSize: 12,
+    lineHeight: 1.55,
+    color: 'var(--text-secondary)',
+    marginBottom: 4,
+  },
+  inlineCode: {
+    fontFamily: '"JetBrains Mono", "Cascadia Code", Consolas, monospace',
+    fontSize: 11,
+    padding: '1px 5px',
+    background: 'var(--bg-input)',
+    border: '1px solid var(--border)',
+    borderRadius: 3,
+    color: 'var(--text-primary)',
   },
 
   consoleEmpty: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquareText, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { MessageSquareText, ChevronLeft, ChevronRight, ChevronDown, Loader } from 'lucide-react';
 
 // ExplanationSidebar — the right-most column. Shows the result of the
 // "Explain" action (offline glossary or AI). Collapsible since v2.4 so
@@ -14,6 +14,7 @@ import { MessageSquareText, ChevronLeft, ChevronRight, ChevronDown } from 'lucid
 
 export default function ExplanationSidebar({
   explanation,
+  loading = false,
   collapsed = false,
   onToggleCollapsed,
 }) {
@@ -62,7 +63,20 @@ export default function ExplanationSidebar({
         )}
       </div>
 
-      {explanation && (
+      {loading && (
+        <div style={styles.loadingBlock}>
+          <Loader
+            size={16}
+            style={{ animation: 'spin 1s linear infinite', color: 'var(--text-secondary)' }}
+          />
+          <span style={styles.loadingText}>Thinking…</span>
+          <span style={styles.loadingHint}>
+            Asking the AI to explain the selection.
+          </span>
+        </div>
+      )}
+
+      {!loading && explanation && (
         <div style={styles.section}>
           <div style={styles.summary}>{explanation.summary}</div>
 
@@ -110,7 +124,7 @@ export default function ExplanationSidebar({
         </div>
       )}
 
-      {!explanation && (
+      {!loading && !explanation && (
         <div style={styles.placeholder}>
           <MessageSquareText size={20} color="var(--text-muted)" />
           <span>Select code to see explanations</span>
@@ -275,5 +289,29 @@ const styles = {
     textAlign: 'center',
     padding: 20,
     gap: 8,
+  },
+  loadingBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: '24px 16px',
+    background: 'var(--bg-input)',
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    textAlign: 'center',
+  },
+  loadingText: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+    letterSpacing: 0.3,
+    marginTop: 2,
+  },
+  loadingHint: {
+    fontSize: 11.5,
+    color: 'var(--text-muted)',
+    lineHeight: 1.5,
   },
 };

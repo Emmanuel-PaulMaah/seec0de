@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Lock, Unlock, Loader, X, Save, Play, Lightbulb } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
@@ -7,6 +7,25 @@ import { fileInfo, basename } from '../engine/fileLanguage';
 
 // Languages currently supported by runnerService.js. Keep in sync.
 const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
+
+// Editor font-size scaling. Persisted per-install so the learner's
+// preferred reading size sticks across launches. Bounded so the editor
+// never shrinks past unreadable or stretches past comically large.
+const FONT_SIZE_KEY     = 'seec0de.editorFontSize';
+const FONT_SIZE_DEFAULT = 13;
+const FONT_SIZE_MIN     = 10;
+const FONT_SIZE_MAX     = 28;
+const FONT_SIZE_STEP    = 1;
+
+function readSavedFontSize() {
+  const raw = parseInt(localStorage.getItem(FONT_SIZE_KEY) || '', 10);
+  if (Number.isFinite(raw) && raw >= FONT_SIZE_MIN && raw <= FONT_SIZE_MAX) return raw;
+  return FONT_SIZE_DEFAULT;
+}
+
+function clampFontSize(n) {
+  return Math.max(FONT_SIZE_MIN, Math.min(FONT_SIZE_MAX, n));
+}
 
 const DEFAULT_FILENAME_FOR_LANG = {
   javascript: 'main.js',
@@ -69,6 +88,42 @@ export default function CodePanel({
   const [selection, setSelection] = useState(null);
   const [btnPos, setBtnPos] = useState(null);
   const editorRef = useRef(null);
+
+  // ---- editor font size -------------------------------------------------
+  // Lives in CodePanel so the +/− controls sit next to the editor they
+  // resize. Persisted to localStorage in an effect below.
+  const [fontSize, setFontSize] = useState(() => readSavedFontSize());
+
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
+  }, [fontSize]);
+
+  const bumpFontSize = useCallback((delta) => {
+    setFontSize((prev) => clampFontSize(prev + delta));
+  }, []);
+  const resetFontSize = useCallback(() => setFontSize(FONT_SIZE_DEFAULT), []);
+
+  // Ctrl/⌘ +  → bigger ; Ctrl/⌘ −  → smaller ; Ctrl/⌘ 0  → reset.
+  // Hooked to window so the shortcuts work even when the Monaco editor
+  // doesn't have focus (e.g. learner just clicked the tab strip).
+  useEffect(() => {
+    const onKey = (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      // `=` keycap doubles as `+` without Shift on most keyboards.
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        bumpFontSize(FONT_SIZE_STEP);
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        bumpFontSize(-FONT_SIZE_STEP);
+      } else if (e.key === '0') {
+        e.preventDefault();
+        resetFontSize();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [bumpFontSize, resetFontSize]);
 
   // ---- which view are we showing? ---------------------------------------
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
@@ -258,6 +313,45 @@ export default function CodePanel({
         </div>
 
         <div style={styles.tabActions}>
+          {/* Font-size scaler — A−, current size (click to reset), A+.
+              Keyboard: Ctrl/⌘ + / − to step, Ctrl/⌘ 0 to reset. */}
+          <div style={styles.fontGroup} role="group" aria-label="Editor font size">
+            <button
+              type="button"
+              style={{
+                ...styles.fontBtn,
+                ...(fontSize <= FONT_SIZE_MIN ? styles.fontBtnDisabled : {}),
+              }}
+              onClick={() => bumpFontSize(-FONT_SIZE_STEP)}
+              disabled={fontSize <= FONT_SIZE_MIN}
+              title="Decrease editor font size (Ctrl + −)"
+              aria-label="Decrease editor font size"
+            >
+              A−
+            </button>
+            <button
+              type="button"
+              style={styles.fontSizeLabel}
+              onClick={resetFontSize}
+              title={`Reset to default (${FONT_SIZE_DEFAULT}px) — Ctrl + 0`}
+              aria-label={`Editor font size ${fontSize}px — click to reset`}
+            >
+              {fontSize}
+            </button>
+            <button
+              type="button"
+              style={{
+                ...styles.fontBtn,
+                ...(fontSize >= FONT_SIZE_MAX ? styles.fontBtnDisabled : {}),
+              }}
+              onClick={() => bumpFontSize(FONT_SIZE_STEP)}
+              disabled={fontSize >= FONT_SIZE_MAX}
+              title="Increase editor font size (Ctrl + +)"
+              aria-label="Increase editor font size"
+            >
+              A+
+            </button>
+          </div>
           {canRun && (
             <button
               style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}) }}
@@ -300,7 +394,7 @@ export default function CodePanel({
       {isPseudocode && (generatedCode.pseudocode || '').trim().length > 0 && (
         <div style={styles.algoBanner}>
           <Lightbulb size={12} color="var(--algorithm)" />
-          <span style={styles.algoBannerStrong}>Algorithm — read this first.</span>
+          <span style={styles.algoBannerStrong}>Algorithm</span>
           <span style={styles.algoBannerHint}>
             Every language tab is the same idea written in different syntax.
           </span>
@@ -330,7 +424,7 @@ export default function CodePanel({
             options={{
               readOnly: isReadOnly,
               minimap: { enabled: false },
-              fontSize: 13,
+              fontSize,
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
               wordWrap: 'on',
@@ -561,5 +655,45 @@ const styles = {
   runBtnDisabled: {
     opacity: 0.6,
     cursor: 'not-allowed',
+  },
+
+  fontGroup: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    margin: '6px 4px 6px 8px',
+    overflow: 'hidden',
+    background: 'var(--bg-tertiary)',
+  },
+  fontBtn: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-secondary)',
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '4px 8px',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    minWidth: 26,
+    transition: 'background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)',
+  },
+  fontBtnDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+  },
+  fontSizeLabel: {
+    background: 'transparent',
+    border: 'none',
+    borderLeft: '1px solid var(--border)',
+    borderRight: '1px solid var(--border)',
+    color: 'var(--text-primary)',
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '4px 8px',
+    cursor: 'pointer',
+    minWidth: 26,
+    fontVariantNumeric: 'tabular-nums',
+    textAlign: 'center',
   },
 };

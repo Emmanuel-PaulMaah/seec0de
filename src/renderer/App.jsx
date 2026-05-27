@@ -8,10 +8,10 @@ import TerminalPanel from './components/TerminalPanel';
 import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer from './components/SettingsDrawer';
-import { generateCode } from './engine/codeGenerator';
+import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey } from './engine/aiService';
-import { loadSettings } from './engine/settings';
+import { loadSettings, updateSettings } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
@@ -72,6 +72,17 @@ export default function App() {
   const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [activeLesson, setActiveLesson] = useState(null);
+
+  // ---- settings + completion -------------------------------------------
+  const completedLessons = useMemo(() => settings.completedLessons || [], [settings.completedLessons]);
+
+  const handleSelectLesson = useCallback((lesson) => {
+    setActiveLesson(lesson);
+    if (lesson) {
+      setInstruction(lesson.instruction);
+    }
+  }, []);
 
   // Lifted from CodePanel so the LivePreviewPanel can read the same active
   // tab without prop-drilling editor state up on every keystroke.
@@ -116,8 +127,13 @@ export default function App() {
 
   // ---- persistence -----------------------------------------------------
   useEffect(() => {
-    if (rootPath) localStorage.setItem(STORAGE_KEY_FOLDER, rootPath);
-    else          localStorage.removeItem(STORAGE_KEY_FOLDER);
+    if (rootPath) {
+      localStorage.setItem(STORAGE_KEY_FOLDER, rootPath);
+      window.seecode.fs.setProjectRoot(rootPath);
+    } else {
+      localStorage.removeItem(STORAGE_KEY_FOLDER);
+      window.seecode.fs.setProjectRoot(null);
+    }
   }, [rootPath]);
 
   useEffect(() => {
@@ -332,7 +348,12 @@ export default function App() {
       }
     };
 
-    const canUseAi = hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
+    // Skip AI when the instruction matches one of the offline templates
+    // (typically the suggestion chips). The hand-tuned template is the
+    // canonical lesson for that prompt — paying for a network round-trip
+    // just to get a less consistent answer adds latency without value.
+    const isTemplate = matchesTemplate(text);
+    const canUseAi = !isTemplate && hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
 
     if (canUseAi) {
       setAiLoading(true);
@@ -376,9 +397,21 @@ export default function App() {
       if (explanationCollapsed) setExplanationCollapsed(false);
     };
 
-    const canUseAi = hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
+    // Skip AI when the selected code is verbatim from one of the offline
+    // templates — the hand-tuned offline explainer already has a bespoke
+    // summary + line-by-line for it (see codeExplainer.js → findTemplateMatch).
+    // Mirrors the same short-circuit in handleGenerate above so template
+    // round-trips stay 100% local even with a key + connection.
+    const isTemplate = !!findTemplateMatch(selectedCode);
+    const canUseAi = !isTemplate && hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
 
     if (canUseAi) {
+      // Clear the previous result and pop the sidebar open BEFORE the
+      // network call so the spinner inside ExplanationSidebar is visible
+      // while we wait — otherwise the only feedback is the tiny floating
+      // button on the editor selection, which is easy to miss.
+      setExplanation(null);
+      if (explanationCollapsed) setExplanationCollapsed(false);
       setAiLoading(true);
       try {
         const result = await explainCodeWithAI(selectedCode, language);
@@ -449,7 +482,17 @@ export default function App() {
         stderr: result.stderr || (result.error ? `[seec0de] ${result.error}\n` : ''),
         exitCode: result.exitCode ?? -1,
         durationMs: result.durationMs ?? 0,
+        language: payload.language,
       });
+
+      // If a lesson is active and it just ran successfully, mark it complete.
+      if (activeLesson && (result.exitCode === 0 || (!result.error && !result.stderr))) {
+        if (!completedLessons.includes(activeLesson.id)) {
+          const next = [...completedLessons, activeLesson.id];
+          const nextSettings = updateSettings({ completedLessons: next });
+          setSettings(nextSettings);
+        }
+      }
     } catch (err) {
       setRunnerOutput({
         command: `run ${payload.language}`,
@@ -457,6 +500,7 @@ export default function App() {
         stderr: `[seec0de] ${err.message}\n`,
         exitCode: -1,
         durationMs: 0,
+        language: payload.language,
       });
     } finally {
       setRunLoading(false);
@@ -525,6 +569,9 @@ export default function App() {
             onOpenSettings={() => setShowSettings(true)}
             collapsed={instructionCollapsed}
             onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
+            completedLessons={completedLessons}
+            onSelectLesson={handleSelectLesson}
+            activeLesson={activeLesson}
           />
 
           <CodePanel
@@ -558,6 +605,7 @@ export default function App() {
 
           <ExplanationSidebar
             explanation={explanation}
+            loading={aiLoading}
             collapsed={explanationCollapsed}
             onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
           />

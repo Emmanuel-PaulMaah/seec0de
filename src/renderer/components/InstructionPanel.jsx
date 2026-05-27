@@ -2,35 +2,13 @@ import React, { useMemo, useState, useCallback } from 'react';
 import {
   Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
+  GraduationCap, Terminal,
 } from 'lucide-react';
 import { hasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
+import LessonsPanel from './LessonsPanel';
 
-// InstructionPanel — the first column of the workspace.
-//
-// Beginner-first redesign: the language picker has moved into the
-// Settings drawer (gear icon in the title bar), because the practical +
-// comparison languages were already chosen during onboarding. What's
-// left here is just *the question*: "what do you want the program to do?"
-// plus the two ways to answer it — the offline template generator and
-// the AI generator.
-//
-// The languages strip at the top is now a passive read-out, not a
-// control. It tells the learner which languages will appear as tabs in
-// the next column, and links to Settings to change that.
-//
-// v2.4: The whole panel is collapsible. Collapsed, it becomes a 32 px
-// vertical rail showing a chevron + "INSTRUCTION" so the learner can
-// re-summon it without losing screen real-estate to the live preview.
-
-const LANGUAGE_LABELS = {
-  python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
-  csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C',
-};
-
-function labelFor(id) {
-  return LANGUAGE_LABELS[id] || id;
-}
+// ... (LANGUAGE_LABELS and labelFor unchanged)
 
 export default function InstructionPanel({
   instruction,
@@ -42,27 +20,40 @@ export default function InstructionPanel({
   onOpenSettings,
   collapsed = false,
   onToggleCollapsed,
+  completedLessons = [],
+  onSelectLesson,
+  activeLesson,
 }) {
   const aiReady = hasApiKey();
+  const [activeTab, setActiveTab] = useState('build'); // 'build' or 'lessons'
+  const labelFor = (id) => {
+  const labels = {
+    js: 'JavaScript',
+    javascript: 'JavaScript',
+    ts: 'TypeScript',
+    typescript: 'TypeScript',
+    py: 'Python',
+    python: 'Python',
+    java: 'Java',
+    cpp: 'C++',
+    csharp: 'C#',
+    go: 'Go',
+    rust: 'Rust',
+  };
+
+  return labels[id] || id;
+};
 
   // ---- suggestions -----------------------------------------------------
-  // A random handful of "I want to learn X" chips. Clicking one fills the
-  // textarea AND fires Generate so the learner sees a real example in one
-  // tap — no guessing what to type. `seed` is bumped by the shuffle
-  // button to re-roll without remounting.
   const [seed, setSeed] = useState(0);
   const suggestions = useMemo(() => pickSuggestions(4), [seed]);
 
   const handleSuggestion = useCallback((text) => {
     onInstructionChange(text);
-    // Pass the text directly so the parent's handleGenerate doesn't
-    // race the controlled-input state update.
     onGenerate?.(text);
   }, [onInstructionChange, onGenerate]);
 
   const handleGenerateClick = useCallback(() => {
-    // Single Generate button — the parent decides whether to use AI
-    // (when online + API key present) or fall back to offline templates.
     onGenerate?.();
   }, [onGenerate]);
 
@@ -92,9 +83,6 @@ export default function InstructionPanel({
         <div style={styles.header}>
           <div style={styles.headerText}>
             <div style={styles.headerLabel}>Instruction</div>
-            <p style={styles.headerHint}>
-              Describe what you want the program to do, in plain English.
-            </p>
           </div>
           {onToggleCollapsed && (
             <button
@@ -109,96 +97,148 @@ export default function InstructionPanel({
           )}
         </div>
 
-        {/* Read-out: which languages will be generated */}
-        <button style={styles.langStrip} onClick={onOpenSettings} title="Manage languages in Settings">
-          <span style={styles.langStripIntro}>You'll see this in</span>
-          <span style={styles.langStripChip}>Pseudocode</span>
-          {practicalLanguage && (
-            <>
-              <span style={styles.langStripPlus}>+</span>
-              <span style={{ ...styles.langStripChip, ...styles.langStripChipPractical }}>
-                {labelFor(practicalLanguage)}
-              </span>
-            </>
+        {/* Tabs for Build vs Lessons */}
+        <div style={styles.tabs}>
+          <button
+            style={{ ...styles.tab, ...(activeTab === 'build' ? styles.tabActive : {}) }}
+            onClick={() => setActiveTab('build')}
+          >
+            <Terminal size={12} />
+            Build
+          </button>
+          <button
+            style={{ ...styles.tab, ...(activeTab === 'lessons' ? styles.tabActive : {}) }}
+            onClick={() => setActiveTab('lessons')}
+          >
+            <GraduationCap size={12} />
+            Lessons
+          </button>
+        </div>
+
+        <div style={styles.scrollContent}>
+          {activeTab === 'build' ? (
+            <div style={styles.buildStack}>
+              <p style={styles.headerHint}>
+                Describe what you want the program to do, in plain English.
+              </p>
+
+              {/* Read-out: which languages will be generated */}
+              <button style={styles.langStrip} onClick={onOpenSettings} title="Manage languages in Settings">
+                <span style={styles.langStripChip}>Pseudocode</span>
+                {practicalLanguage && (
+                  <>
+                    <span style={styles.langStripPlus}>+</span>
+                    <span style={{ ...styles.langStripChip, ...styles.langStripChipPractical }}>
+                      {labelFor(practicalLanguage)}
+                    </span>
+                  </>
+                )}
+                {comparisonLanguages.map((id) => (
+                  <React.Fragment key={id}>
+                    <span style={styles.langStripPlus}>+</span>
+                    <span style={styles.langStripChip}>{labelFor(id)}</span>
+                  </React.Fragment>
+                ))}
+                <span style={styles.langStripGear} aria-hidden="true">
+                  <SettingsIcon size={11} />
+                </span>
+              </button>
+
+              <div style={styles.suggestionsHead}>
+                <span style={styles.suggestionsLabel}>Try one of these</span>
+                <button
+                  type="button"
+                  style={styles.shuffleBtn}
+                  onClick={() => setSeed((s) => s + 1)}
+                  title="Shuffle suggestions"
+                  aria-label="Shuffle suggestions"
+                >
+                  <Shuffle size={11} />
+                </button>
+              </div>
+              <div style={styles.suggestions}>
+                {suggestions.map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    style={styles.suggestionChip}
+                    onClick={() => handleSuggestion(s.instruction)}
+                    title={s.instruction}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                style={styles.textarea}
+                value={instruction}
+                onChange={(e) => onInstructionChange(e.target.value)}
+                placeholder={'e.g. "read a CSV of student grades and print the top 5 averages"'}
+                aria-label="Instruction for the program"
+              />
+
+              <div style={styles.actions}>
+                <button
+                  style={{
+                    ...styles.generateBtn,
+                    ...(aiLoading ? styles.disabledBtn : {}),
+                  }}
+                  onClick={handleGenerateClick}
+                  disabled={aiLoading}
+                >
+                  {aiLoading
+                    ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 6 }}>Thinking…</span></>
+                    : <><Wand2 size={13} /><span style={{ marginLeft: 6 }}>Generate</span></>}
+                </button>
+              </div>
+
+              {!aiReady && (
+                <button style={styles.subtleLink} onClick={onOpenSettings}>
+                  Add a free Gemini key in Settings for smarter AI generation →
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={styles.lessonsStack}>
+              {activeLesson ? (
+                <div style={styles.activeLessonCard}>
+                  <div style={styles.activeLessonHeader}>
+                    <span style={styles.activeLessonTitle}>{activeLesson.title}</span>
+                    <button
+                      style={styles.clearLessonBtn}
+                      onClick={() => onSelectLesson(null)}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div style={styles.activeLessonGoal}>
+                    <b>Goal:</b> {activeLesson.goal}
+                  </div>
+                  <div style={styles.activeLessonExercise}>
+                    <b>Exercise:</b> {activeLesson.exercise}
+                  </div>
+                  <button
+                    style={styles.lessonGenerateBtn}
+                    onClick={() => onGenerate?.(activeLesson.instruction)}
+                    disabled={aiLoading}
+                  >
+                    {aiLoading ? 'Thinking...' : 'Start Lesson'}
+                  </button>
+                </div>
+              ) : (
+                <p style={styles.headerHint}>
+                  Follow a structured path to learn the basics.
+                </p>
+              )}
+              <LessonsPanel
+                completedLessons={completedLessons}
+                onSelectLesson={onSelectLesson}
+                activeLessonId={activeLesson?.id}
+              />
+            </div>
           )}
-          {comparisonLanguages.map((id) => (
-            <React.Fragment key={id}>
-              <span style={styles.langStripPlus}>+</span>
-              <span style={styles.langStripChip}>{labelFor(id)}</span>
-            </React.Fragment>
-          ))}
-          <span style={styles.langStripGear} aria-hidden="true">
-            <SettingsIcon size={11} />
-          </span>
-        </button>
-
-        {/* Suggestion chips — one-tap learner starters. Each clicks
-            straight through to Generate so the workspace fills with a
-            real, runnable example without anybody having to think up an
-            instruction. */}
-        <div style={styles.suggestionsHead}>
-          <span style={styles.suggestionsLabel}>Try one of these</span>
-          <button
-            type="button"
-            style={styles.shuffleBtn}
-            onClick={() => setSeed((s) => s + 1)}
-            title="Shuffle suggestions"
-            aria-label="Shuffle suggestions"
-          >
-            <Shuffle size={11} />
-          </button>
         </div>
-        <div style={styles.suggestions}>
-          {suggestions.map((s) => (
-            <button
-              key={s.label}
-              type="button"
-              style={styles.suggestionChip}
-              onClick={() => handleSuggestion(s.instruction)}
-              title={s.instruction}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {/* The question */}
-        <textarea
-          style={styles.textarea}
-          value={instruction}
-          onChange={(e) => onInstructionChange(e.target.value)}
-          placeholder={'e.g. "read a CSV of student grades and print the top 5 averages"'}
-          aria-label="Instruction for the program"
-        />
-
-        {/* One button. Online + API key → AI; otherwise → offline templates. */}
-        <div style={styles.actions}>
-          <button
-            style={{
-              ...styles.generateBtn,
-              ...(aiLoading ? styles.disabledBtn : {}),
-            }}
-            onClick={handleGenerateClick}
-            disabled={aiLoading}
-            title={
-              aiLoading
-                ? 'Thinking…'
-                : aiReady
-                  ? 'Generate with AI when online, otherwise use built-in templates'
-                  : 'Generate using built-in templates (add a Gemini key in Settings for AI)'
-            }
-          >
-            {aiLoading
-              ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 6 }}>Thinking…</span></>
-              : <><Wand2 size={13} /><span style={{ marginLeft: 6 }}>Generate</span></>}
-          </button>
-        </div>
-
-        {!aiReady && (
-          <button style={styles.subtleLink} onClick={onOpenSettings}>
-            Add a free Gemini key in Settings for smarter AI generation →
-          </button>
-        )}
 
       </div>
     </div>
@@ -237,7 +277,6 @@ const styles = {
     flexDirection: 'column',
     background: 'var(--bg-secondary)',
     borderRight: '1px solid var(--border)',
-    overflow: 'auto',
   },
   inner: {
     padding: 16,
@@ -245,6 +284,7 @@ const styles = {
     flexDirection: 'column',
     gap: 14,
     flex: 1,
+    overflow: 'hidden',
   },
 
   header: {
@@ -269,6 +309,7 @@ const styles = {
     fontSize: 12,
     color: 'var(--text-muted)',
     lineHeight: 1.5,
+    marginBottom: 4,
   },
   collapseBtn: {
     background: 'transparent',
@@ -279,6 +320,53 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     flexShrink: 0,
+  },
+
+  tabs: {
+    display: 'flex',
+    background: 'var(--bg-tertiary)',
+    borderRadius: 8,
+    padding: 2,
+    gap: 2,
+  },
+  tab: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: '6px 0',
+    fontSize: 12,
+    fontWeight: 500,
+    border: 'none',
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    borderRadius: 6,
+    cursor: 'pointer',
+    transition: 'all var(--motion-fast) var(--ease-out)',
+  },
+  tabActive: {
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    boxShadow: 'var(--shadow-sm)',
+  },
+
+  scrollContent: {
+    flex: 1,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  buildStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 14,
+    flex: 1,
+  },
+  lessonsStack: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 14,
   },
 
   langStrip: {
@@ -417,4 +505,58 @@ const styles = {
     textDecorationColor: 'var(--border-strong)',
     textUnderlineOffset: 3,
   },
+
+  activeLessonCard: {
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--accent)',
+    borderRadius: 8,
+    padding: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    boxShadow: 'var(--shadow-md)',
+  },
+  activeLessonHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  activeLessonTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: 'var(--text-primary)',
+  },
+  clearLessonBtn: {
+    fontSize: 10,
+    color: 'var(--text-muted)',
+    background: 'transparent',
+    border: 'none',
+    padding: '2px 4px',
+    cursor: 'pointer',
+  },
+  activeLessonGoal: {
+    fontSize: 12,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.4,
+  },
+  activeLessonExercise: {
+    fontSize: 12,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.4,
+    padding: 8,
+    background: 'var(--bg-tertiary)',
+    borderRadius: 4,
+    borderLeft: '3px solid var(--accent)',
+  },
+  lessonGenerateBtn: {
+    background: 'var(--accent)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 6,
+    padding: '8px 0',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
 };
+
