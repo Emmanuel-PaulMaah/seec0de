@@ -72,6 +72,18 @@ select any chunk of code in the editor & a floating **Explain** button appears. 
 
 the line-by-line breakdown is a **single-open accordion** — every line starts collapsed; click one to expand it, & whichever line was previously open auto-closes. lets you focus on one line at a time instead of getting hit with the whole explanation at once.
 
+### 🩹 errors get translated
+
+when Run fails, the **Console** tab stacks a small "what does that mean?" card above the raw stderr — title, plain-english explanation, and 2–5 concrete fixes that reference your actual variable/function names. covers the common beginner errors offline (regex-matched against the stderr you actually hit, no AI needed) across python, javascript, typescript, c, and c++. anything the offline translator doesn't recognise falls through to an **AI-translated** card with the same shape (small "AI" badge so you know the source), when you have a key + connection. the raw stderr stays visible underneath either way.
+
+### 🎓 lessons mode
+
+the instruction panel has a **Build / Lessons** tab strip. *Build* is the existing "write what you want" surface. *Lessons* opens a curated track of starter exercises — pick one, the instruction fills in, an active-lesson card shows the goal + exercise, and the lesson marks itself complete the first time you Run successfully. completion sticks across launches.
+
+### 🅰 editor font controls
+
+the editor toolbar has `A−` / size / `A+` buttons (and `Ctrl/⌘ +` / `Ctrl/⌘ −` / `Ctrl/⌘ 0` shortcuts) to scale Monaco between 10 px and 28 px. preference persists per-install.
+
 ### 🔍 keyword glossary
 
 click any highlighted keyword in the code to see:
@@ -104,6 +116,14 @@ bottom-of-window collapsible terminal (`Ctrl + ``) that turns every command into
 - students learning their first language
 - developers picking up a new language & wanting to see familiar concepts in unfamiliar syntax
 - anyone who finds a snippet online & wants to know what it actually does
+
+---
+
+## privacy & security
+
+- **API key never touches the renderer.** The Gemini key is stored encrypted at rest in the main process via Electron `safeStorage` (DPAPI on Windows, Keychain on macOS, libsecret on Linux). The HTTPS call to Google also runs from the main process. The renderer only sees a boolean *"is a key set?"*.
+- **Child processes (Run, Terminal) get a sanitized environment.** A whitelist of safe variables (`PATH`, `HOME`/`USERPROFILE`, locale, temp dirs) is passed to every spawned tool — secrets in the parent process don't leak into your code or shell commands.
+- **Filesystem IPC is scoped to the open folder + OS temp dir** when a project root is set, so an accidental `..` in a path can't wander out of the workspace.
 
 ---
 
