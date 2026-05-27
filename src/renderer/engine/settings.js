@@ -4,15 +4,14 @@
 // Schema is versioned so we can migrate cleanly. Bump SCHEMA_VERSION when
 // the shape changes meaningfully and add a `migrate()` branch.
 //
-// IMPORTANT: the Gemini API key keeps using its legacy key
-// (`seec0de_gemini_key`) so aiService.js continues to work without changes.
-// Settings.apiKey is just a convenience pass-through that reads/writes the
-// same legacy key under the hood.
+// The Gemini API key itself lives in the main process (encrypted via
+// safeStorage). The setSettingsApiKey passthrough below just forwards to
+// the IPC bridge and refreshes the renderer-side hasApiKey() cache.
 
-import { getApiKey, setApiKey } from './aiService';
+import { refreshHasApiKey } from './aiService';
 
 const STORAGE_KEY    = 'seec0de.settings';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const DEFAULTS = Object.freeze({
   schemaVersion:       SCHEMA_VERSION,
@@ -33,6 +32,8 @@ const DEFAULTS = Object.freeze({
   // beginners — they have no files yet. Power users flip these on.
   showFileExplorer:    false,
   showTerminal:        false,
+  // List of lesson IDs the user has completed.
+  completedLessons:    [],
 });
 
 // Languages currently supported by runnerService.js. The onboarding picker
@@ -64,8 +65,10 @@ export function defaultComparisonFor(practicalLang) {
 // load / save / update
 
 function migrate(parsed) {
-  // No migrations yet (we are at v1). Future:
-  //   if (parsed.schemaVersion < 2) { ...rename/move fields... }
+  if (parsed && parsed.schemaVersion < 2) {
+    // v1 -> v2: Add completedLessons
+    parsed.completedLessons = parsed.completedLessons || [];
+  }
   return { ...DEFAULTS, ...parsed, schemaVersion: SCHEMA_VERSION };
 }
 
@@ -95,12 +98,17 @@ export function resetOnboarding() {
 }
 
 // ---------------------------------------------------------------------------
-// API key passthrough — keeps the legacy storage key for backwards compat.
+// API key passthrough — stored securely in the main process via safeStorage.
 
 export function getSettingsApiKey() {
-  return getApiKey();
+  // We no longer return the raw key to the renderer for security.
+  // The UI will just show "••••••••" if hasKey() is true.
+  return '';
 }
 
+// Async under the hood but safe to call without `await` — fires the IPC
+// then refreshes the sync `hasApiKey()` cache so the UI updates the next
+// time it re-renders. Returns the promise for callers who want to await.
 export function setSettingsApiKey(key) {
-  setApiKey(key || '');
+  return window.seecode.ai.setKey(key || '').then(() => refreshHasApiKey());
 }

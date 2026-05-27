@@ -26,6 +26,7 @@ const fs   = require('fs').promises;
 const path = require('path');
 const os   = require('os');
 const crypto = require('crypto');
+const { getSafeEnv } = require('./envUtils');
 
 const COMPILE_TIMEOUT_MS = 15_000;
 const RUN_TIMEOUT_MS     = 15_000;
@@ -79,7 +80,7 @@ function execProcess({ cmd, args, cwd, timeout }) {
     const child = spawn(cmd, args, {
       cwd,
       windowsHide: true,
-      env: process.env,
+      env: getSafeEnv(),
     });
 
     const cap = (acc, buf) => {
@@ -314,8 +315,13 @@ async function checkToolchains() {
 
 function registerRunnerServiceHandlers() {
   ipcMain.handle('runner:run', async (_e, payload) => {
-    try { return await run(payload || {}); }
-    catch (err) {
+    try {
+      const { language, source, filePath } = payload || {};
+      if (!['javascript', 'typescript', 'python', 'c', 'cpp'].includes(language)) {
+        throw new Error(`Unsupported runner language: ${language}`);
+      }
+      return await run(payload || {});
+    } catch (err) {
       return mkResult({ error: err.message, stderr: `[seec0de] runner crashed: ${err.message}\n` });
     }
   });

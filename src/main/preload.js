@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('seecode', {
     rename:     (oldP, newP)   => ipcRenderer.invoke('fs:rename', oldP, newP),
     delete:     (p)            => ipcRenderer.invoke('fs:delete', p),
     pathExists: (p)            => ipcRenderer.invoke('fs:path-exists', p),
+    setProjectRoot: (p)        => ipcRenderer.invoke('fs:set-project-root', p),
   },
   terminal: {
     home:      ()              => ipcRenderer.invoke('term:home'),
@@ -27,6 +28,11 @@ contextBridge.exposeInMainWorld('seecode', {
     // Returns { python, javascript, typescript, c, cpp }, each
     // { installed: bool, tool: string|null, version: string|null }.
     checkToolchains: () => ipcRenderer.invoke('runner:check-toolchains'),
+  },
+  ai: {
+    setKey: (key) => ipcRenderer.invoke('ai:set-key', key),
+    hasKey: ()    => ipcRenderer.invoke('ai:has-key'),
+    call:   (payload) => ipcRenderer.invoke('ai:call', payload),
   },
   updates: {
     // One-shot: fetch the current updater status.

@@ -81,18 +81,24 @@ const PLATFORM_LABEL = (() => {
 
 export default function SettingsDrawer({ open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal }) {
   const [settings, setSettings] = useState(loadSettings());
-  const [apiKey, setApiKey]     = useState(getSettingsApiKey());
+  const [apiKey, setApiKey]     = useState('');
+  const [hasKey, setHasKey]     = useState(false);
   const [showKey, setShowKey]   = useState(false);
   const [keySaved, setKeySaved] = useState(false);
   const update = useUpdateStatus();
 
-  // Refresh local copy whenever the drawer opens (handles changes that
-  // happened elsewhere, e.g. via onboarding).
+  // Placeholder shown when a key exists. Never saved — see handleSaveKey.
+  const KEY_MASK = '••••••••••••••••';
+
+  // Refresh local copy whenever the drawer opens.
   useEffect(() => {
     if (open) {
       setSettings(loadSettings());
-      setApiKey(getSettingsApiKey());
       setKeySaved(false);
+      window.seecode.ai.hasKey().then((exists) => {
+        setHasKey(exists);
+        setApiKey(exists ? KEY_MASK : '');
+      });
     }
   }, [open]);
 
@@ -129,10 +135,31 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
     patch({ comparisonLanguages: next });
   };
 
-  const handleSaveKey = () => {
-    setSettingsApiKey(apiKey.trim());
+  const handleSaveKey = async () => {
+    const trimmed = apiKey.trim();
+    // Guard: the field is pre-filled with mask bullets when a key
+    // already exists. If the user clicks Save without editing, we'd
+    // otherwise overwrite their real key with "••••••••" — Gemini then
+    // rightly rejects every subsequent call with "API key not valid".
+    // Treat "unchanged mask" as a no-op confirm.
+    if (hasKey && (trimmed === KEY_MASK || /^[•*]+$/.test(trimmed))) {
+      setKeySaved(true);
+      setTimeout(() => setKeySaved(false), 1800);
+      return;
+    }
+    await setSettingsApiKey(trimmed);
+    const exists = await window.seecode.ai.hasKey();
+    setHasKey(exists);
+    setApiKey(exists ? KEY_MASK : '');
     setKeySaved(true);
     setTimeout(() => setKeySaved(false), 1800);
+  };
+
+  // Clear the mask the first time the user focuses the field so they
+  // can type a fresh key without first having to manually delete the
+  // placeholder bullets.
+  const handleKeyFocus = () => {
+    if (apiKey === KEY_MASK) setApiKey('');
   };
 
   const handleRerun = () => {
@@ -212,6 +239,7 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
                   type={showKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
+                  onFocus={handleKeyFocus}
                   placeholder="AIza…"
                   style={styles.input}
                   autoComplete="off"

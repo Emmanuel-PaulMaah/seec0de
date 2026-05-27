@@ -12,7 +12,7 @@
     "release:win": "npm run build:renderer && electron-builder --win --publish always"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.6.0",
+    "@monaco-editor/react": "^4.7.0",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.8.3",
     "lucide-react": "^1.9.0",

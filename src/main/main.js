@@ -1,14 +1,22 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const https = require('https');
 const { autoUpdater } = require('electron-updater');
 const log = require('electron-log');
+
 const { registerFileServiceHandlers } = require('./fileService');
 const { registerTerminalServiceHandlers } = require('./terminalService');
 const { registerRunnerServiceHandlers } = require('./runnerService');
 
-// Pipe electron-updater logs to a file you can inspect on the user's machine
-// (Windows: %USERPROFILE%\AppData\Roaming\seec0de\logs\main.log)
+// Optional AI handlers. App should not crash if this file does not exist yet.
+let registerAiServiceHandlers = null;
+
+try {
+  ({ registerAiServiceHandlers } = require('./aiService'));
+} catch (err) {
+  log.warn('AI service handlers not loaded:', err.message);
+}
+
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 autoUpdater.autoDownload = true;
@@ -16,26 +24,19 @@ autoUpdater.autoInstallOnAppQuit = true;
 
 let mainWindow;
 
-// ---------------------------------------------------------------------------
-// Update status — single source of truth shared with the renderer over IPC.
-// `status` is one of:
-//   'idle' | 'checking' | 'available' | 'not-available'
-//   'downloading' | 'downloaded' | 'error' | 'disabled-in-dev'
-// ---------------------------------------------------------------------------
 const updateState = {
   appVersion: app.getVersion(),
   status: 'idle',
-  info: null,           // raw info object from electron-updater
-  lastChecked: null,    // ISO string
-  error: null,          // string message
-  releaseNotes: null,   // markdown string fetched from GitHub release body
-  progress: null,       // { percent, transferred, total, bytesPerSecond }
+  info: null,
+  lastChecked: null,
+  error: null,
+  releaseNotes: null,
+  progress: null,
 };
 
 function broadcastStatus() {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('update:status', updateState);
-  }
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send('update:status', updateState);
 }
 
 function setStatus(patch) {
@@ -58,56 +59,56 @@ function createWindow() {
     },
   });
 
-  const isDev = !app.isPackaged;
-  if (isDev) {
+  if (!app.isPackaged) {
     mainWindow.loadURL('http://localhost:9000');
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
   }
 
-  // Re-broadcast current status to the renderer once it's ready, so the
-  // UI can render the correct state on first paint after a reload.
-  mainWindow.webContents.on('did-finish-load', () => {
-    broadcastStatus();
+  mainWindow.webContents.on('did-finish-load', broadcastStatus);
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
   });
 }
 
-// ---------------------------------------------------------------------------
-// Release notes — fetched from the GitHub Releases API when an update is
-// downloaded, so the UpdatePill can show users what's new before they
-// restart. Public repo, no auth needed.
-// ---------------------------------------------------------------------------
 function fetchReleaseNotes(version) {
   return new Promise((resolve) => {
-    const options = {
-      hostname: 'api.github.com',
-      path: `/repos/Emmanuel-PaulMaah/seec0de/releases/tags/v${version}`,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'seec0de-app',
-        Accept: 'application/vnd.github+json',
+    const req = https.request(
+      {
+        hostname: 'api.github.com',
+        path: `/repos/Emmanuel-PaulMaah/seec0de/releases/tags/v${version}`,
+        method: 'GET',
+        headers: {
+          'User-Agent': 'seec0de-app',
+          Accept: 'application/vnd.github+json',
+        },
       },
-    };
+      (res) => {
+        let body = '';
 
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => { body += chunk; });
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          log.warn(`Release notes fetch returned ${res.statusCode} for v${version}`);
-          resolve(null);
-          return;
-        }
-        try {
-          const json = JSON.parse(body);
-          resolve(json.body || null);
-        } catch (err) {
-          log.warn('Failed to parse release notes JSON:', err.message);
-          resolve(null);
-        }
-      });
-    });
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            log.warn(`Release notes fetch returned ${res.statusCode} for v${version}`);
+            resolve(null);
+            return;
+          }
+
+          try {
+            const json = JSON.parse(body);
+            resolve(json.body || null);
+          } catch (err) {
+            log.warn('Failed to parse release notes JSON:', err.message);
+            resolve(null);
+          }
+        });
+      }
+    );
 
     req.on('error', (err) => {
       log.warn('Release notes fetch error:', err.message);
@@ -147,14 +148,16 @@ function setupAutoUpdates() {
   });
 
   autoUpdater.on('error', (err) => {
-    const message = err == null ? 'unknown' : (err.stack || err).toString();
+    const message = err?.stack || err?.message || String(err);
     log.error('Auto-update error:', message);
     setStatus({ status: 'error', error: message });
   });
 
   autoUpdater.on('update-downloaded', async (info) => {
     log.info('Update downloaded:', info.version);
+
     const releaseNotes = await fetchReleaseNotes(info.version);
+
     setStatus({
       status: 'downloaded',
       info,
@@ -163,13 +166,11 @@ function setupAutoUpdates() {
     });
   });
 
-  autoUpdater.checkForUpdates().catch((err) => log.error(err));
+  autoUpdater.checkForUpdates().catch((err) => {
+    log.error('Initial update check failed:', err);
+  });
 }
 
-// ---------------------------------------------------------------------------
-// IPC — the renderer talks to the updater through these three handlers,
-// exposed via the preload script as `window.seecode.updates`.
-// ---------------------------------------------------------------------------
 ipcMain.handle('update:get-status', () => updateState);
 
 ipcMain.handle('update:check-now', async () => {
@@ -177,18 +178,26 @@ ipcMain.handle('update:check-now', async () => {
     setStatus({ status: 'disabled-in-dev' });
     return updateState;
   }
+
   try {
     await autoUpdater.checkForUpdates();
   } catch (err) {
-    setStatus({ status: 'error', error: err.message });
+    setStatus({
+      status: 'error',
+      error: err?.message || String(err),
+    });
   }
+
   return updateState;
 });
 
 ipcMain.handle('update:install-now', () => {
   if (updateState.status !== 'downloaded') return false;
-  // setImmediate so the IPC reply can flush before the app quits.
-  setImmediate(() => autoUpdater.quitAndInstall());
+
+  setImmediate(() => {
+    autoUpdater.quitAndInstall();
+  });
+
   return true;
 });
 
@@ -196,6 +205,11 @@ app.whenReady().then(() => {
   registerFileServiceHandlers();
   registerTerminalServiceHandlers();
   registerRunnerServiceHandlers();
+
+  if (typeof registerAiServiceHandlers === 'function') {
+    registerAiServiceHandlers();
+  }
+
   createWindow();
   setupAutoUpdates();
 });

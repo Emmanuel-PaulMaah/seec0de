@@ -21,6 +21,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs').promises;
 const os = require('os');
+const { getSafeEnv } = require('./envUtils');
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_BYTES   = 1_000_000;     // 1 MB per stream
@@ -46,7 +47,7 @@ function runCommand({ command, cwd }) {
     const child = spawn(cmd, args, {
       cwd: cwd || os.homedir(),
       windowsHide: true,
-      env: process.env,
+      env: getSafeEnv(),
     });
 
     const onData = (buf, target) => {
@@ -114,7 +115,11 @@ async function resolveCd({ cwd, target }) {
 }
 
 function registerTerminalServiceHandlers() {
-  ipcMain.handle('term:exec', async (_e, payload) => runCommand(payload || {}));
+  ipcMain.handle('term:exec', async (_e, payload) => {
+    const { command, cwd } = payload || {};
+    if (typeof command !== 'string') throw new Error('Invalid terminal command');
+    return runCommand({ command, cwd });
+  });
   ipcMain.handle('term:home', () => os.homedir());
   ipcMain.handle('term:resolve-cd', async (_e, payload) => resolveCd(payload || {}));
 }
