@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
@@ -7,6 +7,7 @@ import {
 import { hasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
 import LessonsPanel from './LessonsPanel';
+import ActiveLessonCard from './ActiveLessonCard';
 
 // ... (LANGUAGE_LABELS and labelFor unchanged)
 
@@ -20,12 +21,27 @@ export default function InstructionPanel({
   onOpenSettings,
   collapsed = false,
   onToggleCollapsed,
+  // lesson props
   completedLessons = [],
   onSelectLesson,
   activeLesson,
+  lessonStatus = 'idle',
+  lessonVerification = null,
+  lessonHasNext = false,
+  onResetLessonCode,
+  onRevealSolution,
+  onNextLesson,
 }) {
   const aiReady = hasApiKey();
   const [activeTab, setActiveTab] = useState('build'); // 'build' or 'lessons'
+
+  // When a lesson becomes active (from any source — list click, "Next
+  // lesson", restored state) the user is in lesson mode, full stop. Pop
+  // the Lessons tab to the front so they see the teaching surface
+  // instead of the Build form.
+  useEffect(() => {
+    if (activeLesson) setActiveTab('lessons');
+  }, [activeLesson?.id]);
   const labelFor = (id) => {
   const labels = {
     js: 'JavaScript',
@@ -202,33 +218,20 @@ export default function InstructionPanel({
           ) : (
             <div style={styles.lessonsStack}>
               {activeLesson ? (
-                <div style={styles.activeLessonCard}>
-                  <div style={styles.activeLessonHeader}>
-                    <span style={styles.activeLessonTitle}>{activeLesson.title}</span>
-                    <button
-                      style={styles.clearLessonBtn}
-                      onClick={() => onSelectLesson(null)}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <div style={styles.activeLessonGoal}>
-                    <b>Goal:</b> {activeLesson.goal}
-                  </div>
-                  <div style={styles.activeLessonExercise}>
-                    <b>Exercise:</b> {activeLesson.exercise}
-                  </div>
-                  <button
-                    style={styles.lessonGenerateBtn}
-                    onClick={() => onGenerate?.(activeLesson.instruction)}
-                    disabled={aiLoading}
-                  >
-                    {aiLoading ? 'Thinking...' : 'Start Lesson'}
-                  </button>
-                </div>
+                <ActiveLessonCard
+                  lesson={activeLesson}
+                  status={lessonStatus}
+                  verification={lessonVerification}
+                  hasNext={lessonHasNext}
+                  onClear={() => onSelectLesson(null)}
+                  onResetCode={onResetLessonCode}
+                  onRevealSolution={onRevealSolution}
+                  onNext={onNextLesson}
+                />
               ) : (
                 <p style={styles.headerHint}>
-                  Follow a structured path to learn the basics.
+                  Pick a lesson below. You'll read the concept, then write the code
+                  yourself in the editor and run it to check your work.
                 </p>
               )}
               <LessonsPanel
@@ -506,57 +509,5 @@ const styles = {
     textUnderlineOffset: 3,
   },
 
-  activeLessonCard: {
-    background: 'var(--bg-elevated)',
-    border: '1px solid var(--accent)',
-    borderRadius: 8,
-    padding: 12,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-    boxShadow: 'var(--shadow-md)',
-  },
-  activeLessonHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  activeLessonTitle: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: 'var(--text-primary)',
-  },
-  clearLessonBtn: {
-    fontSize: 10,
-    color: 'var(--text-muted)',
-    background: 'transparent',
-    border: 'none',
-    padding: '2px 4px',
-    cursor: 'pointer',
-  },
-  activeLessonGoal: {
-    fontSize: 12,
-    color: 'var(--text-secondary)',
-    lineHeight: 1.4,
-  },
-  activeLessonExercise: {
-    fontSize: 12,
-    color: 'var(--text-secondary)',
-    lineHeight: 1.4,
-    padding: 8,
-    background: 'var(--bg-tertiary)',
-    borderRadius: 4,
-    borderLeft: '3px solid var(--accent)',
-  },
-  lessonGenerateBtn: {
-    background: 'var(--accent)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 6,
-    padding: '8px 0',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
 };
 
