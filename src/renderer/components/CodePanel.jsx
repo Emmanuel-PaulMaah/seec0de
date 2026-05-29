@@ -81,8 +81,17 @@ export default function CodePanel({
   // Generate then writes directly into the open folder as a scratch file
   // (handled in App.jsx) and opens that file as a tab.
   folderOpen = false,
+  // v3.3: when a lesson is active the central panel becomes the lesson's
+  // scratchpad — one JavaScript tab, always editable, no pseudocode or
+  // comparison-language tabs to distract from the exercise. The Run
+  // button stays so the lesson can verify the user's output.
+  lessonMode = false,
 }) {
-  const generatedTabs = folderOpen ? [] : ['pseudocode', ...selectedLanguages];
+  const generatedTabs = folderOpen
+    ? []
+    : lessonMode
+      ? ['javascript']
+      : ['pseudocode', ...selectedLanguages];
   const [editable, setEditable] = useState(false);
   const [tooltip, setTooltip] = useState(null);
   const [selection, setSelection] = useState(null);
@@ -129,13 +138,19 @@ export default function CodePanel({
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
   const showingFile = !!fileTab;
 
-  const generatedDisplayTab = generatedTabs.includes(activeGeneratedTab) ? activeGeneratedTab : 'pseudocode';
-  const isPseudocode = !showingFile && !folderOpen && generatedDisplayTab === 'pseudocode';
+  // In lesson mode the default tab is always the single JS tab — never
+  // fall back to 'pseudocode' (which isn't even rendered then).
+  const generatedDisplayTab = generatedTabs.includes(activeGeneratedTab)
+    ? activeGeneratedTab
+    : (lessonMode ? 'javascript' : 'pseudocode');
+  const isPseudocode = !showingFile && !folderOpen && !lessonMode && generatedDisplayTab === 'pseudocode';
   const showEmptyState = folderOpen && !showingFile;
 
   let value = '';
   let monacoLang = 'plaintext';
-  let isReadOnly = !editable;
+  // Lesson mode forces the editor to be writable so the learner can do
+  // the exercise — the lock toggle is hidden in lesson mode (see below).
+  let isReadOnly = !(editable || lessonMode);
 
   if (showingFile) {
     value = fileTab.content || '';
@@ -202,9 +217,12 @@ export default function CodePanel({
       onFileContentChange?.(fileTab.path, next);
       return;
     }
-    if (!editable) return;
+    // Editable when the user has toggled the lock OR when a lesson is
+    // running (the lock is hidden in lesson mode and the editor is
+    // implicitly writable so the learner can do the exercise).
+    if (!editable && !lessonMode) return;
     onCodeChange?.(generatedDisplayTab, next);
-  }, [editable, generatedDisplayTab, onCodeChange, showingFile, fileTab, onFileContentChange]);
+  }, [editable, lessonMode, generatedDisplayTab, onCodeChange, showingFile, fileTab, onFileContentChange]);
 
   const explainLanguage = showingFile ? fileInfo(fileTab.path).run || 'plaintext' : generatedDisplayTab;
 
@@ -218,7 +236,7 @@ export default function CodePanel({
     }
   }, [selection, isPseudocode, showingFile, explainLanguage, onSelectionExplain, clearSelection]);
 
-  const showExplainButtons = (showingFile || (editable && !isPseudocode)) && selection && btnPos;
+  const showExplainButtons = (showingFile || ((editable || lessonMode) && !isPseudocode)) && selection && btnPos;
 
   // ---- run button: figure out language + source for the runner ----------
   let runLanguage = null;
@@ -376,7 +394,7 @@ export default function CodePanel({
               <span style={{ marginLeft: 4 }}>{fileTab.dirty ? 'Save' : 'Saved'}</span>
             </button>
           )}
-          {!showingFile && !folderOpen && (
+          {!showingFile && !folderOpen && !lessonMode && (
             <button
               style={{ ...styles.lockBtn, ...(editable ? styles.lockBtnActive : {}) }}
               onClick={() => { setEditable((e) => !e); clearSelection(); setTooltip(null); }}

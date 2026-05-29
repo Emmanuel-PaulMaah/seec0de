@@ -13,6 +13,8 @@ import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey } from './engine/aiService';
 import { loadSettings, updateSettings } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
+import { verifyLessonOutput, nextLessonAfter } from './engine/lessonVerifier';
+import lessonsData from './data/lessons.json';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
 // last time comes back the next time. Settings.showTerminal/showFileExplorer
@@ -72,21 +74,74 @@ export default function App() {
   const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+
+  // ---- lesson state ----------------------------------------------------
+  // `activeLesson` is the lesson object the user is currently working on.
+  // `lessonStatus` flips to 'pass' / 'fail' after each Run (see
+  // handleRunCode). `lessonVerification` carries the diff payload so the
+  // ActiveLessonCard can show expected-vs-actual on a failed attempt.
   const [activeLesson, setActiveLesson] = useState(null);
+  const [lessonStatus, setLessonStatus] = useState('idle');
+  const [lessonVerification, setLessonVerification] = useState(null);
 
   // ---- settings + completion -------------------------------------------
   const completedLessons = useMemo(() => settings.completedLessons || [], [settings.completedLessons]);
 
-  const handleSelectLesson = useCallback((lesson) => {
-    setActiveLesson(lesson);
-    if (lesson) {
-      setInstruction(lesson.instruction);
-    }
-  }, []);
-
   // Lifted from CodePanel so the LivePreviewPanel can read the same active
   // tab without prop-drilling editor state up on every keystroke.
   const [activeGeneratedTab, setActiveGeneratedTab] = useState('pseudocode');
+
+  // Picking a lesson loads its starter code into the editor, focuses the
+  // JavaScript tab, and resets pass/fail state. Picking `null` clears
+  // the lesson but leaves the editor as-is (so the learner can still
+  // tinker with their last attempt).
+  const handleSelectLesson = useCallback((lesson) => {
+    setActiveLesson(lesson);
+    setLessonStatus('idle');
+    setLessonVerification(null);
+    if (lesson) {
+      setGeneratedCode({ pseudocode: '', code: { javascript: lesson.starterCode || '' } });
+      setActiveGeneratedTab('javascript');
+      setActivePath(null);
+      setInstruction('');
+    }
+  }, []);
+
+  const handleResetLessonCode = useCallback(() => {
+    if (!activeLesson) return;
+    setGeneratedCode({ pseudocode: '', code: { javascript: activeLesson.starterCode || '' } });
+    setActiveGeneratedTab('javascript');
+    setLessonStatus('idle');
+    setLessonVerification(null);
+  }, [activeLesson]);
+
+  const handleRevealSolution = useCallback(() => {
+    // Just acknowledge the click — ActiveLessonCard renders the solution
+    // text itself. We intentionally don't overwrite the user's editor
+    // buffer; they can copy the solution in manually (or hit Reset code
+    // then paste).
+  }, []);
+
+  const handleNextLesson = useCallback(() => {
+    if (!activeLesson) return;
+    const next = nextLessonAfter(lessonsData, activeLesson.id);
+    if (next) handleSelectLesson(next);
+  }, [activeLesson, handleSelectLesson]);
+
+  // While a lesson is active, force the editor / preview to behave as if
+  // JavaScript is the only language — hides the pseudocode + comparison
+  // tabs in CodePanel and routes livePreview to the JS tab. The user's
+  // real `selectedLanguages` setting stays untouched and returns the
+  // moment they leave the lesson.
+  const effectiveLanguages = useMemo(
+    () => (activeLesson ? ['javascript'] : selectedLanguages),
+    [activeLesson, selectedLanguages]
+  );
+
+  const hasNextLesson = useMemo(
+    () => !!(activeLesson && nextLessonAfter(lessonsData, activeLesson.id)),
+    [activeLesson]
+  );
 
   useEffect(() => {
     setSelectedLanguages(deriveLanguages(settings));
@@ -448,8 +503,10 @@ export default function App() {
         filename: basename(file.path),
       };
     }
-    const tabs = ['pseudocode', ...selectedLanguages];
-    const tab = tabs.includes(activeGeneratedTab) ? activeGeneratedTab : 'pseudocode';
+    // In lesson mode the editor is single-tab JavaScript; in normal mode
+    // we honour the user's selected practical + comparison languages.
+    const tabs = activeLesson ? ['javascript'] : ['pseudocode', ...effectiveLanguages];
+    const tab = tabs.includes(activeGeneratedTab) ? activeGeneratedTab : tabs[0];
     if (tab === 'pseudocode') {
       return { code: generatedCode.pseudocode || '', language: 'plaintext', filename: null };
     }
@@ -458,7 +515,7 @@ export default function App() {
       language: tab,
       filename: DEFAULT_FILENAME_FOR_LANG[tab] || null,
     };
-  }, [activePath, openFiles, activeGeneratedTab, selectedLanguages, generatedCode]);
+  }, [activePath, openFiles, activeGeneratedTab, effectiveLanguages, generatedCode, activeLesson]);
 
   // ---- run code --------------------------------------------------------
   // Runner output flows into the LivePreviewPanel's Console tab — the
@@ -476,18 +533,28 @@ export default function App() {
 
     try {
       const result = await window.seecode.runner.run(payload);
-      setRunnerOutput({
+      const normalisedOutput = {
         command: result.command || `run ${payload.language}`,
         stdout: result.stdout || '',
         stderr: result.stderr || (result.error ? `[seec0de] ${result.error}\n` : ''),
         exitCode: result.exitCode ?? -1,
         durationMs: result.durationMs ?? 0,
         language: payload.language,
-      });
+      };
+      setRunnerOutput(normalisedOutput);
 
-      // If a lesson is active and it just ran successfully, mark it complete.
-      if (activeLesson && (result.exitCode === 0 || (!result.error && !result.stderr))) {
-        if (!completedLessons.includes(activeLesson.id)) {
+      // Lesson verification: compare the program's actual stdout against
+      // the lesson's expectedOutput. Passing requires the program to
+      // both (a) exit cleanly with no stderr AND (b) match the expected
+      // output per the lesson's matchType (exact/contains/regex). On
+      // pass we mark the lesson complete and show the green status; on
+      // fail we surface a diff so the learner can see *what* didn't
+      // match instead of just "wrong, try again".
+      if (activeLesson) {
+        const verdict = verifyLessonOutput(normalisedOutput, activeLesson);
+        setLessonVerification(verdict);
+        setLessonStatus(verdict.pass ? 'pass' : 'fail');
+        if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
           const nextSettings = updateSettings({ completedLessons: next });
           setSettings(nextSettings);
@@ -505,7 +572,7 @@ export default function App() {
     } finally {
       setRunLoading(false);
     }
-  }, [livePreview, runLoading, previewVisible]);
+  }, [livePreview, runLoading, previewVisible, activeLesson, completedLessons]);
 
   // ---- onboarding / settings handlers ----------------------------------
   const handleOnboardingComplete = useCallback(() => {
@@ -572,11 +639,17 @@ export default function App() {
             completedLessons={completedLessons}
             onSelectLesson={handleSelectLesson}
             activeLesson={activeLesson}
+            lessonStatus={lessonStatus}
+            lessonVerification={lessonVerification}
+            lessonHasNext={hasNextLesson}
+            onResetLessonCode={handleResetLessonCode}
+            onRevealSolution={handleRevealSolution}
+            onNextLesson={handleNextLesson}
           />
 
           <CodePanel
             generatedCode={generatedCode}
-            selectedLanguages={selectedLanguages}
+            selectedLanguages={effectiveLanguages}
             onCodeChange={handleCodeChange}
             onSelectionExplain={handleSelectionExplain}
             aiLoading={aiLoading}
@@ -591,6 +664,7 @@ export default function App() {
             activeGeneratedTab={activeGeneratedTab}
             onActivateGeneratedTab={setActiveGeneratedTab}
             folderOpen={!!rootPath}
+            lessonMode={!!activeLesson}
           />
 
           <LivePreviewPanel
