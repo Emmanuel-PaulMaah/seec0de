@@ -1,44 +1,304 @@
 {
+  "schemaVersion": 2,
   "tracks": [
     {
-      "id": "starter",
-      "name": "Starter Track",
-      "description": "The fundamentals of programming, step by step.",
+      "id": "js-foundations",
+      "name": "JavaScript — First Steps",
+      "language": "javascript",
+      "description": "Start from zero. Print, store, compare, branch.",
       "lessons": [
         {
-          "id": "variables",
-          "title": "1. Variables",
-          "instruction": "Create a variable named 'score', set it to 10, then print it.",
-          "goal": "Learn how to store and retrieve data.",
-          "exercise": "Try changing the value of 'score' to 20 and run the code again."
+          "id": "js-01-hello",
+          "title": "1. Hello, console",
+          "concept": "console.log",
+          "summary": "How JavaScript prints things.",
+          "teaching": [
+            { "type": "p", "text": "Programs talk to you by printing. In JavaScript, the built-in printer is `console.log()`." },
+            { "type": "p", "text": "Whatever you pass between the parentheses lands in the Console. Text goes in quotes — single `'…'` or double `\"…\"`, either works." },
+            { "type": "code", "text": "console.log('Hi there')\n// → Hi there" },
+            { "type": "note", "text": "Lines that start with `//` are comments. JavaScript ignores them; they're notes for humans." }
+          ],
+          "task": "Make the program print exactly: Hello, World!",
+          "starterCode": "// Use console.log to print Hello, World!\n",
+          "expectedOutput": "Hello, World!",
+          "matchType": "exact",
+          "hints": [
+            "Call `console.log()` with a string in quotes.",
+            "Inside the quotes write exactly: Hello, World! — capital H, capital W, the comma, the exclamation mark."
+          ],
+          "solution": "console.log('Hello, World!');\n"
         },
         {
-          "id": "conditions",
-          "title": "2. Conditions",
-          "instruction": "Check if a variable 'age' is 18 or older. If it is, print 'Access granted', otherwise print 'Access denied'. Set age to 20 first.",
-          "goal": "Learn how to make decisions in code.",
-          "exercise": "Change 'age' to 15 and see the output change."
+          "id": "js-02-variables",
+          "title": "2. Variables with let",
+          "concept": "let",
+          "summary": "Storing a value under a name you can reuse.",
+          "teaching": [
+            { "type": "p", "text": "A variable is a labelled box. You put a value in it, then refer to the value by the label." },
+            { "type": "code", "text": "let score = 10;\nconsole.log(score);\n// → 10" },
+            { "type": "p", "text": "Read it as: 'let the name `score` mean `10` from now on.' `let` is the keyword that introduces a new variable, the `=` is assignment (not equality)." },
+            { "type": "p", "text": "Once a variable exists, you can change it later: `score = 20;` (no second `let` — that would be a new variable)." }
+          ],
+          "task": "Create a variable named `score`, set it to 42, then print it.",
+          "starterCode": "// Declare a variable named score with the value 42\n// Then print score\n",
+          "expectedOutput": "42",
+          "matchType": "exact",
+          "hints": [
+            "Start the line with `let score = 42;`",
+            "Then on the next line: `console.log(score);`"
+          ],
+          "solution": "let score = 42;\nconsole.log(score);\n"
         },
         {
-          "id": "loops",
-          "title": "3. Loops",
-          "instruction": "Create a loop that prints the numbers from 1 to 5.",
-          "goal": "Learn how to repeat actions.",
-          "exercise": "Modify the loop to print numbers from 1 to 10."
+          "id": "js-03-const",
+          "title": "3. const vs let",
+          "concept": "const",
+          "summary": "Names that aren't supposed to change.",
+          "teaching": [
+            { "type": "p", "text": "Use `const` when the value behind a name should never be reassigned. Use `let` when it should." },
+            { "type": "code", "text": "const PI = 3.14;\nlet radius = 5;\nradius = 6; // ok — let lets you reassign\n// PI = 3.15; // ❌ TypeError: Assignment to constant variable" },
+            { "type": "p", "text": "Rule of thumb: reach for `const` first. Switch to `let` only when you actually need to reassign." }
+          ],
+          "task": "Declare `const pi = 3.14;` and `let radius = 5;`. Print the area of the circle (pi × radius × radius).",
+          "starterCode": "// const pi, let radius — then print the area\n",
+          "expectedOutput": "78.5",
+          "matchType": "exact",
+          "hints": [
+            "Area of a circle is pi * radius * radius.",
+            "`console.log(pi * radius * radius);`"
+          ],
+          "solution": "const pi = 3.14;\nlet radius = 5;\nconsole.log(pi * radius * radius);\n"
         },
         {
-          "id": "functions",
-          "title": "4. Functions",
-          "instruction": "Define a function named 'greet' that takes a name and prints 'Hello, ' followed by the name. Call it with 'Alice'.",
-          "goal": "Learn how to group code into reusable blocks.",
-          "exercise": "Call the function again with your own name."
+          "id": "js-04-numbers",
+          "title": "4. Numbers and math",
+          "concept": "arithmetic",
+          "summary": "+, -, *, /, % — and the order they run in.",
+          "teaching": [
+            { "type": "p", "text": "JavaScript has the usual five math operators: `+` add, `-` subtract, `*` multiply, `/` divide, and `%` remainder (the leftover after dividing)." },
+            { "type": "code", "text": "console.log(2 + 3);  // → 5\nconsole.log(10 / 4); // → 2.5\nconsole.log(10 % 3); // → 1   (10 ÷ 3 = 3 remainder 1)" },
+            { "type": "p", "text": "Parentheses force the order, exactly like school maths. `(3 + 4) * 2` is `14`, but `3 + 4 * 2` is `11` because `*` runs before `+`." }
+          ],
+          "task": "Print the result of (3 + 4) × 2 − 1 using a single console.log.",
+          "starterCode": "// Print (3 + 4) * 2 - 1\n",
+          "expectedOutput": "13",
+          "matchType": "exact",
+          "hints": [
+            "Put the expression directly inside `console.log( … )`.",
+            "`console.log((3 + 4) * 2 - 1);`"
+          ],
+          "solution": "console.log((3 + 4) * 2 - 1);\n"
         },
         {
-          "id": "lists",
-          "title": "5. Lists",
-          "instruction": "Create a list of colors: 'red', 'green', 'blue'. Print the second color in the list.",
-          "goal": "Learn how to store collections of data.",
-          "exercise": "Add 'yellow' to the list and print the whole list."
+          "id": "js-05-strings",
+          "title": "5. Strings and template literals",
+          "concept": "`${…}`",
+          "summary": "Stitching variables into text without sticky tape.",
+          "teaching": [
+            { "type": "p", "text": "Strings are text. You can glue them together with `+`, but it gets ugly: `'Hi, ' + name + '!'`." },
+            { "type": "p", "text": "Backtick strings — *template literals* — let you drop variables straight in with `${…}`:" },
+            { "type": "code", "text": "let name = 'Sam';\nconsole.log(`Hi, ${name}!`);\n// → Hi, Sam!" },
+            { "type": "note", "text": "Those are backticks `` ` ``, not single quotes. On most keyboards they live to the left of the `1` key." }
+          ],
+          "task": "Store the name 'Sam' in a variable, then print: Hi, Sam!",
+          "starterCode": "// let name = 'Sam';\n// Print: Hi, Sam!  (use a template literal)\n",
+          "expectedOutput": "Hi, Sam!",
+          "matchType": "exact",
+          "hints": [
+            "Wrap the whole greeting in backticks ` ` ` `, not quotes.",
+            "`console.log(`Hi, ${name}!`);`"
+          ],
+          "solution": "let name = 'Sam';\nconsole.log(`Hi, ${name}!`);\n"
+        },
+        {
+          "id": "js-06-booleans",
+          "title": "6. Booleans and comparisons",
+          "concept": "true / false",
+          "summary": "Yes-or-no values that decisions are built on.",
+          "teaching": [
+            { "type": "p", "text": "Booleans have exactly two values: `true` and `false`. Comparisons produce them." },
+            { "type": "code", "text": "console.log(7 > 5);     // → true\nconsole.log(3 === 4);   // → false\nconsole.log(3 !== 4);   // → true" },
+            { "type": "p", "text": "Use three equals `===` to check equality and `!==` to check inequality. (`==` exists too but it does weird type-juggling — avoid it.)" }
+          ],
+          "task": "Print whether 7 is greater than 5.",
+          "starterCode": "// Print the result of: 7 > 5\n",
+          "expectedOutput": "true",
+          "matchType": "exact",
+          "hints": [
+            "Put the whole comparison inside `console.log(…)`.",
+            "`console.log(7 > 5);`"
+          ],
+          "solution": "console.log(7 > 5);\n"
+        },
+        {
+          "id": "js-07-if-else",
+          "title": "7. if / else",
+          "concept": "branching",
+          "summary": "Doing different things based on a condition.",
+          "teaching": [
+            { "type": "p", "text": "An `if` block runs only when its condition is `true`. An `else` block runs when it's `false`." },
+            { "type": "code", "text": "let temp = 30;\nif (temp > 25) {\n  console.log('hot');\n} else {\n  console.log('cool');\n}\n// → hot" },
+            { "type": "p", "text": "The condition goes in parentheses. The body goes in curly braces `{ … }`. Indent inside the braces — JavaScript doesn't care about indentation, but humans reading the code do." }
+          ],
+          "task": "Set `let age = 20;`. Print 'adult' if age is at least 18, otherwise print 'minor'.",
+          "starterCode": "let age = 20;\n// if age >= 18 print 'adult', otherwise print 'minor'\n",
+          "expectedOutput": "adult",
+          "matchType": "exact",
+          "hints": [
+            "'At least 18' is `age >= 18`.",
+            "if (age >= 18) { console.log('adult'); } else { console.log('minor'); }"
+          ],
+          "solution": "let age = 20;\nif (age >= 18) {\n  console.log('adult');\n} else {\n  console.log('minor');\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "js-building",
+      "name": "JavaScript — Building Up",
+      "language": "javascript",
+      "description": "Loops, arrays, functions, objects.",
+      "lessons": [
+        {
+          "id": "js-08-elseif",
+          "title": "8. else if & logical operators",
+          "concept": "&& ||",
+          "summary": "Chaining decisions and combining conditions.",
+          "teaching": [
+            { "type": "p", "text": "When you have more than two options, chain them with `else if`. The first matching branch runs; the rest are skipped." },
+            { "type": "code", "text": "let score = 75;\nif (score >= 90)       console.log('A');\nelse if (score >= 80)  console.log('B');\nelse if (score >= 70)  console.log('C');\nelse                   console.log('F');\n// → C" },
+            { "type": "p", "text": "You can also combine conditions: `&&` means both must be true, `||` means at least one must be true, `!` flips true↔false." }
+          ],
+          "task": "Set `let score = 75;`. Print 'A' if score ≥ 90, 'B' if ≥ 80, 'C' if ≥ 70, otherwise 'F'.",
+          "starterCode": "let score = 75;\n// Print the letter grade using if / else if / else\n",
+          "expectedOutput": "C",
+          "matchType": "exact",
+          "hints": [
+            "Start with the highest threshold first.",
+            "Check `>= 90`, then `>= 80`, then `>= 70`, then fall through to else."
+          ],
+          "solution": "let score = 75;\nif (score >= 90) {\n  console.log('A');\n} else if (score >= 80) {\n  console.log('B');\n} else if (score >= 70) {\n  console.log('C');\n} else {\n  console.log('F');\n}\n"
+        },
+        {
+          "id": "js-09-while",
+          "title": "9. while loops",
+          "concept": "while",
+          "summary": "Repeat as long as a condition holds.",
+          "teaching": [
+            { "type": "p", "text": "A `while` loop runs its body again and again, as long as the condition stays true." },
+            { "type": "code", "text": "let i = 1;\nwhile (i <= 3) {\n  console.log(i);\n  i = i + 1; // ← without this, the loop never ends\n}\n// → 1\n//   2\n//   3" },
+            { "type": "note", "text": "If the condition never becomes false, the loop runs forever. Always make sure something inside the body moves you toward the exit." }
+          ],
+          "task": "Use a while loop to print the numbers 1 through 5, each on its own line.",
+          "starterCode": "// Print 1, 2, 3, 4, 5 — one per line — using while\n",
+          "expectedOutput": "1\n2\n3\n4\n5",
+          "matchType": "exact",
+          "hints": [
+            "Start a counter at 1. Loop while it's <= 5. Print it. Add 1 each pass.",
+            "let i = 1; while (i <= 5) { console.log(i); i = i + 1; }"
+          ],
+          "solution": "let i = 1;\nwhile (i <= 5) {\n  console.log(i);\n  i = i + 1;\n}\n"
+        },
+        {
+          "id": "js-10-for",
+          "title": "10. for loops",
+          "concept": "for",
+          "summary": "A while loop with the counter built in.",
+          "teaching": [
+            { "type": "p", "text": "A `for` loop packs three things into one line: where the counter starts, how long to keep going, and how to step." },
+            { "type": "code", "text": "for (let i = 1; i <= 3; i = i + 1) {\n  console.log(i);\n}\n// → 1\n//   2\n//   3" },
+            { "type": "p", "text": "Read the header as: 'start with `i = 1`; while `i <= 3`; after each pass do `i = i + 1`'. You can step by anything — `i = i + 2` jumps two at a time." },
+            { "type": "p", "text": "`i++` is shorthand for `i = i + 1`. You'll see it everywhere." }
+          ],
+          "task": "Use a for loop to print the even numbers from 2 to 10 inclusive, one per line.",
+          "starterCode": "// 2, 4, 6, 8, 10 — one per line\n",
+          "expectedOutput": "2\n4\n6\n8\n10",
+          "matchType": "exact",
+          "hints": [
+            "Start at 2, go up to 10, step by 2.",
+            "for (let i = 2; i <= 10; i = i + 2) { console.log(i); }"
+          ],
+          "solution": "for (let i = 2; i <= 10; i = i + 2) {\n  console.log(i);\n}\n"
+        },
+        {
+          "id": "js-11-arrays",
+          "title": "11. Arrays — basics",
+          "concept": "[ ]",
+          "summary": "An ordered list of values.",
+          "teaching": [
+            { "type": "p", "text": "An array is a list. It's written with square brackets, and items are separated by commas." },
+            { "type": "code", "text": "let fruits = ['apple', 'banana', 'cherry'];\nconsole.log(fruits[0]);     // → apple   (positions start at 0!)\nconsole.log(fruits.length); // → 3" },
+            { "type": "p", "text": "Position numbers (indices) start at **0**, not 1. So the first item is `fruits[0]`, the second is `fruits[1]`, and so on." }
+          ],
+          "task": "Given the fruits array, print the second fruit on one line, then the array's length on the next.",
+          "starterCode": "let fruits = ['apple', 'banana', 'cherry'];\n// Print the second fruit, then print fruits.length\n",
+          "expectedOutput": "banana\n3",
+          "matchType": "exact",
+          "hints": [
+            "Second item = index 1.",
+            "console.log(fruits[1]); console.log(fruits.length);"
+          ],
+          "solution": "let fruits = ['apple', 'banana', 'cherry'];\nconsole.log(fruits[1]);\nconsole.log(fruits.length);\n"
+        },
+        {
+          "id": "js-12-loop-array",
+          "title": "12. Looping over an array",
+          "concept": "for / of",
+          "summary": "Visit each item without managing an index yourself.",
+          "teaching": [
+            { "type": "p", "text": "You can loop an array with a classic `for` and `arr[i]`, but `for…of` is cleaner — it hands you each item directly." },
+            { "type": "code", "text": "let colors = ['red', 'green', 'blue'];\nfor (const c of colors) {\n  console.log(c);\n}\n// → red\n//   green\n//   blue" },
+            { "type": "p", "text": "Read it as: 'for each `c` of `colors`, do this.' The variable name (`c`) is yours to choose." }
+          ],
+          "task": "Loop over the fruits array and print each fruit on its own line.",
+          "starterCode": "let fruits = ['apple', 'banana', 'cherry'];\n// Print each fruit on its own line\n",
+          "expectedOutput": "apple\nbanana\ncherry",
+          "matchType": "exact",
+          "hints": [
+            "Use `for (const f of fruits) { … }`.",
+            "for (const f of fruits) { console.log(f); }"
+          ],
+          "solution": "let fruits = ['apple', 'banana', 'cherry'];\nfor (const f of fruits) {\n  console.log(f);\n}\n"
+        },
+        {
+          "id": "js-13-functions",
+          "title": "13. Functions — declare, call, return",
+          "concept": "function",
+          "summary": "A reusable mini-program with a name.",
+          "teaching": [
+            { "type": "p", "text": "A function is a chunk of code with a name. You *declare* it once, then *call* it whenever you need it." },
+            { "type": "code", "text": "function double(n) {\n  return n * 2;\n}\n\nconsole.log(double(7)); // → 14" },
+            { "type": "p", "text": "The bit in parentheses (`n`) is a **parameter** — a placeholder for whatever value the caller passes in. `return` is the function's answer. Whatever you return becomes the value of the call expression." },
+            { "type": "note", "text": "Without `return`, the function still runs, but calling it gives back `undefined` instead of a useful value." }
+          ],
+          "task": "Write a function `square(n)` that returns n × n. Call it with 7 and print the result.",
+          "starterCode": "// function square(n) { … }\n// console.log(square(7));\n",
+          "expectedOutput": "49",
+          "matchType": "exact",
+          "hints": [
+            "Inside the function: `return n * n;`",
+            "function square(n) { return n * n; } console.log(square(7));"
+          ],
+          "solution": "function square(n) {\n  return n * n;\n}\nconsole.log(square(7));\n"
+        },
+        {
+          "id": "js-14-objects",
+          "title": "14. Objects — basics",
+          "concept": "{ key: value }",
+          "summary": "Bundling related values under one name.",
+          "teaching": [
+            { "type": "p", "text": "An object groups related values together as **key → value** pairs. Curly braces, commas between pairs, colons between keys and values." },
+            { "type": "code", "text": "let user = {\n  name: 'Alex',\n  age: 25,\n};\n\nconsole.log(user.name); // → Alex\nconsole.log(user.age);  // → 25" },
+            { "type": "p", "text": "Read a value with dot notation: `user.name`. Add or change one the same way: `user.age = 26;`." }
+          ],
+          "task": "Given the user object, print: Alex is 25 — using a template literal.",
+          "starterCode": "let user = { name: 'Alex', age: 25 };\n// Print: Alex is 25\n",
+          "expectedOutput": "Alex is 25",
+          "matchType": "exact",
+          "hints": [
+            "Use backticks and `${user.name}` / `${user.age}` inside.",
+            "console.log(`${user.name} is ${user.age}`);"
+          ],
+          "solution": "let user = { name: 'Alex', age: 25 };\nconsole.log(`${user.name} is ${user.age}`);\n"
         }
       ]
     }
