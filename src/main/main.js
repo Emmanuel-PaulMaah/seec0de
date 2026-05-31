@@ -17,6 +17,12 @@ try {
   log.warn('AI service handlers not loaded:', err.message);
 }
 
+// Suppress harmless but noisy Chromium GPU shader disk-cache errors on
+// Windows ("Access is denied. (0x5) / Unable to move the cache"). These
+// come from Chromium trying to relocate the GPUCache folder inside
+// %AppData%\seec0de\ and have no effect on app or AI features.
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+
 log.transports.file.level = 'info';
 autoUpdater.logger = log;
 autoUpdater.autoDownload = true;
