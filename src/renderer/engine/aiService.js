@@ -233,8 +233,33 @@ Remember: respond with ONLY valid JSON matching the required format.`;
   }
 
   const parsed = JSON.parse(cleaned);
+
+  // Normalise the AI's per-line shape to the offline explainer's shape so
+  // ExplanationSidebar can render either source uniformly.
+  //
+  //   AI emits     → { line: <number>, code: "<actual line>", explanation }
+  //   Offline emits → { line: "<actual line>", explanation }
+  //
+  // The sidebar's accordion header reads `item.line`, so without this
+  // mapping the AI path showed bare line numbers in the header instead
+  // of the code being explained. Prefer the AI's `code` field; fall
+  // back to `line` if it's already a string (so a future AI prompt
+  // change or an offline-style input passes through unchanged).
+  const lineByLine = (Array.isArray(parsed.lineByLine) ? parsed.lineByLine : []).map((item) => {
+    const codeText =
+      typeof item?.code === 'string' && item.code.length > 0
+        ? item.code
+        : typeof item?.line === 'string'
+          ? item.line
+          : String(item?.line ?? '');
+    return {
+      line: codeText,
+      explanation: String(item?.explanation ?? ''),
+    };
+  });
+
   return {
     summary: parsed.summary || '',
-    lineByLine: parsed.lineByLine || [],
+    lineByLine,
   };
 }
