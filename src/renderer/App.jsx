@@ -10,7 +10,7 @@ import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer from './components/SettingsDrawer';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
-import { generateCodeWithAI, explainCodeWithAI, hasApiKey } from './engine/aiService';
+import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
 import { loadSettings, updateSettings } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 import { verifyLessonOutput, nextLessonAfter } from './engine/lessonVerifier';
@@ -74,6 +74,15 @@ export default function App() {
   const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  // Surfaced to InstructionPanel as a small inline card so the learner
+  // sees *why* a Generate click didn't produce a real answer (invalid
+  // key, overloaded model, offline, etc.) instead of silently getting
+  // the generic "PROGRAM CustomTask" offline placeholder and assuming
+  // the button is broken. Shape: { message: string, kind: 'no-key' |
+  // 'invalid-key' | 'overloaded' | 'network' | 'parse' | 'offline' |
+  // 'generic' }. Cleared on the next Generate click and on any edit
+  // to the instruction textarea.
+  const [aiError, setAiError] = useState(null);
 
   // ---- lesson state ----------------------------------------------------
   // `activeLesson` is the lesson object the user is currently working on.
@@ -384,13 +393,38 @@ export default function App() {
     await handleOpenFile(target);
   }, [rootPath, handleOpenFile]);
 
-  // Single unified Generate flow. If we have an API key AND we're online,
-  // try the AI generator first; on any failure (or when offline/no key),
-  // silently fall back to the built-in template generator so the learner
-  // always gets *something*.
-  const handleGenerate = useCallback(async (instructionOverride) => {
+  // Single unified Generate flow.
+  //
+  // Two entry points feed this, distinguished by `opts.source`:
+  //   • Suggestion chip in InstructionPanel  → opts.source === 'suggestion'
+  //   • Manual "Generate" button             → opts is undefined
+  //
+  // Decision tree per click:
+  //   1. Suggestion chip AND prompt matches a built-in template?
+  //      → use the offline generator. Suggestion chips are hand-tuned
+  //        to map onto a template; that template is the canonical
+  //        lesson for that prompt, no network round-trip needed.
+  //   2. Manual button (or suggestion with no template hit)?
+  //      → key present + online → call Gemini. On success: apply. On
+  //        failure: surface the actual error to the learner via
+  //        `aiError`. NEVER silently fall back to the generic offline
+  //        "PROGRAM CustomTask" scaffold — the manual button is for
+  //        novel prompts and the learner deserves a real answer or a
+  //        real explanation of why they didn't get one.
+  //   3. Manual button, no key OR offline?
+  //      → surface a clear "add a key" / "you're offline" prompt
+  //        instead of silently emitting the generic placeholder.
+  //
+  // The cached `hasApiKey()` hydrates asynchronously on module load, so
+  // we re-check via `refreshHasApiKey()` whenever the cache says "no" —
+  // otherwise a fast click after launch would skip AI even with a saved
+  // key.
+  const handleGenerate = useCallback(async (instructionOverride, opts) => {
     const text = (typeof instructionOverride === 'string' ? instructionOverride : instruction).trim();
     if (!text || aiLoading) return;
+
+    setAiError(null);
+
     const language = settings.practicalLanguage || selectedLanguages[0] || 'python';
     const languagesForGen = rootPath ? [language] : selectedLanguages;
 
@@ -403,12 +437,27 @@ export default function App() {
       }
     };
 
-    // Skip AI when the instruction matches one of the offline templates
-    // (typically the suggestion chips). The hand-tuned template is the
-    // canonical lesson for that prompt — paying for a network round-trip
-    // just to get a less consistent answer adds latency without value.
-    const isTemplate = matchesTemplate(text);
-    const canUseAi = !isTemplate && hasApiKey() && (typeof navigator === 'undefined' || navigator.onLine);
+    // Only consult the offline-template heuristic when the click came
+    // from a suggestion chip. The manual Generate button must always go
+    // through AI so the learner's free-form prompts are honoured — even
+    // if the wording happens to overlap a built-in template's regex.
+    const fromSuggestion = opts?.source === 'suggestion';
+    const isTemplate = fromSuggestion && matchesTemplate(text);
+    const online = typeof navigator === 'undefined' || navigator.onLine;
+
+    // Re-verify the key when the synchronous cache says "no". Avoids
+    // the launch-race where a saved key hasn't hydrated yet and we
+    // wrongly fall through to the offline path.
+    let keyPresent = hasApiKey();
+    if (!keyPresent && !isTemplate) {
+      try {
+        keyPresent = await refreshHasApiKey();
+      } catch {
+        keyPresent = false;
+      }
+    }
+
+    const canUseAi = !isTemplate && keyPresent && online;
 
     if (canUseAi) {
       setAiLoading(true);
@@ -417,10 +466,34 @@ export default function App() {
         await applyResult(result);
         return;
       } catch (err) {
-        // AI failed — fall through to the offline generator below.
-        console.warn('[seec0de] AI generate failed, falling back to offline:', err?.message || err);
+        // Surface the real reason. For novel prompts we don't fall back
+        // to the offline placeholder — the learner deserves to know AI
+        // failed instead of getting a meaningless "Task completed" stub.
+        console.warn('[seec0de] AI generate failed:', err?.message || err);
+        setAiError(describeAiError(err));
+        return;
       } finally {
         setAiLoading(false);
+      }
+    }
+
+    // No AI path available. If the offline generator has nothing real
+    // to say either (novel prompt, no template match), surface a clear
+    // explanation instead of silently writing the generic scaffold.
+    if (!isTemplate) {
+      if (!keyPresent) {
+        setAiError({
+          message: 'Add a free Gemini key in Settings to generate code for novel prompts. The built-in templates only cover a handful of starter exercises — try one of the suggestion chips above.',
+          kind: 'no-key',
+        });
+        return;
+      }
+      if (!online) {
+        setAiError({
+          message: "You're offline. Reconnect and click Generate again — the built-in templates only cover a handful of starter exercises.",
+          kind: 'offline',
+        });
+        return;
       }
     }
 
@@ -431,6 +504,14 @@ export default function App() {
       setExplanation({ summary: `Couldn't generate: ${err.message}`, lineByLine: [] });
     }
   }, [instruction, selectedLanguages, aiLoading, rootPath, settings.practicalLanguage, writeScratchFromResult]);
+
+  // Clear any stale AI-error card the moment the learner edits the
+  // instruction. Keeps the panel from showing a red banner that refers
+  // to a prompt they've already moved on from.
+  const handleInstructionChange = useCallback((value) => {
+    setInstruction(value);
+    setAiError((prev) => (prev ? null : prev));
+  }, []);
 
   const handleCodeChange = useCallback((tab, value) => {
     setGeneratedCode((prev) => {
@@ -628,9 +709,11 @@ export default function App() {
 
           <InstructionPanel
             instruction={instruction}
-            onInstructionChange={setInstruction}
+            onInstructionChange={handleInstructionChange}
             onGenerate={handleGenerate}
             aiLoading={aiLoading}
+            aiError={aiError}
+            onClearAiError={() => setAiError(null)}
             practicalLanguage={settings.practicalLanguage}
             comparisonLanguages={settings.comparisonLanguages}
             onOpenSettings={() => setShowSettings(true)}
@@ -711,6 +794,48 @@ export default function App() {
 
 // ---------------------------------------------------------------------------
 // helpers
+
+// Translate a raw error from `generateCodeWithAI` into a card the
+// InstructionPanel can render. The `kind` field decides whether the
+// panel shows an "Open Settings" CTA (key issues) vs a plain dismiss
+// (transient issues like overload / network).
+function describeAiError(err) {
+  const raw = err?.message ? String(err.message) : String(err ?? '');
+  if (/no api key/i.test(raw)) {
+    return {
+      message: 'No Gemini key found. Add one in Settings to enable AI generation for novel prompts.',
+      kind: 'no-key',
+    };
+  }
+  if (/api key not valid|invalid.*api key|api key.*invalid|permission denied|forbidden|unauthor/i.test(raw)) {
+    return {
+      message: 'Gemini rejected your API key. Open Settings and paste a fresh key — you can grab a free one at aistudio.google.com/apikey.',
+      kind: 'invalid-key',
+    };
+  }
+  if (err?.isOverloaded || /overload|capacity|quota|rate.?limit|429|503/i.test(raw)) {
+    return {
+      message: "Gemini is overloaded right now. Wait a few seconds and click Generate again.",
+      kind: 'overloaded',
+    };
+  }
+  if (/network|enotfound|econnrefused|econnreset|fetch|timeout|getaddrinfo|offline/i.test(raw)) {
+    return {
+      message: "Couldn't reach Gemini. Check your internet connection and try again.",
+      kind: 'network',
+    };
+  }
+  if (/json|parse|unexpected response|no response/i.test(raw)) {
+    return {
+      message: 'Gemini returned an unexpected response. Click Generate again to retry.',
+      kind: 'parse',
+    };
+  }
+  return {
+    message: `Generate failed: ${raw || 'unknown error'}`,
+    kind: 'generic',
+  };
+}
 
 function deriveLanguages(settings) {
   const practical = settings?.practicalLanguage || 'python';

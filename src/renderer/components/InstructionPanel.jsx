@@ -2,9 +2,9 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
-  GraduationCap, Terminal,
+  GraduationCap, Terminal, AlertCircle, X,
 } from 'lucide-react';
-import { hasApiKey } from '../engine/aiService';
+import { hasApiKey, subscribeHasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
 import LessonsPanel from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
@@ -16,6 +16,8 @@ export default function InstructionPanel({
   onInstructionChange,
   onGenerate,
   aiLoading,
+  aiError = null,
+  onClearAiError,
   practicalLanguage,
   comparisonLanguages = [],
   onOpenSettings,
@@ -32,7 +34,17 @@ export default function InstructionPanel({
   onRevealSolution,
   onNextLesson,
 }) {
-  const aiReady = hasApiKey();
+  // Track key-presence reactively. The cached `hasApiKey()` hydrates
+  // asynchronously on module load AND flips whenever the SettingsDrawer
+  // saves a key, so a one-shot render-time read can be stale. Subscribe
+  // so the "Add a Gemini key" hint disappears the instant the user adds
+  // one in Settings — no need to interact with this panel first.
+  const [aiReady, setAiReady] = useState(() => hasApiKey());
+  useEffect(() => {
+    const unsub = subscribeHasApiKey(setAiReady);
+    return () => { unsub(); };
+  }, []);
+
   const [activeTab, setActiveTab] = useState('build'); // 'build' or 'lessons'
 
   // When a lesson becomes active (from any source — list click, "Next
@@ -64,9 +76,14 @@ export default function InstructionPanel({
   const [seed, setSeed] = useState(0);
   const suggestions = useMemo(() => pickSuggestions(4), [seed]);
 
+  // Suggestion chips are hand-tuned prompts that map onto a built-in
+  // offline template. Pass a `source: 'suggestion'` marker so App.jsx
+  // can keep the template-first short-circuit for these — while the
+  // manual Generate button (which calls onGenerate with no args) always
+  // goes through AI.
   const handleSuggestion = useCallback((text) => {
     onInstructionChange(text);
-    onGenerate?.(text);
+    onGenerate?.(text, { source: 'suggestion' });
   }, [onInstructionChange, onGenerate]);
 
   const handleGenerateClick = useCallback(() => {
@@ -209,10 +226,38 @@ export default function InstructionPanel({
                 </button>
               </div>
 
-              {!aiReady && (
-                <button style={styles.subtleLink} onClick={onOpenSettings}>
-                  Add a free Gemini key in Settings for smarter AI generation →
-                </button>
+              {aiError ? (
+                <div style={styles.errorCard} role="alert">
+                  <div style={styles.errorRow}>
+                    <AlertCircle size={13} style={styles.errorIcon} />
+                    <div style={styles.errorMessage}>{aiError.message}</div>
+                    <button
+                      type="button"
+                      style={styles.errorClose}
+                      onClick={onClearAiError}
+                      title="Dismiss"
+                      aria-label="Dismiss error"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                  {(aiError.kind === 'no-key' || aiError.kind === 'invalid-key') && (
+                    <button
+                      type="button"
+                      style={styles.errorAction}
+                      onClick={() => { onClearAiError?.(); onOpenSettings?.(); }}
+                    >
+                      <SettingsIcon size={11} />
+                      <span style={{ marginLeft: 6 }}>Open Settings</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                !aiReady && (
+                  <button style={styles.subtleLink} onClick={onOpenSettings}>
+                    Add a free Gemini key in Settings for smarter AI generation →
+                  </button>
+                )
               )}
             </div>
           ) : (
@@ -507,6 +552,61 @@ const styles = {
     textDecoration: 'underline',
     textDecorationColor: 'var(--border-strong)',
     textUnderlineOffset: 3,
+  },
+
+  // Inline error card surfaced under the Generate button whenever the
+  // AI call fails (invalid key, overload, network) OR when we have no
+  // way to satisfy a novel prompt (no key + no template match). Kept
+  // monochrome to fit the rest of the panel; the AlertCircle icon is
+  // the only colour cue.
+  errorCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 6,
+    padding: '10px 12px',
+  },
+  errorRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  errorIcon: {
+    color: '#e06c75',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  errorMessage: {
+    flex: 1,
+    color: 'var(--text-primary)',
+    fontSize: 11.5,
+    lineHeight: 1.5,
+  },
+  errorClose: {
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-muted)',
+    padding: 2,
+    borderRadius: 4,
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  errorAction: {
+    alignSelf: 'flex-start',
+    display: 'inline-flex',
+    alignItems: 'center',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
+    color: 'var(--text-primary)',
+    fontSize: 11.5,
+    fontWeight: 500,
+    padding: '5px 10px',
+    borderRadius: 6,
+    cursor: 'pointer',
   },
 
 };
