@@ -13,10 +13,22 @@
           "concept": "console.log",
           "summary": "How JavaScript prints things.",
           "teaching": [
-            { "type": "p", "text": "Programs talk to you by printing. In JavaScript, the built-in printer is `console.log()`." },
-            { "type": "p", "text": "Whatever you pass between the parentheses lands in the Console. Text goes in quotes — single `'…'` or double `\"…\"`, either works." },
-            { "type": "code", "text": "console.log('Hi there')\n// → Hi there" },
-            { "type": "note", "text": "Lines that start with `//` are comments. JavaScript ignores them; they're notes for humans." }
+            {
+              "type": "p",
+              "text": "Programs talk to you by printing. In JavaScript, the built-in printer is `console.log()`."
+            },
+            {
+              "type": "p",
+              "text": "Whatever you pass between the parentheses lands in the Console. Text goes in quotes — single `'…'` or double `\"…\"`, either works."
+            },
+            {
+              "type": "code",
+              "text": "console.log('Hi there')\n// → Hi there"
+            },
+            {
+              "type": "note",
+              "text": "Lines that start with `//` are comments. JavaScript ignores them; they're notes for humans."
+            }
           ],
           "task": "Make the program print exactly: Hello, World!",
           "starterCode": "// Use console.log to print Hello, World!\n",
@@ -34,10 +46,22 @@
           "concept": "let",
           "summary": "Storing a value under a name you can reuse.",
           "teaching": [
-            { "type": "p", "text": "A variable is a labelled box. You put a value in it, then refer to the value by the label." },
-            { "type": "code", "text": "let score = 10;\nconsole.log(score);\n// → 10" },
-            { "type": "p", "text": "Read it as: 'let the name `score` mean `10` from now on.' `let` is the keyword that introduces a new variable, the `=` is assignment (not equality)." },
-            { "type": "p", "text": "Once a variable exists, you can change it later: `score = 20;` (no second `let` — that would be a new variable)." }
+            {
+              "type": "p",
+              "text": "A variable is a labelled box. You put a value in it, then refer to the value by the label."
+            },
+            {
+              "type": "code",
+              "text": "let score = 10;\nconsole.log(score);\n// → 10"
+            },
+            {
+              "type": "p",
+              "text": "Read it as: 'let the name `score` mean `10` from now on.' `let` is the keyword that introduces a new variable, the `=` is assignment (not equality)."
+            },
+            {
+              "type": "p",
+              "text": "Once a variable exists, you can change it later: `score = 20;` (no second `let` — that would be a new variable)."
+            }
           ],
           "task": "Create a variable named `score`, set it to 42, then print it.",
           "starterCode": "// Declare a variable named score with the value 42\n// Then print score\n",
@@ -55,9 +79,18 @@
           "concept": "const",
           "summary": "Names that aren't supposed to change.",
           "teaching": [
-            { "type": "p", "text": "Use `const` when the value behind a name should never be reassigned. Use `let` when it should." },
-            { "type": "code", "text": "const PI = 3.14;\nlet radius = 5;\nradius = 6; // ok — let lets you reassign\n// PI = 3.15; // ❌ TypeError: Assignment to constant variable" },
-            { "type": "p", "text": "Rule of thumb: reach for `const` first. Switch to `let` only when you actually need to reassign." }
+            {
+              "type": "p",
+              "text": "Use `const` when the value behind a name should never be reassigned. Use `let` when it should."
+            },
+            {
+              "type": "code",
+              "text": "const PI = 3.14;\nlet radius = 5;\nradius = 6; // ok — let lets you reassign\n// PI = 3.15; // ❌ TypeError: Assignment to constant variable"
+            },
+            {
+              "type": "p",
+              "text": "Rule of thumb: reach for `const` first. Switch to `let` only when you actually need to reassign."
+            }
           ],
           "task": "Declare `const pi = 3.14;` and `let radius = 5;`. Print the area of the circle (pi × radius × radius).",
           "starterCode": "// const pi, let radius — then print the area\n",
@@ -72,12 +105,21 @@
         {
           "id": "js-04-numbers",
           "title": "4. Numbers and math",
-          "concept": "arithmetic",
+          "concept": "2+2;",
           "summary": "+, -, *, /, % — and the order they run in.",
           "teaching": [
-            { "type": "p", "text": "JavaScript has the usual five math operators: `+` add, `-` subtract, `*` multiply, `/` divide, and `%` remainder (the leftover after dividing)." },
-            { "type": "code", "text": "console.log(2 + 3);  // → 5\nconsole.log(10 / 4); // → 2.5\nconsole.log(10 % 3); // → 1   (10 ÷ 3 = 3 remainder 1)" },
-            { "type": "p", "text": "Parentheses force the order, exactly like school maths. `(3 + 4) * 2` is `14`, but `3 + 4 * 2` is `11` because `*` runs before `+`." }
+            {
+              "type": "p",
+              "text": "JavaScript has the usual five math operators: `+` add, `-` subtract, `*` multiply, `/` divide, and `%` remainder (the leftover after dividing)."
+            },
+            {
+              "type": "code",
+              "text": "console.log(2 + 3);  // → 5\nconsole.log(10 / 4); // → 2.5\nconsole.log(10 % 3); // → 1   (10 ÷ 3 = 3 remainder 1)"
+            },
+            {
+              "type": "p",
+              "text": "Parentheses force the order, exactly like school maths. `(3 + 4) * 2` is `14`, but `3 + 4 * 2` is `11` because `*` runs before `+`."
+            }
           ],
           "task": "Print the result of (3 + 4) × 2 − 1 using a single console.log.",
           "starterCode": "// Print (3 + 4) * 2 - 1\n",
@@ -95,10 +137,22 @@
           "concept": "`${…}`",
           "summary": "Stitching variables into text without sticky tape.",
           "teaching": [
-            { "type": "p", "text": "Strings are text. You can glue them together with `+`, but it gets ugly: `'Hi, ' + name + '!'`." },
-            { "type": "p", "text": "Backtick strings — *template literals* — let you drop variables straight in with `${…}`:" },
-            { "type": "code", "text": "let name = 'Sam';\nconsole.log(`Hi, ${name}!`);\n// → Hi, Sam!" },
-            { "type": "note", "text": "Those are backticks `` ` ``, not single quotes. On most keyboards they live to the left of the `1` key." }
+            {
+              "type": "p",
+              "text": "Strings are text. You can glue them together with `+`, but it gets ugly: `'Hi, ' + name + '!'`."
+            },
+            {
+              "type": "p",
+              "text": "Backtick strings — *template literals* — let you drop variables straight in with `${…}`:"
+            },
+            {
+              "type": "code",
+              "text": "let name = 'Sam';\nconsole.log(`Hi, ${name}!`);\n// → Hi, Sam!"
+            },
+            {
+              "type": "note",
+              "text": "Those are backticks `` ` ``, not single quotes. On most keyboards they live to the left of the `1` key."
+            }
           ],
           "task": "Store the name 'Sam' in a variable, then print: Hi, Sam!",
           "starterCode": "// let name = 'Sam';\n// Print: Hi, Sam!  (use a template literal)\n",
@@ -116,9 +170,18 @@
           "concept": "true / false",
           "summary": "Yes-or-no values that decisions are built on.",
           "teaching": [
-            { "type": "p", "text": "Booleans have exactly two values: `true` and `false`. Comparisons produce them." },
-            { "type": "code", "text": "console.log(7 > 5);     // → true\nconsole.log(3 === 4);   // → false\nconsole.log(3 !== 4);   // → true" },
-            { "type": "p", "text": "Use three equals `===` to check equality and `!==` to check inequality. (`==` exists too but it does weird type-juggling — avoid it.)" }
+            {
+              "type": "p",
+              "text": "Booleans have exactly two values: `true` and `false`. Comparisons produce them."
+            },
+            {
+              "type": "code",
+              "text": "console.log(7 > 5);     // → true\nconsole.log(3 === 4);   // → false\nconsole.log(3 !== 4);   // → true"
+            },
+            {
+              "type": "p",
+              "text": "Use three equals `===` to check equality and `!==` to check inequality. (`==` exists too but it does weird type-juggling — avoid it.)"
+            }
           ],
           "task": "Print whether 7 is greater than 5.",
           "starterCode": "// Print the result of: 7 > 5\n",
@@ -133,12 +196,21 @@
         {
           "id": "js-07-if-else",
           "title": "7. if / else",
-          "concept": "branching",
+          "concept": "if(…){",
           "summary": "Doing different things based on a condition.",
           "teaching": [
-            { "type": "p", "text": "An `if` block runs only when its condition is `true`. An `else` block runs when it's `false`." },
-            { "type": "code", "text": "let temp = 30;\nif (temp > 25) {\n  console.log('hot');\n} else {\n  console.log('cool');\n}\n// → hot" },
-            { "type": "p", "text": "The condition goes in parentheses. The body goes in curly braces `{ … }`. Indent inside the braces — JavaScript doesn't care about indentation, but humans reading the code do." }
+            {
+              "type": "p",
+              "text": "An `if` block runs only when its condition is `true`. An `else` block runs when it's `false`."
+            },
+            {
+              "type": "code",
+              "text": "let temp = 30;\nif (temp > 25) {\n  console.log('hot');\n} else {\n  console.log('cool');\n}\n// → hot"
+            },
+            {
+              "type": "p",
+              "text": "The condition goes in parentheses. The body goes in curly braces `{ … }`. Indent inside the braces — JavaScript doesn't care about indentation, but humans reading the code do."
+            }
           ],
           "task": "Set `let age = 20;`. Print 'adult' if age is at least 18, otherwise print 'minor'.",
           "starterCode": "let age = 20;\n// if age >= 18 print 'adult', otherwise print 'minor'\n",
@@ -164,9 +236,18 @@
           "concept": "&& ||",
           "summary": "Chaining decisions and combining conditions.",
           "teaching": [
-            { "type": "p", "text": "When you have more than two options, chain them with `else if`. The first matching branch runs; the rest are skipped." },
-            { "type": "code", "text": "let score = 75;\nif (score >= 90)       console.log('A');\nelse if (score >= 80)  console.log('B');\nelse if (score >= 70)  console.log('C');\nelse                   console.log('F');\n// → C" },
-            { "type": "p", "text": "You can also combine conditions: `&&` means both must be true, `||` means at least one must be true, `!` flips true↔false." }
+            {
+              "type": "p",
+              "text": "When you have more than two options, chain them with `else if`. The first matching branch runs; the rest are skipped."
+            },
+            {
+              "type": "code",
+              "text": "let score = 75;\nif (score >= 90)       console.log('A');\nelse if (score >= 80)  console.log('B');\nelse if (score >= 70)  console.log('C');\nelse                   console.log('F');\n// → C"
+            },
+            {
+              "type": "p",
+              "text": "You can also combine conditions: `&&` means both must be true, `||` means at least one must be true, `!` flips true↔false."
+            }
           ],
           "task": "Set `let score = 75;`. Print 'A' if score ≥ 90, 'B' if ≥ 80, 'C' if ≥ 70, otherwise 'F'.",
           "starterCode": "let score = 75;\n// Print the letter grade using if / else if / else\n",
@@ -184,9 +265,18 @@
           "concept": "while",
           "summary": "Repeat as long as a condition holds.",
           "teaching": [
-            { "type": "p", "text": "A `while` loop runs its body again and again, as long as the condition stays true." },
-            { "type": "code", "text": "let i = 1;\nwhile (i <= 3) {\n  console.log(i);\n  i = i + 1; // ← without this, the loop never ends\n}\n// → 1\n//   2\n//   3" },
-            { "type": "note", "text": "If the condition never becomes false, the loop runs forever. Always make sure something inside the body moves you toward the exit." }
+            {
+              "type": "p",
+              "text": "A `while` loop runs its body again and again, as long as the condition stays true."
+            },
+            {
+              "type": "code",
+              "text": "let i = 1;\nwhile (i <= 3) {\n  console.log(i);\n  i = i + 1; // ← without this, the loop never ends\n}\n// → 1\n//   2\n//   3"
+            },
+            {
+              "type": "note",
+              "text": "If the condition never becomes false, the loop runs forever. Always make sure something inside the body moves you toward the exit."
+            }
           ],
           "task": "Use a while loop to print the numbers 1 through 5, each on its own line.",
           "starterCode": "// Print 1, 2, 3, 4, 5 — one per line — using while\n",
@@ -204,10 +294,22 @@
           "concept": "for",
           "summary": "A while loop with the counter built in.",
           "teaching": [
-            { "type": "p", "text": "A `for` loop packs three things into one line: where the counter starts, how long to keep going, and how to step." },
-            { "type": "code", "text": "for (let i = 1; i <= 3; i = i + 1) {\n  console.log(i);\n}\n// → 1\n//   2\n//   3" },
-            { "type": "p", "text": "Read the header as: 'start with `i = 1`; while `i <= 3`; after each pass do `i = i + 1`'. You can step by anything — `i = i + 2` jumps two at a time." },
-            { "type": "p", "text": "`i++` is shorthand for `i = i + 1`. You'll see it everywhere." }
+            {
+              "type": "p",
+              "text": "A `for` loop packs three things into one line: where the counter starts, how long to keep going, and how to step."
+            },
+            {
+              "type": "code",
+              "text": "for (let i = 1; i <= 3; i = i + 1) {\n  console.log(i);\n}\n// → 1\n//   2\n//   3"
+            },
+            {
+              "type": "p",
+              "text": "Read the header as: 'start with `i = 1`; while `i <= 3`; after each pass do `i = i + 1`'. You can step by anything — `i = i + 2` jumps two at a time."
+            },
+            {
+              "type": "p",
+              "text": "`i++` is shorthand for `i = i + 1`. You'll see it everywhere."
+            }
           ],
           "task": "Use a for loop to print the even numbers from 2 to 10 inclusive, one per line.",
           "starterCode": "// 2, 4, 6, 8, 10 — one per line\n",
@@ -225,9 +327,18 @@
           "concept": "[ ]",
           "summary": "An ordered list of values.",
           "teaching": [
-            { "type": "p", "text": "An array is a list. It's written with square brackets, and items are separated by commas." },
-            { "type": "code", "text": "let fruits = ['apple', 'banana', 'cherry'];\nconsole.log(fruits[0]);     // → apple   (positions start at 0!)\nconsole.log(fruits.length); // → 3" },
-            { "type": "p", "text": "Position numbers (indices) start at **0**, not 1. So the first item is `fruits[0]`, the second is `fruits[1]`, and so on." }
+            {
+              "type": "p",
+              "text": "An array is a list. It's written with square brackets, and items are separated by commas."
+            },
+            {
+              "type": "code",
+              "text": "let fruits = ['apple', 'banana', 'cherry'];\nconsole.log(fruits[0]);     // → apple   (positions start at 0!)\nconsole.log(fruits.length); // → 3"
+            },
+            {
+              "type": "p",
+              "text": "Position numbers (indices) start at **0**, not 1. So the first item is `fruits[0]`, the second is `fruits[1]`, and so on."
+            }
           ],
           "task": "Given the fruits array, print the second fruit on one line, then the array's length on the next.",
           "starterCode": "let fruits = ['apple', 'banana', 'cherry'];\n// Print the second fruit, then print fruits.length\n",
@@ -245,9 +356,18 @@
           "concept": "for / of",
           "summary": "Visit each item without managing an index yourself.",
           "teaching": [
-            { "type": "p", "text": "You can loop an array with a classic `for` and `arr[i]`, but `for…of` is cleaner — it hands you each item directly." },
-            { "type": "code", "text": "let colors = ['red', 'green', 'blue'];\nfor (const c of colors) {\n  console.log(c);\n}\n// → red\n//   green\n//   blue" },
-            { "type": "p", "text": "Read it as: 'for each `c` of `colors`, do this.' The variable name (`c`) is yours to choose." }
+            {
+              "type": "p",
+              "text": "You can loop an array with a classic `for` and `arr[i]`, but `for…of` is cleaner — it hands you each item directly."
+            },
+            {
+              "type": "code",
+              "text": "let colors = ['red', 'green', 'blue'];\nfor (const c of colors) {\n  console.log(c);\n}\n// → red\n//   green\n//   blue"
+            },
+            {
+              "type": "p",
+              "text": "Read it as: 'for each `c` of `colors`, do this.' The variable name (`c`) is yours to choose."
+            }
           ],
           "task": "Loop over the fruits array and print each fruit on its own line.",
           "starterCode": "let fruits = ['apple', 'banana', 'cherry'];\n// Print each fruit on its own line\n",
@@ -265,10 +385,22 @@
           "concept": "function",
           "summary": "A reusable mini-program with a name.",
           "teaching": [
-            { "type": "p", "text": "A function is a chunk of code with a name. You *declare* it once, then *call* it whenever you need it." },
-            { "type": "code", "text": "function double(n) {\n  return n * 2;\n}\n\nconsole.log(double(7)); // → 14" },
-            { "type": "p", "text": "The bit in parentheses (`n`) is a **parameter** — a placeholder for whatever value the caller passes in. `return` is the function's answer. Whatever you return becomes the value of the call expression." },
-            { "type": "note", "text": "Without `return`, the function still runs, but calling it gives back `undefined` instead of a useful value." }
+            {
+              "type": "p",
+              "text": "A function is a chunk of code with a name. You *declare* it once, then *call* it whenever you need it."
+            },
+            {
+              "type": "code",
+              "text": "function double(n) {\n  return n * 2;\n}\n\nconsole.log(double(7)); // → 14"
+            },
+            {
+              "type": "p",
+              "text": "The bit in parentheses (`n`) is a **parameter** — a placeholder for whatever value the caller passes in. `return` is the function's answer. Whatever you return becomes the value of the call expression."
+            },
+            {
+              "type": "note",
+              "text": "Without `return`, the function still runs, but calling it gives back `undefined` instead of a useful value."
+            }
           ],
           "task": "Write a function `square(n)` that returns n × n. Call it with 7 and print the result.",
           "starterCode": "// function square(n) { … }\n// console.log(square(7));\n",
@@ -286,9 +418,18 @@
           "concept": "{ key: value }",
           "summary": "Bundling related values under one name.",
           "teaching": [
-            { "type": "p", "text": "An object groups related values together as **key → value** pairs. Curly braces, commas between pairs, colons between keys and values." },
-            { "type": "code", "text": "let user = {\n  name: 'Alex',\n  age: 25,\n};\n\nconsole.log(user.name); // → Alex\nconsole.log(user.age);  // → 25" },
-            { "type": "p", "text": "Read a value with dot notation: `user.name`. Add or change one the same way: `user.age = 26;`." }
+            {
+              "type": "p",
+              "text": "An object groups related values together as **key → value** pairs. Curly braces, commas between pairs, colons between keys and values."
+            },
+            {
+              "type": "code",
+              "text": "let user = {\n  name: 'Alex',\n  age: 25,\n};\n\nconsole.log(user.name); // → Alex\nconsole.log(user.age);  // → 25"
+            },
+            {
+              "type": "p",
+              "text": "Read a value with dot notation: `user.name`. Add or change one the same way: `user.age = 26;`."
+            }
           ],
           "task": "Given the user object, print: Alex is 25 — using a template literal.",
           "starterCode": "let user = { name: 'Alex', age: 25 };\n// Print: Alex is 25\n",
@@ -299,6 +440,315 @@
             "console.log(`${user.name} is ${user.age}`);"
           ],
           "solution": "let user = { name: 'Alex', age: 25 };\nconsole.log(`${user.name} is ${user.age}`);\n"
+        }
+      ]
+    },
+    {
+      "id": "js-functions",
+      "name": "JavaScript — Functions Deep Dive",
+      "language": "javascript",
+      "description": "Parameters, returns, scope, and reusable logic.",
+      "lessons": [
+        {
+          "id": "js-15-function-call",
+          "title": "15. Calling a function",
+          "concept": "main()",
+          "summary": "A function does nothing until you call it.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A function is a reusable block of code. But declaring a function only teaches JavaScript what the function is. It does not run the function yet."
+            },
+            {
+              "type": "code",
+              "text": "function sayHi() {\n  console.log('Hi');\n}\n\n// Nothing prints until the function is called:\nsayHi();\n// → Hi"
+            },
+            {
+              "type": "p",
+              "text": "To call a function, write its name followed by parentheses: `sayHi()`."
+            },
+            {
+              "type": "note",
+              "text": "Forgetting the parentheses is a common beginner bug. `sayHi` means the function itself. `sayHi()` runs it."
+            }
+          ],
+          "task": "Create a function named `sayHello` that prints `Hello from a function!`, then call it.",
+          "starterCode": "// Create a function named sayHello\n// Inside it, print: Hello from a function!\n// Then call the function\n",
+          "expectedOutput": "Hello from a function!",
+          "matchType": "exact",
+          "hints": [
+            "Start with `function sayHello() { ... }`.",
+            "Put `console.log('Hello from a function!');` inside the function body.",
+            "After the closing brace, call it with `sayHello();`"
+          ],
+          "solution": "function sayHello() {\n  console.log('Hello from a function!');\n}\n\nsayHello();\n"
+        },
+        {
+          "id": "js-16-function-parameter",
+          "title": "16. Function parameters",
+          "concept": "(foo)",
+          "summary": "A parameter lets a function receive a value.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A parameter is a name that stands in for a value passed into a function."
+            },
+            {
+              "type": "code",
+              "text": "function greet(name) {\n  console.log(`Hi, ${name}!`);\n}\n\ngreet('Sam');\n// → Hi, Sam!"
+            },
+            {
+              "type": "p",
+              "text": "When you call `greet('Sam')`, JavaScript puts `'Sam'` into the `name` parameter for that one call."
+            }
+          ],
+          "task": "Write a function `greet(name)` that prints `Hi, NAME!`. Call it with `Sam` and then with `Alex`.",
+          "starterCode": "// Write greet(name)\n// Call it with 'Sam'\n// Call it with 'Alex'\n",
+          "expectedOutput": "Hi, Sam!\nHi, Alex!",
+          "matchType": "exact",
+          "hints": [
+            "Use a template literal: `Hi, ${name}!`.",
+            "Call the function twice, once with `'Sam'` and once with `'Alex'`."
+          ],
+          "solution": "function greet(name) {\n  console.log(`Hi, ${name}!`);\n}\n\ngreet('Sam');\ngreet('Alex');\n"
+        },
+        {
+          "id": "js-17-two-parameters",
+          "title": "17. Two parameters",
+          "concept": "(foo, bar)",
+          "summary": "Functions can receive more than one value.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A function can have multiple parameters. Separate them with commas."
+            },
+            {
+              "type": "code",
+              "text": "function add(a, b) {\n  console.log(a + b);\n}\n\nadd(2, 3);\n// → 5"
+            },
+            {
+              "type": "p",
+              "text": "Arguments match parameters by position: the first argument goes into the first parameter, the second argument goes into the second parameter."
+            }
+          ],
+          "task": "Write a function `add(a, b)` that prints the sum. Call it with `5` and `7`, then with `10` and `20`.",
+          "starterCode": "// Write add(a, b)\n// Print a + b inside the function\n// Call it twice\n",
+          "expectedOutput": "12\n30",
+          "matchType": "exact",
+          "hints": [
+            "The function header is `function add(a, b) {`.",
+            "Inside, use `console.log(a + b);`.",
+            "Call `add(5, 7);` and `add(10, 20);`."
+          ],
+          "solution": "function add(a, b) {\n  console.log(a + b);\n}\n\nadd(5, 7);\nadd(10, 20);\n"
+        },
+        {
+          "id": "js-18-return-value",
+          "title": "18. Returning a value",
+          "concept": "return",
+          "summary": "`return` gives a value back to the code that called the function.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Printing and returning are different. `console.log()` shows a value in the console. `return` sends a value back from the function."
+            },
+            {
+              "type": "code",
+              "text": "function double(n) {\n  return n * 2;\n}\n\nlet result = double(6);\nconsole.log(result);\n// → 12"
+            },
+            {
+              "type": "note",
+              "text": "A returned value can be stored, printed, compared, or passed into another function."
+            }
+          ],
+          "task": "Write a function `triple(n)` that returns `n * 3`. Print `triple(4)` and `triple(10)`.",
+          "starterCode": "// Write triple(n) so it returns n * 3\n// Print triple(4)\n// Print triple(10)\n",
+          "expectedOutput": "12\n30",
+          "matchType": "exact",
+          "hints": [
+            "Inside the function, use `return n * 3;`.",
+            "Outside the function, use `console.log(triple(4));`."
+          ],
+          "solution": "function triple(n) {\n  return n * 3;\n}\n\nconsole.log(triple(4));\nconsole.log(triple(10));\n"
+        },
+        {
+          "id": "js-19-return-vs-log",
+          "title": "19. return vs console.log",
+          "concept": "return; console.log();",
+          "summary": "Use `return` when the caller needs the answer later.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A function that only logs a value shows the answer, but the rest of your program cannot reuse that answer."
+            },
+            {
+              "type": "code",
+              "text": "function makeName(first, last) {\n  return `${first} ${last}`;\n}\n\nlet fullName = makeName('Ada', 'Lovelace');\nconsole.log(fullName);\n// → Ada Lovelace"
+            },
+            {
+              "type": "p",
+              "text": "Use `return` when the function should produce a value. Use `console.log()` when you want to display something."
+            }
+          ],
+          "task": "Write `makeFullName(first, last)` so it returns the full name. Store the result for `Ada` and `Lovelace` in `name`, then print `name`.",
+          "starterCode": "// Write makeFullName(first, last)\n// Store the returned value in a variable named name\n// Print name\n",
+          "expectedOutput": "Ada Lovelace",
+          "matchType": "exact",
+          "hints": [
+            "Return a template literal: `${first} ${last}`.",
+            "Use `let name = makeFullName('Ada', 'Lovelace');`.",
+            "Then print `name`."
+          ],
+          "solution": "function makeFullName(first, last) {\n  return `${first} ${last}`;\n}\n\nlet name = makeFullName('Ada', 'Lovelace');\nconsole.log(name);\n"
+        },
+        {
+          "id": "js-20-calling-multiple-times",
+          "title": "20. Calling a function multiple times",
+          "concept": "main()",
+          "summary": "One function can solve the same kind of problem many times.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The point of a function is reuse. Write the logic once, then call it with different inputs."
+            },
+            {
+              "type": "code",
+              "text": "function square(n) {\n  return n * n;\n}\n\nconsole.log(square(2));\nconsole.log(square(5));\n// → 4\n//   25"
+            },
+            {
+              "type": "p",
+              "text": "Each call gets its own value for the parameter."
+            }
+          ],
+          "task": "Write `multiplyByTen(n)` that returns `n * 10`. Print the results for `3`, `8`, and `12`.",
+          "starterCode": "// Write multiplyByTen(n)\n// Print multiplyByTen(3), multiplyByTen(8), multiplyByTen(12)\n",
+          "expectedOutput": "30\n80\n120",
+          "matchType": "exact",
+          "hints": [
+            "Return `n * 10` from the function.",
+            "Use three separate `console.log()` calls."
+          ],
+          "solution": "function multiplyByTen(n) {\n  return n * 10;\n}\n\nconsole.log(multiplyByTen(3));\nconsole.log(multiplyByTen(8));\nconsole.log(multiplyByTen(12));\n"
+        },
+        {
+          "id": "js-21-function-expression",
+          "title": "21. Function expressions",
+          "concept": "foo = function()",
+          "summary": "A function can be stored in a variable.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A function declaration starts with the `function` keyword. A function expression stores a function in a variable."
+            },
+            {
+              "type": "code",
+              "text": "const double = function(n) {\n  return n * 2;\n};\n\nconsole.log(double(9));\n// → 18"
+            },
+            {
+              "type": "p",
+              "text": "After the function is stored, you call it through the variable name: `double(9)`."
+            }
+          ],
+          "task": "Create a function expression named `half` that returns `n / 2`. Print `half(10)` and `half(25)`.",
+          "starterCode": "// const half = function(n) { ... };\n// Print half(10) and half(25)\n",
+          "expectedOutput": "5\n12.5",
+          "matchType": "exact",
+          "hints": [
+            "Start with `const half = function(n) {`.",
+            "Return `n / 2`.",
+            "Do not forget the semicolon after the function expression."
+          ],
+          "solution": "const half = function(n) {\n  return n / 2;\n};\n\nconsole.log(half(10));\nconsole.log(half(25));\n"
+        },
+        {
+          "id": "js-22-arrow-functions",
+          "title": "22. Arrow functions",
+          "concept": "=>",
+          "summary": "Arrow functions are a shorter way to write function expressions.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Arrow functions are commonly used in modern JavaScript. They are often shorter than regular function expressions."
+            },
+            {
+              "type": "code",
+              "text": "const double = (n) => {\n  return n * 2;\n};\n\nconsole.log(double(6));\n// → 12"
+            },
+            {
+              "type": "note",
+              "text": "For now, treat arrow functions as another way to write small reusable functions. Later, they become especially useful with arrays and events."
+            }
+          ],
+          "task": "Create an arrow function named `subtract` that returns `a - b`. Print `subtract(10, 3)` and `subtract(20, 8)`.",
+          "starterCode": "// const subtract = (a, b) => { ... };\n// Print two calls\n",
+          "expectedOutput": "7\n12",
+          "matchType": "exact",
+          "hints": [
+            "Use `const subtract = (a, b) => {`.",
+            "Inside, `return a - b;`.",
+            "Print both calls with `console.log()`."
+          ],
+          "solution": "const subtract = (a, b) => {\n  return a - b;\n};\n\nconsole.log(subtract(10, 3));\nconsole.log(subtract(20, 8));\n"
+        },
+        {
+          "id": "js-23-default-parameters",
+          "title": "23. Default parameters",
+          "concept": "(x='foo')",
+          "summary": "A parameter can have a fallback value.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A default parameter gives JavaScript a value to use when the caller does not pass one."
+            },
+            {
+              "type": "code",
+              "text": "function greet(name = 'friend') {\n  console.log(`Hi, ${name}!`);\n}\n\ngreet('Sam');\ngreet();\n// → Hi, Sam!\n//   Hi, friend!"
+            },
+            {
+              "type": "p",
+              "text": "Defaults make functions safer because missing arguments do not always break your output."
+            }
+          ],
+          "task": "Write `welcome(name = 'guest')` that returns `Welcome, NAME`. Print `welcome('Mia')` and `welcome()`.",
+          "starterCode": "// Write welcome(name = 'guest')\n// Print welcome('Mia')\n// Print welcome()\n",
+          "expectedOutput": "Welcome, Mia\nWelcome, guest",
+          "matchType": "exact",
+          "hints": [
+            "Put the default value in the parameter list: `name = 'guest'`.",
+            "Return a template literal.",
+            "The second call should pass no arguments."
+          ],
+          "solution": "function welcome(name = 'guest') {\n  return `Welcome, ${name}`;\n}\n\nconsole.log(welcome('Mia'));\nconsole.log(welcome());\n"
+        },
+        {
+          "id": "js-24-local-variables",
+          "title": "24. Local variables inside functions",
+          "concept": "local variables",
+          "summary": "Variables created inside a function belong to that function.",
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A variable created inside a function is local to that function. It exists while the function is running."
+            },
+            {
+              "type": "code",
+              "text": "function totalWithTax(price) {\n  let tax = price * 0.1;\n  return price + tax;\n}\n\nconsole.log(totalWithTax(100));\n// → 110"
+            },
+            {
+              "type": "p",
+              "text": "Local variables are useful for naming intermediate steps in a calculation."
+            }
+          ],
+          "task": "Write `finalPrice(price)` that creates a local variable `shipping` set to `5`, then returns `price + shipping`. Print the final price for `20` and `100`.",
+          "starterCode": "// Write finalPrice(price)\n// Inside it, create let shipping = 5\n// Return price + shipping\n// Print finalPrice(20) and finalPrice(100)\n",
+          "expectedOutput": "25\n105",
+          "matchType": "exact",
+          "hints": [
+            "Inside the function, write `let shipping = 5;`.",
+            "Return `price + shipping`.",
+            "Use two `console.log()` calls."
+          ],
+          "solution": "function finalPrice(price) {\n  let shipping = 5;\n  return price + shipping;\n}\n\nconsole.log(finalPrice(20));\nconsole.log(finalPrice(100));\n"
         }
       ]
     }
