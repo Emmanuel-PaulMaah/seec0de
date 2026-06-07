@@ -16,6 +16,17 @@ Section conventions:
 
 ## [Unreleased]
 
+### Added
+- **Collapsible lesson tracks (accordion).** [`LessonsPanel.jsx`](src/renderer/components/LessonsPanel.jsx) is now an accordion: each track header is a button that expands/collapses its lesson list, with a rotating chevron and per-track collapsed state held in local component state. The `done/total` progress count stays visible on the header even when the track is collapsed, and lesson selection / completion behaviour is unchanged.
+- **New JavaScript track: "Functions Deep Dive."** [`lessons.json`](src/renderer/data/lessons.json) gains a third track (`js-functions`, 10 lessons, 15-24): calling a function, function parameters, two parameters, returning a value, `return` vs `console.log`, calling a function multiple times, function expressions, arrow functions, default parameters, and local variables inside functions. All use the existing output-based (stdout) verifier.
+- **Resizable workspace panels.** All four side panels - file explorer, instruction, live preview, and explanation - now have a drag handle to resize their width. Widths are clamped to sensible min/max and persisted per-install: `seec0de.explorerWidth` (180-420), `seec0de.instructionWidth` (240-520), `seec0de.previewWidth` (300-680), `seec0de.explanationWidth` (240-520). Implemented in [`App.jsx`](src/renderer/App.jsx) via per-panel shell wrappers plus `mousedown` resize handlers that listen on `window` and restore the cursor / text-selection on mouseup.
+- **Inline file rename in the explorer.** [`FileExplorer.jsx`](src/renderer/components/FileExplorer.jsx) rows now show a pencil button that swaps the file name for an inline input; committing calls the existing `fs:rename` IPC and reopens the file under its new path if it was the active file.
+- **`fs:copy` IPC handler + preload bridge.** [`fileService.js`](src/main/fileService.js) adds a path-validated `fs:copy` handler (recursive `fs.cp` with `errorOnExist`) and [`preload.js`](src/main/preload.js) exposes `window.seecode.fs.copy(old, new)`. Backend only - not yet surfaced in the explorer UI.
+
+### Changed
+- **Side-panel components now fill their resizable shells.** [`InstructionPanel.jsx`](src/renderer/components/InstructionPanel.jsx), [`LivePreviewPanel.jsx`](src/renderer/components/LivePreviewPanel.jsx), [`ExplanationSidebar.jsx`](src/renderer/components/ExplanationSidebar.jsx), and [`FileExplorer.jsx`](src/renderer/components/FileExplorer.jsx) switched from fixed pixel widths to `width: 100%` so the parent resize shell in `App.jsx` controls their size.
+- **Terminal empty-state hint** in [`TerminalPanel.jsx`](src/renderer/components/TerminalPanel.jsx) shortened to "Run commands, see explanations".
+
 ---
 
 ## [3.4.0] - 2026-05-31
