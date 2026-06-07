@@ -9,7 +9,8 @@
 //   fs:write-file(path,str) → { ok: true }
 //   fs:create-file(path)    → creates empty file
 //   fs:create-dir(path)     → creates directory (recursive)
-//   fs:rename(old, new)     → renames a file or folder
+//   fs:rename(old, new)     → renames/moves a file or folder
+//   fs:copy(old, new)       → copies a file or folder
 //   fs:delete(path)         → moves to OS trash (shell.trashItem) for safety
 //   fs:path-exists(path)    → boolean
 //
@@ -113,6 +114,13 @@ function registerFileServiceHandlers() {
     await fs.rename(oldPath, newPath);
     return { ok: true };
   });
+
+  ipcMain.handle('fs:copy', async (_e, oldPath, newPath) => {
+    validatePath(oldPath);
+    validatePath(newPath);
+    await fs.cp(oldPath, newPath, { recursive: true, errorOnExist: true });
+    return { ok: true };
+});
 
   ipcMain.handle('fs:delete', async (_e, targetPath) => {
     validatePath(targetPath);

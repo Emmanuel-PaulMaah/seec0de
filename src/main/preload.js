@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('seecode', {
     createFile: (p)            => ipcRenderer.invoke('fs:create-file', p),
     createDir:  (p)            => ipcRenderer.invoke('fs:create-dir', p),
     rename:     (oldP, newP)   => ipcRenderer.invoke('fs:rename', oldP, newP),
+    copy:       (oldP, newP)   => ipcRenderer.invoke('fs:copy', oldP, newP),
     delete:     (p)            => ipcRenderer.invoke('fs:delete', p),
     pathExists: (p)            => ipcRenderer.invoke('fs:path-exists', p),
     setProjectRoot: (p)        => ipcRenderer.invoke('fs:set-project-root', p),

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check } from 'lucide-react';
+import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check, Pencil } from 'lucide-react';
 import { basename, joinPath } from '../engine/fileLanguage';
 
 // A small recursive file tree. Keeps state per-folder (open/closed + entries)
@@ -31,6 +31,9 @@ export default function FileExplorer({
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(null); // null | 'file' | 'folder'
   const [draftName, setDraftName] = useState('');
+  const [renaming, setRenaming] = useState(null); // { path, name, parentPath } | null
+  const [renameDraft, setRenameDraft] = useState('');
+  const renameRef = useRef(null);
   const draftRef = useRef(null);
 
   const loadDir = useCallback(async (dirPath) => {
@@ -60,6 +63,13 @@ export default function FileExplorer({
   useEffect(() => {
     if (creating && draftRef.current) draftRef.current.focus();
   }, [creating]);
+
+  useEffect(() => {
+    if (renaming && renameRef.current) {
+      renameRef.current.focus();
+      renameRef.current.select();
+    }
+  }, [renaming]);
 
   const toggleDir = useCallback(async (dirPath) => {
     const node = tree[dirPath];
@@ -120,6 +130,63 @@ export default function FileExplorer({
       loadDir(rootPath);
     }
   }, [rootPath, loadDir]);
+
+  const startRename = useCallback((entryPath, entryName) => {
+    setError(null);
+
+    const slash = Math.max(entryPath.lastIndexOf('/'), entryPath.lastIndexOf('\\'));
+    const parentPath = slash >+ 0 ? entryPath.slice(0, slash) : rootPath;
+
+    setRenaming({ path: entryPath, name: entryName, parentPath });
+    setRenameDraft(entryName);
+  }, [rootPath]);
+
+  const cancelRename = useCallback(() => {
+    setRenaming(null);
+    setRenameDraft('');
+  }, []);
+
+  const commitRename = useCallback(async () => {
+    if (!renaming) return;
+
+    const nextName = renameDraft.trim();
+
+    if (!nextName || nextName === renaming.name) {
+      cancelRename();
+      return;
+    }
+
+    if (/[\\/]/.test(nextName)) {
+      setError('Name cannot contain "/" or "\\".');
+      return;
+    }
+
+    try {
+      const nextPath = joinPath(renaming.parentPath, nextName);
+
+      await window.seecode.fs.rename(renaming.path, nextPath);
+
+      await loadDir(renaming.parentPath);
+
+      if (activeFilePath === renaming.path) {
+        onOpenFile?.(nextPath);
+      }
+
+      cancelRename();
+    } catch (err) {
+      setError(err.message || 'Failed to rename.');
+    }
+  }, [renaming, renameDraft, cancelRename, loadDir, activeFilePath, onOpenFile]);
+
+  const onRenameKey = useCallback((e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commitRename();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      commitRename();
+    }
+  }, [commitRename, cancelRename]);
 
   if (!rootPath) {
     return (
@@ -194,13 +261,20 @@ export default function FileExplorer({
           onOpenFile={onOpenFile}
           activeFilePath={activeFilePath}
           isRoot
+          renaming={renaming}
+          renameDraft={renameDraft}
+          renameRef={renameRef}
+          onRenameDraftChange={setRenameDraft}
+          onRenameKey={onRenameKey}
+          onRenameBlur={commitRename}
+          onStartRename={startRename}
         />
       </div>
     </div>
   );
 }
 
-function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, activeFilePath, isRoot }) {
+function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, activeFilePath, isRoot, renaming, renameDraft, renameRef, onRenameDraftChange, onRenameKey, onRenameBlur, onStartRename }) {
   const node = isDir ? tree[path] : null;
   const open = !!node?.open;
   const entries = node?.entries;
@@ -221,6 +295,13 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
             onToggleDir={onToggleDir}
             onOpenFile={onOpenFile}
             activeFilePath={activeFilePath}
+            renaming={renaming}
+            renameDraft={renameDraft}
+            renameRef={renameRef}
+            onRenameDraftChange={onRenameDraftChange}
+            onRenameKey={onRenameKey}
+            onRenameBlur={onRenameBlur}
+            onStartRename={onStartRename}
           />
         ))}
       </>
@@ -228,6 +309,7 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
   }
 
   const isActive = !isDir && path === activeFilePath;
+  const isRenaming = renaming?.path === path;
 
   return (
     <div>
@@ -250,7 +332,44 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
         ) : (
           <File size={13} style={styles.icon} />
         )}
-        <span style={styles.name}>{name}</span>
+        {isRenaming ? (
+  <input
+    ref={renameRef}
+    value={renameDraft}
+    onChange={(e) => onRenameDraftChange(e.target.value)}
+    onKeyDown={onRenameKey}
+    onBlur={onRenameBlur}
+    onClick={(e) => e.stopPropagation()}
+    style={styles.renameInput}
+  />
+) : (
+  <span style={styles.name}>{name}</span>
+)}
+
+{!isRenaming && (
+  <span style={styles.rowActions}>
+    <span
+      role="button"
+      tabIndex={0}
+      title="Rename"
+      style={styles.rowAction}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onStartRename(path, name);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onStartRename(path, name);
+        }
+      }}
+    >
+      <Pencil size={11} />
+    </span>
+  </span>
+)}
       </button>
       {isDir && open && entries && entries.map((entry) => (
         <TreeNode
@@ -263,6 +382,13 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
           onToggleDir={onToggleDir}
           onOpenFile={onOpenFile}
           activeFilePath={activeFilePath}
+          renaming={renaming}
+          renameDraft={renameDraft}
+          renameRef={renameRef}
+          onRenameDraftChange={onRenameDraftChange}
+          onRenameKey={onRenameKey}
+          onRenameBlur={onRenameBlur}
+          onStartRename={onStartRename}
         />
       ))}
     </div>
@@ -271,13 +397,13 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
 
 const styles = {
   panel: {
-    width: 240,
-    display: 'flex',
-    flexDirection: 'column',
-    background: 'var(--bg-secondary)',
-    borderRight: '1px solid var(--border)',
-    overflow: 'hidden',
-  },
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  background: 'var(--bg-secondary)',
+  overflow: 'hidden',
+},
   header: {
     display: 'flex',
     alignItems: 'center',
@@ -309,6 +435,38 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  rowActions: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 2,
+    marginLeft: 'auto',
+    opacity: 0.75,
+    flexShrink: 0,
+  },
+
+  rowAction: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 18,
+    height: 18,
+    borderRadius: 3,
+    color: 'var(--text-muted)',
+  },
+
+  renameInput: {
+    flex: 1,
+    minWidth: 0,
+    background: 'var(--bg-input)',
+    border: '1px solid var(--border-focus)',
+    borderRadius: 3,
+    color: 'var(--text-primary)',
+    fontSize: 12,
+    padding: '2px 5px',
+    outline: 'none',
+    fontFamily: 'inherit',
   },
 
   draftRow: {
