@@ -23,9 +23,13 @@ import lessonsData from './data/lessons.json';
 const STORAGE_KEY_FOLDER             = 'seec0de.lastFolder';
 const STORAGE_KEY_TERMINAL_OPEN      = 'seec0de.terminalVisible';
 const STORAGE_KEY_EXPLORER_OPEN      = 'seec0de.explorerVisible';
+const STORAGE_KEY_EXPLORER_WIDTH     = 'seec0de.explorerWidth';
+const STORAGE_KEY_INSTRUCTION_WIDTH  = 'seec0de.instructionWidth';
 const STORAGE_KEY_PREVIEW_OPEN       = 'seec0de.previewVisible';
+const STORAGE_KEY_PREVIEW_WIDTH      = 'seec0de.previewWidth';
 const STORAGE_KEY_INSTRUCTION_COLLAPSED = 'seec0de.instructionCollapsed';
 const STORAGE_KEY_EXPLANATION_COLLAPSED = 'seec0de.explanationCollapsed';
+const STORAGE_KEY_EXPLANATION_WIDTH  = 'seec0de.explanationWidth';
 
 // Languages the runner service can actually execute. Mirrors runnerService.js.
 const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
@@ -164,6 +168,12 @@ export default function App() {
     STORAGE_KEY_EXPLORER_OPEN, loadSettings().showFileExplorer,
   ));
 
+  const [explorerWidth, setExplorerWidth] = useState(() => {
+  const saved = Number(localStorage.getItem(STORAGE_KEY_EXPLORER_WIDTH));
+  if (Number.isFinite(saved)) return Math.max(180, Math.min(420, saved));
+  return 240;
+});
+
   // ---- panel visibility ------------------------------------------------
   const [terminalVisible, setTerminalVisible] = useState(() => initialPanelVisible(
     STORAGE_KEY_TERMINAL_OPEN, loadSettings().showTerminal,
@@ -173,14 +183,32 @@ export default function App() {
   const [previewVisible, setPreviewVisible] = useState(() => initialPanelVisible(
     STORAGE_KEY_PREVIEW_OPEN, true,
   ));
+  const [previewWidth, setPreviewWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(STORAGE_KEY_PREVIEW_WIDTH));
+    if (Number.isFinite(saved) && saved > 0) return Math.max(300, Math.min(680, saved));
+    return 440;
+  });
   // Sidebars default expanded but can be collapsed to a 32 px rail to
   // give the editor + preview more room.
   const [instructionCollapsed, setInstructionCollapsed] = useState(
     () => localStorage.getItem(STORAGE_KEY_INSTRUCTION_COLLAPSED) === '1'
   );
+
+  const [instructionWidth, setInstructionWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(STORAGE_KEY_INSTRUCTION_WIDTH));
+    if (Number.isFinite(saved)) return Math.max(240, Math.min(520, saved));
+    return 320;
+  });
+
   const [explanationCollapsed, setExplanationCollapsed] = useState(
     () => localStorage.getItem(STORAGE_KEY_EXPLANATION_COLLAPSED) === '1'
   );
+
+  const [explanationWidth, setExplanationWidth] = useState(() => {
+  const saved = Number(localStorage.getItem(STORAGE_KEY_EXPLANATION_WIDTH));
+  if (Number.isFinite(saved)) return Math.max(240, Math.min(520, saved));
+  return 320;
+});
 
   // ---- runner state ----------------------------------------------------
   const terminalApi = useRef(null);
@@ -209,16 +237,32 @@ export default function App() {
   }, [explorerVisible]);
 
   useEffect(() => {
+  localStorage.setItem(STORAGE_KEY_EXPLORER_WIDTH, String(explorerWidth));
+}, [explorerWidth]);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PREVIEW_OPEN, previewVisible ? '1' : '0');
   }, [previewVisible]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_PREVIEW_WIDTH, String(previewWidth));
+  }, [previewWidth]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_INSTRUCTION_COLLAPSED, instructionCollapsed ? '1' : '0');
   }, [instructionCollapsed]);
 
   useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_INSTRUCTION_WIDTH, String(instructionWidth));
+  }, [instructionWidth]);
+
+  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_EXPLANATION_COLLAPSED, explanationCollapsed ? '1' : '0');
   }, [explanationCollapsed]);
+
+  useEffect(() => {
+  localStorage.setItem(STORAGE_KEY_EXPLANATION_WIDTH, String(explanationWidth));
+}, [explanationWidth]);
 
   // ---- keyboard shortcuts ---------------------------------------------
   // Ctrl+`  → toggle terminal (matches VS Code).
@@ -684,6 +728,111 @@ export default function App() {
     }, 60);
   }, []);
 
+  const beginExplorerResize = useCallback((event) => {
+  event.preventDefault();
+
+  const startX = event.clientX;
+  const startWidth = explorerWidth;
+
+  function handleMouseMove(moveEvent) {
+    const delta = moveEvent.clientX - startX;
+    const nextWidth = Math.max(180, Math.min(420, startWidth + delta));
+    setExplorerWidth(nextWidth);
+  }
+
+  function handleMouseUp() {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+}, [explorerWidth]);
+
+const beginInstructionResize = useCallback((event) => {
+  event.preventDefault();
+
+  const startX = event.clientX;
+  const startWidth = instructionWidth;
+
+  function handleMouseMove(moveEvent) {
+    const delta = moveEvent.clientX - startX;
+    const nextWidth = Math.max(240, Math.min(520, startWidth + delta));
+    setInstructionWidth(nextWidth);
+  }
+
+  function handleMouseUp() {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+}, [instructionWidth]);
+
+const beginPreviewResize = useCallback((event) => {
+  event.preventDefault();
+
+  const startX = event.clientX;
+  const startWidth = previewWidth;
+
+  function handleMouseMove(moveEvent) {
+    const delta = moveEvent.clientX - startX;
+    // Handle sits on the preview's left edge: dragging left widens it.
+    const nextWidth = Math.max(300, Math.min(680, startWidth - delta));
+    setPreviewWidth(nextWidth);
+  }
+
+  function handleMouseUp() {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+}, [previewWidth]);
+
+const beginExplanationResize = useCallback((event) => {
+  event.preventDefault();
+
+  const startX = event.clientX;
+  const startWidth = explanationWidth;
+
+  function handleMouseMove(moveEvent) {
+    const delta = moveEvent.clientX - startX;
+    const nextWidth = Math.max(240, Math.min(520, startWidth - delta));
+    setExplanationWidth(nextWidth);
+  }
+
+  function handleMouseUp() {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+}, [explanationWidth]);
+
   return (
     <div style={styles.container}>
       <TitleBar
@@ -697,38 +846,67 @@ export default function App() {
       <div style={styles.body}>
         <div style={styles.workspace}>
           {explorerVisible && (
-            <FileExplorer
-              rootPath={rootPath}
-              onPickFolder={handlePickFolder}
-              onCloseFolder={handleCloseFolder}
-              onOpenFile={handleOpenFile}
-              activeFilePath={activePath}
-              refreshKey={0}
+  <>
+    <div style={{ ...styles.explorerShell, width: explorerWidth }}>
+      <FileExplorer
+        rootPath={rootPath}
+        onPickFolder={handlePickFolder}
+        onCloseFolder={handleCloseFolder}
+        onOpenFile={handleOpenFile}
+        activeFilePath={activePath}
+        refreshKey={0}
+      />
+    </div>
+
+    <div
+      style={styles.verticalResizeHandle}
+      onMouseDown={beginExplorerResize}
+      title="Resize file explorer"
+      role="separator"
+      aria-orientation="vertical"
+    />
+  </>
+)}
+
+          <div
+            style={{
+              ...styles.instructionShell,
+              width: instructionCollapsed ? 32 : instructionWidth,
+            }}
+          >
+            <InstructionPanel
+              instruction={instruction}
+              onInstructionChange={handleInstructionChange}
+              onGenerate={handleGenerate}
+              aiLoading={aiLoading}
+              aiError={aiError}
+              onClearAiError={() => setAiError(null)}
+              practicalLanguage={settings.practicalLanguage}
+              comparisonLanguages={settings.comparisonLanguages}
+              onOpenSettings={() => setShowSettings(true)}
+              collapsed={instructionCollapsed}
+              onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
+              completedLessons={completedLessons}
+              onSelectLesson={handleSelectLesson}
+              activeLesson={activeLesson}
+              lessonStatus={lessonStatus}
+              lessonVerification={lessonVerification}
+              lessonHasNext={hasNextLesson}
+              onResetLessonCode={handleResetLessonCode}
+              onRevealSolution={handleRevealSolution}
+              onNextLesson={handleNextLesson}
+            />
+          </div>
+
+          {!instructionCollapsed && (
+            <div
+              style={styles.verticalResizeHandle}
+              onMouseDown={beginInstructionResize}
+              title="Resize instruction panel"
+              role="separator"
+              aria-orientation="vertical"
             />
           )}
-
-          <InstructionPanel
-            instruction={instruction}
-            onInstructionChange={handleInstructionChange}
-            onGenerate={handleGenerate}
-            aiLoading={aiLoading}
-            aiError={aiError}
-            onClearAiError={() => setAiError(null)}
-            practicalLanguage={settings.practicalLanguage}
-            comparisonLanguages={settings.comparisonLanguages}
-            onOpenSettings={() => setShowSettings(true)}
-            collapsed={instructionCollapsed}
-            onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
-            completedLessons={completedLessons}
-            onSelectLesson={handleSelectLesson}
-            activeLesson={activeLesson}
-            lessonStatus={lessonStatus}
-            lessonVerification={lessonVerification}
-            lessonHasNext={hasNextLesson}
-            onResetLessonCode={handleResetLessonCode}
-            onRevealSolution={handleRevealSolution}
-            onNextLesson={handleNextLesson}
-          />
 
           <CodePanel
             generatedCode={generatedCode}
@@ -750,22 +928,57 @@ export default function App() {
             lessonMode={!!activeLesson}
           />
 
-          <LivePreviewPanel
-            visible={previewVisible}
-            onToggle={() => setPreviewVisible((v) => !v)}
-            code={livePreview.code}
-            language={livePreview.language}
-            filename={livePreview.filename}
-            runnerOutput={runnerOutput}
-            runLoading={runLoading}
-          />
+          {previewVisible && (
+            <div
+              style={styles.verticalResizeHandle}
+              onMouseDown={beginPreviewResize}
+              title="Resize live preview"
+              role="separator"
+              aria-orientation="vertical"
+            />
+          )}
 
-          <ExplanationSidebar
-            explanation={explanation}
-            loading={aiLoading}
-            collapsed={explanationCollapsed}
-            onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
-          />
+          <div
+            style={{
+              ...styles.previewShell,
+              width: previewVisible ? previewWidth : 32,
+            }}
+          >
+            <LivePreviewPanel
+              visible={previewVisible}
+              onToggle={() => setPreviewVisible((v) => !v)}
+              code={livePreview.code}
+              language={livePreview.language}
+              filename={livePreview.filename}
+              runnerOutput={runnerOutput}
+              runLoading={runLoading}
+            />
+          </div>
+
+
+          {!explanationCollapsed && (
+            <div
+              style={styles.verticalResizeHandle}
+              onMouseDown={beginExplanationResize}
+              title="Resize explanation sidebar"
+              role="separator"
+              aria-orientation="vertical"
+            />
+          )}
+
+          <div
+            style={{
+              ...styles.explanationShell,
+              width: explanationCollapsed ? 32 : explanationWidth,
+            }}
+          >
+            <ExplanationSidebar
+              explanation={explanation}
+              loading={aiLoading}
+              collapsed={explanationCollapsed}
+              onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
+            />
+          </div>
         </div>
 
         <TerminalPanel
@@ -798,7 +1011,8 @@ export default function App() {
 // Translate a raw error from `generateCodeWithAI` into a card the
 // InstructionPanel can render. The `kind` field decides whether the
 // panel shows an "Open Settings" CTA (key issues) vs a plain dismiss
-// (transient issues like overload / network).
+// (transient issues like overload / network)
+
 function describeAiError(err) {
   const raw = err?.message ? String(err.message) : String(err ?? '');
   if (/no api key/i.test(raw)) {
@@ -870,4 +1084,43 @@ const styles = {
     overflow: 'hidden',
     minHeight: 0,
   },
+  explorerShell: {
+  flexShrink: 0,
+  display: 'flex',
+  minWidth: 180,
+  maxWidth: 420,
+  overflow: 'hidden',
+},
+
+instructionShell: {
+  flexShrink: 0,
+  display: 'flex',
+  minWidth: 32,
+  maxWidth: 520,
+  overflow: 'hidden',
+},
+
+explanationShell: {
+  flexShrink: 0,
+  display: 'flex',
+  minWidth: 32,
+  maxWidth: 520,
+  overflow: 'hidden',
+},
+
+previewShell: {
+  flexShrink: 0,
+  display: 'flex',
+  minWidth: 32,
+  maxWidth: 680,
+  overflow: 'hidden',
+},
+
+verticalResizeHandle: {
+  width: 5,
+  flexShrink: 0,
+  cursor: 'col-resize',
+  background: 'transparent',
+  borderRight: '1px solid var(--border)',
+},
 };
