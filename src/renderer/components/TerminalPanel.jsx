@@ -191,7 +191,7 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
       <div style={styles.scroll} ref={scrollRef}>
         {entries.length === 0 && (
           <div style={styles.empty}>
-            Run a shell command, get a one-line explanation.
+            Run commands, see explanations
             <br />Try: <code style={styles.kbd}>git status</code>, <code style={styles.kbd}>npm install</code>, <code style={styles.kbd}>dir</code>, <code style={styles.kbd}>Get-Process</code>.
           </div>
         )}
