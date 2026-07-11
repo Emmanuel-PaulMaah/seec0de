@@ -334,3 +334,254 @@ export function explainCode(code, language) {
 
   return { summary, lineByLine };
 }
+
+// Legacy export kept so any code that imports traceSimpleJavaScript directly
+// still works. Internally we call the private traceSimpleJS().
+export function traceSimpleJavaScript(code) {
+  return traceSimpleJS(code);
+}
+
+// Language-dispatching entry point used by ActiveLessonCard and any
+// future callers that need language-aware tracing.
+export function traceCode(code, language) {
+  if (language === 'python') return traceSimplePython(code);
+  // Default to JS tracer for javascript/typescript/all others that share
+  // the C-style for-loop syntax.
+  return traceSimpleJS(code);
+}
+
+function traceSimpleJS(code) {
+  const lines = String(code || '').split('\n');
+  const state = {};
+  const steps = [];
+  const output = [];
+
+  const pushStep = (lineNumber, line, note) => {
+    steps.push({
+      lineNumber,
+      line: line.trim(),
+      note,
+      state: { ...state },
+      output: output.join('\n'),
+    });
+  };
+
+  const runStatement = (rawLine, lineNumber) => {
+    const line = stripTrailingComment(rawLine).trim();
+    if (!line) return;
+
+    let match = line.match(/^(?:let|const|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(.+?);?$/);
+    if (match) {
+      state[match[1]] = evaluateSimpleExpression(match[2], state);
+      pushStep(lineNumber, rawLine, `Store ${formatValue(state[match[1]])} in ${match[1]}.`);
+      return;
+    }
+
+    match = line.match(/^([A-Za-z_$][\w$]*)\s*=\s*(.+?);?$/);
+    if (match) {
+      state[match[1]] = evaluateSimpleExpression(match[2], state);
+      pushStep(lineNumber, rawLine, `Update ${match[1]} to ${formatValue(state[match[1]])}.`);
+      return;
+    }
+
+    match = line.match(/^([A-Za-z_$][\w$]*)\s*\+=\s*(.+?);?$/);
+    if (match) {
+      state[match[1]] = (Number(state[match[1]]) || 0) + Number(evaluateSimpleExpression(match[2], state));
+      pushStep(lineNumber, rawLine, `Add to ${match[1]}; it is now ${formatValue(state[match[1]])}.`);
+      return;
+    }
+
+    match = line.match(/^([A-Za-z_$][\w$]*)(\+\+|--);?$/);
+    if (match) {
+      state[match[1]] = (Number(state[match[1]]) || 0) + (match[2] === '++' ? 1 : -1);
+      pushStep(lineNumber, rawLine, `Move ${match[1]} to ${formatValue(state[match[1]])}.`);
+      return;
+    }
+
+    match = line.match(/^console\.log\((.*)\);?$/);
+    if (match) {
+      const value = evaluateSimpleExpression(match[1], state);
+      output.push(String(value));
+      pushStep(lineNumber, rawLine, `Print ${formatValue(value)}.`);
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const loop = rawLine.trim().match(/^for\s*\(\s*(?:let|var)?\s*([A-Za-z_$][\w$]*)\s*=\s*([^;]+);\s*\1\s*(<|<=|>|>=)\s*([^;]+);\s*\1\s*(\+\+|--|\+=\s*[^)]+)\s*\)\s*\{?\s*$/);
+    if (!loop) {
+      runStatement(rawLine, i + 1);
+      continue;
+    }
+
+    const body = [];
+    let end = i + 1;
+    for (; end < lines.length; end++) {
+      if (lines[end].trim() === '}') break;
+      body.push({ line: lines[end], lineNumber: end + 1 });
+    }
+
+    const [, name, startExpr, op, limitExpr, updateExpr] = loop;
+    state[name] = evaluateSimpleExpression(startExpr, state);
+    pushStep(i + 1, rawLine, `Start loop with ${name} = ${formatValue(state[name])}.`);
+
+    let guard = 0;
+    while (compareValues(state[name], evaluateSimpleExpression(limitExpr, state), op) && guard < 20) {
+      pushStep(i + 1, rawLine, `Loop condition is true (${name} is ${formatValue(state[name])}).`);
+      body.forEach((statement) => runStatement(statement.line, statement.lineNumber));
+      if (updateExpr === '++') state[name] = (Number(state[name]) || 0) + 1;
+      else if (updateExpr === '--') state[name] = (Number(state[name]) || 0) - 1;
+      else state[name] = (Number(state[name]) || 0) + Number(evaluateSimpleExpression(updateExpr.replace(/^\+=\s*/, ''), state));
+      pushStep(i + 1, rawLine, `Update ${name} to ${formatValue(state[name])}.`);
+      guard += 1;
+    }
+    pushStep(i + 1, rawLine, guard >= 20 ? 'Stopped after 20 iterations.' : 'Loop condition is false, so the loop ends.');
+    i = end;
+  }
+
+  return { steps, finalState: state, output: output.join('\n') };
+}
+
+// ---------------------------------------------------------------------------
+// Python-specific tracer
+// Understands: plain assignment (x = …), augmented assignment (x += …),
+// print(…) calls, and `for VAR in range(start, stop[, step])` loops.
+// Returns the same { steps, finalState, output } shape as traceSimpleJS.
+// ---------------------------------------------------------------------------
+function traceSimplePython(code) {
+  const lines = String(code || '').split('\n');
+  const state = {};
+  const steps = [];
+  const outputLines = [];
+
+  const pushStep = (lineNumber, line, note) => {
+    steps.push({
+      lineNumber,
+      line: line.trim(),
+      note,
+      state: { ...state },
+      output: outputLines.join('\n'),
+    });
+  };
+
+  // Strip Python comments from a line.
+  const stripComment = (line) => String(line || '').replace(/\s*#.*$/, '');
+
+  const runStatement = (rawLine, lineNumber) => {
+    const line = stripComment(rawLine).trim();
+    if (!line) return;
+
+    // print(...)
+    let match = line.match(/^print\s*\((.*)\)\s*$/);
+    if (match) {
+      const value = evaluateSimpleExpression(match[1], state);
+      outputLines.push(String(value));
+      pushStep(lineNumber, rawLine, `Print ${formatValue(value)}.`);
+      return;
+    }
+
+    // x += value
+    match = line.match(/^([A-Za-z_][\w]*)\s*\+=\s*(.+)$/);
+    if (match) {
+      state[match[1]] = (Number(state[match[1]]) || 0) + Number(evaluateSimpleExpression(match[2], state));
+      pushStep(lineNumber, rawLine, `Add to ${match[1]}; it is now ${formatValue(state[match[1]])}.`);
+      return;
+    }
+
+    // x -= value
+    match = line.match(/^([A-Za-z_][\w]*)\s*-=\s*(.+)$/);
+    if (match) {
+      state[match[1]] = (Number(state[match[1]]) || 0) - Number(evaluateSimpleExpression(match[2], state));
+      pushStep(lineNumber, rawLine, `Subtract from ${match[1]}; it is now ${formatValue(state[match[1]])}.`);
+      return;
+    }
+
+    // x = value  (plain assignment — must come after augmented-assign checks)
+    match = line.match(/^([A-Za-z_][\w]*)\s*=\s*(.+)$/);
+    if (match) {
+      state[match[1]] = evaluateSimpleExpression(match[2], state);
+      pushStep(lineNumber, rawLine, `Store ${formatValue(state[match[1]])} in ${match[1]}.`);
+      return;
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const stripped = stripComment(rawLine).trim();
+
+    // for VAR in range(stop)
+    // for VAR in range(start, stop)
+    // for VAR in range(start, stop, step)
+    const rangeLoop = stripped.match(/^for\s+([A-Za-z_][\w]*)\s+in\s+range\(([^)]+)\)\s*:/);
+    if (rangeLoop) {
+      const [, name, argsRaw] = rangeLoop;
+      const args = argsRaw.split(',').map((a) => Number(evaluateSimpleExpression(a.trim(), state)));
+      let start = 0;
+      let stop;
+      let step = 1;
+      if (args.length === 1) { stop = args[0]; }
+      else if (args.length === 2) { [start, stop] = args; }
+      else { [start, stop, step] = args; }
+
+      // Collect the indented body lines.
+      const body = [];
+      let end = i + 1;
+      while (end < lines.length) {
+        const bodyLine = lines[end];
+        if (bodyLine.trim() && !/^\s+/.test(bodyLine) && !bodyLine.startsWith('\t')) break;
+        if (bodyLine.trim()) body.push({ line: bodyLine, lineNumber: end + 1 });
+        end += 1;
+      }
+
+      state[name] = start;
+      pushStep(i + 1, rawLine, `Start loop with ${name} = ${formatValue(start)}.`);
+
+      let guard = 0;
+      const cond = step > 0 ? (v) => v < stop : (v) => v > stop;
+      while (cond(state[name]) && guard < 20) {
+        pushStep(i + 1, rawLine, `Loop condition is true (${name} is ${formatValue(state[name])}).`);
+        body.forEach((s) => runStatement(s.line, s.lineNumber));
+        state[name] = Number(state[name]) + step;
+        pushStep(i + 1, rawLine, `Update ${name} to ${formatValue(state[name])}.`);
+        guard += 1;
+      }
+      pushStep(i + 1, rawLine, guard >= 20 ? 'Stopped after 20 iterations.' : 'Loop finished.');
+      i = end - 1;
+      continue;
+    }
+
+    runStatement(rawLine, i + 1);
+  }
+
+  return { steps, finalState: state, output: outputLines.join('\n') };
+}
+
+function stripTrailingComment(line) {
+  return String(line || '').replace(/\s*\/\/.*$/, '');
+}
+
+function evaluateSimpleExpression(expr, state) {
+  const source = String(expr || '').trim().replace(/;$/, '');
+  if (!source) return '';
+  if (/[A-Za-z_$][\w$]*\s*\(/.test(source)) return source;
+  if (!/^[\w$\s+\-*/%().,'"<>!=&|?]+$/.test(source)) return source;
+  try {
+    // eslint-disable-next-line no-new-func
+    return Function(...Object.keys(state), `"use strict"; return (${source});`)(...Object.values(state));
+  } catch {
+    return source;
+  }
+}
+
+function compareValues(left, right, op) {
+  if (op === '<') return left < right;
+  if (op === '<=') return left <= right;
+  if (op === '>') return left > right;
+  if (op === '>=') return left >= right;
+  return false;
+}
+
+function formatValue(value) {
+  if (typeof value === 'string') return `"${value}"`;
+  return String(value);
+}

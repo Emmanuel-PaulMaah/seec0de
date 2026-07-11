@@ -2,17 +2,23 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
-  Cpu, Play, Copy, Download,
+  Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
+  User, Users, UserPlus, Lock, Trash2,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
+  TOOLCHAIN_GUIDES,
   defaultComparisonFor,
   loadSettings,
   updateSettings,
   resetOnboarding,
   getSettingsApiKey,
   setSettingsApiKey,
+  usernameExists,
+  setProfilePin,
+  clearProfilePin,
 } from '../engine/settings';
+import { ProfileFields } from './ProfileForm';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
 
 // SettingsDrawer — right-side overlay containing every persistent
@@ -20,57 +26,15 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 // `AboutSettings` blocks that used to live in the left panel.
 //
 // Sections (top → bottom):
-//   1. Languages              — practical + comparison
-//   2. AI                     — Gemini key
-//   3. Workspace              — defaults for explorer / terminal panels
-//   4. About & Updates        — version, last-checked, "Check now"
-//   5. Onboarding             — "Rerun onboarding"
+//   1. Profile                — identity, PIN lock, switch / add / delete
+//   2. Languages              — practical + comparison
+//   3. AI                     — Gemini key
+//   4. Workspace              — defaults for explorer / terminal panels
+//   5. About & Updates        — version, last-checked, "Check now"
+//   6. Onboarding             — "Rerun onboarding"
 //
 // Visual direction: AI-Native UI. Slides in from the right, dimmed scrim
 // behind, generous whitespace, single-column, semantic icons (no emoji).
-
-// Per-language install recipes for the "Toolchains" section. We show the
-// command, an "Install" button that pushes it into the bottom terminal,
-// and a "Copy" fallback for users who'd rather paste it themselves. The
-// commands are picked for Windows first because that's seec0de's primary
-// distribution target; macOS/Linux hints sit alongside as plain text.
-const INSTALL_RECIPES = {
-  python: {
-    label: 'Python',
-    why: 'Runs .py files. seec0de uses the first of `python`, `py`, or `python3` on PATH.',
-    win:   'winget install --id Python.Python.3.12 -e --source winget',
-    macos: 'brew install python',
-    linux: 'sudo apt install python3',
-  },
-  javascript: {
-    label: 'Node.js (for JavaScript)',
-    why: 'Runs .js files. seec0de looks for `node` on PATH.',
-    win:   'winget install --id OpenJS.NodeJS.LTS -e --source winget',
-    macos: 'brew install node',
-    linux: 'sudo apt install nodejs npm',
-  },
-  typescript: {
-    label: 'tsx (for TypeScript)',
-    why: 'Runs .ts files directly. Needs Node.js first; installs `tsx` globally.',
-    win:   'npm install -g tsx',
-    macos: 'npm install -g tsx',
-    linux: 'npm install -g tsx',
-  },
-  c: {
-    label: 'C compiler',
-    why: 'Compiles & runs .c files. seec0de looks for `gcc`, `clang`, then MSVC `cl`.',
-    win:   'winget install --id LLVM.LLVM -e --source winget',
-    macos: 'xcode-select --install',
-    linux: 'sudo apt install build-essential',
-  },
-  cpp: {
-    label: 'C++ compiler',
-    why: 'Compiles & runs .cpp files. seec0de looks for `g++`, `clang++`, then MSVC `cl`.',
-    win:   'winget install --id LLVM.LLVM -e --source winget',
-    macos: 'xcode-select --install',
-    linux: 'sudo apt install build-essential',
-  },
-};
 
 const PLATFORM_LABEL = (() => {
   const p = (typeof navigator !== 'undefined' ? navigator.platform : '') || '';
@@ -79,7 +43,10 @@ const PLATFORM_LABEL = (() => {
   return 'linux';
 })();
 
-export default function SettingsDrawer({ open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal }) {
+export default function SettingsDrawer({
+  open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal,
+  onSwitchProfile, onAddProfile, onDeleteProfile,
+}) {
   const [settings, setSettings] = useState(loadSettings());
   const [apiKey, setApiKey]     = useState('');
   const [hasKey, setHasKey]     = useState(false);
@@ -192,7 +159,17 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
         </header>
 
         <div style={styles.scroll}>
-          {/* ---- 1. Languages ----------------------------------------- */}
+          {/* ---- 1. Profile ------------------------------------------- */}
+          <Section icon={<User size={13} />} title="Profile">
+            <ProfileSection
+              onSettingsChange={onSettingsChange}
+              onSwitchProfile={onSwitchProfile}
+              onAddProfile={onAddProfile}
+              onDeleteProfile={onDeleteProfile}
+            />
+          </Section>
+
+          {/* ---- 2. Languages ----------------------------------------- */}
           <Section icon={<Layers size={13} />} title="Languages">
             <Field label="Practical language" hint="The language you build in. Powers Run, default file extension, and the first language tab.">
               <div style={styles.langGrid}>
@@ -228,7 +205,7 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
             </Field>
           </Section>
 
-          {/* ---- 2. AI ------------------------------------------------- */}
+          {/* ---- 3. AI ------------------------------------------------- */}
           <Section icon={<Sparkles size={13} />} title="AI">
             <Field
               label="Gemini API key"
@@ -271,7 +248,7 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
             </Field>
           </Section>
 
-          {/* ---- 3. Workspace ----------------------------------------- */}
+          {/* ---- 4. Workspace ----------------------------------------- */}
           <Section icon={<FolderTree size={13} />} title="Workspace">
             <ToggleRow
               icon={<FolderTree size={13} />}
@@ -289,17 +266,17 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
             />
           </Section>
 
-          {/* ---- 4. Toolchains ----------------------------------------- */}
+          {/* ---- 5. Toolchains ----------------------------------------- */}
           <Section icon={<Cpu size={13} />} title="Toolchains">
             <ToolchainPanel onRunInTerminal={onRunInTerminal} />
           </Section>
 
-          {/* ---- 5. About & Updates ----------------------------------- */}
+          {/* ---- 6. About & Updates ----------------------------------- */}
           <Section icon={<Info size={13} />} title="About & Updates">
             <UpdatePanel update={update} />
           </Section>
 
-          {/* ---- 5. Onboarding ---------------------------------------- */}
+          {/* ---- 7. Onboarding ---------------------------------------- */}
           <Section title="Onboarding">
             <button style={styles.ghostBtn} onClick={handleRerun}>
               Rerun onboarding
@@ -315,6 +292,205 @@ export default function SettingsDrawer({ open, onClose, onSettingsChange, onReru
         </div>
       </aside>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ProfileSection — Settings → Profile.
+//
+// Edits the ACTIVE local profile: identity (avatar / username / bio /
+// languages), an optional PIN lock, and profile management (switch, add,
+// delete). Reads a fresh snapshot from the store on mount so it never shows
+// stale data, and routes every mutation back up through onSettingsChange /
+// the profile callbacks so App's gate + title-bar chip stay in sync.
+//
+// The PIN is a courtesy lock for shared machines, not real security (see
+// settings.js) — we say so in the hint copy so we don't over-promise.
+function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDeleteProfile }) {
+  const initial = loadSettings();
+  const activeId = initial.activeProfileId;
+
+  const [draft, setDraft] = useState({
+    username:          initial.username || '',
+    avatar:            initial.avatar || null,
+    bio:               initial.bio || '',
+    languagesUsing:    initial.languagesUsing || [],
+    languagesLearning: initial.languagesLearning || [],
+  });
+  const [saved, setSaved] = useState(false);
+
+  const [hasPin, setHasPin]       = useState(!!(initial.pinHash && initial.pinHash.hash));
+  const [pinOpen, setPinOpen]     = useState(false);
+  const [pin, setPin]             = useState('');
+  const [pin2, setPin2]           = useState('');
+  const [pinBusy, setPinBusy]     = useState(false);
+  const [pinError, setPinError]   = useState('');
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Username validation (excludes the active profile so keeping your own
+  // name isn't flagged as "taken").
+  const trimmed = (draft.username || '').trim();
+  const usernameError =
+    trimmed.length === 0 ? 'Enter a username.'
+    : trimmed.length < 2 ? 'At least 2 characters.'
+    : usernameExists(trimmed, activeId) ? 'That username is taken on this device.'
+    : '';
+  const canSave = !usernameError;
+
+  const handleSaveProfile = () => {
+    if (!canSave) return;
+    const next = updateSettings({
+      username:          trimmed,
+      avatar:            draft.avatar || null,
+      bio:               (draft.bio || '').trim(),
+      languagesUsing:    draft.languagesUsing || [],
+      languagesLearning: draft.languagesLearning || [],
+    });
+    onSettingsChange?.(next);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+
+  const openPinEditor = () => {
+    setPin('');
+    setPin2('');
+    setPinError('');
+    setPinOpen(true);
+  };
+
+  const handleSavePin = async () => {
+    const clean = pin.trim();
+    if (clean.length < 4) { setPinError('Use at least 4 digits.'); return; }
+    if (clean !== pin2.trim()) { setPinError("Those PINs don't match."); return; }
+    setPinBusy(true);
+    try {
+      await setProfilePin(activeId, clean);
+      setHasPin(true);
+      setPinOpen(false);
+      setPin('');
+      setPin2('');
+      onSettingsChange?.(loadSettings());
+    } catch {
+      setPinError("Couldn't set the PIN. Try again.");
+    } finally {
+      setPinBusy(false);
+    }
+  };
+
+  const handleRemovePin = () => {
+    clearProfilePin(activeId);
+    setHasPin(false);
+    setPinOpen(false);
+    onSettingsChange?.(loadSettings());
+  };
+
+  return (
+    <>
+      <ProfileFields
+        values={draft}
+        onChange={setDraft}
+        usernameError={usernameError}
+      />
+
+      <button
+        style={{ ...styles.primaryBtn, alignSelf: 'flex-start', padding: '7px 14px', ...(!canSave ? styles.disabled : {}) }}
+        onClick={handleSaveProfile}
+        disabled={!canSave}
+      >
+        {saved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save profile'}
+      </button>
+
+      {/* ---- PIN lock ---- */}
+      <Field
+        label="PIN lock"
+        hint="Optional. Asks for a PIN before opening this profile — a courtesy lock for shared machines, not real security. Anyone with disk access can still reset it."
+      >
+        {!pinOpen ? (
+          <div style={styles.profileBtnRow}>
+            {hasPin ? (
+              <>
+                <span style={styles.pinOnBadge}>
+                  <Lock size={11} style={{ marginRight: 5 }} /> PIN lock is on
+                </span>
+                <button style={styles.ghostBtn} onClick={openPinEditor}>Change</button>
+                <button style={styles.dangerGhostBtn} onClick={handleRemovePin}>Remove</button>
+              </>
+            ) : (
+              <button style={styles.ghostBtn} onClick={openPinEditor}>
+                <Lock size={12} style={{ marginRight: 6 }} /> Add a PIN lock
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={styles.pinEditor}>
+            <input
+              type="password"
+              inputMode="numeric"
+              value={pin}
+              onChange={(e) => { setPin(e.target.value); setPinError(''); }}
+              placeholder="New PIN"
+              style={styles.input}
+              maxLength={12}
+              autoComplete="off"
+            />
+            <input
+              type="password"
+              inputMode="numeric"
+              value={pin2}
+              onChange={(e) => { setPin2(e.target.value); setPinError(''); }}
+              placeholder="Confirm PIN"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSavePin(); }}
+              style={styles.input}
+              maxLength={12}
+              autoComplete="off"
+            />
+            {pinError && <p style={styles.errorText}>{pinError}</p>}
+            <div style={styles.profileBtnRow}>
+              <button
+                style={{ ...styles.primaryBtn, padding: '7px 14px', ...(pinBusy ? styles.disabled : {}) }}
+                onClick={handleSavePin}
+                disabled={pinBusy}
+              >
+                {pinBusy ? 'Saving…' : 'Save PIN'}
+              </button>
+              <button style={styles.ghostBtn} onClick={() => setPinOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
+      </Field>
+
+      {/* ---- Manage ---- */}
+      <Field label="Profiles" hint="Every profile lives on this device. Switching or adding never touches the others' progress.">
+        <div style={styles.profileBtnRow}>
+          <button style={styles.ghostBtn} onClick={() => onSwitchProfile?.()}>
+            <Users size={12} style={{ marginRight: 6 }} /> Switch profile
+          </button>
+          <button style={styles.ghostBtn} onClick={() => onAddProfile?.()}>
+            <UserPlus size={12} style={{ marginRight: 6 }} /> Add profile
+          </button>
+        </div>
+      </Field>
+
+      {/* ---- Delete ---- */}
+      {confirmDelete ? (
+        <div style={styles.deleteConfirm}>
+          <p style={styles.deleteWarn}>
+            Delete this profile and all its progress on this device? This can't be undone.
+          </p>
+          <div style={styles.profileBtnRow}>
+            <button style={styles.dangerBtn} onClick={() => onDeleteProfile?.(activeId)}>
+              <Trash2 size={12} style={{ marginRight: 6 }} /> Delete permanently
+            </button>
+            <button style={styles.ghostBtn} onClick={() => setConfirmDelete(false)}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <button style={styles.dangerGhostBtn} onClick={() => setConfirmDelete(true)}>
+          <Trash2 size={12} style={{ marginRight: 6 }} /> Delete this profile
+        </button>
+      )}
+    </>
   );
 }
 
@@ -449,11 +625,20 @@ function UpdatePanel({ update }) {
 // We deliberately don't auto-poll the toolchains: the terminal already
 // gives honest feedback while an install runs, and polling masks the
 // "watch the install happen" moment we want learners to internalise.
+function toolchainCommand(recipe) {
+  return recipe?.install?.[PLATFORM_LABEL] || '';
+}
+
+function platformValue(map, fallback = '') {
+  return map?.[PLATFORM_LABEL] || map?.default || fallback;
+}
+
 function ToolchainPanel({ onRunInTerminal }) {
   const [status, setStatus] = useState(null);   // null = first load; {} = checked
   const [checking, setChecking] = useState(true);
   const [copiedLang, setCopiedLang] = useState(null);
   const [installingLang, setInstallingLang] = useState(null);
+  const [expandedGuide, setExpandedGuide] = useState(null);
 
   const probe = useCallback(async () => {
     setChecking(true);
@@ -470,18 +655,19 @@ function ToolchainPanel({ onRunInTerminal }) {
   useEffect(() => { probe(); }, [probe]);
 
   const handleInstall = useCallback((langId) => {
-    const recipe = INSTALL_RECIPES[langId];
+    const recipe = TOOLCHAIN_GUIDES[langId];
     if (!recipe) return;
-    const command = recipe[PLATFORM_LABEL];
+    const command = toolchainCommand(recipe);
     if (!command || !onRunInTerminal) return;
     setInstallingLang(langId);
+    setExpandedGuide(langId);
     onRunInTerminal(command);
   }, [onRunInTerminal]);
 
   const handleCopy = useCallback(async (langId) => {
-    const recipe = INSTALL_RECIPES[langId];
+    const recipe = TOOLCHAIN_GUIDES[langId];
     if (!recipe) return;
-    const command = recipe[PLATFORM_LABEL];
+    const command = toolchainCommand(recipe);
     if (!command) return;
     try {
       await navigator.clipboard.writeText(command);
@@ -503,15 +689,17 @@ function ToolchainPanel({ onRunInTerminal }) {
     <>
       <p style={styles.fieldHint}>
         seec0de's <b>Run</b> button needs the right compiler or interpreter on PATH.
-        Here's what's installed on this machine — and one-click install for what's missing.
+        Use each guide to install, verify, fix PATH, then run a tiny smoke test.
       </p>
 
       <div style={toolchainStyles.list}>
-        {Object.entries(INSTALL_RECIPES).map(([langId, recipe]) => {
+        {Object.entries(TOOLCHAIN_GUIDES).map(([langId, recipe]) => {
           const row = status?.[langId];
           const isInstalled = !!row?.installed;
           const isLoading   = checking && !row;
-          const command     = recipe[PLATFORM_LABEL];
+          const command     = toolchainCommand(recipe);
+          const guideOpen   = expandedGuide === langId;
+          const showInstall = !isLoading && !isInstalled && command;
 
           return (
             <div key={langId} style={toolchainStyles.row}>
@@ -533,7 +721,7 @@ function ToolchainPanel({ onRunInTerminal }) {
 
               <p style={toolchainStyles.why}>{recipe.why}</p>
 
-              {!isLoading && !isInstalled && command && (
+              {showInstall && (
                 <>
                   <code style={toolchainStyles.cmd}>{command}</code>
                   <div style={toolchainStyles.actions}>
@@ -575,6 +763,22 @@ function ToolchainPanel({ onRunInTerminal }) {
                   )}
                 </>
               )}
+
+              <div style={toolchainStyles.actions}>
+                <button
+                  type="button"
+                  style={toolchainStyles.copyBtn}
+                  onClick={() => setExpandedGuide((cur) => (cur === langId ? null : langId))}
+                  title={guideOpen ? 'Hide setup guide' : 'Show setup guide'}
+                >
+                  {guideOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                  <span style={{ marginLeft: 4 }}>{guideOpen ? 'Hide guide' : 'Guide'}</span>
+                </button>
+              </div>
+
+              {guideOpen && (
+                <ToolchainGuide recipe={recipe} command={command} />
+              )}
             </div>
           );
         })}
@@ -594,6 +798,48 @@ function ToolchainPanel({ onRunInTerminal }) {
         <span style={{ marginLeft: 6 }}>Re-check toolchains</span>
       </button>
     </>
+  );
+}
+
+function ToolchainGuide({ recipe, command }) {
+  const detects = platformValue(recipe.detects, 'the matching command for this language');
+  const verify = recipe.verify?.[PLATFORM_LABEL] || [];
+  const pathHelp = platformValue(recipe.pathHelp);
+  const pathCommand = platformValue(recipe.pathCommand);
+
+  return (
+    <div style={toolchainStyles.guide}>
+      <div style={toolchainStyles.guideBlock}>
+        <span style={toolchainStyles.guideLabel}>seec0de checks</span>
+        <p style={toolchainStyles.guideText}>{detects}</p>
+      </div>
+
+      {command && (
+        <div style={toolchainStyles.guideBlock}>
+          <span style={toolchainStyles.guideLabel}>install</span>
+          <code style={toolchainStyles.miniCmd}>{command}</code>
+        </div>
+      )}
+
+      {verify.length > 0 && (
+        <div style={toolchainStyles.guideBlock}>
+          <span style={toolchainStyles.guideLabel}>verify</span>
+          {verify.map((cmd) => (
+            <code key={cmd} style={toolchainStyles.miniCmd}>{cmd}</code>
+          ))}
+        </div>
+      )}
+
+      {pathCommand && (
+        <div style={toolchainStyles.guideBlock}>
+          <span style={toolchainStyles.guideLabel}>PATH fix</span>
+          <code style={toolchainStyles.miniCmd}>{pathCommand}</code>
+        </div>
+      )}
+
+      {pathHelp && <p style={toolchainStyles.guideText}>{pathHelp}</p>}
+      {recipe.smokeTest && <p style={toolchainStyles.guideText}>{recipe.smokeTest}</p>}
+    </div>
   );
 }
 
@@ -774,6 +1020,46 @@ const styles = {
     fontSize: 12.5,
     padding: '7px 12px',
   },
+  dangerGhostBtn: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    background: 'transparent',
+    border: '1px solid rgba(239, 68, 68, 0.4)',
+    borderRadius: 6,
+    color: '#fca5a5',
+    fontSize: 12.5,
+    padding: '7px 12px',
+    alignSelf: 'flex-start',
+  },
+  dangerBtn: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--danger)',
+    border: '1px solid var(--danger)',
+    borderRadius: 6,
+    color: '#fff',
+    fontSize: 12.5,
+    fontWeight: 600,
+    padding: '7px 12px',
+  },
+  profileBtnRow: {
+    display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center',
+  },
+  pinOnBadge: {
+    display: 'inline-flex', alignItems: 'center',
+    fontSize: 12, color: 'var(--text-secondary)',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border)',
+    borderRadius: 6, padding: '6px 10px',
+  },
+  pinEditor: { display: 'flex', flexDirection: 'column', gap: 8 },
+  errorText: { fontSize: 11.5, color: '#fca5a5', lineHeight: 1.5, margin: 0 },
+  deleteConfirm: {
+    display: 'flex', flexDirection: 'column', gap: 8,
+    background: 'var(--danger-soft)',
+    border: '1px solid rgba(239, 68, 68, 0.25)',
+    borderRadius: 8,
+    padding: '10px 12px',
+  },
+  deleteWarn: { fontSize: 12, color: '#fca5a5', lineHeight: 1.5, margin: 0 },
   disabled: { opacity: 0.5, cursor: 'not-allowed' },
   link: {
     fontSize: 11.5,
@@ -967,6 +1253,45 @@ const toolchainStyles = {
     fontSize: 11.5,
     padding: '5px 10px',
     cursor: 'pointer',
+  },
+  guide: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTop: '1px solid var(--border)',
+  },
+  guideBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  },
+  guideLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  guideText: {
+    fontSize: 11,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.5,
+    margin: 0,
+  },
+  miniCmd: {
+    display: 'block',
+    padding: '5px 7px',
+    background: 'var(--bg-input)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 4,
+    color: 'var(--text-primary)',
+    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontSize: 10.5,
+    lineHeight: 1.45,
+    wordBreak: 'break-all',
+    whiteSpace: 'pre-wrap',
   },
   installingNote: {
     fontSize: 11,

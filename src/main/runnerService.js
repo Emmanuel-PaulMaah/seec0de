@@ -3,10 +3,10 @@
 // typescript, python, c, cpp.
 //
 // Toolchain strategy:
-//   - JavaScript : `node` (always present — bundled with Electron's runtime).
+//   - JavaScript : system `node` on PATH.
 //   - TypeScript : `tsx` or `ts-node` on PATH; otherwise we tell the user
 //                  one-shot how to install (`npm i -g tsx`).
-//   - Python     : `python3` then `python` on PATH.
+//   - Python     : Windows `py`/`python`/`python3`; elsewhere `python3`/`python`.
 //   - C / C++    : MSVC `cl.exe` if found, else `g++`/`gcc`, else
 //                  `clang++`/`clang`. Compile to .exe in the temp dir, run.
 //
@@ -169,7 +169,7 @@ async function runPython(dir, source, filename) {
   const file = path.join(dir, filename || 'main.py');
   await fs.writeFile(file, source, 'utf8');
   // `py` is the Windows launcher that resolves to the latest installed Python.
-  const tool = await firstAvailable(IS_WINDOWS ? ['python', 'py', 'python3'] : ['python3', 'python']);
+  const tool = await firstAvailable(IS_WINDOWS ? ['py', 'python', 'python3'] : ['python3', 'python']);
   if (!tool) {
     return notInstalled('Python', 'Install from https://www.python.org and reopen seec0de.');
   }
@@ -272,7 +272,7 @@ async function run({ language, source, filename }) {
 // the runners above so the "installed?" view matches what Run will actually
 // pick when the user hits the Run button.
 const LANGUAGE_TOOLS = {
-  python:     IS_WINDOWS ? ['python', 'py', 'python3'] : ['python3', 'python'],
+  python:     IS_WINDOWS ? ['py', 'python', 'python3'] : ['python3', 'python'],
   javascript: ['node'],
   typescript: ['tsx', 'ts-node'],
   c:          ['gcc', 'clang', 'cl'],

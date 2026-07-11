@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   CheckCircle2,
   Circle,
   ChevronRight,
   BookOpen,
   ChevronDown,
+  Code2,
 } from 'lucide-react';
-import lessonsData from '../data/lessons.json';
+import lessonsData from '../data/lessons/index.js';
 
 // LessonsPanel — the directory of available lessons.
 //
@@ -17,9 +18,32 @@ import lessonsData from '../data/lessons.json';
 // The active-lesson teaching surface (with task, hints, status, solution)
 // is rendered separately by ActiveLessonCard inside InstructionPanel.
 
+const LANGUAGE_LABELS = {
+  js: 'JavaScript',
+  javascript: 'JavaScript',
+  ts: 'TypeScript',
+  typescript: 'TypeScript',
+  py: 'Python',
+  python: 'Python',
+  java: 'Java',
+  cpp: 'C++',
+  csharp: 'C#',
+  go: 'Go',
+  rust: 'Rust',
+};
+
+function formatLanguage(id) {
+  return LANGUAGE_LABELS[id] || id;
+}
+
 export default function LessonsPanel({ completedLessons = [], onSelectLesson, activeLessonId }) {
   const { tracks } = lessonsData;
 
+  const uniqueLanguages = useMemo(() => {
+    return Array.from(new Set(tracks.map(t => t.language).filter(Boolean)));
+  }, [tracks]);
+
+  const [selectedLanguage, setSelectedLanguage] = useState(uniqueLanguages[0] || 'javascript');
   const [collapsedTracks, setCollapsedTracks] = useState({});
 
   function toggleTrack(trackId) {
@@ -29,9 +53,32 @@ export default function LessonsPanel({ completedLessons = [], onSelectLesson, ac
     }));
   }
 
+  const visibleTracks = tracks.filter((track) => track.language === selectedLanguage);
+
   return (
     <div style={styles.container}>
-      {tracks.map((track) => {
+      {uniqueLanguages.length > 0 && (
+        <div style={styles.languageSelectorRow}>
+          {uniqueLanguages.map((lang) => {
+            const isActive = lang === selectedLanguage;
+            return (
+              <button
+                key={lang}
+                type="button"
+                style={{
+                  ...styles.langPill,
+                  ...(isActive ? styles.langPillActive : {}),
+                }}
+                onClick={() => setSelectedLanguage(lang)}
+              >
+                {formatLanguage(lang)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {visibleTracks.map((track) => {
         const lessons = track.lessons || [];
         const total = lessons.length;
         const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
@@ -80,7 +127,7 @@ export default function LessonsPanel({ completedLessons = [], onSelectLesson, ac
                         ...styles.lessonItem,
                         ...(isActive ? styles.lessonItemActive : {}),
                       }}
-                      onClick={() => onSelectLesson(lesson)}
+                      onClick={() => onSelectLesson({ ...lesson, language: track.language })}
                       title={lesson.summary || lesson.title}
                     >
                       <span style={styles.statusIcon}>
@@ -129,6 +176,32 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 20,
+  },
+
+  languageSelectorRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+
+  langPill: {
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border)',
+    color: 'var(--text-secondary)',
+    fontSize: 11.5,
+    fontWeight: 500,
+    padding: '4px 10px',
+    borderRadius: 999,
+    cursor: 'pointer',
+    transition: 'all var(--motion-fast) var(--ease-out)',
+  },
+
+  langPillActive: {
+    background: 'var(--bg-elevated)',
+    borderColor: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
+    fontWeight: 600,
   },
 
   track: {

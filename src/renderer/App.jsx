@@ -8,13 +8,15 @@ import TerminalPanel from './components/TerminalPanel';
 import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer from './components/SettingsDrawer';
+import ProfileGate from './components/ProfileGate';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
-import { loadSettings, updateSettings } from './engine/settings';
+import { loadSettings, updateSettings, listProfiles, switchProfile, deleteProfile } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 import { verifyLessonOutput, nextLessonAfter } from './engine/lessonVerifier';
-import lessonsData from './data/lessons.json';
+import { translateError } from './engine/errorTranslator';
+import lessonsData from './data/lessons/index.js';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
 // last time comes back the next time. Settings.showTerminal/showFileExplorer
@@ -67,10 +69,21 @@ async function uniqueScratchPath(rootPath, language) {
 }
 
 export default function App() {
-  // ---- settings + onboarding -------------------------------------------
+  // ---- settings + onboarding + profiles --------------------------------
   const [settings, setSettings] = useState(() => loadSettings());
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Local profiles ("accounts") + which auth surface is showing.
+  //   onboardingMode 'setup'       — create/edit the first (active) profile.
+  //   onboardingMode 'new-profile' — "Add profile": always make a fresh one.
+  //   gate  null       — signed in, app is usable.
+  //         'launch'   — must pick/unlock a profile before using the app
+  //                       (multiple profiles, or the single one is PIN-locked).
+  //         'switch'   — mid-session profile switch (cancellable).
+  const [profiles, setProfiles] = useState(() => listProfiles());
+  const [onboardingMode, setOnboardingMode] = useState('setup');
+  const [gate, setGate] = useState(() => (computeInitialGate() ? 'launch' : null));
 
   // ---- generator state -------------------------------------------------
   const [selectedLanguages, setSelectedLanguages] = useState(() => deriveLanguages(loadSettings()));
@@ -96,6 +109,14 @@ export default function App() {
   const [activeLesson, setActiveLesson] = useState(null);
   const [lessonStatus, setLessonStatus] = useState('idle');
   const [lessonVerification, setLessonVerification] = useState(null);
+  const [lessonErrorCoaching, setLessonErrorCoaching] = useState([]);
+
+  // Which InstructionPanel tab is showing ('build' | 'lessons'). Lifted
+  // out of InstructionPanel so the CodePanel's lesson mode can follow it:
+  // switching back to Build must drop the JS-only lesson scratchpad and
+  // restore the normal pseudocode + language view. The active lesson is
+  // kept (not cleared) so returning to the Lessons tab resumes it.
+  const [instructionTab, setInstructionTab] = useState('build');
 
   // ---- settings + completion -------------------------------------------
   const completedLessons = useMemo(() => settings.completedLessons || [], [settings.completedLessons]);
@@ -112,9 +133,10 @@ export default function App() {
     setActiveLesson(lesson);
     setLessonStatus('idle');
     setLessonVerification(null);
+    setLessonErrorCoaching([]);
     if (lesson) {
-      setGeneratedCode({ pseudocode: '', code: { javascript: lesson.starterCode || '' } });
-      setActiveGeneratedTab('javascript');
+      setGeneratedCode({ pseudocode: '', code: { [lesson.language || 'javascript']: lesson.starterCode || '' } });
+      setActiveGeneratedTab(lesson.language || 'javascript');
       setActivePath(null);
       setInstruction('');
     }
@@ -122,10 +144,11 @@ export default function App() {
 
   const handleResetLessonCode = useCallback(() => {
     if (!activeLesson) return;
-    setGeneratedCode({ pseudocode: '', code: { javascript: activeLesson.starterCode || '' } });
-    setActiveGeneratedTab('javascript');
+    setGeneratedCode({ pseudocode: '', code: { [activeLesson.language || 'javascript']: activeLesson.starterCode || '' } });
+    setActiveGeneratedTab(activeLesson.language || 'javascript');
     setLessonStatus('idle');
     setLessonVerification(null);
+    setLessonErrorCoaching([]);
   }, [activeLesson]);
 
   const handleRevealSolution = useCallback(() => {
@@ -141,14 +164,22 @@ export default function App() {
     if (next) handleSelectLesson(next);
   }, [activeLesson, handleSelectLesson]);
 
-  // While a lesson is active, force the editor / preview to behave as if
+  // While in lesson mode, the editor / preview behaves as if
   // JavaScript is the only language — hides the pseudocode + comparison
   // tabs in CodePanel and routes livePreview to the JS tab. The user's
   // real `selectedLanguages` setting stays untouched and returns the
-  // moment they leave the lesson.
+  // moment they leave lesson mode.
+  //
+  // Lesson mode is on only while the Lessons tab is showing the active
+  // lesson. Switching to the Build tab exits it (restoring the normal
+  // pseudocode + language editor) without discarding the lesson, so
+  // returning to the Lessons tab resumes it. This is what makes the
+  // CodePanel respond to the InstructionPanel's tab state.
+  const inLessonMode = instructionTab === 'lessons' && !!activeLesson;
+
   const effectiveLanguages = useMemo(
-    () => (activeLesson ? ['javascript'] : selectedLanguages),
-    [activeLesson, selectedLanguages]
+    () => (inLessonMode ? [activeLesson?.language || 'javascript'] : selectedLanguages),
+    [inLessonMode, selectedLanguages, activeLesson?.language]
   );
 
   const hasNextLesson = useMemo(
@@ -159,6 +190,14 @@ export default function App() {
   useEffect(() => {
     setSelectedLanguages(deriveLanguages(settings));
   }, [settings.practicalLanguage, settings.comparisonLanguages]);
+
+  // Surface the Lessons tab whenever a lesson becomes active (list click,
+  // "Next lesson", restored state) so the teaching surface is visible.
+  // Switching to Build afterwards is respected; this only fires when the
+  // active lesson's id changes, not on every tab toggle.
+  useEffect(() => {
+    if (activeLesson) setInstructionTab('lessons');
+  }, [activeLesson?.id]);
 
   // ---- file manager state ----------------------------------------------
   const [rootPath, setRootPath] = useState(() => localStorage.getItem(STORAGE_KEY_FOLDER));
@@ -628,9 +667,9 @@ export default function App() {
         filename: basename(file.path),
       };
     }
-    // In lesson mode the editor is single-tab JavaScript; in normal mode
+    // In lesson mode the editor is single-tab of the lesson's language; in normal mode
     // we honour the user's selected practical + comparison languages.
-    const tabs = activeLesson ? ['javascript'] : ['pseudocode', ...effectiveLanguages];
+    const tabs = activeLesson ? [activeLesson.language || 'javascript'] : ['pseudocode', ...effectiveLanguages];
     const tab = tabs.includes(activeGeneratedTab) ? activeGeneratedTab : tabs[0];
     if (tab === 'pseudocode') {
       return { code: generatedCode.pseudocode || '', language: 'plaintext', filename: null };
@@ -679,6 +718,7 @@ export default function App() {
         const verdict = verifyLessonOutput(normalisedOutput, activeLesson);
         setLessonVerification(verdict);
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
+        setLessonErrorCoaching(verdict.pass ? [] : buildLessonErrorCoaching(normalisedOutput.stderr, normalisedOutput.language));
         if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
           const nextSettings = updateSettings({ completedLessons: next });
@@ -694,25 +734,80 @@ export default function App() {
         durationMs: 0,
         language: payload.language,
       });
+      if (activeLesson) {
+        const stderr = `[seec0de] ${err.message}\n`;
+        setLessonStatus('fail');
+        setLessonVerification({
+          pass: false,
+          expected: activeLesson.expectedOutput || '',
+          actual: '',
+          reason: 'Your code did not run — check the Fix-it coach, then try again.',
+        });
+        setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language));
+      }
     } finally {
       setRunLoading(false);
     }
   }, [livePreview, runLoading, previewVisible, activeLesson, completedLessons]);
 
-  // ---- onboarding / settings handlers ----------------------------------
+  // ---- onboarding / settings / profile handlers ------------------------
+  // Fires after onboarding finishes in either mode. In 'setup' it created or
+  // edited the active profile; in 'new-profile' it created + activated a new
+  // one. Either way we're now signed into an active profile, so clear the
+  // gate and refresh the profile-derived state.
   const handleOnboardingComplete = useCallback(() => {
-    const next = loadSettings();
-    setSettings(next);
+    setSettings(loadSettings());
+    setProfiles(listProfiles());
     setShowOnboarding(false);
+    setOnboardingMode('setup');
+    setGate(null);
   }, []);
 
   const handleSettingsChange = useCallback((next) => {
     setSettings(next);
+    // Profile edits (name/avatar/bio/PIN) happen in the drawer; keep the
+    // gate + title-bar chip in sync.
+    setProfiles(listProfiles());
   }, []);
 
   const handleRerunOnboarding = useCallback(() => {
     setSettings(loadSettings());
+    setOnboardingMode('setup');
     setShowOnboarding(true);
+  }, []);
+
+  // Sign in as `id` (from the gate). PIN verification, if any, already
+  // happened inside ProfileGate before this fires.
+  const handleEnterProfile = useCallback((id) => {
+    const next = switchProfile(id);
+    setSettings(next);
+    setProfiles(listProfiles());
+    setGate(null);
+  }, []);
+
+  // "Add profile" from the gate, the title-bar menu, or Settings. Runs
+  // onboarding in new-profile mode (which creates + activates on finish).
+  const handleAddProfile = useCallback(() => {
+    setShowSettings(false);
+    setOnboardingMode('new-profile');
+    setShowOnboarding(true);
+  }, []);
+
+  // Open the picker mid-session (cancellable — Esc / X keeps you signed in).
+  const handleSwitchProfile = useCallback(() => {
+    setShowSettings(false);
+    setGate('switch');
+  }, []);
+
+  // Delete a profile from Settings. Deleting your own identity is
+  // disorienting to do silently, so afterwards we drop back to the picker
+  // (launch gate) to re-establish who's signed in.
+  const handleDeleteProfile = useCallback((id) => {
+    deleteProfile(id);
+    setSettings(loadSettings());
+    setProfiles(listProfiles());
+    setShowSettings(false);
+    setGate('launch');
   }, []);
 
   // Used by Settings → Toolchains "Install" buttons: pops the bottom
@@ -841,6 +936,10 @@ const beginExplanationResize = useCallback((event) => {
         terminalVisible={terminalVisible}
         onToggleTerminal={() => setTerminalVisible((v) => !v)}
         onOpenSettings={() => setShowSettings(true)}
+        activeProfile={settings.activeProfileId ? { username: settings.username, avatar: settings.avatar } : null}
+        onSwitchProfile={handleSwitchProfile}
+        onAddProfile={handleAddProfile}
+        onManageProfile={() => setShowSettings(true)}
       />
 
       <div style={styles.body}>
@@ -891,6 +990,7 @@ const beginExplanationResize = useCallback((event) => {
               activeLesson={activeLesson}
               lessonStatus={lessonStatus}
               lessonVerification={lessonVerification}
+              lessonErrorCoaching={lessonErrorCoaching}
               lessonHasNext={hasNextLesson}
               onResetLessonCode={handleResetLessonCode}
               onRevealSolution={handleRevealSolution}
@@ -926,6 +1026,7 @@ const beginExplanationResize = useCallback((event) => {
             onActivateGeneratedTab={setActiveGeneratedTab}
             folderOpen={!!rootPath}
             lessonMode={!!activeLesson}
+            lessonLanguage={activeLesson?.language}
           />
 
           {previewVisible && (
@@ -992,6 +1093,7 @@ const beginExplanationResize = useCallback((event) => {
         open={showOnboarding}
         initialSettings={settings}
         onComplete={handleOnboardingComplete}
+        mode={onboardingMode}
       />
 
       <SettingsDrawer
@@ -1000,7 +1102,24 @@ const beginExplanationResize = useCallback((event) => {
         onSettingsChange={handleSettingsChange}
         onRerunOnboarding={handleRerunOnboarding}
         onRunInTerminal={handleRunInTerminal}
+        onSwitchProfile={handleSwitchProfile}
+        onAddProfile={handleAddProfile}
+        onDeleteProfile={handleDeleteProfile}
       />
+
+      {/* Auth gate — the "who's learning?" picker + PIN unlock. Sits above
+          everything. Hidden while onboarding is open (add-profile flow) so
+          the two overlays don't stack. */}
+      {gate && !showOnboarding && (
+        <ProfileGate
+          profiles={profiles}
+          autoSelectId={gate === 'launch' && profiles.length === 1 ? profiles[0].id : null}
+          onEnter={handleEnterProfile}
+          onAddProfile={handleAddProfile}
+          allowClose={gate === 'switch'}
+          onClose={() => setGate(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1055,6 +1174,36 @@ function deriveLanguages(settings) {
   const practical = settings?.practicalLanguage || 'python';
   const comparisons = (settings?.comparisonLanguages || []).filter((c) => c !== practical);
   return [practical, ...comparisons];
+}
+
+function buildLessonErrorCoaching(stderr, language) {
+  if (!stderr || !String(stderr).trim()) return [];
+  const translated = translateError(stderr, language);
+  if (translated.length > 0) return translated;
+  return [{
+    title: 'Runtime error',
+    plain: 'The program stopped before the lesson could check its output. Read the first error line, fix that line, then run again.',
+    fixes: [
+      'Check for missing quotes, brackets, parentheses, or semicolons near the first error line.',
+      'Make sure every variable you use has been declared or assigned first.',
+      'Compare your code with the lesson hints one small line at a time.',
+    ],
+  }];
+}
+
+// Decide whether the app should open behind the "who's learning?" gate.
+// We only force a pick when it's ambiguous or locked:
+//   • onboarding not done            → false (onboarding creates profile 1)
+//   • no profiles yet                → false (same)
+//   • exactly one, no PIN            → false (nothing to choose — sign straight in)
+//   • more than one, or a PIN lock   → true  (pick / unlock first)
+function computeInitialGate() {
+  const s = loadSettings();
+  if (!s.onboardingComplete) return false;
+  const list = listProfiles();
+  if (list.length === 0) return false;
+  if (list.length === 1 && !(list[0].pinHash && list[0].pinHash.hash)) return false;
+  return true;
 }
 
 // Read the per-session "is this panel open" key, falling back to the

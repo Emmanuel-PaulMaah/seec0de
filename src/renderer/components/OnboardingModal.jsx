@@ -3,10 +3,14 @@ import { ArrowRight, Check, X, Code2 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
   defaultComparisonFor,
-  updateSettings,
+  commitOnboarding,
+  createProfile,
+  usernameExists,
+  suggestUsername,
   setSettingsApiKey,
   getSettingsApiKey,
 } from '../engine/settings';
+import { ProfileFields } from './ProfileForm';
 
 // Onboarding — runs once after install (and any time the user clicks
 // "Rerun onboarding" from the settings drawer). Two real questions plus a
@@ -28,34 +32,72 @@ import {
 // scrim with backdrop blur, centered card, large typography, generous
 // whitespace, gentle pop-in animation, single primary CTA per step.
 
-const STEPS = ['experience', 'language', 'apikey', 'done'];
+const STEPS = ['profile', 'experience', 'language', 'apikey'];
 
-export default function OnboardingModal({ open, initialSettings, onComplete }) {
+const emptyProfile = () => ({
+  username: '', avatar: null, bio: '', languagesUsing: [], languagesLearning: [],
+});
+
+function profileFromSettings(s, mode) {
+  if (mode !== 'setup' || !s) return emptyProfile();
+  return {
+    username:          s.username || '',
+    avatar:            s.avatar || null,
+    bio:               s.bio || '',
+    languagesUsing:    s.languagesUsing || [],
+    languagesLearning: s.languagesLearning || [],
+  };
+}
+
+// `mode`:
+//   'setup'       — first run or "Rerun onboarding": edits/creates the ACTIVE
+//                   profile (prefilled from initialSettings).
+//   'new-profile' — "Add profile" from the gate/settings: always creates a
+//                   fresh profile and signs into it.
+export default function OnboardingModal({ open, initialSettings, onComplete, mode = 'setup' }) {
   const [stepIdx, setStepIdx] = useState(0);
+  const [profile, setProfile] = useState(() => profileFromSettings(initialSettings, mode));
   const [experienceLevel, setExperienceLevel] = useState(initialSettings?.experienceLevel || null);
   const [practicalLanguage, setPracticalLanguage] = useState(initialSettings?.practicalLanguage || 'python');
   const [apiKey, setApiKey] = useState(getSettingsApiKey());
 
-  // Reset to step 1 every time the modal opens (handles "Rerun onboarding").
+  // Reset to step 1 every time the modal opens (handles "Rerun onboarding"
+  // and "Add profile").
   useEffect(() => {
     if (open) {
       setStepIdx(0);
-      setExperienceLevel(initialSettings?.experienceLevel || null);
-      setPracticalLanguage(initialSettings?.practicalLanguage || 'python');
+      setProfile(profileFromSettings(initialSettings, mode));
+      setExperienceLevel(mode === 'setup' ? (initialSettings?.experienceLevel || null) : null);
+      setPracticalLanguage(mode === 'setup' ? (initialSettings?.practicalLanguage || 'python') : 'python');
       setApiKey(getSettingsApiKey());
     }
-  }, [open, initialSettings]);
+  }, [open, initialSettings, mode]);
 
   const finish = useCallback(({ skipped = false } = {}) => {
-    updateSettings({
-      onboardingComplete:  true,
+    const comparisons = defaultComparisonFor(practicalLanguage).filter((c) => c !== practicalLanguage);
+    const username = (profile.username || '').trim() || suggestUsername('learner');
+    const fields = {
+      username,
+      avatar:              profile.avatar || null,
+      bio:                 (profile.bio || '').trim(),
       experienceLevel:     experienceLevel || 'none',
       practicalLanguage,
-      comparisonLanguages: defaultComparisonFor(practicalLanguage),
-    });
+      comparisonLanguages: comparisons,
+      // Seed "languages I use" from the learner's picks; they can refine the
+      // full using/learning lists later in Settings → Profile.
+      languagesUsing:      Array.from(new Set([practicalLanguage, ...comparisons].filter(Boolean))),
+      languagesLearning:   profile.languagesLearning || [],
+    };
+
+    if (mode === 'new-profile') {
+      createProfile(fields, { activate: true });
+    } else {
+      commitOnboarding(fields);
+    }
+
     if (!skipped && apiKey.trim()) setSettingsApiKey(apiKey.trim());
     onComplete?.();
-  }, [experienceLevel, practicalLanguage, apiKey, onComplete]);
+  }, [profile, experienceLevel, practicalLanguage, apiKey, mode, onComplete]);
 
   const next = useCallback(() => {
     setStepIdx((i) => Math.min(i + 1, STEPS.length - 1));
@@ -77,13 +119,24 @@ export default function OnboardingModal({ open, initialSettings, onComplete }) {
 
   const step = STEPS[stepIdx];
 
+  // Username validation. Editing the active profile (setup rerun) keeps its
+  // own name, so exclude it from the taken-check.
+  const exceptId = mode === 'setup' ? (initialSettings?.activeProfileId || null) : null;
+  const trimmedName = (profile.username || '').trim();
+  const usernameError =
+    trimmedName.length === 0 ? ''
+    : trimmedName.length < 2 ? 'At least 2 characters.'
+    : usernameExists(trimmedName, exceptId) ? 'That username is taken on this device.'
+    : '';
+  const canContinueProfile = trimmedName.length >= 2 && !usernameError;
+
   return (
     <div style={styles.scrim} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div style={styles.card}>
         {/* Top bar: progress dots + skip */}
         <div style={styles.topBar}>
           <div style={styles.dots}>
-            {STEPS.slice(0, -1).map((s, i) => (
+            {STEPS.map((s, i) => (
               <span
                 key={s}
                 style={{ ...styles.dot, ...(i === stepIdx ? styles.dotActive : {}) }}
@@ -102,10 +155,22 @@ export default function OnboardingModal({ open, initialSettings, onComplete }) {
 
         {/* Step body */}
         <div style={styles.body}>
+          {step === 'profile' && (
+            <StepProfile
+              mode={mode}
+              value={profile}
+              onChange={setProfile}
+              usernameError={usernameError}
+              canContinue={canContinueProfile}
+              onNext={next}
+            />
+          )}
+
           {step === 'experience' && (
             <StepExperience
               value={experienceLevel}
               onChange={setExperienceLevel}
+              onBack={back}
               onNext={next}
             />
           )}
@@ -135,20 +200,57 @@ export default function OnboardingModal({ open, initialSettings, onComplete }) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 1 — experience level
+// Step 1 — profile identity (username + optional photo & bio)
 
-function StepExperience({ value, onChange, onNext }) {
+function StepProfile({ mode, value, onChange, usernameError, canContinue, onNext }) {
   return (
     <>
       <Brand />
-      <h1 id="onboarding-title" style={styles.title}>Welcome to seec0de.</h1>
+      <h1 id="onboarding-title" style={styles.title}>
+        {mode === 'new-profile' ? 'Add a profile.' : 'Create your profile.'}
+      </h1>
       <p style={styles.subtitle}>
-        A tool for learning to code by <em style={styles.em}>actually understanding</em> what
-        the AI just wrote — not by copying it blindly.
+        seec0de saves your progress to a profile on <em style={styles.em}>this device</em>.
+        No email, no password, nothing leaves your machine. Pick a name (add a photo
+        &amp; bio if you like) and you're in.
+      </p>
+
+      <ProfileFields
+        values={value}
+        onChange={onChange}
+        usernameError={usernameError}
+        showLanguages={false}
+        autoFocusUsername
+      />
+
+      <div style={styles.actions}>
+        <span />
+        <button
+          style={{ ...styles.primaryBtn, ...(canContinue ? {} : styles.primaryBtnDisabled) }}
+          onClick={onNext}
+          disabled={!canContinue}
+        >
+          Continue <ArrowRight size={14} style={{ marginLeft: 6 }} />
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 2 — experience level
+
+function StepExperience({ value, onChange, onBack, onNext }) {
+  return (
+    <>
+      <h2 id="onboarding-title" style={styles.title}>Have you written code before?</h2>
+      <p style={styles.subtitle}>
+        This tunes how chatty the explanations are — we can start from the ground up
+        or keep things terse. You can change your mind any time.
       </p>
 
       <fieldset style={styles.choiceGroup}>
-        <legend style={styles.legend}>First — have you written code before?</legend>
+        <legend style={styles.legend}>Your experience</legend>
         <ChoiceCard
           selected={value === 'none'}
           onClick={() => onChange('none')}
@@ -164,7 +266,7 @@ function StepExperience({ value, onChange, onNext }) {
       </fieldset>
 
       <div style={styles.actions}>
-        <span />
+        <button style={styles.ghostBtn} onClick={onBack}>Back</button>
         <button
           style={{ ...styles.primaryBtn, ...(value ? {} : styles.primaryBtnDisabled) }}
           onClick={onNext}
@@ -178,7 +280,7 @@ function StepExperience({ value, onChange, onNext }) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 2 — practical language
+// Step 3 — practical language
 
 function StepLanguage({ value, onChange, onBack, onNext }) {
   return (

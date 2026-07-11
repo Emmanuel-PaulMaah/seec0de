@@ -1,6 +1,6 @@
 // lessonVerifier — checks a runner result against a lesson's expected output.
 //
-// Lessons in `data/lessons.json` declare an `expectedOutput` plus a
+// Lessons in `data/lessons/index.js` declare an `expectedOutput` plus a
 // `matchType`:
 //   - "exact"    → stdout (normalised) must equal expectedOutput (normalised)
 //   - "contains" → stdout must contain expectedOutput as a substring

@@ -1,0 +1,1494 @@
+{
+"tracks": [
+{
+"id": "py-foundations",
+"name": "Python — First Steps",
+"language": "python",
+"description": "Start from zero. Print values, store data, do math, and shape strings.",
+"lessons": [
+{
+"id": "py-01-hello",
+"title": "1. Hello, print",
+"concept": "print()",
+"summary": "Use `print()` to send text to standard output.",
+"teaching": [
+{
+"type": "p",
+"text": "Programs talk to you by printing. In Python, the built-in printer is `print()`."
+},
+{
+"type": "code",
+"text": "print('Hi there')\n# → Hi there"
+},
+{
+"type": "note",
+"text": "Lines that start with `#` are comments. Python ignores them."
+}
+],
+"task": "Make the program print exactly: Hello, World!",
+"starterCode": "# Use print to say Hello, World!\n",
+"expectedOutput": "Hello, World!",
+"matchType": "exact",
+"hints": [
+"Call `print()` with a string in quotes.",
+"Write `Hello, World!` exactly, including punctuation."
+],
+"solution": "print('Hello, World!')\n"
+},
+{
+"id": "py-02-multiple-prints",
+"title": "2. Print more than one line",
+"concept": "multiple print() calls",
+"summary": "Each `print()` call writes a new line by default.",
+"teaching": [
+{
+"type": "p",
+"text": "Use separate `print()` calls when each value should appear on its own line."
+},
+{
+"type": "code",
+"text": "print('Ready')\nprint('Go')\n# → Ready\n# → Go"
+},
+{
+"type": "note",
+"text": "Python runs these statements from top to bottom."
+}
+],
+"task": "Print `Learn` on the first line and `Python` on the second line.",
+"starterCode": "# Print two lines: Learn, then Python\n",
+"expectedOutput": "Learn\nPython",
+"matchType": "exact",
+"hints": [
+"Use two `print()` calls.",
+"Put `Learn` in the first call and `Python` in the second."
+],
+"solution": "print('Learn')\nprint('Python')\n"
+},
+{
+"id": "py-03-strings",
+"title": "3. Text is a string",
+"concept": "string literals",
+"summary": "Text wrapped in quotes is a Python string.",
+"teaching": [
+{
+"type": "p",
+"text": "Python treats quoted text as data. Single and double quotes both create strings."
+},
+{
+"type": "code",
+"text": "print(\"Python\")\nprint('rocks')\n# → Python\n# → rocks"
+},
+{
+"type": "note",
+"text": "The opening and closing quote marks must match."
+}
+],
+"task": "Print the string `Code is data`.",
+"starterCode": "# Print the text Code is data\n",
+"expectedOutput": "Code is data",
+"matchType": "exact",
+"hints": [
+"Wrap the text in matching quotes.",
+"Pass that string to `print()`."
+],
+"solution": "print('Code is data')\n"
+},
+{
+"id": "py-04-variables",
+"title": "4. Store a value",
+"concept": "variables",
+"summary": "A variable gives a value a reusable name.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `=` to assign a value to a variable, then use the variable name to read it."
+},
+{
+"type": "code",
+"text": "language = 'Python'\nprint(language)\n# → Python"
+},
+{
+"type": "note",
+"text": "Do not put quotes around a variable name when you want its stored value."
+}
+],
+"task": "Create a variable named `tool` with the value `seec0de`, then print it.",
+"starterCode": "# Store seec0de in a variable named tool, then print it\n",
+"expectedOutput": "seec0de",
+"matchType": "exact",
+"hints": [
+"Assign the string with `tool = ...`.",
+"Print `tool` without quotes."
+],
+"solution": "tool = 'seec0de'\nprint(tool)\n"
+},
+{
+"id": "py-05-update-variable",
+"title": "5. Update a variable",
+"concept": "reassignment",
+"summary": "Assigning a new value replaces the value stored in a variable.",
+"teaching": [
+{
+"type": "p",
+"text": "Variables can change while a program runs. Reassign the same name to replace its value."
+},
+{
+"type": "code",
+"text": "score = 2\nscore = 5\nprint(score)\n# → 5"
+},
+{
+"type": "note",
+"text": "Only the latest assigned value is stored."
+}
+],
+"task": "Set `level` to `1`, update it to `2`, then print `level`.",
+"starterCode": "# Set level to 1, change it to 2, then print it\n",
+"expectedOutput": "2",
+"matchType": "exact",
+"hints": [
+"Assign to `level` twice.",
+"Print the variable after the second assignment."
+],
+"solution": "level = 1\nlevel = 2\nprint(level)\n"
+},
+{
+"id": "py-06-basic-math",
+"title": "6. Add and subtract",
+"concept": "+ and -",
+"summary": "Python uses arithmetic operators to calculate numeric values.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `+` for addition and `-` for subtraction. Python calculates the expression before printing it."
+},
+{
+"type": "code",
+"text": "print(7 + 3)\nprint(7 - 3)\n# → 10\n# → 4"
+},
+{
+"type": "note",
+"text": "Numbers are not wrapped in quotes."
+}
+],
+"task": "Calculate `18 - 7` and print the result.",
+"starterCode": "# Print the result of 18 minus 7\n",
+"expectedOutput": "11",
+"matchType": "exact",
+"hints": [
+"Write the subtraction inside `print()`.",
+"Use the `-` operator between `18` and `7`."
+],
+"solution": "print(18 - 7)\n"
+},
+{
+"id": "py-07-multiply-divide",
+"title": "7. Multiply and divide",
+"concept": "* and /",
+"summary": "Use `*` to multiply and `/` to divide.",
+"teaching": [
+{
+"type": "p",
+"text": "Multiplication uses `*`. Regular division uses `/` and produces a decimal number."
+},
+{
+"type": "code",
+"text": "print(4 * 3)\nprint(12 / 3)\n# → 12\n# → 4.0"
+},
+{
+"type": "note",
+"text": "Even when division is exact, `/` returns a floating-point value."
+}
+],
+"task": "Multiply `6` by `7` and print the result.",
+"starterCode": "# Print 6 multiplied by 7\n",
+"expectedOutput": "42",
+"matchType": "exact",
+"hints": [
+"Use `*` for multiplication.",
+"Put `6 * 7` inside `print()`."
+],
+"solution": "print(6 * 7)\n"
+},
+{
+"id": "py-08-combine-strings",
+"title": "8. Join strings",
+"concept": "string concatenation",
+"summary": "The `+` operator joins strings into one string.",
+"teaching": [
+{
+"type": "p",
+"text": "When both values are strings, `+` concatenates them instead of doing arithmetic."
+},
+{
+"type": "code",
+"text": "first = 'sea'\nsecond = 'code'\nprint(first + second)\n# → seacode"
+},
+{
+"type": "note",
+"text": "Add a space inside one string when the output needs a space."
+}
+],
+"task": "Join `Hello, ` and `Python!` with `+`, then print the result.",
+"starterCode": "# Join the two strings with + and print them\n",
+"expectedOutput": "Hello, Python!",
+"matchType": "exact",
+"hints": [
+"Store or use both strings with their exact punctuation.",
+"The first string should include the space after the comma."
+],
+"solution": "print('Hello, ' + 'Python!')\n"
+},
+{
+"id": "py-09-f-strings",
+"title": "9. Put values inside text",
+"concept": "f-strings",
+"summary": "An f-string inserts variable values inside a string.",
+"teaching": [
+{
+"type": "p",
+"text": "Prefix a string with `f` and place variable names inside `{}` to embed their values."
+},
+{
+"type": "code",
+"text": "name = 'Ada'\nprint(f'Hello, {name}')\n# → Hello, Ada"
+},
+{
+"type": "note",
+"text": "The braces contain Python expressions, not quoted text."
+}
+],
+"task": "Store `3` in `lessons` and use an f-string to print `Lessons complete: 3`.",
+"starterCode": "# Store 3 in lessons, then print the message with an f-string\n",
+"expectedOutput": "Lessons complete: 3",
+"matchType": "exact",
+"hints": [
+"Create `lessons = 3`.",
+"Use `{lessons}` inside a string prefixed with `f`."
+],
+"solution": "lessons = 3\nprint(f'Lessons complete: {lessons}')\n"
+},
+{
+"id": "py-10-string-tools",
+"title": "10. Measure and transform text",
+"concept": "len() and string methods",
+"summary": "Built-ins and string methods can inspect or transform text.",
+"teaching": [
+{
+"type": "p",
+"text": "`len()` counts characters. Methods such as `.upper()` return a transformed string."
+},
+{
+"type": "code",
+"text": "word = 'code'\nprint(len(word))\nprint(word.upper())\n# → 4\n# → CODE"
+},
+{
+"type": "note",
+"text": "The original string stays unchanged unless you assign the transformed value."
+}
+],
+"task": "Store `python` in `word`, then print its length and its uppercase form on separate lines.",
+"starterCode": "# Store python in word\n# Print its length, then print it in uppercase\n",
+"expectedOutput": "6\nPYTHON",
+"matchType": "exact",
+"hints": [
+"Use `len(word)` for the first line.",
+"Use `word.upper()` for the second line."
+],
+"solution": "word = 'python'\nprint(len(word))\nprint(word.upper())\n"
+}
+]
+},
+{
+"id": "py-control-flow",
+"name": "Python — Control Flow",
+"language": "python",
+"description": "Make decisions and repeat work with booleans, conditions, and loops.",
+"lessons": [
+{
+"id": "py-11-booleans",
+"title": "11. True or False",
+"concept": "booleans",
+"summary": "A boolean value is either `True` or `False`.",
+"teaching": [
+{
+"type": "p",
+"text": "Booleans represent yes-or-no states. Python spells them `True` and `False` with capital first letters."
+},
+{
+"type": "code",
+"text": "is_ready = True\nprint(is_ready)\n# → True"
+},
+{
+"type": "note",
+"text": "`True` and `False` are values, so do not wrap them in quotes."
+}
+],
+"task": "Create `is_learning` with the boolean value `True`, then print it.",
+"starterCode": "# Store True in is_learning, then print it\n",
+"expectedOutput": "True",
+"matchType": "exact",
+"hints": [
+"Use the capitalized boolean value `True`.",
+"Print the variable without quotes."
+],
+"solution": "is_learning = True\nprint(is_learning)\n"
+},
+{
+"id": "py-12-comparisons",
+"title": "12. Compare values",
+"concept": "comparison operators",
+"summary": "Comparisons produce boolean results.",
+"teaching": [
+{
+"type": "p",
+"text": "Use operators such as `==`, `!=`, `<`, and `>` to compare values."
+},
+{
+"type": "code",
+"text": "print(5 > 3)\nprint(5 == 3)\n# → True\n# → False"
+},
+{
+"type": "note",
+"text": "`=` assigns a value; `==` checks whether two values are equal."
+}
+],
+"task": "Check whether `10` is greater than `7` and print the result.",
+"starterCode": "# Print the result of comparing 10 and 7\n",
+"expectedOutput": "True",
+"matchType": "exact",
+"hints": [
+"Use the greater-than operator `>`.",
+"Put the comparison inside `print()`."
+],
+"solution": "print(10 > 7)\n"
+},
+{
+"id": "py-13-if",
+"title": "13. Run code conditionally",
+"concept": "if statements",
+"summary": "An `if` block runs only when its condition is true.",
+"teaching": [
+{
+"type": "p",
+"text": "Put a boolean expression after `if`, end the line with `:`, and indent the code that depends on it."
+},
+{
+"type": "code",
+"text": "score = 8\nif score > 5:\n    print('Passed')\n# → Passed"
+},
+{
+"type": "note",
+"text": "Indentation defines which statements belong to the `if` block."
+}
+],
+"task": "Set `temperature` to `30`. If it is greater than `25`, print `Hot`.",
+"starterCode": "# Set temperature to 30\n# If it is above 25, print Hot\n",
+"expectedOutput": "Hot",
+"matchType": "exact",
+"hints": [
+"Write `if temperature > 25:`.",
+"Indent `print('Hot')` under the condition."
+],
+"solution": "temperature = 30\nif temperature > 25:\n    print('Hot')\n"
+},
+{
+"id": "py-14-if-else",
+"title": "14. Choose between two paths",
+"concept": "if and else",
+"summary": "An `else` block runs when the `if` condition is false.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `if` for one path and `else` for the fallback path."
+},
+{
+"type": "code",
+"text": "age = 16\nif age >= 18:\n    print('Adult')\nelse:\n    print('Minor')\n# → Minor"
+},
+{
+"type": "note",
+"text": "Exactly one of these two branches runs."
+}
+],
+"task": "Set `number` to `9`. Print `Even` if it is divisible by `2`; otherwise print `Odd`.",
+"starterCode": "# Set number to 9\n# Print Even or Odd with if/else\n",
+"expectedOutput": "Odd",
+"matchType": "exact",
+"hints": [
+"A number is even when `number % 2 == 0`.",
+"Put `print('Odd')` in the `else` block."
+],
+"solution": "number = 9\nif number % 2 == 0:\n    print('Even')\nelse:\n    print('Odd')\n"
+},
+{
+"id": "py-15-elif",
+"title": "15. Check several conditions",
+"concept": "elif",
+"summary": "Use `elif` to test another condition when earlier ones fail.",
+"teaching": [
+{
+"type": "p",
+"text": "An `if`/`elif`/`else` chain checks conditions from top to bottom and runs the first matching branch."
+},
+{
+"type": "code",
+"text": "score = 72\nif score >= 90:\n    print('A')\nelif score >= 70:\n    print('B')\nelse:\n    print('C')\n# → B"
+},
+{
+"type": "note",
+"text": "Order matters: put stricter or higher thresholds first."
+}
+],
+"task": "Set `signal` to `yellow`. Print `Go` for `green`, `Wait` for `yellow`, and `Stop` otherwise.",
+"starterCode": "# Set signal to yellow\n# Use if, elif, and else to print the correct action\n",
+"expectedOutput": "Wait",
+"matchType": "exact",
+"hints": [
+"Compare strings with `==`.",
+"Use `elif signal == 'yellow':` for the second branch."
+],
+"solution": "signal = 'yellow'\nif signal == 'green':\n    print('Go')\nelif signal == 'yellow':\n    print('Wait')\nelse:\n    print('Stop')\n"
+},
+{
+"id": "py-16-logic",
+"title": "16. Combine conditions",
+"concept": "and, or, not",
+"summary": "Logical operators combine or reverse boolean expressions.",
+"teaching": [
+{
+"type": "p",
+"text": "`and` requires both sides to be true, `or` requires at least one, and `not` reverses a boolean."
+},
+{
+"type": "code",
+"text": "age = 20\nhas_ticket = True\nprint(age >= 18 and has_ticket)\n# → True"
+},
+{
+"type": "note",
+"text": "Parentheses can make combined conditions easier to read."
+}
+],
+"task": "Set `logged_in` to `True` and `is_admin` to `False`, then print whether either value is true.",
+"starterCode": "# Create logged_in and is_admin\n# Print whether either one is True\n",
+"expectedOutput": "True",
+"matchType": "exact",
+"hints": [
+"Use the boolean values `True` and `False`.",
+"Combine the variables with `or`."
+],
+"solution": "logged_in = True\nis_admin = False\nprint(logged_in or is_admin)\n"
+},
+{
+"id": "py-17-while-loop",
+"title": "17. Repeat with while",
+"concept": "while loops",
+"summary": "A `while` loop repeats while its condition remains true.",
+"teaching": [
+{
+"type": "p",
+"text": "A `while` loop is useful when repetition depends on a changing condition."
+},
+{
+"type": "code",
+"text": "count = 1\nwhile count <= 3:\n    print(count)\n    count += 1\n# → 1\n# → 2\n# → 3"
+},
+{
+"type": "note",
+"text": "Update the loop variable so the condition eventually becomes false."
+}
+],
+"task": "Use a `while` loop to print `1`, `2`, and `3` on separate lines.",
+"starterCode": "# Start count at 1\n# Use while to print through 3\n",
+"expectedOutput": "1\n2\n3",
+"matchType": "exact",
+"hints": [
+"Loop while `count <= 3`.",
+"Increase `count` with `count += 1` inside the loop."
+],
+"solution": "count = 1\nwhile count <= 3:\n    print(count)\n    count += 1\n"
+},
+{
+"id": "py-18-break",
+"title": "18. Stop a loop early",
+"concept": "break",
+"summary": "`break` exits the nearest loop immediately.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `break` when a loop should stop as soon as a condition is met."
+},
+{
+"type": "code",
+"text": "number = 1\nwhile True:\n    print(number)\n    if number == 2:\n        break\n    number += 1\n# → 1\n# → 2"
+},
+{
+"type": "note",
+"text": "`while True` runs forever unless something inside exits the loop."
+}
+],
+"task": "Use `while True` to print `Searching`, then immediately stop the loop with `break`.",
+"starterCode": "# Start an infinite loop\n# Print Searching once, then break\n",
+"expectedOutput": "Searching",
+"matchType": "exact",
+"hints": [
+"Begin with `while True:`.",
+"Indent both `print('Searching')` and `break` inside the loop."
+],
+"solution": "while True:\n    print('Searching')\n    break\n"
+},
+{
+"id": "py-19-for-range",
+"title": "19. Count with for",
+"concept": "for and range()",
+"summary": "A `for` loop visits each value produced by `range()`.",
+"teaching": [
+{
+"type": "p",
+"text": "`range(start, stop)` produces integers from `start` up to, but not including, `stop`."
+},
+{
+"type": "code",
+"text": "for number in range(1, 4):\n    print(number)\n# → 1\n# → 2\n# → 3"
+},
+{
+"type": "note",
+"text": "The stop value is excluded."
+}
+],
+"task": "Use `for` and `range()` to print `2`, `3`, and `4` on separate lines.",
+"starterCode": "# Loop over the numbers 2 through 4 and print each one\n",
+"expectedOutput": "2\n3\n4",
+"matchType": "exact",
+"hints": [
+"Start the range at `2`.",
+"Use `5` as the stop value because it is excluded."
+],
+"solution": "for number in range(2, 5):\n    print(number)\n"
+},
+{
+"id": "py-20-for-strings",
+"title": "20. Loop through text",
+"concept": "iterating over strings",
+"summary": "A `for` loop can visit each character in a string.",
+"teaching": [
+{
+"type": "p",
+"text": "Strings are iterable, so a `for` loop can process one character at a time."
+},
+{
+"type": "code",
+"text": "for letter in 'cat':\n    print(letter)\n# → c\n# → a\n# → t"
+},
+{
+"type": "note",
+"text": "The loop variable receives the next character on each iteration."
+}
+],
+"task": "Loop through the string `code` and print each character on its own line.",
+"starterCode": "# Loop through code and print each character\n",
+"expectedOutput": "c\no\nd\ne",
+"matchType": "exact",
+"hints": [
+"Use `for letter in 'code':`.",
+"Print `letter` inside the loop."
+],
+"solution": "for letter in 'code':\n    print(letter)\n"
+}
+]
+},
+{
+"id": "py-data-structures",
+"name": "Python — Data Structures",
+"language": "python",
+"description": "Group, access, update, and organize values with Python's core collections.",
+"lessons": [
+{
+"id": "py-21-lists",
+"title": "21. Store many values",
+"concept": "lists",
+"summary": "A list stores an ordered collection of values.",
+"teaching": [
+{
+"type": "p",
+"text": "Create a list with square brackets and separate its items with commas."
+},
+{
+"type": "code",
+"text": "colors = ['red', 'blue']\nprint(colors)\n# → ['red', 'blue']"
+},
+{
+"type": "note",
+"text": "Lists can grow, shrink, and change after creation."
+}
+],
+"task": "Create a list named `languages` containing `Python` and `JavaScript`, then print it.",
+"starterCode": "# Create languages with Python and JavaScript, then print it\n",
+"expectedOutput": "['Python', 'JavaScript']",
+"matchType": "exact",
+"hints": [
+"Use square brackets to create the list.",
+"Put both strings inside the brackets, separated by a comma."
+],
+"solution": "languages = ['Python', 'JavaScript']\nprint(languages)\n"
+},
+{
+"id": "py-22-list-indexing",
+"title": "22. Read a list item",
+"concept": "list indexing",
+"summary": "Use an index to access one item in a list.",
+"teaching": [
+{
+"type": "p",
+"text": "List indexes start at `0`, so the first item is at index `0`."
+},
+{
+"type": "code",
+"text": "tools = ['Git', 'Python', 'SQL']\nprint(tools[1])\n# → Python"
+},
+{
+"type": "note",
+"text": "An index outside the list raises an error."
+}
+],
+"task": "Create `numbers = [10, 20, 30]` and print the second item.",
+"starterCode": "# Create the numbers list and print its second item\n",
+"expectedOutput": "20",
+"matchType": "exact",
+"hints": [
+"The second item is at index `1`.",
+"Print `numbers[1]`."
+],
+"solution": "numbers = [10, 20, 30]\nprint(numbers[1])\n"
+},
+{
+"id": "py-23-list-update",
+"title": "23. Change a list item",
+"concept": "list assignment",
+"summary": "Assign to a list index to replace an item.",
+"teaching": [
+{
+"type": "p",
+"text": "Lists are mutable, so you can replace an item at a specific index."
+},
+{
+"type": "code",
+"text": "status = ['todo', 'todo']\nstatus[0] = 'done'\nprint(status)\n# → ['done', 'todo']"
+},
+{
+"type": "note",
+"text": "Only the selected index changes."
+}
+],
+"task": "Create `scores = [5, 8, 9]`, change the first score to `7`, then print the list.",
+"starterCode": "# Create scores, replace the first item with 7, then print it\n",
+"expectedOutput": "[7, 8, 9]",
+"matchType": "exact",
+"hints": [
+"The first item is at index `0`.",
+"Assign `7` to `scores[0]`."
+],
+"solution": "scores = [5, 8, 9]\nscores[0] = 7\nprint(scores)\n"
+},
+{
+"id": "py-24-list-append",
+"title": "24. Add to a list",
+"concept": "append()",
+"summary": "The `.append()` method adds one item to the end of a list.",
+"teaching": [
+{
+"type": "p",
+"text": "Call `.append(value)` when you need to grow a list by one item."
+},
+{
+"type": "code",
+"text": "queue = ['A']\nqueue.append('B')\nprint(queue)\n# → ['A', 'B']"
+},
+{
+"type": "note",
+"text": "`.append()` changes the existing list."
+}
+],
+"task": "Create `tasks = ['build']`, append `test`, then print the list.",
+"starterCode": "# Create tasks, append test, then print the list\n",
+"expectedOutput": "['build', 'test']",
+"matchType": "exact",
+"hints": [
+"Call the method on `tasks`.",
+"Pass the string `test` to `.append()`."
+],
+"solution": "tasks = ['build']\ntasks.append('test')\nprint(tasks)\n"
+},
+{
+"id": "py-25-list-slicing",
+"title": "25. Take part of a list",
+"concept": "list slicing",
+"summary": "A slice creates a new list from part of another list.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `list[start:stop]` to copy items from `start` up to, but not including, `stop`."
+},
+{
+"type": "code",
+"text": "values = [1, 2, 3, 4]\nprint(values[1:3])\n# → [2, 3]"
+},
+{
+"type": "note",
+"text": "The stop index is excluded."
+}
+],
+"task": "Create `letters = ['a', 'b', 'c', 'd']` and print the slice containing `b` and `c`.",
+"starterCode": "# Create letters and print a slice containing b and c\n",
+"expectedOutput": "['b', 'c']",
+"matchType": "exact",
+"hints": [
+"Start the slice at index `1`.",
+"Stop at index `3`."
+],
+"solution": "letters = ['a', 'b', 'c', 'd']\nprint(letters[1:3])\n"
+},
+{
+"id": "py-26-list-loop",
+"title": "26. Loop through a list",
+"concept": "list iteration",
+"summary": "A `for` loop can process each item in a list.",
+"teaching": [
+{
+"type": "p",
+"text": "Each loop iteration assigns the next list item to the loop variable."
+},
+{
+"type": "code",
+"text": "names = ['Ada', 'Linus']\nfor name in names:\n    print(name)\n# → Ada\n# → Linus"
+},
+{
+"type": "note",
+"text": "The loop follows the list's order."
+}
+],
+"task": "Loop through `['plan', 'build', 'ship']` and print each item on its own line.",
+"starterCode": "# Create the list and print each item with a for loop\n",
+"expectedOutput": "plan\nbuild\nship",
+"matchType": "exact",
+"hints": [
+"Store the strings in a list.",
+"Use `for item in steps:` and print `item`."
+],
+"solution": "steps = ['plan', 'build', 'ship']\nfor item in steps:\n    print(item)\n"
+},
+{
+"id": "py-27-dictionaries",
+"title": "27. Store key-value pairs",
+"concept": "dictionaries",
+"summary": "A dictionary maps unique keys to values.",
+"teaching": [
+{
+"type": "p",
+"text": "Create a dictionary with `{}` and write each entry as `key: value`."
+},
+{
+"type": "code",
+"text": "user = {'name': 'Ada', 'level': 3}\nprint(user['name'])\n# → Ada"
+},
+{
+"type": "note",
+"text": "Access a value by placing its key inside square brackets."
+}
+],
+"task": "Create `profile` with the key `role` mapped to `developer`, then print that value.",
+"starterCode": "# Create profile with role set to developer, then print the role\n",
+"expectedOutput": "developer",
+"matchType": "exact",
+"hints": [
+"Use `{'role': 'developer'}`.",
+"Read the value with `profile['role']`."
+],
+"solution": "profile = {'role': 'developer'}\nprint(profile['role'])\n"
+},
+{
+"id": "py-28-dictionary-update",
+"title": "28. Add and update dictionary values",
+"concept": "dictionary assignment",
+"summary": "Assigning to a dictionary key adds it or replaces its value.",
+"teaching": [
+{
+"type": "p",
+"text": "Use square-bracket assignment to create a new key or update an existing one."
+},
+{
+"type": "code",
+"text": "settings = {'theme': 'light'}\nsettings['theme'] = 'dark'\nsettings['sound'] = True\nprint(settings['theme'])\n# → dark"
+},
+{
+"type": "note",
+"text": "Dictionary keys must be unique."
+}
+],
+"task": "Create `game = {'score': 10}`, update `score` to `15`, then print it.",
+"starterCode": "# Create game, update its score to 15, then print the score\n",
+"expectedOutput": "15",
+"matchType": "exact",
+"hints": [
+"Use `game['score'] = 15`.",
+"Print the value stored under the `score` key."
+],
+"solution": "game = {'score': 10}\ngame['score'] = 15\nprint(game['score'])\n"
+},
+{
+"id": "py-29-tuples",
+"title": "29. Store fixed data",
+"concept": "tuples",
+"summary": "A tuple is an ordered collection that cannot be changed.",
+"teaching": [
+{
+"type": "p",
+"text": "Create a tuple with parentheses. Read its items with indexes just like a list."
+},
+{
+"type": "code",
+"text": "point = (4, 7)\nprint(point[0])\n# → 4"
+},
+{
+"type": "note",
+"text": "Tuple items cannot be reassigned after creation."
+}
+],
+"task": "Create `size = (1920, 1080)` and print the second value.",
+"starterCode": "# Create the size tuple and print its second value\n",
+"expectedOutput": "1080",
+"matchType": "exact",
+"hints": [
+"Put the two numbers inside parentheses.",
+"The second value is at index `1`."
+],
+"solution": "size = (1920, 1080)\nprint(size[1])\n"
+},
+{
+"id": "py-30-sets",
+"title": "30. Keep unique values",
+"concept": "sets",
+"summary": "A set stores unique values and removes duplicates.",
+"teaching": [
+{
+"type": "p",
+"text": "Create a set with braces. Repeated values appear only once."
+},
+{
+"type": "code",
+"text": "tags = {'python', 'python', 'code'}\nprint(len(tags))\n# → 2"
+},
+{
+"type": "note",
+"text": "Sets are unordered, so do not rely on their printed item order."
+}
+],
+"task": "Create a set from `1`, `1`, `2`, and `3`, then print the number of unique values.",
+"starterCode": "# Create a set with 1, 1, 2, and 3\n# Print how many unique values it contains\n",
+"expectedOutput": "3",
+"matchType": "exact",
+"hints": [
+"Use braces to create the set.",
+"Pass the set to `len()`."
+],
+"solution": "numbers = {1, 1, 2, 3}\nprint(len(numbers))\n"
+}
+]
+},
+{
+"id": "py-functions",
+"name": "Python — Functions",
+"language": "python",
+"description": "Package reusable behavior with definitions, parameters, return values, and scope.",
+"lessons": [
+{
+"id": "py-31-define-function",
+"title": "31. Define a function",
+"concept": "def",
+"summary": "A function groups statements under a reusable name.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `def`, a function name, parentheses, and a colon. Indent the function body."
+},
+{
+"type": "code",
+"text": "def greet():\n    print('Hello')\n\ngreet()\n# → Hello"
+},
+{
+"type": "note",
+"text": "Defining a function does not run it; calling it does."
+}
+],
+"task": "Define a function named `launch` that prints `Launching`, then call it.",
+"starterCode": "# Define launch so it prints Launching, then call it\n",
+"expectedOutput": "Launching",
+"matchType": "exact",
+"hints": [
+"Start with `def launch():`.",
+"Call the function with `launch()` after its definition."
+],
+"solution": "def launch():\n    print('Launching')\n\nlaunch()\n"
+},
+{
+"id": "py-32-function-parameter",
+"title": "32. Pass a value in",
+"concept": "parameters",
+"summary": "A parameter lets a function receive a value from its caller.",
+"teaching": [
+{
+"type": "p",
+"text": "Place a parameter name inside the function's parentheses, then pass an argument when calling it."
+},
+{
+"type": "code",
+"text": "def greet(name):\n    print(f'Hello, {name}')\n\ngreet('Ada')\n# → Hello, Ada"
+},
+{
+"type": "note",
+"text": "The argument is assigned to the parameter during the call."
+}
+],
+"task": "Define `show_language(language)` to print `Learning: <language>`, then call it with `Python`.",
+"starterCode": "# Define show_language with one parameter, then call it with Python\n",
+"expectedOutput": "Learning: Python",
+"matchType": "exact",
+"hints": [
+"Use an f-string containing `{language}`.",
+"Call `show_language('Python')`."
+],
+"solution": "def show_language(language):\n    print(f'Learning: {language}')\n\nshow_language('Python')\n"
+},
+{
+"id": "py-33-multiple-parameters",
+"title": "33. Use multiple parameters",
+"concept": "multiple parameters",
+"summary": "A function can receive several arguments through several parameters.",
+"teaching": [
+{
+"type": "p",
+"text": "Separate parameter names and arguments with commas, keeping their positions aligned."
+},
+{
+"type": "code",
+"text": "def add(a, b):\n    print(a + b)\n\nadd(2, 3)\n# → 5"
+},
+{
+"type": "note",
+"text": "By default, arguments are matched to parameters by position."
+}
+],
+"task": "Define `multiply(a, b)` to print their product, then call it with `6` and `7`.",
+"starterCode": "# Define multiply with two parameters, then call it with 6 and 7\n",
+"expectedOutput": "42",
+"matchType": "exact",
+"hints": [
+"Put `a` and `b` inside the definition's parentheses.",
+"Print `a * b` inside the function."
+],
+"solution": "def multiply(a, b):\n    print(a * b)\n\nmultiply(6, 7)\n"
+},
+{
+"id": "py-34-return-values",
+"title": "34. Return a result",
+"concept": "return",
+"summary": "`return` sends a value back to the function's caller.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `return` when the caller should receive and reuse a computed value."
+},
+{
+"type": "code",
+"text": "def double(number):\n    return number * 2\n\nresult = double(4)\nprint(result)\n# → 8"
+},
+{
+"type": "note",
+"text": "A returned value is not printed unless you print it."
+}
+],
+"task": "Define `square(number)` to return the number times itself, then print `square(5)`.",
+"starterCode": "# Define square so it returns number squared\n# Print square(5)\n",
+"expectedOutput": "25",
+"matchType": "exact",
+"hints": [
+"Return `number * number`.",
+"Pass the function call directly to `print()`."
+],
+"solution": "def square(number):\n    return number * number\n\nprint(square(5))\n"
+},
+{
+"id": "py-35-return-early",
+"title": "35. Return early",
+"concept": "early return",
+"summary": "A `return` statement ends the function immediately.",
+"teaching": [
+{
+"type": "p",
+"text": "Use an early return to handle a condition before the rest of the function runs."
+},
+{
+"type": "code",
+"text": "def label(number):\n    if number < 0:\n        return 'negative'\n    return 'non-negative'\n\nprint(label(-2))\n# → negative"
+},
+{
+"type": "note",
+"text": "Statements after an executed `return` are skipped."
+}
+],
+"task": "Define `check(number)` to return `zero` when the number is `0`, otherwise return `nonzero`. Print `check(0)`.",
+"starterCode": "# Define check with an early return for zero\n# Print check(0)\n",
+"expectedOutput": "zero",
+"matchType": "exact",
+"hints": [
+"Test `if number == 0:`.",
+"Return `zero` inside the `if`, then return `nonzero` afterward."
+],
+"solution": "def check(number):\n    if number == 0:\n        return 'zero'\n    return 'nonzero'\n\nprint(check(0))\n"
+},
+{
+"id": "py-36-default-parameters",
+"title": "36. Set a default value",
+"concept": "default parameters",
+"summary": "A default parameter supplies a value when an argument is omitted.",
+"teaching": [
+{
+"type": "p",
+"text": "Assign a value in the parameter list to make that argument optional."
+},
+{
+"type": "code",
+"text": "def greet(name='friend'):\n    print(f'Hello, {name}')\n\ngreet()\n# → Hello, friend"
+},
+{
+"type": "note",
+"text": "Passing an argument overrides the default."
+}
+],
+"task": "Define `set_mode(mode='safe')` to print `Mode: <mode>`, then call it without an argument.",
+"starterCode": "# Define set_mode with safe as the default, then call it\n",
+"expectedOutput": "Mode: safe",
+"matchType": "exact",
+"hints": [
+"Write `mode='safe'` in the parameter list.",
+"Call `set_mode()` with empty parentheses."
+],
+"solution": "def set_mode(mode='safe'):\n    print(f'Mode: {mode}')\n\nset_mode()\n"
+},
+{
+"id": "py-37-keyword-arguments",
+"title": "37. Name arguments explicitly",
+"concept": "keyword arguments",
+"summary": "Keyword arguments match values to parameters by name.",
+"teaching": [
+{
+"type": "p",
+"text": "Pass `parameter=value` to make a function call clearer or change argument order."
+},
+{
+"type": "code",
+"text": "def describe(name, level):\n    print(f'{name}: {level}')\n\ndescribe(level=2, name='Ada')\n# → Ada: 2"
+},
+{
+"type": "note",
+"text": "Keyword names must match the function's parameter names."
+}
+],
+"task": "Define `connect(host, port)` to print `<host>:<port>`, then call it with keyword arguments `port=8000` and `host='localhost'`.",
+"starterCode": "# Define connect, then call it using named arguments\n",
+"expectedOutput": "localhost:8000",
+"matchType": "exact",
+"hints": [
+"Use an f-string with `{host}:{port}`.",
+"Call with `connect(port=8000, host='localhost')`."
+],
+"solution": "def connect(host, port):\n    print(f'{host}:{port}')\n\nconnect(port=8000, host='localhost')\n"
+},
+{
+"id": "py-38-local-scope",
+"title": "38. Keep values local",
+"concept": "local scope",
+"summary": "Variables created inside a function belong to that function.",
+"teaching": [
+{
+"type": "p",
+"text": "A local variable exists while its function runs and is accessed inside that function."
+},
+{
+"type": "code",
+"text": "def build_message():\n    message = 'Ready'\n    print(message)\n\nbuild_message()\n# → Ready"
+},
+{
+"type": "note",
+"text": "Trying to use `message` outside the function would raise an error."
+}
+],
+"task": "Define `report()` with a local variable `status = 'Complete'`, print it inside the function, then call `report()`.",
+"starterCode": "# Define report with a local status variable, then call it\n",
+"expectedOutput": "Complete",
+"matchType": "exact",
+"hints": [
+"Create `status` inside the indented function body.",
+"Print it before the function ends."
+],
+"solution": "def report():\n    status = 'Complete'\n    print(status)\n\nreport()\n"
+},
+{
+"id": "py-39-outer-scope",
+"title": "39. Read an outer value",
+"concept": "scope lookup",
+"summary": "A function can read a variable defined in an enclosing outer scope.",
+"teaching": [
+{
+"type": "p",
+"text": "When a name is not local, Python looks outward for a matching variable."
+},
+{
+"type": "code",
+"text": "prefix = 'ID'\n\ndef show(value):\n    print(f'{prefix}-{value}')\n\nshow(7)\n# → ID-7"
+},
+{
+"type": "note",
+"text": "Prefer parameters when a function should explicitly depend on a value."
+}
+],
+"task": "Create `app = 'seec0de'`. Define `show_app()` to print that outer variable, then call it.",
+"starterCode": "# Create app outside the function\n# Define show_app to print it, then call the function\n",
+"expectedOutput": "seec0de",
+"matchType": "exact",
+"hints": [
+"Assign `app` before defining the function.",
+"Print `app` inside `show_app()`."
+],
+"solution": "app = 'seec0de'\n\ndef show_app():\n    print(app)\n\nshow_app()\n"
+},
+{
+"id": "py-40-compose-functions",
+"title": "40. Combine functions",
+"concept": "function composition",
+"summary": "One function can call another and use its returned value.",
+"teaching": [
+{
+"type": "p",
+"text": "Small functions become more useful when their outputs feed other functions."
+},
+{
+"type": "code",
+"text": "def double(number):\n    return number * 2\n\ndef add_one(number):\n    return number + 1\n\nprint(add_one(double(3)))\n# → 7"
+},
+{
+"type": "note",
+"text": "The inner function runs first."
+}
+],
+"task": "Define `triple(number)` and `add_two(number)`, then print the result of adding two to triple of `4`.",
+"starterCode": "# Define triple and add_two\n# Combine them so the output is 14\n",
+"expectedOutput": "14",
+"matchType": "exact",
+"hints": [
+"`triple` should return `number * 3`.",
+"Call `add_two(triple(4))` inside `print()`."
+],
+"solution": "def triple(number):\n    return number * 3\n\ndef add_two(number):\n    return number + 2\n\nprint(add_two(triple(4)))\n"
+}
+]
+},
+{
+"id": "py-next-level",
+"name": "Python — Next Level",
+"language": "python",
+"description": "Model objects, handle failures, and write compact transformations.",
+"lessons": [
+{
+"id": "py-41-classes",
+"title": "41. Define a class",
+"concept": "class",
+"summary": "A class defines a reusable type of object.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `class` to group data and behavior under a new type name."
+},
+{
+"type": "code",
+"text": "class Robot:\n    pass\n\nbot = Robot()\nprint(type(bot).**name**)\n# → Robot"
+},
+{
+"type": "note",
+"text": "`pass` creates an empty body while keeping the class valid."
+}
+],
+"task": "Define an empty class named `Lesson`, create one object, and print its type name.",
+"starterCode": "# Define Lesson, create an object, and print its type name\n",
+"expectedOutput": "Lesson",
+"matchType": "exact",
+"hints": [
+"Use `class Lesson:` followed by an indented `pass`.",
+"Print `type(lesson).__name__`."
+],
+"solution": "class Lesson:\n    pass\n\nlesson = Lesson()\nprint(type(lesson).**name**)\n"
+},
+{
+"id": "py-42-init",
+"title": "42. Initialize an object",
+"concept": "**init**()",
+"summary": "The `__init__()` method sets up a new object's initial state.",
+"teaching": [
+{
+"type": "p",
+"text": "`__init__()` runs when an object is created. Its first parameter, `self`, refers to that object."
+},
+{
+"type": "code",
+"text": "class User:\n    def **init**(self, name):\n        self.name = name\n\nuser = User('Ada')\nprint(user.name)\n# → Ada"
+},
+{
+"type": "note",
+"text": "Instance attributes are commonly created with `self.attribute = value`."
+}
+],
+"task": "Define `Course` so its initializer stores a `title`. Create `Course('Python')` and print its title.",
+"starterCode": "# Define Course with an initializer that stores title\n# Create a Python course and print its title\n",
+"expectedOutput": "Python",
+"matchType": "exact",
+"hints": [
+"Define `__init__(self, title)`.",
+"Assign `self.title = title`."
+],
+"solution": "class Course:\n    def **init**(self, title):\n        self.title = title\n\ncourse = Course('Python')\nprint(course.title)\n"
+},
+{
+"id": "py-43-instance-attributes",
+"title": "43. Give objects their own data",
+"concept": "instance attributes",
+"summary": "Each object can store its own attribute values.",
+"teaching": [
+{
+"type": "p",
+"text": "Objects created from the same class can hold different values in the same attributes."
+},
+{
+"type": "code",
+"text": "class Player:\n    def **init**(self, score):\n        self.score = score\n\nfirst = Player(10)\nsecond = Player(20)\nprint(first.score)\nprint(second.score)\n# → 10\n# → 20"
+},
+{
+"type": "note",
+"text": "Changing one object's attribute does not change another object's attribute."
+}
+],
+"task": "Define `Device` with a `name` attribute. Create devices named `Laptop` and `Tablet`, then print both names.",
+"starterCode": "# Define Device with a name attribute\n# Create Laptop and Tablet devices, then print both names\n",
+"expectedOutput": "Laptop\nTablet",
+"matchType": "exact",
+"hints": [
+"Store the constructor argument in `self.name`.",
+"Create two separate `Device` objects."
+],
+"solution": "class Device:\n    def **init**(self, name):\n        self.name = name\n\nfirst = Device('Laptop')\nsecond = Device('Tablet')\nprint(first.name)\nprint(second.name)\n"
+},
+{
+"id": "py-44-methods",
+"title": "44. Add object behavior",
+"concept": "instance methods",
+"summary": "An instance method defines behavior that uses an object's data.",
+"teaching": [
+{
+"type": "p",
+"text": "Define a method inside a class and include `self` as its first parameter."
+},
+{
+"type": "code",
+"text": "class Dog:\n    def speak(self):\n        print('Woof')\n\ndog = Dog()\ndog.speak()\n# → Woof"
+},
+{
+"type": "note",
+"text": "Call an instance method with `object.method()`."
+}
+],
+"task": "Define `Button` with a method `click()` that prints `Clicked`, then create a button and call the method.",
+"starterCode": "# Define Button.click so it prints Clicked\n# Create a button and call click\n",
+"expectedOutput": "Clicked",
+"matchType": "exact",
+"hints": [
+"Define `click(self)` inside the class.",
+"Call `button.click()`."
+],
+"solution": "class Button:\n    def click(self):\n        print('Clicked')\n\nbutton = Button()\nbutton.click()\n"
+},
+{
+"id": "py-45-methods-with-state",
+"title": "45. Update object state",
+"concept": "methods and state",
+"summary": "A method can read and change an object's attributes.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `self` inside a method to update the current object's state."
+},
+{
+"type": "code",
+"text": "class Counter:\n    def **init**(self):\n        self.value = 0\n\n    def increment(self):\n        self.value += 1\n\ncounter = Counter()\ncounter.increment()\nprint(counter.value)\n# → 1"
+},
+{
+"type": "note",
+"text": "The updated attribute remains on the object after the method finishes."
+}
+],
+"task": "Define `Counter` starting at `0`, add an `increment()` method, call it twice, and print the value.",
+"starterCode": "# Define Counter with value 0 and an increment method\n# Increment twice, then print the value\n",
+"expectedOutput": "2",
+"matchType": "exact",
+"hints": [
+"Set `self.value = 0` in `__init__()`.",
+"Inside `increment()`, use `self.value += 1`."
+],
+"solution": "class Counter:\n    def **init**(self):\n        self.value = 0\n\n    def increment(self):\n        self.value += 1\n\ncounter = Counter()\ncounter.increment()\ncounter.increment()\nprint(counter.value)\n"
+},
+{
+"id": "py-46-try-except",
+"title": "46. Catch an exception",
+"concept": "try and except",
+"summary": "A `try`/`except` block handles an error without crashing the program.",
+"teaching": [
+{
+"type": "p",
+"text": "Put risky code in `try` and error-handling code in `except`."
+},
+{
+"type": "code",
+"text": "try:\n    print(10 / 0)\nexcept ZeroDivisionError:\n    print('Cannot divide by zero')\n# → Cannot divide by zero"
+},
+{
+"type": "note",
+"text": "Catch specific exception types instead of every possible error."
+}
+],
+"task": "Try to convert `hello` to an integer. Catch `ValueError` and print `Invalid number`.",
+"starterCode": "# Try int('hello')\n# Catch ValueError and print Invalid number\n",
+"expectedOutput": "Invalid number",
+"matchType": "exact",
+"hints": [
+"Put `int('hello')` inside the `try` block.",
+"Use `except ValueError:`."
+],
+"solution": "try:\n    int('hello')\nexcept ValueError:\n    print('Invalid number')\n"
+},
+{
+"id": "py-47-exception-else",
+"title": "47. Handle success after try",
+"concept": "try, except, else",
+"summary": "An `else` block runs when the `try` block finishes without an exception.",
+"teaching": [
+{
+"type": "p",
+"text": "Use `else` for work that should happen only after the risky code succeeds."
+},
+{
+"type": "code",
+"text": "try:\n    value = int('12')\nexcept ValueError:\n    print('Invalid')\nelse:\n    print(value)\n# → 12"
+},
+{
+"type": "note",
+"text": "Keeping success logic in `else` makes the `try` block smaller."
+}
+],
+"task": "Convert `42` from a string to an integer in `try`, catch `ValueError`, and print the value in `else`.",
+"starterCode": "# Convert '42' inside try\n# Catch ValueError and print the value in else\n",
+"expectedOutput": "42",
+"matchType": "exact",
+"hints": [
+"Assign `value = int('42')` in the `try` block.",
+"Add `else:` after the `except` block and print `value`."
+],
+"solution": "try:\n    value = int('42')\nexcept ValueError:\n    print('Invalid')\nelse:\n    print(value)\n"
+},
+{
+"id": "py-48-raise-exception",
+"title": "48. Raise an exception",
+"concept": "raise",
+"summary": "Use `raise` to signal that a value or state is invalid.",
+"teaching": [
+{
+"type": "p",
+"text": "A function can raise a specific exception when its input breaks a rule."
+},
+{
+"type": "code",
+"text": "def set_age(age):\n    if age < 0:\n        raise ValueError('Age cannot be negative')\n\ntry:\n    set_age(-1)\nexcept ValueError:\n    print('Invalid age')\n# → Invalid age"
+},
+{
+"type": "note",
+"text": "Raising an exception stops normal execution until it is handled."
+}
+],
+"task": "Define `check_score(score)` to raise `ValueError` when the score is below `0`. Call it with `-5`, catch the error, and print `Invalid score`.",
+"starterCode": "# Define check_score and raise ValueError for a negative score\n# Call it with -5 and handle the error\n",
+"expectedOutput": "Invalid score",
+"matchType": "exact",
+"hints": [
+"Inside the function, test `if score < 0:`.",
+"Wrap the call in `try`/`except ValueError`."
+],
+"solution": "def check_score(score):\n    if score < 0:\n        raise ValueError('Score cannot be negative')\n\ntry:\n    check_score(-5)\nexcept ValueError:\n    print('Invalid score')\n"
+},
+{
+"id": "py-49-list-comprehensions",
+"title": "49. Build a list compactly",
+"concept": "list comprehensions",
+"summary": "A list comprehension creates a list by transforming each item from an iterable.",
+"teaching": [
+{
+"type": "p",
+"text": "Write the output expression first, followed by a `for` clause inside square brackets."
+},
+{
+"type": "code",
+"text": "squares = [number * number for number in range(1, 4)]\nprint(squares)\n# → [1, 4, 9]"
+},
+{
+"type": "note",
+"text": "Use a normal loop when the transformation needs several steps."
+}
+],
+"task": "Use a list comprehension to double the values in `[1, 2, 3]`, then print the new list.",
+"starterCode": "# Double each value in [1, 2, 3] with a list comprehension\n# Print the result\n",
+"expectedOutput": "[2, 4, 6]",
+"matchType": "exact",
+"hints": [
+"Use `number * 2` as the output expression.",
+"Loop with `for number in [1, 2, 3]`."
+],
+"solution": "doubled = [number * 2 for number in [1, 2, 3]]\nprint(doubled)\n"
+},
+{
+"id": "py-50-filtered-comprehensions",
+"title": "50. Filter a comprehension",
+"concept": "conditional list comprehensions",
+"summary": "Add an `if` clause to keep only items that match a condition.",
+"teaching": [
+{
+"type": "p",
+"text": "Place an `if` condition after the `for` clause to filter the source values."
+},
+{
+"type": "code",
+"text": "evens = [number for number in range(1, 7) if number % 2 == 0]\nprint(evens)\n# → [2, 4, 6]"
+},
+{
+"type": "note",
+"text": "The condition decides which source items enter the new list."
+}
+],
+"task": "Use a list comprehension to keep only numbers greater than `3` from `[1, 2, 3, 4, 5]`, then print the result.",
+"starterCode": "# Keep values greater than 3 with a list comprehension\n# Print the result\n",
+"expectedOutput": "[4, 5]",
+"matchType": "exact",
+"hints": [
+"Use the source list `[1, 2, 3, 4, 5]`.",
+"Add `if number > 3` after the `for` clause."
+],
+"solution": "filtered = [number for number in [1, 2, 3, 4, 5] if number > 3]\nprint(filtered)\n"
+}
+]
+}
+]
+}

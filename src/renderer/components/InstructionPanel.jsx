@@ -29,6 +29,7 @@ export default function InstructionPanel({
   activeLesson,
   lessonStatus = 'idle',
   lessonVerification = null,
+  lessonErrorCoaching = [],
   lessonHasNext = false,
   onResetLessonCode,
   onRevealSolution,
@@ -46,6 +47,7 @@ export default function InstructionPanel({
   }, []);
 
   const [activeTab, setActiveTab] = useState('build'); // 'build' or 'lessons'
+  const [lessonBrowserOpen, setLessonBrowserOpen] = useState(false);
 
   // When a lesson becomes active (from any source — list click, "Next
   // lesson", restored state) the user is in lesson mode, full stop. Pop
@@ -54,6 +56,14 @@ export default function InstructionPanel({
   useEffect(() => {
     if (activeLesson) setActiveTab('lessons');
   }, [activeLesson?.id]);
+
+  // Focus the active lesson by default. The full curriculum is still one
+  // click away, but it no longer sits underneath every lesson and competes
+  // with the current task, hints, and run feedback.
+  useEffect(() => {
+    if (activeLesson) setLessonBrowserOpen(false);
+  }, [activeLesson?.id]);
+
   const labelFor = (id) => {
   const labels = {
     js: 'JavaScript',
@@ -263,27 +273,57 @@ export default function InstructionPanel({
           ) : (
             <div style={styles.lessonsStack}>
               {activeLesson ? (
-                <ActiveLessonCard
-                  lesson={activeLesson}
-                  status={lessonStatus}
-                  verification={lessonVerification}
-                  hasNext={lessonHasNext}
-                  onClear={() => onSelectLesson(null)}
-                  onResetCode={onResetLessonCode}
-                  onRevealSolution={onRevealSolution}
-                  onNext={onNextLesson}
-                />
+                <>
+                  <ActiveLessonCard
+                    lesson={activeLesson}
+                    status={lessonStatus}
+                    verification={lessonVerification}
+                    errorCoaching={lessonErrorCoaching}
+                    hasNext={lessonHasNext}
+                    onClear={() => onSelectLesson(null)}
+                    onResetCode={onResetLessonCode}
+                    onRevealSolution={onRevealSolution}
+                    onNext={onNextLesson}
+                  />
+                  <div style={styles.lessonBrowserCard}>
+                    <button
+                      type="button"
+                      style={styles.lessonBrowserToggle}
+                      onClick={() => setLessonBrowserOpen((v) => !v)}
+                      aria-expanded={lessonBrowserOpen}
+                    >
+                      <GraduationCap size={12} />
+                      <span style={styles.lessonBrowserText}>
+                        {lessonBrowserOpen ? 'Hide lesson list' : 'Browse other lessons'}
+                      </span>
+                      <span style={styles.lessonBrowserMeta}>
+                        {completedLessons.length} completed
+                      </span>
+                    </button>
+                    {lessonBrowserOpen && (
+                      <div style={styles.lessonBrowserBody}>
+                        <LessonsPanel
+                          completedLessons={completedLessons}
+                          onSelectLesson={onSelectLesson}
+                          activeLessonId={activeLesson?.id}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
-                <p style={styles.headerHint}>
-                  Pick a lesson below. You'll read the concept, then write the code
-                  yourself in the editor and run it to check your work.
-                </p>
+                <>
+                  <p style={styles.headerHint}>
+                    Pick a lesson below. You'll read the concept, then write the code
+                    yourself in the editor and run it to check your work.
+                  </p>
+                  <LessonsPanel
+                    completedLessons={completedLessons}
+                    onSelectLesson={onSelectLesson}
+                    activeLessonId={activeLesson?.id}
+                  />
+                </>
               )}
-              <LessonsPanel
-                completedLessons={completedLessons}
-                onSelectLesson={onSelectLesson}
-                activeLessonId={activeLesson?.id}
-              />
             </div>
           )}
         </div>
@@ -415,6 +455,39 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 14,
+  },
+  lessonBrowserCard: {
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  lessonBrowserToggle: {
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-secondary)',
+    padding: '9px 10px',
+    fontSize: 12,
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  lessonBrowserText: {
+    flex: 1,
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+  },
+  lessonBrowserMeta: {
+    color: 'var(--text-muted)',
+    fontSize: 10.5,
+  },
+  lessonBrowserBody: {
+    borderTop: '1px solid var(--border)',
+    padding: 10,
+    background: 'var(--bg-secondary)',
   },
 
   langStrip: {
@@ -610,4 +683,3 @@ const styles = {
   },
 
 };
-

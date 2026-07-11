@@ -86,11 +86,12 @@ export default function CodePanel({
   // comparison-language tabs to distract from the exercise. The Run
   // button stays so the lesson can verify the user's output.
   lessonMode = false,
+  lessonLanguage = 'javascript',
 }) {
   const generatedTabs = folderOpen
     ? []
     : lessonMode
-      ? ['javascript']
+      ? [lessonLanguage || 'javascript']
       : ['pseudocode', ...selectedLanguages];
   const [editable, setEditable] = useState(false);
   const [tooltip, setTooltip] = useState(null);
@@ -139,10 +140,10 @@ export default function CodePanel({
   const showingFile = !!fileTab;
 
   // In lesson mode the default tab is always the single JS tab — never
-  // fall back to 'pseudocode' (which isn't even rendered then).
+  // fallback to 'pseudocode' (which isn't even rendered then).
   const generatedDisplayTab = generatedTabs.includes(activeGeneratedTab)
     ? activeGeneratedTab
-    : (lessonMode ? 'javascript' : 'pseudocode');
+    : (lessonMode ? (lessonLanguage || 'javascript') : 'pseudocode');
   const isPseudocode = !showingFile && !folderOpen && !lessonMode && generatedDisplayTab === 'pseudocode';
   const showEmptyState = folderOpen && !showingFile;
 
