@@ -2,7 +2,7 @@
   "tracks": [
     {
       "id": "js-foundations",
-      "name": "JavaScript — First Steps",
+      "name": "First Steps",
       "language": "javascript",
       "description": "Start from zero. Print, store, compare, branch.",
       "lessons": [
@@ -225,7 +225,7 @@
     },
     {
       "id": "js-building",
-      "name": "JavaScript — Building Up",
+      "name": "Building Up",
       "language": "javascript",
       "description": "Loops, arrays, functions, objects.",
       "lessons": [
@@ -444,7 +444,7 @@
     },
     {
       "id": "js-functions",
-      "name": "JavaScript — Functions Deep Dive",
+      "name": "Functions Deep Dive",
       "language": "javascript",
       "description": "Parameters, returns, scope, and reusable logic.",
       "lessons": [

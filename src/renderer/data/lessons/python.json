@@ -2,7 +2,7 @@
 "tracks": [
 {
 "id": "py-foundations",
-"name": "Python — First Steps",
+"name": "First Steps",
 "language": "python",
 "description": "Start from zero. Print values, store data, do math, and shape strings.",
 "lessons": [
@@ -300,7 +300,7 @@
 },
 {
 "id": "py-control-flow",
-"name": "Python — Control Flow",
+"name": "Control Flow",
 "language": "python",
 "description": "Make decisions and repeat work with booleans, conditions, and loops.",
 "lessons": [
@@ -598,7 +598,7 @@
 },
 {
 "id": "py-data-structures",
-"name": "Python — Data Structures",
+"name": "Data Structures",
 "language": "python",
 "description": "Group, access, update, and organize values with Python's core collections.",
 "lessons": [
@@ -896,7 +896,7 @@
 },
 {
 "id": "py-functions",
-"name": "Python — Functions",
+"name": "Functions",
 "language": "python",
 "description": "Package reusable behavior with definitions, parameters, return values, and scope.",
 "lessons": [
@@ -1194,7 +1194,7 @@
 },
 {
 "id": "py-next-level",
-"name": "Python — Next Level",
+"name": "Next Level",
 "language": "python",
 "description": "Model objects, handle failures, and write compact transformations.",
 "lessons": [
