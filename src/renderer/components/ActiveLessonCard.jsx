@@ -729,7 +729,7 @@ const styles = {
     gap: 6,
     background: 'var(--accent, #2563eb)',
     border: 'none',
-    color: '#fff',
+    color: 'var(--text-on-accent, #fff)',
     fontSize: 12.5,
     fontWeight: 600,
     padding: '8px 0',

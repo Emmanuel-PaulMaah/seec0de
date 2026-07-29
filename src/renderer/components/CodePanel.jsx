@@ -45,6 +45,31 @@ const LANGUAGE_LABELS = {
   csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C',
 };
 
+function defineSeec0deThemes(monaco) {
+  monaco.editor.defineTheme('seec0de-green', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'keyword', foreground: 'C8B6FF' },
+      { token: 'string', foreground: 'EFB78F' },
+      { token: 'number', foreground: 'A8D8A0' },
+      { token: 'comment', foreground: '70756D' },
+      { token: 'type', foreground: '9CC9FF' },
+    ],
+    colors: {
+      'editor.background': '#0B0D0C',
+      'editor.foreground': '#F2F0E9',
+      'editorLineNumber.foreground': '#61645E',
+      'editorLineNumber.activeForeground': '#C7C5BD',
+      'editor.selectionBackground': '#35451F',
+      'editor.inactiveSelectionBackground': '#29351B',
+      'editorCursor.foreground': '#C8FF4D',
+      'editorIndentGuide.background1': '#232620',
+      'editorIndentGuide.activeBackground1': '#353A30',
+    },
+  });
+}
+
 // CodePanel — the middle column. Hosts the generator output (pseudocode +
 // language tabs), open-file tabs, the Run button, and the editor itself.
 //
@@ -58,6 +83,7 @@ const LANGUAGE_LABELS = {
 export default function CodePanel({
   generatedCode,
   selectedLanguages,
+  appTheme = 'seec0de-dark',
   onCodeChange,
   onSelectionExplain,
   aiLoading,
@@ -437,7 +463,8 @@ export default function CodePanel({
             height="100%"
             language={monacoLang}
             value={value}
-            theme="hc-black"
+            theme={appTheme === 'seec0de-green' ? 'seec0de-green' : 'hc-black'}
+            beforeMount={defineSeec0deThemes}
             onMount={handleEditorMount}
             onChange={handleChange}
             options={{

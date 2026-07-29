@@ -74,6 +74,11 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
 
+  useEffect(() => {
+    const theme = settings.theme === 'seec0de-green' ? 'seec0de-green' : 'seec0de-dark';
+    document.documentElement.dataset.theme = theme;
+  }, [settings.theme]);
+
   // Local profiles ("accounts") + which auth surface is showing.
   //   onboardingMode 'setup'       — create/edit the first (active) profile.
   //   onboardingMode 'new-profile' — "Add profile": always make a fresh one.
@@ -1011,6 +1016,7 @@ const beginExplanationResize = useCallback((event) => {
           <CodePanel
             generatedCode={generatedCode}
             selectedLanguages={effectiveLanguages}
+            appTheme={settings.theme}
             onCodeChange={handleCodeChange}
             onSelectionExplain={handleSelectionExplain}
             aiLoading={aiLoading}

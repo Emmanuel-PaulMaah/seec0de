@@ -42,6 +42,7 @@
   --accent:         #2f6fed;   /* primary blue (matches AI-Native palette) */
   --accent-hover:   #3b7eff;
   --accent-soft:    rgba(47, 111, 237, 0.16);
+  --text-on-accent: #ffffff;
 
   /* Semantic accents — used by Pseudocode badge, Run button, errors. */
   --algorithm:      #b48dff;   /* pseudocode = "the algorithm" */
@@ -72,6 +73,48 @@
   /* Modal / drawer chrome. */
   --scrim:          rgba(0, 0, 0, 0.55);
   --shadow-lg:      0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* The landing-page-inspired palette from index.html: layered charcoal
+   surfaces, warm text, and a high-energy lime accent. */
+:root[data-theme="seec0de-green"] {
+  --bg-primary:     #080909;
+  --bg-secondary:   #0f1110;
+  --bg-tertiary:    #131514;
+  --bg-elevated:    #181a18;
+  --bg-input:       #0b0d0c;
+
+  --border:         #232620;
+  --border-strong:  #353a30;
+  --border-focus:   #c8ff4d;
+
+  --text-primary:   #f2f0e9;
+  --text-secondary: #c7c5bd;
+  --text-muted:     #92938d;
+
+  --accent:         #c8ff4d;
+  --accent-hover:   #d5ff73;
+  --accent-soft:    rgba(200, 255, 77, 0.10);
+  --text-on-accent: #101507;
+
+  --algorithm:      #c8b6ff;
+  --algorithm-soft: rgba(200, 182, 255, 0.12);
+  --success:        #95e59a;
+  --success-soft:   rgba(149, 229, 154, 0.12);
+  --danger:         #f08c8c;
+  --danger-soft:    rgba(240, 140, 140, 0.12);
+
+  --keyword-highlight:  #c8b6ff;
+  --string-highlight:   #efb78f;
+  --function-highlight: #9cc9ff;
+  --comment-highlight:  #70756d;
+  --number-highlight:   #a8d8a0;
+  --type-highlight:     #9cc9ff;
+
+  --scrollbar-thumb: #353a30;
+  --scrollbar-track: #080909;
+  --scrim:           rgba(8, 9, 9, 0.68);
+  --shadow-lg:       0 28px 90px rgba(0, 0, 0, 0.50);
 }
 
 html, body, #root {

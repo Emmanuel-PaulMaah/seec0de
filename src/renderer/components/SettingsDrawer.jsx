@@ -27,11 +27,12 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 //
 // Sections (top → bottom):
 //   1. Profile                — identity, PIN lock, switch / add / delete
-//   2. Languages              — practical + comparison
-//   3. AI                     — Gemini key
-//   4. Workspace              — defaults for explorer / terminal panels
-//   5. About & Updates        — version, last-checked, "Check now"
-//   6. Onboarding             — "Rerun onboarding"
+//   2. Appearance             — app theme
+//   3. Languages              — practical + comparison
+//   4. AI                     — Gemini key
+//   5. Workspace              — defaults for explorer / terminal panels
+//   6. About & Updates        — version, last-checked, "Check now"
+//   7. Onboarding             — "Rerun onboarding"
 //
 // Visual direction: AI-Native UI. Slides in from the right, dimmed scrim
 // behind, generous whitespace, single-column, semantic icons (no emoji).
@@ -169,7 +170,29 @@ export default function SettingsDrawer({
             />
           </Section>
 
-          {/* ---- 2. Languages ----------------------------------------- */}
+          {/* ---- 2. Appearance ---------------------------------------- */}
+          <Section icon={<Eye size={13} />} title="Appearance">
+            <Field label="App theme" hint="Choose the palette used across your workspace. Saved to this profile.">
+              <div style={styles.themeGrid}>
+                <ThemeChoice
+                  name="seec0de-dark"
+                  description="High-contrast black and blue"
+                  colors={['#000000', '#2f6fed', '#e6e6e6']}
+                  selected={settings.theme !== 'seec0de-green'}
+                  onClick={() => patch({ theme: 'seec0de-dark' })}
+                />
+                <ThemeChoice
+                  name="seec0de-green"
+                  description="Layered charcoal and lime"
+                  colors={['#0f1110', '#c8ff4d', '#f2f0e9']}
+                  selected={settings.theme === 'seec0de-green'}
+                  onClick={() => patch({ theme: 'seec0de-green' })}
+                />
+              </div>
+            </Field>
+          </Section>
+
+          {/* ---- 3. Languages ----------------------------------------- */}
           <Section icon={<Layers size={13} />} title="Languages">
             <Field label="Practical language" hint="The language you build in. Powers Run, default file extension, and the first language tab.">
               <div style={styles.langGrid}>
@@ -529,6 +552,26 @@ function Pill({ selected, onClick, children }) {
     >
       {selected && <Check size={10} style={{ marginRight: 4 }} />}
       {children}
+    </button>
+  );
+}
+
+function ThemeChoice({ name, description, colors, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      style={{ ...styles.themeChoice, ...(selected ? styles.themeChoiceSelected : {}) }}
+    >
+      <span style={styles.themeSwatches} aria-hidden="true">
+        {colors.map((color) => <span key={color} style={{ ...styles.themeSwatch, background: color }} />)}
+      </span>
+      <span style={styles.themeChoiceText}>
+        <span style={styles.themeChoiceName}>{name}</span>
+        <span style={styles.themeChoiceDescription}>{description}</span>
+      </span>
+      {selected && <Check size={13} style={styles.themeCheck} />}
     </button>
   );
 }
@@ -962,6 +1005,39 @@ const styles = {
   langGrid: {
     display: 'flex', flexWrap: 'wrap', gap: 6,
   },
+  themeGrid: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
+  },
+  themeChoice: {
+    position: 'relative',
+    display: 'flex', flexDirection: 'column', gap: 8,
+    minWidth: 0,
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    color: 'var(--text-secondary)',
+    padding: 10,
+    textAlign: 'left',
+  },
+  themeChoiceSelected: {
+    background: 'var(--accent-soft)',
+    borderColor: 'var(--accent)',
+  },
+  themeSwatches: { display: 'flex', gap: 4 },
+  themeSwatch: {
+    width: 18, height: 18, borderRadius: 999,
+    border: '1px solid var(--border-strong)',
+  },
+  themeChoiceText: { display: 'flex', flexDirection: 'column', gap: 2 },
+  themeChoiceName: {
+    color: 'var(--text-primary)', fontSize: 11.5, fontWeight: 600,
+  },
+  themeChoiceDescription: {
+    color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.35,
+  },
+  themeCheck: {
+    position: 'absolute', top: 10, right: 10, color: 'var(--accent)',
+  },
   pill: {
     display: 'inline-flex', alignItems: 'center',
     background: 'var(--bg-tertiary)',
@@ -1006,7 +1082,7 @@ const styles = {
     background: 'var(--accent)',
     border: '1px solid var(--accent)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 12.5,
     fontWeight: 600,
     padding: '0 12px',
@@ -1234,7 +1310,7 @@ const toolchainStyles = {
     borderStyle: 'solid',
     borderColor: 'var(--accent)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 11.5,
     fontWeight: 600,
     padding: '5px 10px',

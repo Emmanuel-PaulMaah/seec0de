@@ -572,7 +572,7 @@ const styles = {
     background: 'var(--accent)',
     border: '1px solid var(--accent)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 13,
     fontWeight: 600,
     padding: '8px 14px',

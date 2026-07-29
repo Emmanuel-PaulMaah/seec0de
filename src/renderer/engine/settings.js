@@ -71,6 +71,9 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   // 'none' = "I haven't coded before" → chattier explanations.
   // 'some' = "I've written some code"  → terser, more idiomatic.
   experienceLevel:    null,
+  // Visual palette. Stored per profile so switching learners also restores
+  // their preferred workspace appearance.
+  theme:              'seec0de-dark',
   // The language the user is *building in* — drives Run, default new-file
   // extension, and the first language tab in the generator.
   practicalLanguage:   'python',
