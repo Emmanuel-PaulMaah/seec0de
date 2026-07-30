@@ -8,7 +8,7 @@ import FileExplorer from './components/FileExplorer';
 import TerminalPanel from './components/TerminalPanel';
 import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
-import SettingsDrawer from './components/SettingsDrawer';
+import SettingsDrawer, { ProfileManagerCard } from './components/SettingsDrawer';
 import ProfileGate from './components/ProfileGate';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
@@ -109,6 +109,7 @@ export default function App() {
   const [learnMode, setLearnMode] = useState(() => !!loadSettings().learnMode);
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfileManager, setShowProfileManager] = useState(false);
 
   useEffect(() => {
     const theme = settings.theme === 'seec0de-green' ? 'seec0de-green' : 'seec0de-dark';
@@ -963,6 +964,7 @@ export default function App() {
   // onboarding in new-profile mode (which creates + activates on finish).
   const handleAddProfile = useCallback(() => {
     setShowSettings(false);
+    setShowProfileManager(false);
     setOnboardingMode('new-profile');
     setShowOnboarding(true);
   }, []);
@@ -970,6 +972,7 @@ export default function App() {
   // Open the picker mid-session (cancellable — Esc / X keeps you signed in).
   const handleSwitchProfile = useCallback(() => {
     setShowSettings(false);
+    setShowProfileManager(false);
     setGate('switch');
   }, []);
 
@@ -983,6 +986,7 @@ export default function App() {
     hydrateLearningProfile(next);
     setProfiles(listProfiles());
     setShowSettings(false);
+    setShowProfileManager(false);
     setGate('launch');
   }, [hydrateLearningProfile]);
 
@@ -1121,7 +1125,7 @@ const beginExplanationResize = useCallback((event) => {
         activeProfile={settings.activeProfileId ? { username: settings.username, avatar: settings.avatar } : null}
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={handleAddProfile}
-        onManageProfile={() => setShowSettings(true)}
+        onManageProfile={() => setShowProfileManager(true)}
         mode={learnMode ? 'learn' : 'workspace'}
         onModeChange={(mode) => {
           const enteringLearnMode = mode === 'learn';
@@ -1332,6 +1336,12 @@ const beginExplanationResize = useCallback((event) => {
         onSettingsChange={handleSettingsChange}
         onRerunOnboarding={handleRerunOnboarding}
         onRunInTerminal={handleRunInTerminal}
+      />
+
+      <ProfileManagerCard
+        open={showProfileManager}
+        onClose={() => setShowProfileManager(false)}
+        onSettingsChange={handleSettingsChange}
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={handleAddProfile}
         onDeleteProfile={handleDeleteProfile}

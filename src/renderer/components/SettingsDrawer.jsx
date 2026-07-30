@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
-  User, Users, UserPlus, Lock, Trash2,
+  Users, UserPlus, Lock, Trash2, GraduationCap,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
@@ -26,8 +26,8 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 // `AboutSettings` blocks that used to live in the left panel.
 //
 // Sections (top → bottom):
-//   1. Profile                — identity, PIN lock, switch / add / delete
-//   2. Appearance             — app theme
+//   1. Appearance             — app theme
+//   2. Learn Mode             — learner-controlled guidance level
 //   3. Languages              — practical + comparison
 //   4. AI                     — Gemini key
 //   5. Workspace              — defaults for explorer / terminal panels
@@ -46,7 +46,6 @@ const PLATFORM_LABEL = (() => {
 
 export default function SettingsDrawer({
   open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal,
-  onSwitchProfile, onAddProfile, onDeleteProfile,
 }) {
   const [settings, setSettings] = useState(loadSettings());
   const [apiKey, setApiKey]     = useState('');
@@ -160,17 +159,7 @@ export default function SettingsDrawer({
         </header>
 
         <div style={styles.scroll}>
-          {/* ---- 1. Profile ------------------------------------------- */}
-          <Section icon={<User size={13} />} title="Profile">
-            <ProfileSection
-              onSettingsChange={onSettingsChange}
-              onSwitchProfile={onSwitchProfile}
-              onAddProfile={onAddProfile}
-              onDeleteProfile={onDeleteProfile}
-            />
-          </Section>
-
-          {/* ---- 2. Appearance ---------------------------------------- */}
+          {/* ---- 1. Appearance ---------------------------------------- */}
           <Section icon={<Eye size={13} />} title="Appearance">
             <Field label="App theme" hint="Choose the palette used across your workspace. Saved to this profile.">
               <div style={styles.themeGrid}>
@@ -189,6 +178,18 @@ export default function SettingsDrawer({
                   onClick={() => patch({ theme: 'seec0de-green' })}
                 />
               </div>
+            </Field>
+          </Section>
+
+          {/* ---- 2. Learn Mode ---------------------------------------- */}
+          <Section icon={<GraduationCap size={13} />} title="Learn Mode">
+            <Field label="Guidance level" hint="Choose how much teaching Learn Mode shows. You can change this at any time.">
+              <GuidanceTabs
+                value={['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
+                  ? settings.guidanceLevel
+                  : 'supported'}
+                onChange={(guidanceLevel) => patch({ guidanceLevel, guidanceSuccessStreak: 0 })}
+              />
             </Field>
           </Section>
 
@@ -319,16 +320,65 @@ export default function SettingsDrawer({
 }
 
 // ---------------------------------------------------------------------------
-// ProfileSection — Settings → Profile.
+// ProfileManagerCard — profile-pill → Manage profile.
 //
 // Edits the ACTIVE local profile: identity (avatar / username / bio /
 // languages), an optional PIN lock, and profile management (switch, add,
-// delete). Reads a fresh snapshot from the store on mount so it never shows
-// stale data, and routes every mutation back up through onSettingsChange /
-// the profile callbacks so App's gate + title-bar chip stay in sync.
+// delete). It is intentionally separate from general app settings.
 //
 // The PIN is a courtesy lock for shared machines, not real security (see
 // settings.js) — we say so in the hint copy so we don't over-promise.
+export function ProfileManagerCard({
+  open,
+  onClose,
+  onSettingsChange,
+  onSwitchProfile,
+  onAddProfile,
+  onDeleteProfile,
+}) {
+  const titleRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    titleRef.current?.focus();
+    const onKey = (event) => { if (event.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div style={styles.profileScrim} onClick={onClose} role="presentation">
+      <section
+        style={styles.profileCard}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manage-profile-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header style={styles.header}>
+          <div>
+            <h2 ref={titleRef} tabIndex={-1} id="manage-profile-title" style={styles.title}>Manage profile</h2>
+            <p style={styles.profileCardSubtitle}>Your identity and progress stay on this device.</p>
+          </div>
+          <button style={styles.iconBtn} onClick={onClose} title="Close (Esc)" aria-label="Close profile manager">
+            <X size={16} />
+          </button>
+        </header>
+        <div style={styles.profileCardScroll}>
+          <ProfileSection
+            onSettingsChange={onSettingsChange}
+            onSwitchProfile={onSwitchProfile}
+            onAddProfile={onAddProfile}
+            onDeleteProfile={onDeleteProfile}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDeleteProfile }) {
   const initial = loadSettings();
   const activeId = initial.activeProfileId;
@@ -538,6 +588,41 @@ function Field({ label, hint, children }) {
       <label style={styles.fieldLabel}>{label}</label>
       {hint && <p style={styles.fieldHint}>{hint}</p>}
       {children}
+    </div>
+  );
+}
+
+const GUIDANCE_LEVELS = ['supported', 'guided', 'independent'];
+
+function GuidanceTabs({ value, onChange }) {
+  const handleKeyDown = (event, index) => {
+    let nextIndex = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % GUIDANCE_LEVELS.length;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + GUIDANCE_LEVELS.length) % GUIDANCE_LEVELS.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = GUIDANCE_LEVELS.length - 1;
+    if (nextIndex == null) return;
+    event.preventDefault();
+    onChange?.(GUIDANCE_LEVELS[nextIndex]);
+    event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus();
+  };
+
+  return (
+    <div style={styles.guidanceControl} role="radiogroup" aria-label="Guidance level">
+      {GUIDANCE_LEVELS.map((level, index) => (
+        <button
+          key={level}
+          type="button"
+          role="radio"
+          style={{ ...styles.guidanceBtn, ...(value === level ? styles.guidanceBtnActive : {}) }}
+          aria-checked={value === level}
+          tabIndex={value === level ? 0 : -1}
+          onClick={() => onChange?.(level)}
+          onKeyDown={(event) => handleKeyDown(event, index)}
+        >
+          {level[0].toUpperCase() + level.slice(1)}
+        </button>
+      ))}
     </div>
   );
 }
@@ -933,6 +1018,40 @@ const styles = {
     display: 'flex', justifyContent: 'flex-end',
     animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
   },
+  profileScrim: {
+    position: 'fixed', inset: 0, zIndex: 900,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: 24,
+    background: 'var(--scrim)',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+    animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
+  },
+  profileCard: {
+    width: 560,
+    maxWidth: '100%',
+    maxHeight: 'calc(100vh - 48px)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 12,
+    boxShadow: 'var(--shadow-lg)',
+    animation: 'seec0de-pop-in var(--motion-slow) var(--ease-out)',
+  },
+  profileCardSubtitle: {
+    marginTop: 3,
+    color: 'var(--text-muted)',
+    fontSize: 11,
+  },
+  profileCardScroll: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+    overflowY: 'auto',
+    padding: 18,
+  },
   drawer: {
     width: DRAWER_W,
     maxWidth: '100vw',
@@ -1037,6 +1156,28 @@ const styles = {
   },
   themeCheck: {
     position: 'absolute', top: 10, right: 10, color: 'var(--accent)',
+  },
+  guidanceControl: {
+    display: 'flex',
+    gap: 2,
+    padding: 2,
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    background: 'var(--bg-tertiary)',
+  },
+  guidanceBtn: {
+    flex: 1,
+    padding: '4px 3px',
+    border: 'none',
+    borderRadius: 4,
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 9.5,
+  },
+  guidanceBtnActive: {
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    fontWeight: 700,
   },
   pill: {
     display: 'inline-flex', alignItems: 'center',

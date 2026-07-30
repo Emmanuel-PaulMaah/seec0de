@@ -8,7 +8,6 @@ const PHASES = [
   { id: 'run', label: 'Run', icon: Play },
   { id: 'fix', label: 'Fix', icon: Wrench },
 ];
-const GUIDANCE_LEVELS = ['supported', 'guided', 'independent'];
 
 export default function LearnModePanel({
   activeLesson,
@@ -57,18 +56,6 @@ export default function LearnModePanel({
     mountedRef.current = true;
   }, [activeLesson?.id]);
 
-  const handleGuidanceKeyDown = (event, index) => {
-    let nextIndex = null;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % GUIDANCE_LEVELS.length;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + GUIDANCE_LEVELS.length) % GUIDANCE_LEVELS.length;
-    if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = GUIDANCE_LEVELS.length - 1;
-    if (nextIndex == null) return;
-    event.preventDefault();
-    onGuidanceChange?.(GUIDANCE_LEVELS[nextIndex]);
-    event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus();
-  };
-
   return (
     <aside style={styles.panel} aria-label="Learn Mode guide">
       <div style={styles.header}>
@@ -85,22 +72,6 @@ export default function LearnModePanel({
           {activeLesson
             ? `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'} · progress saves automatically`
             : 'Pick a lesson to begin a guided Learn → Run → Fix loop.'}
-        </div>
-        <div style={styles.guidanceControl} role="radiogroup" aria-label="Guidance level">
-          {GUIDANCE_LEVELS.map((level, index) => (
-            <button
-              key={level}
-              type="button"
-              role="radio"
-              style={{ ...styles.guidanceBtn, ...(guidanceLevel === level ? styles.guidanceBtnActive : {}) }}
-              aria-checked={guidanceLevel === level}
-              tabIndex={guidanceLevel === level ? 0 : -1}
-              onClick={() => onGuidanceChange?.(level)}
-              onKeyDown={(event) => handleGuidanceKeyDown(event, index)}
-            >
-              {level[0].toUpperCase() + level.slice(1)}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -311,29 +282,6 @@ const styles = {
     color: 'var(--text-muted)',
     fontSize: 11,
     lineHeight: 1.45,
-  },
-  guidanceControl: {
-    display: 'flex',
-    gap: 2,
-    marginTop: 9,
-    padding: 2,
-    border: '1px solid var(--border)',
-    borderRadius: 6,
-    background: 'var(--bg-tertiary)',
-  },
-  guidanceBtn: {
-    flex: 1,
-    padding: '4px 3px',
-    border: 'none',
-    borderRadius: 4,
-    background: 'transparent',
-    color: 'var(--text-muted)',
-    fontSize: 9.5,
-  },
-  guidanceBtnActive: {
-    background: 'var(--bg-elevated)',
-    color: 'var(--text-primary)',
-    fontWeight: 700,
   },
   phaseBar: {
     display: 'grid',
