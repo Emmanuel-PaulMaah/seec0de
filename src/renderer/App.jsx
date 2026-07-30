@@ -10,6 +10,7 @@ import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer, { ProfileManagerCard } from './components/SettingsDrawer';
 import ProfileGate from './components/ProfileGate';
+import HomeScreen from './components/HomeScreen';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
@@ -110,6 +111,7 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
+  const [showHome, setShowHome] = useState(true);
 
   useEffect(() => {
     const theme = settings.theme === 'seec0de-green' ? 'seec0de-green' : 'seec0de-dark';
@@ -935,6 +937,7 @@ export default function App() {
     setShowOnboarding(false);
     setOnboardingMode('setup');
     setGate(null);
+    setShowHome(true);
   }, [hydrateLearningProfile]);
 
   const handleSettingsChange = useCallback((next) => {
@@ -1114,39 +1117,57 @@ const beginExplanationResize = useCallback((event) => {
     ? settings.guidanceLevel
     : 'supported';
 
+  const handleModeChange = (mode) => {
+    if (mode === 'home') {
+      runOwnerRef.current += 1;
+      setRunLoading(false);
+      setShowHome(true);
+      return;
+    }
+
+    setShowHome(false);
+    const enteringLearnMode = mode === 'learn';
+    if (enteringLearnMode === learnMode) return;
+
+    runOwnerRef.current += 1;
+    setRunLoading(false);
+    if (enteringLearnMode) {
+      workspaceGeneratedCodeRef.current = generatedCode;
+      setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
+      setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
+      setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn Mode opened. Choose a course.');
+    } else {
+      if (activeLesson) learnDraftRef.current = generatedCode;
+      setGeneratedCode(workspaceGeneratedCodeRef.current);
+      setActiveGeneratedTab('pseudocode');
+    }
+    setLearnMode(enteringLearnMode);
+  };
+
   return (
     <div style={styles.container}>
       <TitleBar
         explorerVisible={explorerVisible}
-        onToggleExplorer={learnMode ? undefined : () => setExplorerVisible((v) => !v)}
+        onToggleExplorer={showHome || learnMode ? undefined : () => setExplorerVisible((v) => !v)}
         terminalVisible={terminalVisible}
-        onToggleTerminal={learnMode ? undefined : () => setTerminalVisible((v) => !v)}
+        onToggleTerminal={showHome || learnMode ? undefined : () => setTerminalVisible((v) => !v)}
         onOpenSettings={() => setShowSettings(true)}
         activeProfile={settings.activeProfileId ? { username: settings.username, avatar: settings.avatar } : null}
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={handleAddProfile}
         onManageProfile={() => setShowProfileManager(true)}
-        mode={learnMode ? 'learn' : 'workspace'}
-        onModeChange={(mode) => {
-          const enteringLearnMode = mode === 'learn';
-          runOwnerRef.current += 1;
-          setRunLoading(false);
-          if (enteringLearnMode) {
-            workspaceGeneratedCodeRef.current = generatedCode;
-            setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
-            setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
-          } else {
-            if (activeLesson) learnDraftRef.current = generatedCode;
-            setGeneratedCode(workspaceGeneratedCodeRef.current);
-            setActiveGeneratedTab('pseudocode');
-          }
-          setLearnMode(enteringLearnMode);
-          if (enteringLearnMode) {
-            setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn Mode opened. Choose a course.');
-          }
-        }}
+        mode={showHome ? 'home' : learnMode ? 'learn' : 'workspace'}
+        onModeChange={handleModeChange}
       />
 
+      {showHome ? (
+        <HomeScreen
+          username={settings.username}
+          hasActiveLesson={!!activeLesson}
+          onOpenWorkspace={() => handleModeChange('workspace')}
+          onOpenLearnMode={() => handleModeChange('learn')}
+        />
+      ) : (
       <div style={styles.body}>
         <div style={styles.workspace} className={learnMode ? 'app-workspace learn-mode-workspace' : 'app-workspace'}>
           {!learnMode && explorerVisible && (
@@ -1323,6 +1344,7 @@ const beginExplanationResize = useCallback((event) => {
           />
         )}
       </div>
+      )}
 
       <OnboardingModal
         open={showOnboarding}

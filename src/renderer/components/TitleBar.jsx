@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   PanelLeft, PanelLeftClose, Terminal as TermIcon,
-  Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap,
+  Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap, House,
 } from 'lucide-react';
 import UpdatePill from './UpdatePill';
 import { Avatar } from './ProfileForm';
@@ -52,6 +52,15 @@ export default function TitleBar({
         )}
         {onModeChange && (
           <div style={styles.modeSwitch} aria-label="Application mode">
+            <button
+              type="button"
+              style={{ ...styles.modeBtn, ...(mode === 'home' ? styles.modeBtnActive : {}) }}
+              aria-pressed={mode === 'home'}
+              onClick={() => onModeChange('home')}
+            >
+              <House size={11} />
+              Home
+            </button>
             <button
               type="button"
               style={{ ...styles.modeBtn, ...(mode === 'workspace' ? styles.modeBtnActive : {}) }}
