@@ -1157,6 +1157,7 @@ const beginExplanationResize = useCallback((event) => {
         onPickFolder={handlePickFolder}
         onCloseFolder={handleCloseFolder}
         onOpenFile={handleOpenFile}
+        onDeleteFile={handleCloseFile}
         activeFilePath={activePath}
         refreshKey={0}
       />

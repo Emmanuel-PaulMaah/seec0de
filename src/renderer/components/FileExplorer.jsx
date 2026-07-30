@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check, Pencil } from 'lucide-react';
-import { basename, joinPath } from '../engine/fileLanguage';
+import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2 } from 'lucide-react';
+import { basename, dirname, joinPath } from '../engine/fileLanguage';
 
 // A small recursive file tree. Keeps state per-folder (open/closed + entries)
 // in a flat map keyed by absolute path, so we don't re-fetch on every render.
@@ -10,6 +10,7 @@ import { basename, joinPath } from '../engine/fileLanguage';
 //   onPickFolder      () => Promise<void>     -- triggers main process dialog
 //   onCloseFolder     () => void
 //   onOpenFile        (path: string) => void  -- opens file in editor
+//   onDeleteFile      (path: string) => void  -- closes a deleted editor tab
 //   activeFilePath    string | null           -- highlighted in the tree
 //   refreshKey        number                  -- bump to force a refresh
 
@@ -24,6 +25,7 @@ export default function FileExplorer({
   onPickFolder,
   onCloseFolder,
   onOpenFile,
+  onDeleteFile,
   activeFilePath,
   refreshKey,
 }) {
@@ -31,6 +33,8 @@ export default function FileExplorer({
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(null); // null | 'file' | 'folder'
   const [draftName, setDraftName] = useState('');
+  const [selectedDir, setSelectedDir] = useState(rootPath);
+  const [deleting, setDeleting] = useState(null); // { path, name, parentPath } | null
   const [renaming, setRenaming] = useState(null); // { path, name, parentPath } | null
   const [renameDraft, setRenameDraft] = useState('');
   const renameRef = useRef(null);
@@ -52,8 +56,11 @@ export default function FileExplorer({
   useEffect(() => {
     if (!rootPath) {
       setTree({});
+      setSelectedDir(null);
       return;
     }
+    setSelectedDir(rootPath);
+    setDeleting(null);
     setTree({ [rootPath]: { entries: null, open: true } });
     loadDir(rootPath);
   }, [rootPath, refreshKey, loadDir]);
@@ -99,25 +106,30 @@ export default function FileExplorer({
     if (!rootPath || !creating) return;
     const name = draftName.trim();
     if (!name) { cancelCreate(); return; }
-    // Disallow path separators — keep new entries at the root for simplicity.
+    // One inline name creates inside whichever folder is selected in the tree.
     if (/[\\/]/.test(name)) {
-      setError('Name cannot contain "/" or "\\". Create nested items by opening a folder first.');
+      setError('Name cannot contain "/" or "\\". Select a folder, then create the item there.');
       return;
     }
     try {
-      const target = joinPath(rootPath, name);
+      const parentPath = selectedDir || rootPath;
+      const target = joinPath(parentPath, name);
       if (creating === NEW_FILE) {
         await window.seecode.fs.createFile(target);
       } else {
         await window.seecode.fs.createDir(target);
       }
-      await loadDir(rootPath);
+      await loadDir(parentPath);
+      setTree((prev) => ({
+        ...prev,
+        [parentPath]: { ...prev[parentPath], open: true },
+      }));
       cancelCreate();
       if (creating === NEW_FILE) onOpenFile?.(target);
     } catch (err) {
       setError(err.message || 'Failed to create.');
     }
-  }, [rootPath, creating, draftName, loadDir, cancelCreate, onOpenFile]);
+  }, [rootPath, selectedDir, creating, draftName, loadDir, cancelCreate, onOpenFile]);
 
   const onDraftKey = useCallback((e) => {
     if (e.key === 'Enter')      { e.preventDefault(); commitCreate(); }
@@ -131,13 +143,13 @@ export default function FileExplorer({
     }
   }, [rootPath, loadDir]);
 
-  const startRename = useCallback((entryPath, entryName) => {
+  const startRename = useCallback((entryPath, entryName, isDir) => {
     setError(null);
 
     const slash = Math.max(entryPath.lastIndexOf('/'), entryPath.lastIndexOf('\\'));
     const parentPath = slash >+ 0 ? entryPath.slice(0, slash) : rootPath;
 
-    setRenaming({ path: entryPath, name: entryName, parentPath });
+    setRenaming({ path: entryPath, name: entryName, parentPath, isDir });
     setRenameDraft(entryName);
   }, [rootPath]);
 
@@ -168,6 +180,14 @@ export default function FileExplorer({
 
       await loadDir(renaming.parentPath);
 
+      if (renaming.isDir && (
+        selectedDir === renaming.path
+        || selectedDir?.startsWith(`${renaming.path}\\`)
+        || selectedDir?.startsWith(`${renaming.path}/`)
+      )) {
+        setSelectedDir(`${nextPath}${selectedDir.slice(renaming.path.length)}`);
+      }
+
       if (activeFilePath === renaming.path) {
         onOpenFile?.(nextPath);
       }
@@ -176,7 +196,26 @@ export default function FileExplorer({
     } catch (err) {
       setError(err.message || 'Failed to rename.');
     }
-  }, [renaming, renameDraft, cancelRename, loadDir, activeFilePath, onOpenFile]);
+  }, [renaming, renameDraft, cancelRename, loadDir, activeFilePath, onOpenFile, selectedDir]);
+
+  const requestDelete = useCallback((filePath, fileName) => {
+    setError(null);
+    setDeleting({ path: filePath, name: fileName, parentPath: dirname(filePath) || rootPath });
+  }, [rootPath]);
+
+  const cancelDelete = useCallback(() => setDeleting(null), []);
+
+  const commitDelete = useCallback(async () => {
+    if (!deleting) return;
+    try {
+      await window.seecode.fs.delete(deleting.path);
+      onDeleteFile?.(deleting.path);
+      await loadDir(deleting.parentPath);
+      setDeleting(null);
+    } catch (err) {
+      setError(err.message || 'Failed to delete file.');
+    }
+  }, [deleting, loadDir, onDeleteFile]);
 
   const onRenameKey = useCallback((e) => {
     if (e.key === 'Enter') {
@@ -207,12 +246,19 @@ export default function FileExplorer({
   return (
     <div style={styles.panel}>
       <div style={styles.header}>
-        <span style={styles.headerLabel} title={rootPath}>{basename(rootPath) || rootPath}</span>
+        <button
+          type="button"
+          style={{ ...styles.headerLabel, ...(selectedDir === rootPath ? styles.headerLabelSelected : {}) }}
+          title="Select project root as the creation target"
+          onClick={() => setSelectedDir(rootPath)}
+        >
+          {basename(rootPath) || rootPath}
+        </button>
         <div style={styles.headerActions}>
-          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title="New file">
+          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
             <Plus size={12} />
           </button>
-          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title="New folder">
+          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title={`New folder in ${basename(selectedDir) || 'project root'}`}>
             <FolderPlus size={12} />
           </button>
           <button style={styles.iconBtn} onClick={handleRefresh} title="Refresh">
@@ -225,7 +271,9 @@ export default function FileExplorer({
       </div>
 
       {creating && (
-        <div style={styles.draftRow}>
+        <div>
+          <div style={styles.draftTarget}>Creating in {selectedDir === rootPath ? 'project root' : basename(selectedDir)}</div>
+          <div style={styles.draftRow}>
           {creating === NEW_FOLDER
             ? <Folder size={13} style={styles.draftIcon} />
             : <File size={13} style={styles.draftIcon} />}
@@ -246,6 +294,15 @@ export default function FileExplorer({
           <button style={styles.draftCancel} onMouseDown={(e) => e.preventDefault()} onClick={cancelCreate} title="Cancel (Esc)">
             <X size={11} />
           </button>
+          </div>
+        </div>
+      )}
+
+      {deleting && (
+        <div style={styles.deleteConfirm} role="alert">
+          <span style={styles.deleteText}>Move “{deleting.name}” to the Recycle Bin?</span>
+          <button type="button" style={styles.deleteBtn} onClick={commitDelete}>Delete</button>
+          <button type="button" style={styles.draftCancel} onClick={cancelDelete} aria-label="Cancel delete"><X size={11} /></button>
         </div>
       )}
 
@@ -259,6 +316,9 @@ export default function FileExplorer({
           tree={tree}
           onToggleDir={toggleDir}
           onOpenFile={onOpenFile}
+          selectedDir={selectedDir}
+          onSelectDir={setSelectedDir}
+          onRequestDelete={requestDelete}
           activeFilePath={activeFilePath}
           isRoot
           renaming={renaming}
@@ -274,7 +334,7 @@ export default function FileExplorer({
   );
 }
 
-function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, activeFilePath, isRoot, renaming, renameDraft, renameRef, onRenameDraftChange, onRenameKey, onRenameBlur, onStartRename }) {
+function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, activeFilePath, selectedDir, onSelectDir, onRequestDelete, isRoot, renaming, renameDraft, renameRef, onRenameDraftChange, onRenameKey, onRenameBlur, onStartRename }) {
   const node = isDir ? tree[path] : null;
   const open = !!node?.open;
   const entries = node?.entries;
@@ -295,6 +355,9 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
             onToggleDir={onToggleDir}
             onOpenFile={onOpenFile}
             activeFilePath={activeFilePath}
+            selectedDir={selectedDir}
+            onSelectDir={onSelectDir}
+            onRequestDelete={onRequestDelete}
             renaming={renaming}
             renameDraft={renameDraft}
             renameRef={renameRef}
@@ -309,6 +372,7 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
   }
 
   const isActive = !isDir && path === activeFilePath;
+  const isSelectedDir = isDir && path === selectedDir;
   const isRenaming = renaming?.path === path;
 
   return (
@@ -317,9 +381,17 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
         style={{
           ...styles.row,
           ...(isActive ? styles.rowActive : {}),
+          ...(isSelectedDir ? styles.rowSelected : {}),
           paddingLeft: 8 + depth * 12,
         }}
-        onClick={() => (isDir ? onToggleDir(path) : onOpenFile(path))}
+        onClick={() => {
+          if (isDir) {
+            onSelectDir(path);
+            onToggleDir(path);
+          } else {
+            onOpenFile(path);
+          }
+        }}
         title={path}
       >
         {isDir ? (
@@ -356,18 +428,41 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        onStartRename(path, name);
+        onStartRename(path, name, isDir);
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
-          onStartRename(path, name);
+          onStartRename(path, name, isDir);
         }
       }}
     >
       <Pencil size={11} />
     </span>
+    {!isDir && (
+      <span
+        role="button"
+        tabIndex={0}
+        title="Delete file"
+        aria-label={`Delete ${name}`}
+        style={styles.rowAction}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRequestDelete(path, name);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            onRequestDelete(path, name);
+          }
+        }}
+      >
+        <Trash2 size={11} />
+      </span>
+    )}
   </span>
 )}
       </button>
@@ -382,6 +477,9 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
           onToggleDir={onToggleDir}
           onOpenFile={onOpenFile}
           activeFilePath={activeFilePath}
+          selectedDir={selectedDir}
+          onSelectDir={onSelectDir}
+          onRequestDelete={onRequestDelete}
           renaming={renaming}
           renameDraft={renameDraft}
           renameRef={renameRef}
@@ -413,6 +511,11 @@ const styles = {
     background: 'var(--bg-tertiary)',
   },
   headerLabel: {
+    minWidth: 0,
+    padding: '2px 4px',
+    border: 'none',
+    borderRadius: 3,
+    background: 'transparent',
     fontSize: 11,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -421,6 +524,10 @@ const styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+  },
+  headerLabelSelected: {
+    background: 'var(--accent-soft)',
+    color: 'var(--text-primary)',
   },
   headerActions: {
     display: 'flex',
@@ -477,6 +584,12 @@ const styles = {
     background: 'var(--bg-elevated)',
     borderBottom: '1px solid var(--border)',
   },
+  draftTarget: {
+    padding: '5px 8px 0',
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-muted)',
+    fontSize: 10,
+  },
   draftIcon: {
     color: 'var(--text-secondary)',
     flexShrink: 0,
@@ -512,6 +625,29 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     cursor: 'pointer',
+  },
+  deleteConfirm: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '6px 8px',
+    background: 'var(--danger-soft)',
+    borderBottom: '1px solid var(--border)',
+  },
+  deleteText: {
+    flex: 1,
+    minWidth: 0,
+    color: 'var(--text-secondary)',
+    fontSize: 10.5,
+    lineHeight: 1.35,
+  },
+  deleteBtn: {
+    padding: '3px 7px',
+    border: '1px solid var(--danger)',
+    borderRadius: 3,
+    background: 'var(--danger)',
+    color: '#fff',
+    fontSize: 10.5,
   },
   emptyState: {
     padding: 16,
@@ -568,6 +704,9 @@ const styles = {
   rowActive: {
     background: 'rgba(0, 122, 204, 0.16)',
     color: '#fff',
+  },
+  rowSelected: {
+    background: 'var(--accent-soft)',
   },
   chev: {
     width: 12,
