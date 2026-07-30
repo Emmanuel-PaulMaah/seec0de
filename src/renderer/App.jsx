@@ -83,7 +83,7 @@ function restoredLearningState(settings = loadSettings()) {
       ? session.activityId
       : lesson?.activities?.[0]?.id || null,
     generatedCode: lesson
-      ? { pseudocode: '', code: { [language]: session?.draftCode ?? lesson.starterCode ?? '' } }
+      ? { pseudocode: '', code: { [language]: typeof session?.draftCode === 'string' ? session.draftCode : lesson.starterCode ?? '' } }
       : { pseudocode: '', code: {} },
   };
 }
@@ -158,6 +158,7 @@ export default function App() {
   const [lessonAttempts, setLessonAttempts] = useState(() => restoredLearningState().attempts);
   const [revealedHints, setRevealedHints] = useState(() => restoredLearningState().revealedHints);
   const [activeActivityId, setActiveActivityId] = useState(() => restoredLearningState().activityId);
+  const [learnAnnouncement, setLearnAnnouncement] = useState('');
   const learnDraftRef = useRef(restoredLearningState().generatedCode);
   const workspaceGeneratedCodeRef = useRef({ pseudocode: '', code: {} });
 
@@ -183,6 +184,7 @@ export default function App() {
     setLessonAttempts(0);
     setRevealedHints(0);
     setActiveActivityId(lesson?.activities?.[0]?.id || null);
+    setLearnAnnouncement(lesson ? `${lesson.title} opened. Start with the first activity.` : 'Course list opened.');
     runOwnerRef.current += 1;
     setRunLoading(false);
     if (lesson) {
@@ -206,6 +208,7 @@ export default function App() {
     setLessonErrorCoaching([]);
     setLearnPhase('learn');
     setRunnerOutput(null);
+    setLearnAnnouncement('Starter code restored.');
   }, [activeLesson]);
 
   const handleRevealSolution = useCallback(() => {
@@ -794,6 +797,7 @@ export default function App() {
     if (inLessonMode) {
       setLearnPhase('run');
       setLessonAttempts((count) => count + 1);
+      setLearnAnnouncement(`Running ${payload.language} lesson…`);
     }
 
     try {
@@ -822,6 +826,9 @@ export default function App() {
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
         setLessonErrorCoaching(verdict.pass ? [] : buildLessonErrorCoaching(normalisedOutput.stderr, normalisedOutput.language));
         setLearnPhase(verdict.pass ? 'complete' : 'fix');
+        setLearnAnnouncement(verdict.pass
+          ? 'Lesson passed. Your progress is saved and the next lesson is available.'
+          : describeLessonRunFailure(normalisedOutput.stderr, payload.language));
         if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
           const nextStreak = revealedHints === 0
@@ -855,6 +862,7 @@ export default function App() {
           reason: 'Your code did not run — check the Fix-it coach, then try again.',
         });
         setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language));
+        setLearnAnnouncement(describeLessonRunFailure(stderr, payload.language));
       }
     } finally {
       if (runOwner === runOwnerRef.current) setRunLoading(false);
@@ -907,6 +915,9 @@ export default function App() {
     setActiveGeneratedTab(nextSettings.learnMode && restored.lesson ? restored.lesson.language : 'pseudocode');
     setActivePath(null);
     setRunnerOutput(null);
+    setLearnAnnouncement(nextSettings.learnMode && restored.lesson
+      ? `${restored.lesson.title} resumed.`
+      : nextSettings.learnMode ? 'Course list opened.' : '');
     runOwnerRef.current += 1;
     setRunLoading(false);
   }, []);
@@ -1095,6 +1106,9 @@ const beginExplanationResize = useCallback((event) => {
 
   const learnResultVisible = learnMode && !!activeLesson && ['run', 'fix', 'complete'].includes(learnPhase);
   const resultVisible = learnMode ? learnResultVisible : previewVisible;
+  const guidanceLevel = ['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
+    ? settings.guidanceLevel
+    : 'supported';
 
   return (
     <div style={styles.container}>
@@ -1123,11 +1137,14 @@ const beginExplanationResize = useCallback((event) => {
             setActiveGeneratedTab('pseudocode');
           }
           setLearnMode(enteringLearnMode);
+          if (enteringLearnMode) {
+            setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn Mode opened. Choose a course.');
+          }
         }}
       />
 
       <div style={styles.body}>
-        <div style={styles.workspace}>
+        <div style={styles.workspace} className={learnMode ? 'app-workspace learn-mode-workspace' : 'app-workspace'}>
           {!learnMode && explorerVisible && (
   <>
     <div style={{ ...styles.explorerShell, width: explorerWidth }}>
@@ -1152,6 +1169,7 @@ const beginExplanationResize = useCallback((event) => {
 )}
 
           <div
+            className={learnMode ? 'learn-mode-guide-shell' : undefined}
             style={{
               ...styles.instructionShell,
               width: learnMode ? 360 : (instructionCollapsed ? 32 : instructionWidth),
@@ -1170,8 +1188,9 @@ const beginExplanationResize = useCallback((event) => {
                 attempts={lessonAttempts}
                 revealedHints={revealedHints}
                 activeActivityId={activeActivityId}
-                guidanceLevel={settings.guidanceLevel || 'supported'}
+                guidanceLevel={guidanceLevel}
                 guidanceSuccessStreak={settings.guidanceSuccessStreak || 0}
+                announcement={learnAnnouncement}
                 onSelectLesson={handleSelectLesson}
                 onResetLessonCode={handleResetLessonCode}
                 onRevealSolution={handleRevealSolution}
@@ -1208,27 +1227,29 @@ const beginExplanationResize = useCallback((event) => {
             />
           )}
 
-          <CodePanel
-            generatedCode={generatedCode}
-            selectedLanguages={effectiveLanguages}
-            appTheme={settings.theme}
-            onCodeChange={handleCodeChange}
-            onSelectionExplain={handleSelectionExplain}
-            aiLoading={aiLoading}
-            openFiles={openFiles}
-            activePath={activePath}
-            onActivatePath={setActivePath}
-            onCloseFile={handleCloseFile}
-            onFileContentChange={handleFileContentChange}
-            onSaveActiveFile={handleSaveActiveFile}
-            onRunCode={handleRunCode}
-            runLoading={runLoading}
-            activeGeneratedTab={activeGeneratedTab}
-            onActivateGeneratedTab={setActiveGeneratedTab}
-            folderOpen={!learnMode && !!rootPath}
-            lessonMode={inLessonMode}
-            lessonLanguage={activeLesson?.language}
-          />
+          <div className={learnMode ? 'workspace-editor-shell learn-mode-editor-shell' : 'workspace-editor-shell'}>
+            <CodePanel
+              generatedCode={generatedCode}
+              selectedLanguages={effectiveLanguages}
+              appTheme={settings.theme}
+              onCodeChange={handleCodeChange}
+              onSelectionExplain={handleSelectionExplain}
+              aiLoading={aiLoading}
+              openFiles={openFiles}
+              activePath={activePath}
+              onActivatePath={setActivePath}
+              onCloseFile={handleCloseFile}
+              onFileContentChange={handleFileContentChange}
+              onSaveActiveFile={handleSaveActiveFile}
+              onRunCode={handleRunCode}
+              runLoading={runLoading}
+              activeGeneratedTab={activeGeneratedTab}
+              onActivateGeneratedTab={setActiveGeneratedTab}
+              folderOpen={!learnMode && !!rootPath}
+              lessonMode={inLessonMode}
+              lessonLanguage={activeLesson?.language}
+            />
+          </div>
 
           {resultVisible && !learnMode && (
             <div
@@ -1242,6 +1263,7 @@ const beginExplanationResize = useCallback((event) => {
 
           {(!learnMode || resultVisible) && (
             <div
+              className={learnMode ? 'learn-mode-result-shell' : undefined}
               style={{
                 ...styles.previewShell,
                 width: resultVisible ? (learnMode ? 360 : previewWidth) : 32,
@@ -1386,6 +1408,19 @@ function deriveLanguages(settings) {
 
 function buildLessonErrorCoaching(stderr, language) {
   if (!stderr || !String(stderr).trim()) return [];
+  const raw = String(stderr);
+  if (/not found on PATH/i.test(raw)) {
+    const runtime = language === 'python' ? 'Python' : language === 'javascript' ? 'Node.js' : 'the required toolchain';
+    return [{
+      title: `${runtime} is not installed`,
+      plain: `Your lesson code is safe. seec0de cannot run it until ${runtime} is available on this computer.`,
+      fixes: [
+        `Install ${runtime} using the link or command in Settings → Toolchains.`,
+        'Close and reopen seec0de after installation so it can find the new tool.',
+        'Return to this lesson and press Run again.',
+      ],
+    }];
+  }
   const translated = translateError(stderr, language);
   if (translated.length > 0) return translated;
   return [{
@@ -1397,6 +1432,14 @@ function buildLessonErrorCoaching(stderr, language) {
       'Compare your code with the lesson hints one small line at a time.',
     ],
   }];
+}
+
+function describeLessonRunFailure(stderr, language) {
+  if (/not found on PATH/i.test(String(stderr || ''))) {
+    const runtime = language === 'python' ? 'Python' : language === 'javascript' ? 'Node.js' : 'The required toolchain';
+    return `${runtime} is not available. Your lesson is saved. Open Settings, then Toolchains, for installation help.`;
+  }
+  return 'Run failed. Fix guidance is available before you try again.';
 }
 
 // Decide whether the app should open behind the "who's learning?" gate.

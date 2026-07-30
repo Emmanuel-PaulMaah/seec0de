@@ -8,6 +8,7 @@ const PHASES = [
   { id: 'run', label: 'Run', icon: Play },
   { id: 'fix', label: 'Fix', icon: Wrench },
 ];
+const GUIDANCE_LEVELS = ['supported', 'guided', 'independent'];
 
 export default function LearnModePanel({
   activeLesson,
@@ -22,6 +23,7 @@ export default function LearnModePanel({
   activeActivityId = null,
   guidanceLevel = 'supported',
   guidanceSuccessStreak = 0,
+  announcement = '',
   onSelectLesson,
   onResetLessonCode,
   onRevealSolution,
@@ -31,6 +33,8 @@ export default function LearnModePanel({
   onGuidanceSuggestionLater,
   onNextLesson,
 }) {
+  const headingRef = React.useRef(null);
+  const mountedRef = React.useRef(false);
   const activePhase = phase === 'complete' ? 'run' : phase;
   const allActivities = activeLesson?.activities || [];
   const activities = guidanceLevel === 'supported'
@@ -48,12 +52,29 @@ export default function LearnModePanel({
       : null;
   const suggestLessGuidance = phase === 'complete' && guidanceSuccessStreak >= 3 && nextGuidanceLevel;
 
+  React.useEffect(() => {
+    if (!mountedRef.current || !activeLesson) headingRef.current?.focus();
+    mountedRef.current = true;
+  }, [activeLesson?.id]);
+
+  const handleGuidanceKeyDown = (event, index) => {
+    let nextIndex = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % GUIDANCE_LEVELS.length;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + GUIDANCE_LEVELS.length) % GUIDANCE_LEVELS.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = GUIDANCE_LEVELS.length - 1;
+    if (nextIndex == null) return;
+    event.preventDefault();
+    onGuidanceChange?.(GUIDANCE_LEVELS[nextIndex]);
+    event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus();
+  };
+
   return (
     <aside style={styles.panel} aria-label="Learn Mode guide">
       <div style={styles.header}>
         <div style={styles.eyebrow}><GraduationCap size={13} /> Learn Mode</div>
         <div style={styles.headingRow}>
-          <div style={styles.heading}>{activeLesson ? activeLesson.title : 'Choose a course'}</div>
+          <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>{activeLesson ? activeLesson.title : 'Choose a course'}</h2>
           {activeLesson && (
             <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
               <ChevronLeft size={11} /> Courses
@@ -65,14 +86,17 @@ export default function LearnModePanel({
             ? `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'} · progress saves automatically`
             : 'Pick a lesson to begin a guided Learn → Run → Fix loop.'}
         </div>
-        <div style={styles.guidanceControl} aria-label="Guidance level">
-          {['supported', 'guided', 'independent'].map((level) => (
+        <div style={styles.guidanceControl} role="radiogroup" aria-label="Guidance level">
+          {GUIDANCE_LEVELS.map((level, index) => (
             <button
               key={level}
               type="button"
+              role="radio"
               style={{ ...styles.guidanceBtn, ...(guidanceLevel === level ? styles.guidanceBtnActive : {}) }}
-              aria-pressed={guidanceLevel === level}
+              aria-checked={guidanceLevel === level}
+              tabIndex={guidanceLevel === level ? 0 : -1}
               onClick={() => onGuidanceChange?.(level)}
+              onKeyDown={(event) => handleGuidanceKeyDown(event, index)}
             >
               {level[0].toUpperCase() + level.slice(1)}
             </button>
@@ -167,9 +191,7 @@ export default function LearnModePanel({
       </div>
 
       <div style={styles.status} role="status" aria-live="polite">
-        {phase === 'run' && 'Running your code…'}
-        {phase === 'fix' && 'The run needs attention. Follow the Fix-it coach, then run again.'}
-        {phase === 'complete' && 'Lesson complete. Your progress has been saved.'}
+        {announcement}
       </div>
     </aside>
   );
@@ -177,8 +199,12 @@ export default function LearnModePanel({
 
 function ActivityGuide({ activity, index, total, onBack, onContinue }) {
   const [answer, setAnswer] = React.useState(null);
+  const headingRef = React.useRef(null);
 
-  React.useEffect(() => setAnswer(null), [activity.id]);
+  React.useEffect(() => {
+    setAnswer(null);
+    headingRef.current?.focus();
+  }, [activity.id]);
 
   const isPrediction = activity.type === 'prediction';
   const answered = answer !== null;
@@ -187,7 +213,7 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
   return (
     <section style={styles.activityCard} aria-labelledby={`activity-${activity.id}`}>
       <div style={styles.activityMeta}>Activity {index + 1} of {total} · {activity.type.replace('-', ' ')}</div>
-      <h3 id={`activity-${activity.id}`} style={styles.activityTitle}>{activity.title}</h3>
+      <h3 ref={headingRef} tabIndex={-1} id={`activity-${activity.id}`} style={styles.activityTitle}>{activity.title}</h3>
       {activity.instruction && <p style={styles.activityText}>{activity.instruction}</p>}
       {activity.example && <pre style={styles.activityCode}>{activity.example}</pre>}
 

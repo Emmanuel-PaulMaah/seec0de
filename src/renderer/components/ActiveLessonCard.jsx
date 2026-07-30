@@ -35,11 +35,16 @@ export default function ActiveLessonCard({
 }) {
   const language = lesson?.language || 'javascript';
   const [solutionShown, setSolutionShown] = useState(false);
+  const resultRef = React.useRef(null);
 
   // Reset hint progression + solution reveal whenever the lesson changes.
   useEffect(() => {
     setSolutionShown(false);
   }, [lesson?.id]);
+
+  useEffect(() => {
+    if (status === 'pass' || status === 'fail') resultRef.current?.focus();
+  }, [status]);
 
   if (!lesson) return null;
 
@@ -92,7 +97,7 @@ export default function ActiveLessonCard({
 
       {/* Status footer */}
       {status === 'pass' && (
-        <div style={{ ...styles.statusBox, ...styles.statusPass }}>
+        <div ref={resultRef} tabIndex={-1} style={{ ...styles.statusBox, ...styles.statusPass }}>
           <CheckCircle2 size={14} />
           <div style={styles.statusBody}>
             <div style={styles.statusTitle}>Nailed it.</div>
@@ -104,7 +109,7 @@ export default function ActiveLessonCard({
       )}
 
       {status === 'fail' && verification && (
-        <div style={{ ...styles.statusBox, ...styles.statusFail }}>
+        <div ref={resultRef} tabIndex={-1} style={{ ...styles.statusBox, ...styles.statusFail }}>
           <XCircle size={14} />
           <div style={styles.statusBody}>
             <div style={styles.statusTitle}>Not quite.</div>
