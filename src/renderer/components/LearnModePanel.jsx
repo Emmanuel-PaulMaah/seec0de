@@ -20,18 +20,33 @@ export default function LearnModePanel({
   attempts = 0,
   revealedHints = 0,
   activeActivityId = null,
+  guidanceLevel = 'supported',
+  guidanceSuccessStreak = 0,
   onSelectLesson,
   onResetLessonCode,
   onRevealSolution,
   onHintIndexChange,
   onActivityChange,
+  onGuidanceChange,
+  onGuidanceSuggestionLater,
   onNextLesson,
 }) {
   const activePhase = phase === 'complete' ? 'run' : phase;
-  const activities = activeLesson?.activities || [];
+  const allActivities = activeLesson?.activities || [];
+  const activities = guidanceLevel === 'supported'
+    ? allActivities
+    : guidanceLevel === 'guided'
+      ? allActivities.filter((activity) => activity.type !== 'worked-example')
+      : allActivities.filter((activity) => activity.type === 'edit');
   const activityIndex = Math.max(0, activities.findIndex((activity) => activity.id === activeActivityId));
   const activeActivity = activities[activityIndex] || null;
   const showLessonCard = phase !== 'learn' || !activeActivity || activeActivity.type === 'edit';
+  const nextGuidanceLevel = guidanceLevel === 'supported'
+    ? 'guided'
+    : guidanceLevel === 'guided'
+      ? 'independent'
+      : null;
+  const suggestLessGuidance = phase === 'complete' && guidanceSuccessStreak >= 3 && nextGuidanceLevel;
 
   return (
     <aside style={styles.panel} aria-label="Learn Mode guide">
@@ -49,6 +64,19 @@ export default function LearnModePanel({
           {activeLesson
             ? `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'} · progress saves automatically`
             : 'Pick a lesson to begin a guided Learn → Run → Fix loop.'}
+        </div>
+        <div style={styles.guidanceControl} aria-label="Guidance level">
+          {['supported', 'guided', 'independent'].map((level) => (
+            <button
+              key={level}
+              type="button"
+              style={{ ...styles.guidanceBtn, ...(guidanceLevel === level ? styles.guidanceBtnActive : {}) }}
+              aria-pressed={guidanceLevel === level}
+              onClick={() => onGuidanceChange?.(level)}
+            >
+              {level[0].toUpperCase() + level.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -103,7 +131,25 @@ export default function LearnModePanel({
                 hintIndex={revealedHints}
                 onHintIndexChange={onHintIndexChange}
                 showTeaching={!activeActivity}
+                guidanceLevel={guidanceLevel}
+                attempts={attempts}
               />
+            )}
+            {suggestLessGuidance && (
+              <div style={styles.fadeSuggestion} role="status">
+                <div style={styles.fadeSuggestionTitle}>Ready for less guidance?</div>
+                <div style={styles.fadeSuggestionText}>
+                  You completed three new lessons without hints. Try {nextGuidanceLevel} guidance? You can switch back at any time.
+                </div>
+                <div style={styles.fadeSuggestionActions}>
+                  <button type="button" style={styles.fadeAcceptBtn} onClick={() => onGuidanceChange?.(nextGuidanceLevel)}>
+                    Use {nextGuidanceLevel}
+                  </button>
+                  <button type="button" style={styles.fadeLaterBtn} onClick={onGuidanceSuggestionLater}>
+                    Not now
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         ) : (
@@ -240,6 +286,29 @@ const styles = {
     fontSize: 11,
     lineHeight: 1.45,
   },
+  guidanceControl: {
+    display: 'flex',
+    gap: 2,
+    marginTop: 9,
+    padding: 2,
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    background: 'var(--bg-tertiary)',
+  },
+  guidanceBtn: {
+    flex: 1,
+    padding: '4px 3px',
+    border: 'none',
+    borderRadius: 4,
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 9.5,
+  },
+  guidanceBtnActive: {
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    fontWeight: 700,
+  },
   phaseBar: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
@@ -277,6 +346,46 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
+  },
+  fadeSuggestion: {
+    padding: 11,
+    border: '1px solid var(--accent)',
+    borderRadius: 8,
+    background: 'var(--accent-soft)',
+  },
+  fadeSuggestionTitle: {
+    color: 'var(--text-primary)',
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  fadeSuggestionText: {
+    marginTop: 4,
+    color: 'var(--text-secondary)',
+    fontSize: 11,
+    lineHeight: 1.45,
+  },
+  fadeSuggestionActions: {
+    display: 'flex',
+    gap: 6,
+    marginTop: 9,
+  },
+  fadeAcceptBtn: {
+    flex: 1,
+    padding: '6px 8px',
+    border: 'none',
+    borderRadius: 5,
+    background: 'var(--accent)',
+    color: 'var(--text-on-accent)',
+    fontSize: 10.5,
+    fontWeight: 700,
+  },
+  fadeLaterBtn: {
+    padding: '6px 8px',
+    border: '1px solid var(--border)',
+    borderRadius: 5,
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-secondary)',
+    fontSize: 10.5,
   },
   activityCard: {
     padding: 12,

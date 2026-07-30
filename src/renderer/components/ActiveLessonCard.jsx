@@ -30,6 +30,8 @@ export default function ActiveLessonCard({
   hintIndex = 0,
   onHintIndexChange,
   showTeaching = true,
+  guidanceLevel = 'supported',
+  attempts = 0,
 }) {
   const language = lesson?.language || 'javascript';
   const [solutionShown, setSolutionShown] = useState(false);
@@ -44,6 +46,10 @@ export default function ActiveLessonCard({
   const hints = lesson.hints || [];
   const visibleHints = hints.slice(0, hintIndex);
   const hintsRemaining = hintIndex < hints.length;
+  const hintsAvailable = guidanceLevel !== 'independent' || status === 'fail';
+  const solutionAvailable = guidanceLevel === 'supported'
+    || (guidanceLevel === 'guided' && status === 'fail')
+    || (guidanceLevel === 'independent' && status === 'fail' && attempts >= 2);
 
   const handleRevealSolution = () => {
     setSolutionShown(true);
@@ -161,7 +167,7 @@ export default function ActiveLessonCard({
 
       {/* Actions */}
       <div style={styles.actions}>
-        {hintsRemaining && (
+        {hintsRemaining && hintsAvailable && (
           <button
             style={styles.actionBtn}
             onClick={() => onHintIndexChange?.(hintIndex + 1)}
@@ -171,7 +177,7 @@ export default function ActiveLessonCard({
             <span>{hintIndex === 0 ? 'Hint' : `Hint ${hintIndex + 1} of ${hints.length}`}</span>
           </button>
         )}
-        {!solutionShown && lesson.solution && (
+        {!solutionShown && lesson.solution && solutionAvailable && (
           <button
             style={styles.actionBtn}
             onClick={handleRevealSolution}

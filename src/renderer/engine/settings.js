@@ -89,6 +89,10 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   // resumable lesson state; transient runner output is intentionally omitted.
   learnMode:           false,
   learningSession:     null,
+  // Scaffolding fades only with the learner's permission. Successful lesson
+  // completions without hints build toward an opt-in suggestion.
+  guidanceLevel:       'supported',
+  guidanceSuccessStreak: 0,
 });
 
 const STORE_DEFAULTS = Object.freeze({

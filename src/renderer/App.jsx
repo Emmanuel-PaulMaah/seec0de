@@ -824,7 +824,13 @@ export default function App() {
         setLearnPhase(verdict.pass ? 'complete' : 'fix');
         if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
-          const nextSettings = updateSettings({ completedLessons: next });
+          const nextStreak = revealedHints === 0
+            ? (settings.guidanceSuccessStreak || 0) + 1
+            : 0;
+          const nextSettings = updateSettings({
+            completedLessons: next,
+            guidanceSuccessStreak: nextStreak,
+          });
           setSettings(nextSettings);
         }
       }
@@ -853,7 +859,35 @@ export default function App() {
     } finally {
       if (runOwner === runOwnerRef.current) setRunLoading(false);
     }
-  }, [livePreview, runLoading, previewVisible, activeLesson, completedLessons, inLessonMode, settings.activeProfileId]);
+  }, [
+    livePreview,
+    runLoading,
+    previewVisible,
+    activeLesson,
+    completedLessons,
+    inLessonMode,
+    settings.activeProfileId,
+    settings.guidanceSuccessStreak,
+    revealedHints,
+  ]);
+
+  const handleGuidanceChange = useCallback((guidanceLevel) => {
+    if (!['supported', 'guided', 'independent'].includes(guidanceLevel)) return;
+    const next = updateSettings({ guidanceLevel, guidanceSuccessStreak: 0 });
+    setSettings(next);
+    const activities = activeLesson?.activities || [];
+    const visible = guidanceLevel === 'supported'
+      ? activities
+      : guidanceLevel === 'guided'
+        ? activities.filter((activity) => activity.type !== 'worked-example')
+        : activities.filter((activity) => activity.type === 'edit');
+    setActiveActivityId(visible[0]?.id || null);
+  }, [activeLesson]);
+
+  const handleGuidanceSuggestionLater = useCallback(() => {
+    const next = updateSettings({ guidanceSuccessStreak: 0 });
+    setSettings(next);
+  }, []);
 
   // ---- onboarding / settings / profile handlers ------------------------
   const hydrateLearningProfile = useCallback((nextSettings) => {
@@ -1136,11 +1170,15 @@ const beginExplanationResize = useCallback((event) => {
                 attempts={lessonAttempts}
                 revealedHints={revealedHints}
                 activeActivityId={activeActivityId}
+                guidanceLevel={settings.guidanceLevel || 'supported'}
+                guidanceSuccessStreak={settings.guidanceSuccessStreak || 0}
                 onSelectLesson={handleSelectLesson}
                 onResetLessonCode={handleResetLessonCode}
                 onRevealSolution={handleRevealSolution}
                 onHintIndexChange={setRevealedHints}
                 onActivityChange={setActiveActivityId}
+                onGuidanceChange={handleGuidanceChange}
+                onGuidanceSuggestionLater={handleGuidanceSuggestionLater}
                 onNextLesson={handleNextLesson}
               />
             ) : (
