@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   PanelLeft, PanelLeftClose, Terminal as TermIcon,
-  Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil,
+  Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap,
 } from 'lucide-react';
 import UpdatePill from './UpdatePill';
 import { Avatar } from './ProfileForm';
@@ -23,6 +23,8 @@ export default function TitleBar({
   onSwitchProfile,
   onAddProfile,
   onManageProfile,
+  mode = 'workspace',
+  onModeChange,
 }) {
   return (
     <div style={styles.titleBar}>
@@ -47,6 +49,27 @@ export default function TitleBar({
           >
             <TermIcon size={14} />
           </ToolBtn>
+        )}
+        {onModeChange && (
+          <div style={styles.modeSwitch} aria-label="Application mode">
+            <button
+              type="button"
+              style={{ ...styles.modeBtn, ...(mode === 'workspace' ? styles.modeBtnActive : {}) }}
+              aria-pressed={mode === 'workspace'}
+              onClick={() => onModeChange('workspace')}
+            >
+              Workspace
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.modeBtn, ...(mode === 'learn' ? styles.modeBtnActive : {}) }}
+              aria-pressed={mode === 'learn'}
+              onClick={() => onModeChange('learn')}
+            >
+              <GraduationCap size={11} />
+              Learn Mode
+            </button>
+          </div>
         )}
       </div>
 
@@ -215,6 +238,35 @@ const styles = {
   toggleBtnActive: {
     background: 'var(--bg-tertiary)',
     color: 'var(--text-primary)',
+  },
+  modeSwitch: {
+    WebkitAppRegion: 'no-drag',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    marginLeft: 5,
+    padding: 2,
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+  },
+  modeBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 21,
+    padding: '2px 7px',
+    border: 'none',
+    borderRadius: 4,
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 10.5,
+    whiteSpace: 'nowrap',
+  },
+  modeBtnActive: {
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    boxShadow: 'var(--shadow-sm)',
   },
 
   profileWrap: {

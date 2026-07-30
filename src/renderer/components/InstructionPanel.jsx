@@ -2,12 +2,10 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
-  GraduationCap, Terminal, AlertCircle, X,
+  AlertCircle, X,
 } from 'lucide-react';
 import { hasApiKey, subscribeHasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
-import LessonsPanel from './LessonsPanel';
-import ActiveLessonCard from './ActiveLessonCard';
 
 // ... (LANGUAGE_LABELS and labelFor unchanged)
 
@@ -23,17 +21,6 @@ export default function InstructionPanel({
   onOpenSettings,
   collapsed = false,
   onToggleCollapsed,
-  // lesson props
-  completedLessons = [],
-  onSelectLesson,
-  activeLesson,
-  lessonStatus = 'idle',
-  lessonVerification = null,
-  lessonErrorCoaching = [],
-  lessonHasNext = false,
-  onResetLessonCode,
-  onRevealSolution,
-  onNextLesson,
 }) {
   // Track key-presence reactively. The cached `hasApiKey()` hydrates
   // asynchronously on module load AND flips whenever the SettingsDrawer
@@ -45,24 +32,6 @@ export default function InstructionPanel({
     const unsub = subscribeHasApiKey(setAiReady);
     return () => { unsub(); };
   }, []);
-
-  const [activeTab, setActiveTab] = useState('build'); // 'build' or 'lessons'
-  const [lessonBrowserOpen, setLessonBrowserOpen] = useState(false);
-
-  // When a lesson becomes active (from any source — list click, "Next
-  // lesson", restored state) the user is in lesson mode, full stop. Pop
-  // the Lessons tab to the front so they see the teaching surface
-  // instead of the Build form.
-  useEffect(() => {
-    if (activeLesson) setActiveTab('lessons');
-  }, [activeLesson?.id]);
-
-  // Focus the active lesson by default. The full curriculum is still one
-  // click away, but it no longer sits underneath every lesson and competes
-  // with the current task, hints, and run feedback.
-  useEffect(() => {
-    if (activeLesson) setLessonBrowserOpen(false);
-  }, [activeLesson?.id]);
 
   const labelFor = (id) => {
   const labels = {
@@ -140,27 +109,8 @@ export default function InstructionPanel({
           )}
         </div>
 
-        {/* Tabs for Build vs Lessons */}
-        <div style={styles.tabs}>
-          <button
-            style={{ ...styles.tab, ...(activeTab === 'build' ? styles.tabActive : {}) }}
-            onClick={() => setActiveTab('build')}
-          >
-            <Terminal size={12} />
-            Build
-          </button>
-          <button
-            style={{ ...styles.tab, ...(activeTab === 'lessons' ? styles.tabActive : {}) }}
-            onClick={() => setActiveTab('lessons')}
-          >
-            <GraduationCap size={12} />
-            Lessons
-          </button>
-        </div>
-
         <div style={styles.scrollContent}>
-          {activeTab === 'build' ? (
-            <div style={styles.buildStack}>
+          <div style={styles.buildStack}>
               <p style={styles.headerHint}>
                 Describe what you want the program to do, in plain English.
               </p>
@@ -269,63 +219,7 @@ export default function InstructionPanel({
                   </button>
                 )
               )}
-            </div>
-          ) : (
-            <div style={styles.lessonsStack}>
-              {activeLesson ? (
-                <>
-                  <ActiveLessonCard
-                    lesson={activeLesson}
-                    status={lessonStatus}
-                    verification={lessonVerification}
-                    errorCoaching={lessonErrorCoaching}
-                    hasNext={lessonHasNext}
-                    onClear={() => onSelectLesson(null)}
-                    onResetCode={onResetLessonCode}
-                    onRevealSolution={onRevealSolution}
-                    onNext={onNextLesson}
-                  />
-                  <div style={styles.lessonBrowserCard}>
-                    <button
-                      type="button"
-                      style={styles.lessonBrowserToggle}
-                      onClick={() => setLessonBrowserOpen((v) => !v)}
-                      aria-expanded={lessonBrowserOpen}
-                    >
-                      <GraduationCap size={12} />
-                      <span style={styles.lessonBrowserText}>
-                        {lessonBrowserOpen ? 'Hide lesson list' : 'Browse other lessons'}
-                      </span>
-                      <span style={styles.lessonBrowserMeta}>
-                        {completedLessons.length} completed
-                      </span>
-                    </button>
-                    {lessonBrowserOpen && (
-                      <div style={styles.lessonBrowserBody}>
-                        <LessonsPanel
-                          completedLessons={completedLessons}
-                          onSelectLesson={onSelectLesson}
-                          activeLessonId={activeLesson?.id}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p style={styles.headerHint}>
-                    Pick a lesson below. You'll read the concept, then write the code
-                    yourself in the editor and run it to check your work.
-                  </p>
-                  <LessonsPanel
-                    completedLessons={completedLessons}
-                    onSelectLesson={onSelectLesson}
-                    activeLessonId={activeLesson?.id}
-                  />
-                </>
-              )}
-            </div>
-          )}
+          </div>
         </div>
 
       </div>
@@ -410,35 +304,6 @@ const styles = {
     flexShrink: 0,
   },
 
-  tabs: {
-    display: 'flex',
-    background: 'var(--bg-tertiary)',
-    borderRadius: 8,
-    padding: 2,
-    gap: 2,
-  },
-  tab: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    padding: '6px 0',
-    fontSize: 12,
-    fontWeight: 500,
-    border: 'none',
-    background: 'transparent',
-    color: 'var(--text-muted)',
-    borderRadius: 6,
-    cursor: 'pointer',
-    transition: 'all var(--motion-fast) var(--ease-out)',
-  },
-  tabActive: {
-    background: 'var(--bg-elevated)',
-    color: 'var(--text-primary)',
-    boxShadow: 'var(--shadow-sm)',
-  },
-
   scrollContent: {
     flex: 1,
     overflowY: 'auto',
@@ -451,45 +316,6 @@ const styles = {
     gap: 14,
     flex: 1,
   },
-  lessonsStack: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 14,
-  },
-  lessonBrowserCard: {
-    background: 'var(--bg-elevated)',
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  lessonBrowserToggle: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-secondary)',
-    padding: '9px 10px',
-    fontSize: 12,
-    cursor: 'pointer',
-    textAlign: 'left',
-  },
-  lessonBrowserText: {
-    flex: 1,
-    color: 'var(--text-primary)',
-    fontWeight: 600,
-  },
-  lessonBrowserMeta: {
-    color: 'var(--text-muted)',
-    fontSize: 10.5,
-  },
-  lessonBrowserBody: {
-    borderTop: '1px solid var(--border)',
-    padding: 10,
-    background: 'var(--bg-secondary)',
-  },
-
   langStrip: {
     display: 'flex',
     alignItems: 'center',

@@ -27,14 +27,15 @@ export default function ActiveLessonCard({
   onRevealSolution,
   onClear,
   onNext,
+  hintIndex = 0,
+  onHintIndexChange,
+  showTeaching = true,
 }) {
   const language = lesson?.language || 'javascript';
-  const [hintIndex, setHintIndex] = useState(0);
   const [solutionShown, setSolutionShown] = useState(false);
 
   // Reset hint progression + solution reveal whenever the lesson changes.
   useEffect(() => {
-    setHintIndex(0);
     setSolutionShown(false);
   }, [lesson?.id]);
 
@@ -62,13 +63,17 @@ export default function ActiveLessonCard({
         </div>
       </div>
 
-      <h3 style={styles.title}>{lesson.title}</h3>
-      {lesson.summary && <p style={styles.summary}>{lesson.summary}</p>}
+      {showTeaching && (
+        <>
+          <h3 style={styles.title}>{lesson.title}</h3>
+          {lesson.summary && <p style={styles.summary}>{lesson.summary}</p>}
 
-      {/* Teaching blocks */}
-      <div style={styles.teaching}>
-        {(lesson.teaching || []).map((block, i) => renderBlock(block, i, language))}
-      </div>
+          {/* Teaching blocks */}
+          <div style={styles.teaching}>
+            {(lesson.teaching || []).map((block, i) => renderBlock(block, i, language))}
+          </div>
+        </>
+      )}
 
       {/* Task callout */}
       <div style={styles.taskBox}>
@@ -159,7 +164,7 @@ export default function ActiveLessonCard({
         {hintsRemaining && (
           <button
             style={styles.actionBtn}
-            onClick={() => setHintIndex((n) => n + 1)}
+            onClick={() => onHintIndexChange?.(hintIndex + 1)}
             title="Show the next hint"
           >
             <Lightbulb size={11} />

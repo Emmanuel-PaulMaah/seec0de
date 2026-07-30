@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import TitleBar from './components/TitleBar';
 import InstructionPanel from './components/InstructionPanel';
+import LearnModePanel from './components/LearnModePanel';
 import CodePanel from './components/CodePanel';
 import ExplanationSidebar from './components/ExplanationSidebar';
 import FileExplorer from './components/FileExplorer';
@@ -14,7 +15,7 @@ import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
 import { loadSettings, updateSettings, listProfiles, switchProfile, deleteProfile } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
-import { verifyLessonOutput, nextLessonAfter } from './engine/lessonVerifier';
+import { verifyLessonOutput, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
 import { translateError } from './engine/errorTranslator';
 import lessonsData from './data/lessons/index.js';
 
@@ -53,6 +54,40 @@ const EXT_FOR_LANG = {
   csharp: 'cs',   go: 'go', rust: 'rs',
 };
 
+const LEARN_PHASES = new Set(['learn', 'run', 'fix', 'complete']);
+
+function restoredLearningState(settings = loadSettings()) {
+  const session = settings?.learningSession;
+  const lesson = session?.lessonId
+    ? flattenLessons(lessonsData).find((item) => item.id === session.lessonId) || null
+    : null;
+  const language = lesson?.language || 'javascript';
+  const status = lesson && ['idle', 'pass', 'fail'].includes(session?.status) ? session.status : 'idle';
+  const savedPhase = lesson && LEARN_PHASES.has(session?.phase) ? session.phase : 'learn';
+  const phase = savedPhase === 'run'
+    ? (status === 'fail' ? 'fix' : 'learn')
+    : status === 'pass'
+      ? 'complete'
+      : status === 'fail'
+        ? 'fix'
+        : 'learn';
+  return {
+    lesson,
+    phase,
+    status,
+    attempts: lesson && Number.isFinite(session?.attempts) ? Math.max(0, session.attempts) : 0,
+    revealedHints: lesson && Number.isFinite(session?.revealedHints) ? Math.max(0, session.revealedHints) : 0,
+    verification: lesson ? session?.verification || null : null,
+    errorCoaching: lesson && Array.isArray(session?.errorCoaching) ? session.errorCoaching : [],
+    activityId: lesson && (lesson.activities || []).some((activity) => activity.id === session?.activityId)
+      ? session.activityId
+      : lesson?.activities?.[0]?.id || null,
+    generatedCode: lesson
+      ? { pseudocode: '', code: { [language]: session?.draftCode ?? lesson.starterCode ?? '' } }
+      : { pseudocode: '', code: {} },
+  };
+}
+
 // Build a filename like "scratch-1.py" / "scratch-2.py" that doesn't
 // collide with anything already on disk. Async because we check existence
 // against the OS via the fs bridge.
@@ -71,6 +106,7 @@ async function uniqueScratchPath(rootPath, language) {
 export default function App() {
   // ---- settings + onboarding + profiles --------------------------------
   const [settings, setSettings] = useState(() => loadSettings());
+  const [learnMode, setLearnMode] = useState(() => !!loadSettings().learnMode);
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -93,7 +129,10 @@ export default function App() {
   // ---- generator state -------------------------------------------------
   const [selectedLanguages, setSelectedLanguages] = useState(() => deriveLanguages(loadSettings()));
   const [instruction, setInstruction] = useState('');
-  const [generatedCode, setGeneratedCode] = useState({ pseudocode: '', code: {} });
+  const [generatedCode, setGeneratedCode] = useState(() => {
+    const current = loadSettings();
+    return current.learnMode ? restoredLearningState(current).generatedCode : { pseudocode: '', code: {} };
+  });
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   // Surfaced to InstructionPanel as a small inline card so the learner
@@ -111,24 +150,25 @@ export default function App() {
   // `lessonStatus` flips to 'pass' / 'fail' after each Run (see
   // handleRunCode). `lessonVerification` carries the diff payload so the
   // ActiveLessonCard can show expected-vs-actual on a failed attempt.
-  const [activeLesson, setActiveLesson] = useState(null);
-  const [lessonStatus, setLessonStatus] = useState('idle');
-  const [lessonVerification, setLessonVerification] = useState(null);
-  const [lessonErrorCoaching, setLessonErrorCoaching] = useState([]);
-
-  // Which InstructionPanel tab is showing ('build' | 'lessons'). Lifted
-  // out of InstructionPanel so the CodePanel's lesson mode can follow it:
-  // switching back to Build must drop the JS-only lesson scratchpad and
-  // restore the normal pseudocode + language view. The active lesson is
-  // kept (not cleared) so returning to the Lessons tab resumes it.
-  const [instructionTab, setInstructionTab] = useState('build');
+  const [activeLesson, setActiveLesson] = useState(() => restoredLearningState().lesson);
+  const [lessonStatus, setLessonStatus] = useState(() => restoredLearningState().status);
+  const [lessonVerification, setLessonVerification] = useState(() => restoredLearningState().verification);
+  const [lessonErrorCoaching, setLessonErrorCoaching] = useState(() => restoredLearningState().errorCoaching);
+  const [learnPhase, setLearnPhase] = useState(() => restoredLearningState().phase);
+  const [lessonAttempts, setLessonAttempts] = useState(() => restoredLearningState().attempts);
+  const [revealedHints, setRevealedHints] = useState(() => restoredLearningState().revealedHints);
+  const [activeActivityId, setActiveActivityId] = useState(() => restoredLearningState().activityId);
+  const learnDraftRef = useRef(restoredLearningState().generatedCode);
+  const workspaceGeneratedCodeRef = useRef({ pseudocode: '', code: {} });
 
   // ---- settings + completion -------------------------------------------
   const completedLessons = useMemo(() => settings.completedLessons || [], [settings.completedLessons]);
 
   // Lifted from CodePanel so the LivePreviewPanel can read the same active
   // tab without prop-drilling editor state up on every keystroke.
-  const [activeGeneratedTab, setActiveGeneratedTab] = useState('pseudocode');
+  const [activeGeneratedTab, setActiveGeneratedTab] = useState(
+    () => restoredLearningState().lesson?.language || 'pseudocode'
+  );
 
   // Picking a lesson loads its starter code into the editor, focuses the
   // JavaScript tab, and resets pass/fail state. Picking `null` clears
@@ -139,8 +179,16 @@ export default function App() {
     setLessonStatus('idle');
     setLessonVerification(null);
     setLessonErrorCoaching([]);
+    setLearnPhase('learn');
+    setLessonAttempts(0);
+    setRevealedHints(0);
+    setActiveActivityId(lesson?.activities?.[0]?.id || null);
+    runOwnerRef.current += 1;
+    setRunLoading(false);
     if (lesson) {
-      setGeneratedCode({ pseudocode: '', code: { [lesson.language || 'javascript']: lesson.starterCode || '' } });
+      const lessonCode = { pseudocode: '', code: { [lesson.language || 'javascript']: lesson.starterCode || '' } };
+      learnDraftRef.current = lessonCode;
+      setGeneratedCode(lessonCode);
       setActiveGeneratedTab(lesson.language || 'javascript');
       setActivePath(null);
       setInstruction('');
@@ -149,11 +197,15 @@ export default function App() {
 
   const handleResetLessonCode = useCallback(() => {
     if (!activeLesson) return;
-    setGeneratedCode({ pseudocode: '', code: { [activeLesson.language || 'javascript']: activeLesson.starterCode || '' } });
+    const lessonCode = { pseudocode: '', code: { [activeLesson.language || 'javascript']: activeLesson.starterCode || '' } };
+    learnDraftRef.current = lessonCode;
+    setGeneratedCode(lessonCode);
     setActiveGeneratedTab(activeLesson.language || 'javascript');
     setLessonStatus('idle');
     setLessonVerification(null);
     setLessonErrorCoaching([]);
+    setLearnPhase('learn');
+    setRunnerOutput(null);
   }, [activeLesson]);
 
   const handleRevealSolution = useCallback(() => {
@@ -169,18 +221,15 @@ export default function App() {
     if (next) handleSelectLesson(next);
   }, [activeLesson, handleSelectLesson]);
 
-  // While in lesson mode, the editor / preview behaves as if
-  // JavaScript is the only language — hides the pseudocode + comparison
+  // While Learn Mode has an active lesson, the editor / preview behaves as
+  // if the lesson language is the only language — hides comparison
   // tabs in CodePanel and routes livePreview to the JS tab. The user's
   // real `selectedLanguages` setting stays untouched and returns the
   // moment they leave lesson mode.
   //
-  // Lesson mode is on only while the Lessons tab is showing the active
-  // lesson. Switching to the Build tab exits it (restoring the normal
-  // pseudocode + language editor) without discarding the lesson, so
-  // returning to the Lessons tab resumes it. This is what makes the
-  // CodePanel respond to the InstructionPanel's tab state.
-  const inLessonMode = instructionTab === 'lessons' && !!activeLesson;
+  // Switching back to Workspace exits the lesson presentation without
+  // discarding the resumable Learn Mode session.
+  const inLessonMode = learnMode && !!activeLesson;
 
   const effectiveLanguages = useMemo(
     () => (inLessonMode ? [activeLesson?.language || 'javascript'] : selectedLanguages),
@@ -195,14 +244,6 @@ export default function App() {
   useEffect(() => {
     setSelectedLanguages(deriveLanguages(settings));
   }, [settings.practicalLanguage, settings.comparisonLanguages]);
-
-  // Surface the Lessons tab whenever a lesson becomes active (list click,
-  // "Next lesson", restored state) so the teaching surface is visible.
-  // Switching to Build afterwards is respected; this only fires when the
-  // active lesson's id changes, not on every tab toggle.
-  useEffect(() => {
-    if (activeLesson) setInstructionTab('lessons');
-  }, [activeLesson?.id]);
 
   // ---- file manager state ----------------------------------------------
   const [rootPath, setRootPath] = useState(() => localStorage.getItem(STORAGE_KEY_FOLDER));
@@ -256,6 +297,7 @@ export default function App() {
 
   // ---- runner state ----------------------------------------------------
   const terminalApi = useRef(null);
+  const runOwnerRef = useRef(0);
   const [runLoading, setRunLoading] = useState(false);
   // Each run produces a fresh object (never mutated); LivePreviewPanel
   // pushes it into its Console tab via reference identity check.
@@ -307,6 +349,51 @@ export default function App() {
   useEffect(() => {
   localStorage.setItem(STORAGE_KEY_EXPLANATION_WIDTH, String(explanationWidth));
 }, [explanationWidth]);
+
+  // Learn Mode state is saved with the active profile. Debouncing keeps
+  // editor keystrokes responsive while still making drafts crash-resilient.
+  useEffect(() => {
+    if (!settings.activeProfileId) return undefined;
+    const ownerProfileId = settings.activeProfileId;
+    const language = activeLesson?.language || 'javascript';
+    const savedLessonCode = learnMode ? generatedCode : learnDraftRef.current;
+    const learningSession = activeLesson ? {
+      lessonId: activeLesson.id,
+      phase: learnPhase,
+      draftCode: savedLessonCode.code?.[language] || '',
+      attempts: lessonAttempts,
+      revealedHints,
+      activityId: activeActivityId,
+      status: lessonStatus,
+      verification: lessonVerification,
+      errorCoaching: lessonErrorCoaching,
+    } : null;
+    const timer = setTimeout(() => {
+      if (loadSettings().activeProfileId === ownerProfileId) {
+        updateSettings({ learnMode, learningSession });
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [
+    settings.activeProfileId,
+    learnMode,
+    activeLesson?.id,
+    activeLesson?.language,
+    generatedCode,
+    learnPhase,
+    lessonAttempts,
+    revealedHints,
+    activeActivityId,
+    lessonStatus,
+    lessonVerification,
+    lessonErrorCoaching,
+  ]);
+
+  // A mode, profile, or lesson change invalidates any run that is still in
+  // flight. Its process may finish, but it must not update the new context.
+  useEffect(() => {
+    runOwnerRef.current += 1;
+  }, [settings.activeProfileId, learnMode, activeLesson?.id]);
 
   // ---- keyboard shortcuts ---------------------------------------------
   // Ctrl+`  → toggle terminal (matches VS Code).
@@ -603,10 +690,13 @@ export default function App() {
 
   const handleCodeChange = useCallback((tab, value) => {
     setGeneratedCode((prev) => {
-      if (tab === 'pseudocode') return { ...prev, pseudocode: value };
-      return { ...prev, code: { ...prev.code, [tab]: value } };
+      const next = tab === 'pseudocode'
+        ? { ...prev, pseudocode: value }
+        : { ...prev, code: { ...prev.code, [tab]: value } };
+      if (inLessonMode) learnDraftRef.current = next;
+      return next;
     });
-  }, []);
+  }, [inLessonMode]);
 
   // Single unified Explain flow. If we have an API key AND we're online,
   // try the AI explainer first; on any failure (or when offline/no key),
@@ -674,7 +764,7 @@ export default function App() {
     }
     // In lesson mode the editor is single-tab of the lesson's language; in normal mode
     // we honour the user's selected practical + comparison languages.
-    const tabs = activeLesson ? [activeLesson.language || 'javascript'] : ['pseudocode', ...effectiveLanguages];
+    const tabs = inLessonMode ? [activeLesson.language || 'javascript'] : ['pseudocode', ...effectiveLanguages];
     const tab = tabs.includes(activeGeneratedTab) ? activeGeneratedTab : tabs[0];
     if (tab === 'pseudocode') {
       return { code: generatedCode.pseudocode || '', language: 'plaintext', filename: null };
@@ -684,7 +774,7 @@ export default function App() {
       language: tab,
       filename: DEFAULT_FILENAME_FOR_LANG[tab] || null,
     };
-  }, [activePath, openFiles, activeGeneratedTab, effectiveLanguages, generatedCode, activeLesson]);
+  }, [activePath, openFiles, activeGeneratedTab, effectiveLanguages, generatedCode, activeLesson, inLessonMode]);
 
   // ---- run code --------------------------------------------------------
   // Runner output flows into the LivePreviewPanel's Console tab — the
@@ -697,11 +787,18 @@ export default function App() {
     );
     if (!payload || !payload.source || runLoading) return;
 
+    const runOwner = runOwnerRef.current;
+    const runProfileId = settings.activeProfileId;
     setRunLoading(true);
     if (!previewVisible) setPreviewVisible(true);
+    if (inLessonMode) {
+      setLearnPhase('run');
+      setLessonAttempts((count) => count + 1);
+    }
 
     try {
       const result = await window.seecode.runner.run(payload);
+      if (runOwner !== runOwnerRef.current || loadSettings().activeProfileId !== runProfileId) return;
       const normalisedOutput = {
         command: result.command || `run ${payload.language}`,
         stdout: result.stdout || '',
@@ -719,11 +816,12 @@ export default function App() {
       // pass we mark the lesson complete and show the green status; on
       // fail we surface a diff so the learner can see *what* didn't
       // match instead of just "wrong, try again".
-      if (activeLesson) {
+      if (inLessonMode) {
         const verdict = verifyLessonOutput(normalisedOutput, activeLesson);
         setLessonVerification(verdict);
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
         setLessonErrorCoaching(verdict.pass ? [] : buildLessonErrorCoaching(normalisedOutput.stderr, normalisedOutput.language));
+        setLearnPhase(verdict.pass ? 'complete' : 'fix');
         if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
           const nextSettings = updateSettings({ completedLessons: next });
@@ -731,6 +829,7 @@ export default function App() {
         }
       }
     } catch (err) {
+      if (runOwner !== runOwnerRef.current || loadSettings().activeProfileId !== runProfileId) return;
       setRunnerOutput({
         command: `run ${payload.language}`,
         stdout: '',
@@ -739,9 +838,10 @@ export default function App() {
         durationMs: 0,
         language: payload.language,
       });
-      if (activeLesson) {
+      if (inLessonMode) {
         const stderr = `[seec0de] ${err.message}\n`;
         setLessonStatus('fail');
+        setLearnPhase('fix');
         setLessonVerification({
           pass: false,
           expected: activeLesson.expectedOutput || '',
@@ -751,22 +851,45 @@ export default function App() {
         setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language));
       }
     } finally {
-      setRunLoading(false);
+      if (runOwner === runOwnerRef.current) setRunLoading(false);
     }
-  }, [livePreview, runLoading, previewVisible, activeLesson, completedLessons]);
+  }, [livePreview, runLoading, previewVisible, activeLesson, completedLessons, inLessonMode, settings.activeProfileId]);
 
   // ---- onboarding / settings / profile handlers ------------------------
+  const hydrateLearningProfile = useCallback((nextSettings) => {
+    const restored = restoredLearningState(nextSettings);
+    setLearnMode(!!nextSettings.learnMode);
+    setActiveLesson(restored.lesson);
+    setLearnPhase(restored.phase);
+    setLessonStatus(restored.status);
+    setLessonVerification(restored.verification);
+    setLessonErrorCoaching(restored.errorCoaching);
+    setLessonAttempts(restored.attempts);
+    setRevealedHints(restored.revealedHints);
+    setActiveActivityId(restored.activityId);
+    learnDraftRef.current = restored.generatedCode;
+    workspaceGeneratedCodeRef.current = { pseudocode: '', code: {} };
+    setGeneratedCode(nextSettings.learnMode ? restored.generatedCode : workspaceGeneratedCodeRef.current);
+    setActiveGeneratedTab(nextSettings.learnMode && restored.lesson ? restored.lesson.language : 'pseudocode');
+    setActivePath(null);
+    setRunnerOutput(null);
+    runOwnerRef.current += 1;
+    setRunLoading(false);
+  }, []);
+
   // Fires after onboarding finishes in either mode. In 'setup' it created or
   // edited the active profile; in 'new-profile' it created + activated a new
   // one. Either way we're now signed into an active profile, so clear the
   // gate and refresh the profile-derived state.
   const handleOnboardingComplete = useCallback(() => {
-    setSettings(loadSettings());
+    const next = loadSettings();
+    setSettings(next);
+    hydrateLearningProfile(next);
     setProfiles(listProfiles());
     setShowOnboarding(false);
     setOnboardingMode('setup');
     setGate(null);
-  }, []);
+  }, [hydrateLearningProfile]);
 
   const handleSettingsChange = useCallback((next) => {
     setSettings(next);
@@ -786,9 +909,10 @@ export default function App() {
   const handleEnterProfile = useCallback((id) => {
     const next = switchProfile(id);
     setSettings(next);
+    hydrateLearningProfile(next);
     setProfiles(listProfiles());
     setGate(null);
-  }, []);
+  }, [hydrateLearningProfile]);
 
   // "Add profile" from the gate, the title-bar menu, or Settings. Runs
   // onboarding in new-profile mode (which creates + activates on finish).
@@ -809,11 +933,13 @@ export default function App() {
   // (launch gate) to re-establish who's signed in.
   const handleDeleteProfile = useCallback((id) => {
     deleteProfile(id);
-    setSettings(loadSettings());
+    const next = loadSettings();
+    setSettings(next);
+    hydrateLearningProfile(next);
     setProfiles(listProfiles());
     setShowSettings(false);
     setGate('launch');
-  }, []);
+  }, [hydrateLearningProfile]);
 
   // Used by Settings → Toolchains "Install" buttons: pops the bottom
   // terminal open (so the user actually sees it work), then pushes the
@@ -933,23 +1059,42 @@ const beginExplanationResize = useCallback((event) => {
   window.addEventListener('mouseup', handleMouseUp);
 }, [explanationWidth]);
 
+  const learnResultVisible = learnMode && !!activeLesson && ['run', 'fix', 'complete'].includes(learnPhase);
+  const resultVisible = learnMode ? learnResultVisible : previewVisible;
+
   return (
     <div style={styles.container}>
       <TitleBar
         explorerVisible={explorerVisible}
-        onToggleExplorer={() => setExplorerVisible((v) => !v)}
+        onToggleExplorer={learnMode ? undefined : () => setExplorerVisible((v) => !v)}
         terminalVisible={terminalVisible}
-        onToggleTerminal={() => setTerminalVisible((v) => !v)}
+        onToggleTerminal={learnMode ? undefined : () => setTerminalVisible((v) => !v)}
         onOpenSettings={() => setShowSettings(true)}
         activeProfile={settings.activeProfileId ? { username: settings.username, avatar: settings.avatar } : null}
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={handleAddProfile}
         onManageProfile={() => setShowSettings(true)}
+        mode={learnMode ? 'learn' : 'workspace'}
+        onModeChange={(mode) => {
+          const enteringLearnMode = mode === 'learn';
+          runOwnerRef.current += 1;
+          setRunLoading(false);
+          if (enteringLearnMode) {
+            workspaceGeneratedCodeRef.current = generatedCode;
+            setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
+            setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
+          } else {
+            if (activeLesson) learnDraftRef.current = generatedCode;
+            setGeneratedCode(workspaceGeneratedCodeRef.current);
+            setActiveGeneratedTab('pseudocode');
+          }
+          setLearnMode(enteringLearnMode);
+        }}
       />
 
       <div style={styles.body}>
         <div style={styles.workspace}>
-          {explorerVisible && (
+          {!learnMode && explorerVisible && (
   <>
     <div style={{ ...styles.explorerShell, width: explorerWidth }}>
       <FileExplorer
@@ -975,35 +1120,47 @@ const beginExplanationResize = useCallback((event) => {
           <div
             style={{
               ...styles.instructionShell,
-              width: instructionCollapsed ? 32 : instructionWidth,
+              width: learnMode ? 360 : (instructionCollapsed ? 32 : instructionWidth),
+              maxWidth: learnMode ? 420 : 520,
             }}
           >
-            <InstructionPanel
-              instruction={instruction}
-              onInstructionChange={handleInstructionChange}
-              onGenerate={handleGenerate}
-              aiLoading={aiLoading}
-              aiError={aiError}
-              onClearAiError={() => setAiError(null)}
-              practicalLanguage={settings.practicalLanguage}
-              comparisonLanguages={settings.comparisonLanguages}
-              onOpenSettings={() => setShowSettings(true)}
-              collapsed={instructionCollapsed}
-              onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
-              completedLessons={completedLessons}
-              onSelectLesson={handleSelectLesson}
-              activeLesson={activeLesson}
-              lessonStatus={lessonStatus}
-              lessonVerification={lessonVerification}
-              lessonErrorCoaching={lessonErrorCoaching}
-              lessonHasNext={hasNextLesson}
-              onResetLessonCode={handleResetLessonCode}
-              onRevealSolution={handleRevealSolution}
-              onNextLesson={handleNextLesson}
-            />
+            {learnMode ? (
+              <LearnModePanel
+                activeLesson={activeLesson}
+                phase={learnPhase}
+                completedLessons={completedLessons}
+                lessonStatus={lessonStatus}
+                lessonVerification={lessonVerification}
+                lessonErrorCoaching={lessonErrorCoaching}
+                lessonHasNext={hasNextLesson}
+                attempts={lessonAttempts}
+                revealedHints={revealedHints}
+                activeActivityId={activeActivityId}
+                onSelectLesson={handleSelectLesson}
+                onResetLessonCode={handleResetLessonCode}
+                onRevealSolution={handleRevealSolution}
+                onHintIndexChange={setRevealedHints}
+                onActivityChange={setActiveActivityId}
+                onNextLesson={handleNextLesson}
+              />
+            ) : (
+              <InstructionPanel
+                instruction={instruction}
+                onInstructionChange={handleInstructionChange}
+                onGenerate={handleGenerate}
+                aiLoading={aiLoading}
+                aiError={aiError}
+                onClearAiError={() => setAiError(null)}
+                practicalLanguage={settings.practicalLanguage}
+                comparisonLanguages={settings.comparisonLanguages}
+                onOpenSettings={() => setShowSettings(true)}
+                collapsed={instructionCollapsed}
+                onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
+              />
+            )}
           </div>
 
-          {!instructionCollapsed && (
+          {!learnMode && !instructionCollapsed && (
             <div
               style={styles.verticalResizeHandle}
               onMouseDown={beginInstructionResize}
@@ -1030,12 +1187,12 @@ const beginExplanationResize = useCallback((event) => {
             runLoading={runLoading}
             activeGeneratedTab={activeGeneratedTab}
             onActivateGeneratedTab={setActiveGeneratedTab}
-            folderOpen={!!rootPath}
-            lessonMode={!!activeLesson}
+            folderOpen={!learnMode && !!rootPath}
+            lessonMode={inLessonMode}
             lessonLanguage={activeLesson?.language}
           />
 
-          {previewVisible && (
+          {resultVisible && !learnMode && (
             <div
               style={styles.verticalResizeHandle}
               onMouseDown={beginPreviewResize}
@@ -1045,25 +1202,28 @@ const beginExplanationResize = useCallback((event) => {
             />
           )}
 
-          <div
-            style={{
-              ...styles.previewShell,
-              width: previewVisible ? previewWidth : 32,
-            }}
-          >
-            <LivePreviewPanel
-              visible={previewVisible}
-              onToggle={() => setPreviewVisible((v) => !v)}
-              code={livePreview.code}
-              language={livePreview.language}
-              filename={livePreview.filename}
-              runnerOutput={runnerOutput}
-              runLoading={runLoading}
-            />
-          </div>
+          {(!learnMode || resultVisible) && (
+            <div
+              style={{
+                ...styles.previewShell,
+                width: resultVisible ? (learnMode ? 360 : previewWidth) : 32,
+              }}
+            >
+              <LivePreviewPanel
+                visible={resultVisible}
+                onToggle={() => setPreviewVisible((v) => !v)}
+                collapsible={!learnMode}
+                code={livePreview.code}
+                language={livePreview.language}
+                filename={livePreview.filename}
+                runnerOutput={runnerOutput}
+                runLoading={runLoading}
+              />
+            </div>
+          )}
 
 
-          {!explanationCollapsed && (
+          {!learnMode && !explanationCollapsed && (
             <div
               style={styles.verticalResizeHandle}
               onMouseDown={beginExplanationResize}
@@ -1073,26 +1233,30 @@ const beginExplanationResize = useCallback((event) => {
             />
           )}
 
-          <div
-            style={{
-              ...styles.explanationShell,
-              width: explanationCollapsed ? 32 : explanationWidth,
-            }}
-          >
-            <ExplanationSidebar
-              explanation={explanation}
-              loading={aiLoading}
-              collapsed={explanationCollapsed}
-              onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
-            />
-          </div>
+          {!learnMode && (
+            <div
+              style={{
+                ...styles.explanationShell,
+                width: explanationCollapsed ? 32 : explanationWidth,
+              }}
+            >
+              <ExplanationSidebar
+                explanation={explanation}
+                loading={aiLoading}
+                collapsed={explanationCollapsed}
+                onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
+              />
+            </div>
+          )}
         </div>
 
-        <TerminalPanel
-          visible={terminalVisible}
-          onToggle={() => setTerminalVisible((v) => !v)}
-          apiRef={terminalApi}
-        />
+        {!learnMode && (
+          <TerminalPanel
+            visible={terminalVisible}
+            onToggle={() => setTerminalVisible((v) => !v)}
+            apiRef={terminalApi}
+          />
+        )}
       </div>
 
       <OnboardingModal

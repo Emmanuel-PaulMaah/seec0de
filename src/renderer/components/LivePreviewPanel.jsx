@@ -58,6 +58,7 @@ export default function LivePreviewPanel({
   filename = null,
   runnerOutput = null,
   runLoading = false,
+  collapsible = true,
 }) {
   const previewable = PREVIEWABLE.has(language);
   const runnable    = RUNNABLE.has(language);
@@ -274,15 +275,17 @@ export default function LivePreviewPanel({
               <RefreshCw size={12} />
             </button>
           )}
-          <button
-            type="button"
-            style={styles.iconBtn}
-            onClick={onToggle}
-            title="Hide preview"
-            aria-label="Hide preview"
-          >
-            <ChevronRight size={14} />
-          </button>
+          {collapsible && (
+            <button
+              type="button"
+              style={styles.iconBtn}
+              onClick={onToggle}
+              title="Hide preview"
+              aria-label="Hide preview"
+            >
+              <ChevronRight size={14} />
+            </button>
+          )}
         </div>
       </div>
 
