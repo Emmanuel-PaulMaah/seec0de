@@ -1282,7 +1282,7 @@
 },
 {
 "type": "code",
-"text": "class Robot:\n    pass\n\nbot = Robot()\nprint(type(bot).**name**)\n# → Robot"
+"text": "class Robot:\n    pass\n\nbot = Robot()\nprint(type(bot).__name__)\n# → Robot"
 },
 {
 "type": "note",
@@ -1297,12 +1297,12 @@
 "Use `class Lesson:` followed by an indented `pass`.",
 "Print `type(lesson).__name__`."
 ],
-"solution": "class Lesson:\n    pass\n\nlesson = Lesson()\nprint(type(lesson).**name**)\n"
+"solution": "class Lesson:\n    pass\n\nlesson = Lesson()\nprint(type(lesson).__name__)\n"
 },
 {
 "id": "py-42-init",
 "title": "42. Initialize an object",
-"concept": "**init**()",
+"concept": "__init__()",
 "summary": "The `__init__()` method sets up a new object's initial state.",
 "teaching": [
 {
@@ -1311,7 +1311,7 @@
 },
 {
 "type": "code",
-"text": "class User:\n    def **init**(self, name):\n        self.name = name\n\nuser = User('Ada')\nprint(user.name)\n# → Ada"
+"text": "class User:\n    def __init__(self, name):\n        self.name = name\n\nuser = User('Ada')\nprint(user.name)\n# → Ada"
 },
 {
 "type": "note",
@@ -1326,7 +1326,7 @@
 "Define `__init__(self, title)`.",
 "Assign `self.title = title`."
 ],
-"solution": "class Course:\n    def **init**(self, title):\n        self.title = title\n\ncourse = Course('Python')\nprint(course.title)\n"
+"solution": "class Course:\n    def __init__(self, title):\n        self.title = title\n\ncourse = Course('Python')\nprint(course.title)\n"
 },
 {
 "id": "py-43-instance-attributes",
@@ -1340,7 +1340,7 @@
 },
 {
 "type": "code",
-"text": "class Player:\n    def **init**(self, score):\n        self.score = score\n\nfirst = Player(10)\nsecond = Player(20)\nprint(first.score)\nprint(second.score)\n# → 10\n# → 20"
+"text": "class Player:\n    def __init__(self, score):\n        self.score = score\n\nfirst = Player(10)\nsecond = Player(20)\nprint(first.score)\nprint(second.score)\n# → 10\n# → 20"
 },
 {
 "type": "note",
@@ -1355,7 +1355,7 @@
 "Store the constructor argument in `self.name`.",
 "Create two separate `Device` objects."
 ],
-"solution": "class Device:\n    def **init**(self, name):\n        self.name = name\n\nfirst = Device('Laptop')\nsecond = Device('Tablet')\nprint(first.name)\nprint(second.name)\n"
+"solution": "class Device:\n    def __init__(self, name):\n        self.name = name\n\nfirst = Device('Laptop')\nsecond = Device('Tablet')\nprint(first.name)\nprint(second.name)\n"
 },
 {
 "id": "py-44-methods",
@@ -1398,7 +1398,7 @@
 },
 {
 "type": "code",
-"text": "class Counter:\n    def **init**(self):\n        self.value = 0\n\n    def increment(self):\n        self.value += 1\n\ncounter = Counter()\ncounter.increment()\nprint(counter.value)\n# → 1"
+"text": "class Counter:\n    def __init__(self):\n        self.value = 0\n\n    def increment(self):\n        self.value += 1\n\ncounter = Counter()\ncounter.increment()\nprint(counter.value)\n# → 1"
 },
 {
 "type": "note",
@@ -1413,7 +1413,7 @@
 "Set `self.value = 0` in `__init__()`.",
 "Inside `increment()`, use `self.value += 1`."
 ],
-"solution": "class Counter:\n    def **init**(self):\n        self.value = 0\n\n    def increment(self):\n        self.value += 1\n\ncounter = Counter()\ncounter.increment()\ncounter.increment()\nprint(counter.value)\n"
+"solution": "class Counter:\n    def __init__(self):\n        self.value = 0\n\n    def increment(self):\n        self.value += 1\n\ncounter = Counter()\ncounter.increment()\ncounter.increment()\nprint(counter.value)\n"
 },
 {
 "id": "py-46-try-except",
