@@ -11,6 +11,30 @@
           "title": "1. Hello, console",
           "concept": "console.log",
           "summary": "How JavaScript prints things.",
+          "activities": [
+            {
+              "id": "js-01-see",
+              "type": "worked-example",
+              "title": "See JavaScript print a message",
+              "instruction": "console.log() sends the value inside its parentheses to the Console. Text needs matching quote marks.",
+              "example": "console.log('Hi there');\n// Console: Hi there"
+            },
+            {
+              "id": "js-01-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "What will console.log('Ready') print?",
+              "choices": ["Ready", "'Ready'", "Nothing"],
+              "answer": "Ready",
+              "explanation": "The quotes mark the value as text; they are not printed."
+            },
+            {
+              "id": "js-01-edit",
+              "type": "edit",
+              "title": "Print your first message",
+              "instruction": "Use the editor to print exactly Hello, World!, then press Run."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -44,6 +68,30 @@
           "title": "2. Variables with let",
           "concept": "let",
           "summary": "Storing a value under a name you can reuse.",
+          "activities": [
+            {
+              "id": "js-02-see",
+              "type": "worked-example",
+              "title": "Give a value a reusable name",
+              "instruction": "let creates a variable. Later code can read the stored value by using that variable's name.",
+              "example": "let score = 10;\nconsole.log(score);\n// Console: 10"
+            },
+            {
+              "id": "js-02-predict",
+              "type": "prediction",
+              "title": "Follow the variable",
+              "question": "What prints after let points = 7; console.log(points);?",
+              "choices": ["points", "7", "Nothing"],
+              "answer": "7",
+              "explanation": "Using the variable name reads the value stored inside it."
+            },
+            {
+              "id": "js-02-edit",
+              "type": "edit",
+              "title": "Store and print 42",
+              "instruction": "Create score with let, store 42, and print score."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -77,6 +125,30 @@
           "title": "3. const vs let",
           "concept": "const",
           "summary": "Names that aren't supposed to change.",
+          "activities": [
+            {
+              "id": "js-03-see",
+              "type": "worked-example",
+              "title": "Choose const or let",
+              "instruction": "Use const when a name should keep the same value. Use let only when your program needs to reassign it.",
+              "example": "const pi = 3.14;\nlet radius = 5;\nradius = 6;"
+            },
+            {
+              "id": "js-03-predict",
+              "type": "prediction",
+              "title": "Spot the value that can change",
+              "question": "Which declaration can be reassigned later?",
+              "choices": ["const pi = 3.14", "let radius = 5", "Both"],
+              "answer": "let radius = 5",
+              "explanation": "let permits reassignment; const does not."
+            },
+            {
+              "id": "js-03-edit",
+              "type": "edit",
+              "title": "Calculate a circle's area",
+              "instruction": "Declare pi and radius, calculate pi * radius * radius, and print the result."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -383,6 +455,30 @@
           "title": "13. Functions — declare, call, return",
           "concept": "function",
           "summary": "A reusable mini-program with a name.",
+          "activities": [
+            {
+              "id": "js-13-see",
+              "type": "worked-example",
+              "title": "Build a reusable operation",
+              "instruction": "A function receives values through parameters and sends an answer back with return.",
+              "example": "function double(n) {\n  return n * 2;\n}\nconsole.log(double(7));"
+            },
+            {
+              "id": "js-13-predict",
+              "type": "prediction",
+              "title": "Trace a function call",
+              "question": "What does double(4) return?",
+              "choices": ["4", "8", "undefined"],
+              "answer": "8",
+              "explanation": "The call puts 4 into n, then returns 4 * 2."
+            },
+            {
+              "id": "js-13-edit",
+              "type": "edit",
+              "title": "Write square(n)",
+              "instruction": "Create a square function that returns n * n, then print square(7)."
+            }
+          ],
           "teaching": [
             {
               "type": "p",

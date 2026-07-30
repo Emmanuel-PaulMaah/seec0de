@@ -11,6 +11,30 @@
 "title": "1. Hello, print",
 "concept": "print()",
 "summary": "Use `print()` to send text to standard output.",
+"activities": [
+{
+"id": "py-01-see",
+"type": "worked-example",
+"title": "See Python print a message",
+"instruction": "print() sends the value inside its parentheses to the output. Text needs matching quote marks.",
+"example": "print('Hi there')\n# Output: Hi there"
+},
+{
+"id": "py-01-predict",
+"type": "prediction",
+"title": "Predict the output",
+"question": "What will print('Ready') display?",
+"choices": ["Ready", "'Ready'", "Nothing"],
+"answer": "Ready",
+"explanation": "The quotes mark a string; Python prints the text inside them."
+},
+{
+"id": "py-01-edit",
+"type": "edit",
+"title": "Print your first message",
+"instruction": "Use the editor to print exactly Hello, World!, then press Run."
+}
+],
 "teaching": [
 {
 "type": "p",
@@ -40,6 +64,30 @@
 "title": "2. Print more than one line",
 "concept": "multiple print() calls",
 "summary": "Each `print()` call writes a new line by default.",
+"activities": [
+{
+"id": "py-02-see",
+"type": "worked-example",
+"title": "Run statements from top to bottom",
+"instruction": "Each print() call creates one output line, in the same order the calls appear in the program.",
+"example": "print('Ready')\nprint('Go')\n# Output:\n# Ready\n# Go"
+},
+{
+"id": "py-02-predict",
+"type": "prediction",
+"title": "Predict two lines",
+"question": "Which line appears first?",
+"choices": ["The first print() value", "The second print() value", "They appear together"],
+"answer": "The first print() value",
+"explanation": "Python executes these statements from top to bottom."
+},
+{
+"id": "py-02-edit",
+"type": "edit",
+"title": "Print two lines",
+"instruction": "Print Learn first and Python second, using two print() calls."
+}
+],
 "teaching": [
 {
 "type": "p",
@@ -69,6 +117,30 @@
 "title": "3. Text is a string",
 "concept": "string literals",
 "summary": "Text wrapped in quotes is a Python string.",
+"activities": [
+{
+"id": "py-03-see",
+"type": "worked-example",
+"title": "Recognize string values",
+"instruction": "Single and double quote marks both create strings. The opening and closing marks must match.",
+"example": "print(\"Python\")\nprint('rocks')"
+},
+{
+"id": "py-03-predict",
+"type": "prediction",
+"title": "Find the valid string",
+"question": "Which value has matching quote marks?",
+"choices": ["'hello'", "'hello\"", "hello"],
+"answer": "'hello'",
+"explanation": "The string starts and ends with the same single quote mark."
+},
+{
+"id": "py-03-edit",
+"type": "edit",
+"title": "Print a string",
+"instruction": "Create the string Code is data and pass it to print()."
+}
+],
 "teaching": [
 {
 "type": "p",
@@ -1435,6 +1507,30 @@
 "title": "49. Build a list compactly",
 "concept": "list comprehensions",
 "summary": "A list comprehension creates a list by transforming each item from an iterable.",
+"activities": [
+{
+"id": "py-49-see",
+"type": "worked-example",
+"title": "Transform every source value",
+"instruction": "A list comprehension puts the output expression first and the for clause second, all inside square brackets.",
+"example": "squares = [number * number for number in range(1, 4)]\nprint(squares)"
+},
+{
+"id": "py-49-predict",
+"type": "prediction",
+"title": "Trace the transformation",
+"question": "What does [n * 2 for n in [1, 2, 3]] create?",
+"choices": ["[1, 2, 3]", "[2, 4, 6]", "6"],
+"answer": "[2, 4, 6]",
+"explanation": "The expression n * 2 runs once for each source value."
+},
+{
+"id": "py-49-edit",
+"type": "edit",
+"title": "Build the doubled list",
+"instruction": "Use a list comprehension to double [1, 2, 3], then print the new list."
+}
+],
 "teaching": [
 {
 "type": "p",
