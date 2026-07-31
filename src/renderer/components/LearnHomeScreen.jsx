@@ -11,7 +11,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import lessonsData from '../data/lessons/index.js';
-import { flattenExercises } from '../data/exerciseCatalog';
+import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
 
 const LANGUAGE_LABELS = {
   python: 'Python',
@@ -33,6 +33,7 @@ export default function LearnHomeScreen({
 }) {
   const headingRef = useRef(null);
   const [activeTrackId, setActiveTrackId] = useState(null);
+  const [activeChallengeTypeId, setActiveChallengeTypeId] = useState(null);
   const tracks = lessonsData.tracks || [];
   const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
@@ -41,14 +42,20 @@ export default function LearnHomeScreen({
   }, [tracks]);
   const languageTracks = tracks.filter((track) => track.language === selectedLanguage);
   const languageExercises = exercises.filter((exercise) => exercise.language === selectedLanguage);
+  const challengeTypes = challengeTypesFor(exercises, selectedLanguage);
+  const activeChallengeType = challengeTypes.find((type) => type.id === activeChallengeTypeId) || null;
+  const visibleExercises = activeChallengeType
+    ? languageExercises.filter((exercise) => exercise.challengeType === activeChallengeType.id)
+    : [];
   const activeTrack = languageTracks.find((track) => track.id === activeTrackId) || null;
 
   useEffect(() => {
     headingRef.current?.focus();
-  }, [selectedLanguage, selectedSection, activeTrackId]);
+  }, [selectedLanguage, selectedSection, activeTrackId, activeChallengeTypeId]);
 
   useEffect(() => {
     setActiveTrackId(null);
+    setActiveChallengeTypeId(null);
   }, [selectedLanguage, selectedSection]);
 
   const chooseLanguage = (language) => {
@@ -59,6 +66,8 @@ export default function LearnHomeScreen({
   const goBack = () => {
     if (activeTrack) {
       setActiveTrackId(null);
+    } else if (activeChallengeType) {
+      setActiveChallengeTypeId(null);
     } else if (selectedSection) {
       onSelectSection(null);
     } else {
@@ -70,6 +79,8 @@ export default function LearnHomeScreen({
     ? 'Choose a language.'
     : activeTrack
       ? activeTrack.name
+      : activeChallengeType
+        ? activeChallengeType.title
       : selectedSection === 'courses'
         ? `${languageLabel(selectedLanguage)} courses.`
         : selectedSection === 'exercises'
@@ -82,10 +93,14 @@ export default function LearnHomeScreen({
       <div style={styles.glow} aria-hidden="true" />
 
       <section className="learn-home-content" style={styles.content}>
-        {(selectedLanguage || selectedSection || activeTrack) && (
+        {(selectedLanguage || selectedSection || activeTrack || activeChallengeType) && (
           <button type="button" style={styles.backButton} onClick={goBack}>
             <ChevronLeft size={14} />
-            {activeTrack ? 'All courses' : selectedSection ? languageLabel(selectedLanguage) : 'All languages'}
+            {activeTrack
+              ? 'All courses'
+              : activeChallengeType
+                ? 'All challenge types'
+                : selectedSection ? languageLabel(selectedLanguage) : 'All languages'}
           </button>
         )}
 
@@ -193,13 +208,36 @@ export default function LearnHomeScreen({
           </>
         )}
 
-        {selectedLanguage && selectedSection === 'exercises' && (
+        {selectedLanguage && selectedSection === 'exercises' && !activeChallengeType && (
           <>
-            <p style={styles.intro}>Standalone retrieval drills and code-alongs use their own starter code, hints, expected output, and completion state.</p>
+            <p style={styles.intro}>Choose how you want to practise. Each challenge type contains deterministic exercises that run offline.</p>
             <div className="learn-home-course-grid" style={styles.courseGrid}>
-              {languageExercises.map((exercise) => {
+              {challengeTypes.map((type) => (
+                <button
+                  key={type.id}
+                  type="button"
+                  className="learn-home-card"
+                  style={styles.challengeTypeCard}
+                  onClick={() => setActiveChallengeTypeId(type.id)}
+                >
+                  <span style={styles.challengeTypeTopline}>
+                    <Wrench size={14} /> {type.count} {type.count === 1 ? 'challenge' : 'challenges'}
+                  </span>
+                  <strong style={styles.courseTitle}>{type.title}</strong>
+                  <span style={styles.courseText}>{type.description}</span>
+                  <span style={styles.openCourse}>Open challenges <ArrowRight size={13} /></span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {selectedLanguage && selectedSection === 'exercises' && activeChallengeType && (
+          <>
+            <p style={styles.intro}>{activeChallengeType.description} Open a challenge to write, run, and verify your solution.</p>
+            <div className="learn-home-course-grid" style={styles.courseGrid}>
+              {visibleExercises.map((exercise) => {
                 const complete = completedLessons.includes(exercise.id);
-                const formatLabel = exercise.exerciseType === 'code-along' ? 'Code-along' : 'Retrieval drill';
                 return (
                   <button
                     key={exercise.id}
@@ -214,11 +252,13 @@ export default function LearnHomeScreen({
                         : exercise.exerciseType === 'code-along'
                           ? <Sparkles size={14} />
                           : <Wrench size={14} />}
-                      {formatLabel}
+                      {activeChallengeType.title}
                     </span>
                     <strong style={styles.courseTitle}>{exercise.concept}</strong>
                     <span style={styles.courseText}>{renderInline(exercise.task)}</span>
-                    <span style={styles.exerciseSource}>From {exercise.sourceLessonTitle}</span>
+                    <span style={styles.exerciseSource}>
+                      {exercise.sourceLessonId ? `From ${exercise.sourceLessonTitle}` : exercise.summary}
+                    </span>
                     <span style={styles.openCourse}>{complete ? 'Practise again' : 'Start exercise'} <ArrowRight size={13} /></span>
                   </button>
                 );
@@ -374,6 +414,28 @@ const styles = {
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     textAlign: 'left',
+  },
+  challengeTypeCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    minHeight: 148,
+    padding: 17,
+    border: '1px solid var(--border-strong)',
+    borderRadius: 10,
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    textAlign: 'left',
+  },
+  challengeTypeTopline: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    color: 'var(--algorithm)',
+    fontSize: 10.5,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
   },
   exerciseCard: {
     display: 'flex',
