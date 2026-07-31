@@ -891,7 +891,7 @@ export default function App() {
       ? activities
       : guidanceLevel === 'guided'
         ? activities.filter((activity) => activity.type !== 'worked-example')
-        : activities.filter((activity) => activity.type === 'edit');
+        : activities.filter((activity) => ['code-along', 'drill', 'edit'].includes(activity.type));
     setActiveActivityId(visible[0]?.id || null);
   }, [activeLesson]);
 

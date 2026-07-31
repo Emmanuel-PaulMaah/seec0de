@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Play, Wrench, CheckCircle2, GraduationCap, ArrowRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft } from 'lucide-react';
 import LessonsPanel from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
 
@@ -8,6 +8,7 @@ const PHASES = [
   { id: 'run', label: 'Run', icon: Play },
   { id: 'fix', label: 'Fix', icon: Wrench },
 ];
+const WRITING_ACTIVITY_TYPES = new Set(['code-along', 'drill', 'edit']);
 
 export default function LearnModePanel({
   activeLesson,
@@ -40,10 +41,10 @@ export default function LearnModePanel({
     ? allActivities
     : guidanceLevel === 'guided'
       ? allActivities.filter((activity) => activity.type !== 'worked-example')
-      : allActivities.filter((activity) => activity.type === 'edit');
+      : allActivities.filter((activity) => WRITING_ACTIVITY_TYPES.has(activity.type));
   const activityIndex = Math.max(0, activities.findIndex((activity) => activity.id === activeActivityId));
   const activeActivity = activities[activityIndex] || null;
-  const showLessonCard = phase !== 'learn' || !activeActivity || activeActivity.type === 'edit';
+  const showLessonCard = phase !== 'learn' || !activeActivity || WRITING_ACTIVITY_TYPES.has(activeActivity.type);
   const nextGuidanceLevel = guidanceLevel === 'supported'
     ? 'guided'
     : guidanceLevel === 'guided'
@@ -170,16 +171,32 @@ export default function LearnModePanel({
 
 function ActivityGuide({ activity, index, total, onBack, onContinue }) {
   const [answer, setAnswer] = React.useState(null);
+  const [checkedSteps, setCheckedSteps] = React.useState([]);
   const headingRef = React.useRef(null);
 
   React.useEffect(() => {
     setAnswer(null);
+    setCheckedSteps([]);
     headingRef.current?.focus();
   }, [activity.id]);
 
   const isPrediction = activity.type === 'prediction';
+  const isCodeAlong = activity.type === 'code-along';
+  const isDrill = activity.type === 'drill';
   const answered = answer !== null;
   const answerCorrect = answered && answer === activity.answer;
+  const steps = activity.steps || [];
+  const canContinue = isPrediction
+    ? answered
+    : isCodeAlong && steps.length > 0
+      ? checkedSteps.length === steps.length
+      : true;
+
+  const toggleStep = (stepIndex) => {
+    setCheckedSteps((current) => current.includes(stepIndex)
+      ? current.filter((item) => item !== stepIndex)
+      : [...current, stepIndex]);
+  };
 
   return (
     <section style={styles.activityCard} aria-labelledby={`activity-${activity.id}`}>
@@ -187,6 +204,34 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
       <h3 ref={headingRef} tabIndex={-1} id={`activity-${activity.id}`} style={styles.activityTitle}>{activity.title}</h3>
       {activity.instruction && <p style={styles.activityText}>{activity.instruction}</p>}
       {activity.example && <pre style={styles.activityCode}>{activity.example}</pre>}
+
+      {isCodeAlong && steps.length > 0 && (
+        <div style={styles.codeAlongSteps} aria-label="Code-along steps">
+          {steps.map((step, stepIndex) => {
+            const checked = checkedSteps.includes(stepIndex);
+            return (
+              <button
+                key={`${activity.id}-step-${stepIndex}`}
+                type="button"
+                style={{ ...styles.codeAlongStep, ...(checked ? styles.codeAlongStepChecked : {}) }}
+                aria-pressed={checked}
+                onClick={() => toggleStep(stepIndex)}
+              >
+                {checked ? <CheckCircle2 size={13} /> : <Circle size={13} />}
+                <span><strong>{stepIndex + 1}.</strong> {step}</span>
+              </button>
+            );
+          })}
+          <div style={styles.writingPrompt}>Write each step in the editor, run when useful, then check it off.</div>
+        </div>
+      )}
+
+      {isDrill && (
+        <div style={styles.drillPrompt}>
+          <strong>Retrieval drill:</strong> write this from memory in the editor before opening a hint.
+          {activity.successCriteria && <span style={styles.drillCriteria}>Done when: {activity.successCriteria}</span>}
+        </div>
+      )}
 
       {isPrediction && (
         <div style={styles.predictionGroup}>
@@ -211,14 +256,14 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
         </div>
       )}
 
-      {(onBack || (onContinue && (!isPrediction || answered))) && (
+      {(onBack || (onContinue && canContinue)) && (
         <div style={styles.activityActions}>
           {onBack && (
             <button type="button" style={styles.backActivityBtn} onClick={onBack}>
               <ChevronLeft size={12} /> Previous
             </button>
           )}
-          {onContinue && (!isPrediction || answered) && (
+          {onContinue && canContinue && (
             <button type="button" style={styles.continueBtn} onClick={onContinue}>
               Continue <ArrowRight size={12} />
             </button>
@@ -395,6 +440,52 @@ const styles = {
     color: 'var(--text-primary)',
     fontSize: 11,
     lineHeight: 1.45,
+  },
+  codeAlongSteps: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    marginTop: 10,
+  },
+  codeAlongStep: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 7,
+    width: '100%',
+    padding: '7px 8px',
+    border: '1px solid var(--border)',
+    borderRadius: 5,
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-secondary)',
+    fontSize: 11,
+    lineHeight: 1.4,
+    textAlign: 'left',
+  },
+  codeAlongStepChecked: {
+    borderColor: 'var(--success)',
+    color: 'var(--text-muted)',
+  },
+  writingPrompt: {
+    color: 'var(--text-muted)',
+    fontSize: 10.5,
+    lineHeight: 1.4,
+  },
+  drillPrompt: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    marginTop: 10,
+    padding: '8px 9px',
+    borderLeft: '3px solid var(--algorithm)',
+    borderRadius: 4,
+    background: 'var(--algorithm-soft)',
+    color: 'var(--text-secondary)',
+    fontSize: 11,
+    lineHeight: 1.45,
+  },
+  drillCriteria: {
+    color: 'var(--text-muted)',
+    fontSize: 10.5,
   },
   predictionGroup: {
     display: 'flex',
