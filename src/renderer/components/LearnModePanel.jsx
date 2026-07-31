@@ -1,6 +1,6 @@
 import React from 'react';
 import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft } from 'lucide-react';
-import LessonsPanel from './LessonsPanel';
+import LessonsPanel, { formatLanguage } from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
 
 const PHASES = [
@@ -35,6 +35,7 @@ export default function LearnModePanel({
 }) {
   const headingRef = React.useRef(null);
   const mountedRef = React.useRef(false);
+  const [catalogLanguage, setCatalogLanguage] = React.useState(activeLesson?.language || null);
   const activePhase = phase === 'complete' ? 'run' : phase;
   const allActivities = activeLesson?.activities || [];
   const activities = guidanceLevel === 'supported'
@@ -57,12 +58,22 @@ export default function LearnModePanel({
     mountedRef.current = true;
   }, [activeLesson?.id]);
 
+  React.useEffect(() => {
+    if (activeLesson?.language) setCatalogLanguage(activeLesson.language);
+  }, [activeLesson?.language]);
+
   return (
     <aside style={styles.panel} aria-label="Learn Mode guide">
       <div style={styles.header}>
         <div style={styles.eyebrow}><GraduationCap size={13} /> Learn Mode</div>
         <div style={styles.headingRow}>
-          <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>{activeLesson ? activeLesson.title : 'Choose a course'}</h2>
+          <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>
+            {activeLesson
+              ? activeLesson.title
+              : catalogLanguage
+                ? formatLanguage(catalogLanguage)
+                : 'Choose a language'}
+          </h2>
           {activeLesson && (
             <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
               <ChevronLeft size={11} /> Courses
@@ -72,7 +83,9 @@ export default function LearnModePanel({
         <div style={styles.subheading}>
           {activeLesson
             ? `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'} · progress saves automatically`
-            : 'Pick a lesson to begin a guided Learn → Run → Fix loop.'}
+            : catalogLanguage
+              ? 'Choose a course or explore the challenge space.'
+              : 'Start with the language you want to learn.'}
         </div>
       </div>
 
@@ -150,13 +163,17 @@ export default function LearnModePanel({
           </div>
         ) : (
           <>
-            <div style={styles.intro}>
-              Courses live here, away from the free-form workspace. You can return to Workspace at any time without losing your lesson draft.
-            </div>
+            {!catalogLanguage && (
+              <div style={styles.intro}>
+                Each language has guided courses now and a home for focused challenges as the library grows.
+              </div>
+            )}
             <LessonsPanel
               completedLessons={completedLessons}
               onSelectLesson={onSelectLesson}
               activeLessonId={null}
+              selectedLanguage={catalogLanguage}
+              onSelectLanguage={setCatalogLanguage}
             />
           </>
         )}
