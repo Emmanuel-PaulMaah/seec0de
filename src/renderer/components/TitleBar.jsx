@@ -54,6 +54,7 @@ export default function TitleBar({
           <div style={styles.modeSwitch} aria-label="Application mode">
             <button
               type="button"
+              className="ui-segmented-button"
               style={{ ...styles.modeBtn, ...(mode === 'home' ? styles.modeBtnActive : {}) }}
               aria-pressed={mode === 'home'}
               onClick={() => onModeChange('home')}
@@ -63,6 +64,7 @@ export default function TitleBar({
             </button>
             <button
               type="button"
+              className="ui-segmented-button"
               style={{ ...styles.modeBtn, ...(mode === 'workspace' ? styles.modeBtnActive : {}) }}
               aria-pressed={mode === 'workspace'}
               onClick={() => onModeChange('workspace')}
@@ -71,6 +73,7 @@ export default function TitleBar({
             </button>
             <button
               type="button"
+              className="ui-segmented-button"
               style={{ ...styles.modeBtn, ...(mode === 'learn' ? styles.modeBtnActive : {}) }}
               aria-pressed={mode === 'learn'}
               onClick={() => onModeChange('learn')}
@@ -117,6 +120,7 @@ function ToolBtn({ onClick, active = false, title, ariaLabel, children }) {
   return (
     <button
       type="button"
+      className="ui-icon-button"
       onClick={onClick}
       title={title}
       aria-label={ariaLabel}
@@ -157,6 +161,7 @@ function ProfileMenu({ profile, onSwitchProfile, onAddProfile, onManageProfile }
     <div ref={wrapRef} style={styles.profileWrap}>
       <button
         type="button"
+        className="ui-toolbar-button"
         onClick={() => setOpen((v) => !v)}
         style={styles.profileChip}
         title={profile.username || 'Profile'}
@@ -189,7 +194,7 @@ function ProfileMenu({ profile, onSwitchProfile, onAddProfile, onManageProfile }
 
 function MenuItem({ icon, label, onClick }) {
   return (
-    <button type="button" role="menuitem" onClick={onClick} style={styles.menuItem}>
+    <button type="button" className="ui-menu-item" role="menuitem" onClick={onClick} style={styles.menuItem}>
       <span style={styles.menuItemIcon}>{icon}</span>
       <span>{label}</span>
     </button>
@@ -200,12 +205,12 @@ const styles = {
   titleBar: {
     position: 'relative',
     zIndex: 20,
-    height: 32,
+    height: 'var(--panel-header-height)',
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border)',
     display: 'flex',
     alignItems: 'center',
-    padding: '0 8px',
+    padding: '0 var(--space-2)',
     WebkitAppRegion: 'drag',
     userSelect: 'none',
     flexShrink: 0,
@@ -220,27 +225,29 @@ const styles = {
   center: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 'var(--space-2)',
     color: 'var(--text-secondary)',
   },
   logo: {
-    fontSize: 11,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-secondary)',
-    fontFamily: 'Consolas, "Courier New", monospace',
+    fontFamily: 'var(--font-mono)',
   },
   title: {
-    fontSize: 11,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-secondary)',
-    letterSpacing: 1.5,
-    fontWeight: 400,
+    letterSpacing: 0.5,
+    fontWeight: 500,
   },
   toggleBtn: {
     WebkitAppRegion: 'no-drag',
     background: 'transparent',
     border: 'none',
     color: 'var(--text-secondary)',
-    padding: 4,
-    borderRadius: 4,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -255,23 +262,24 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 2,
-    marginLeft: 5,
+    marginLeft: 'var(--space-1)',
     padding: 2,
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-group)',
   },
   modeBtn: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 4,
-    minHeight: 21,
-    padding: '2px 7px',
+    minHeight: 24,
+    padding: '0 var(--space-2)',
     border: 'none',
-    borderRadius: 4,
+    borderRadius: 'var(--radius-control)',
     background: 'transparent',
     color: 'var(--text-muted)',
-    fontSize: 10.5,
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
     whiteSpace: 'nowrap',
   },
   modeBtnActive: {
@@ -290,16 +298,17 @@ const styles = {
     WebkitAppRegion: 'no-drag',
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
+    gap: 'var(--space-2)',
+    minHeight: 'var(--control-compact)',
     background: 'transparent',
     border: '1px solid var(--border)',
     borderRadius: 999,
     color: 'var(--text-secondary)',
-    padding: '2px 8px 2px 2px',
+    padding: '2px var(--space-2) 2px 2px',
     maxWidth: 160,
   },
   profileName: {
-    fontSize: 11.5,
+    fontSize: 'var(--text-sm)',
     fontWeight: 500,
     color: 'var(--text-secondary)',
     maxWidth: 92,
@@ -315,7 +324,7 @@ const styles = {
     zIndex: 1000,
     background: 'var(--bg-elevated)',
     border: '1px solid var(--border-strong)',
-    borderRadius: 10,
+    borderRadius: 'var(--radius-card)',
     boxShadow: 'var(--shadow-lg)',
     padding: 6,
     WebkitAppRegion: 'no-drag',
@@ -345,10 +354,12 @@ const styles = {
     width: '100%',
     background: 'transparent',
     border: 'none',
-    borderRadius: 6,
+    minHeight: 'var(--control-standard)',
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-secondary)',
-    fontSize: 12.5,
-    padding: '8px 8px',
+    fontSize: 'var(--text-md)',
+    fontWeight: 500,
+    padding: '0 var(--space-2)',
     textAlign: 'left',
   },
   menuItemIcon: { display: 'inline-flex', color: 'var(--text-muted)' },

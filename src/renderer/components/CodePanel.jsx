@@ -310,6 +310,7 @@ export default function CodePanel({
             return (
               <button
                 key={`gen:${tab}`}
+                className="ui-tab"
                 style={{
                   ...styles.tab,
                   ...(isActive ? styles.activeTab : {}),
@@ -342,6 +343,7 @@ export default function CodePanel({
                 style={{ ...styles.fileTab, ...(isActive ? styles.activeTab : {}) }}
               >
                 <button
+                  className="ui-tab"
                   style={styles.fileTabName}
                   onClick={() => handleActivateFile(f.path)}
                   title={f.path}
@@ -349,6 +351,7 @@ export default function CodePanel({
                   {basename(f.path)}{f.dirty ? ' •' : ''}
                 </button>
                 <button
+                  className="ui-icon-button"
                   style={styles.fileTabClose}
                   onClick={(e) => { e.stopPropagation(); onCloseFile?.(f.path); }}
                   title="Close file"
@@ -367,6 +370,7 @@ export default function CodePanel({
           <div style={styles.fontGroup} role="group" aria-label="Editor font size">
             <button
               type="button"
+              className="ui-toolbar-button"
               style={{
                 ...styles.fontBtn,
                 ...(fontSize <= FONT_SIZE_MIN ? styles.fontBtnDisabled : {}),
@@ -380,6 +384,7 @@ export default function CodePanel({
             </button>
             <button
               type="button"
+              className="ui-toolbar-button"
               style={styles.fontSizeLabel}
               onClick={resetFontSize}
               title={`Reset to default (${FONT_SIZE_DEFAULT}px) — Ctrl + 0`}
@@ -389,6 +394,7 @@ export default function CodePanel({
             </button>
             <button
               type="button"
+              className="ui-toolbar-button"
               style={{
                 ...styles.fontBtn,
                 ...(fontSize >= FONT_SIZE_MAX ? styles.fontBtnDisabled : {}),
@@ -403,6 +409,7 @@ export default function CodePanel({
           </div>
           {canRun && (
             <button
+              className="ui-toolbar-button ui-primary-button"
               style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}) }}
               onClick={handleRun}
               disabled={runLoading}
@@ -416,6 +423,7 @@ export default function CodePanel({
           )}
           {showingFile && (
             <button
+              className="ui-toolbar-button"
               style={{ ...styles.lockBtn, ...(fileTab.dirty ? styles.lockBtnActive : {}) }}
               onClick={() => onSaveActiveFile?.()}
               title="Save (Ctrl + S)"
@@ -427,6 +435,7 @@ export default function CodePanel({
           )}
           {!showingFile && !folderOpen && !lessonMode && (
             <button
+              className="ui-toolbar-button"
               style={{ ...styles.lockBtn, ...(editable ? styles.lockBtnActive : {}) }}
               onClick={() => { setEditable((e) => !e); clearSelection(); setTooltip(null); }}
               title={editable ? 'Switch to read-only' : 'Switch to editable (paste your own code)'}
@@ -484,6 +493,7 @@ export default function CodePanel({
         {showExplainButtons && (
           <div style={{ ...styles.btnGroup, top: btnPos.top, left: btnPos.left }}>
             <button
+              className="ui-toolbar-button"
               style={styles.explainBtn}
               onClick={handleExplain}
               disabled={aiLoading}
@@ -521,7 +531,8 @@ const styles = {
   },
   tabs: {
     display: 'flex',
-    alignItems: 'stretch',
+    alignItems: 'center',
+    minHeight: 'var(--panel-header-height)',
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border)',
   },
@@ -540,8 +551,10 @@ const styles = {
     borderBottomStyle: 'solid',
     borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
-    fontSize: 12,
-    padding: '8px 14px',
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     whiteSpace: 'nowrap',
     transition: 'color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
@@ -573,7 +586,8 @@ const styles = {
     borderBottomStyle: 'solid',
     borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
-    fontSize: 12,
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
     whiteSpace: 'nowrap',
     paddingLeft: 8,
   },
@@ -581,21 +595,29 @@ const styles = {
     background: 'none',
     border: 'none',
     color: 'inherit',
-    fontSize: 12,
-    padding: '6px 4px 6px 4px',
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-1)',
     whiteSpace: 'nowrap',
   },
   fileTabClose: {
     background: 'none',
     border: 'none',
     color: 'var(--text-muted)',
-    padding: '4px 8px 4px 4px',
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
   },
   tabActions: {
     display: 'flex',
     alignItems: 'center',
+    gap: 'var(--space-1)',
+    paddingRight: 'var(--space-2)',
   },
   lockBtn: {
     display: 'inline-flex',
@@ -607,11 +629,13 @@ const styles = {
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: 'var(--border)',
-    borderRadius: 6,
+    minHeight: 'var(--control-compact)',
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    padding: '4px 10px',
-    margin: '6px 8px',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
+    margin: 0,
     whiteSpace: 'nowrap',
   },
   lockBtnActive: {
@@ -624,10 +648,11 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    padding: '6px 14px',
+    minHeight: 'var(--control-standard)',
+    padding: '0 var(--space-3)',
     background: 'var(--algorithm-soft)',
     borderBottom: '1px solid var(--border)',
-    fontSize: 11.5,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-secondary)',
   },
   algoBannerStrong: {
@@ -657,20 +682,20 @@ const styles = {
     color: 'var(--text-secondary)',
   },
   emptyTitle: {
-    fontSize: 15,
+    fontSize: 'var(--text-lg)',
     fontWeight: 600,
     color: 'var(--text-primary)',
     margin: 0,
   },
   emptyText: {
-    fontSize: 12.5,
+    fontSize: 'var(--text-md)',
     color: 'var(--text-secondary)',
     lineHeight: 1.6,
     maxWidth: 420,
     margin: 0,
   },
   emptyHint: {
-    fontSize: 11.5,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-muted)',
     margin: '4px 0 0',
   },
@@ -683,10 +708,12 @@ const styles = {
   explainBtn: {
     background: 'var(--bg-elevated)',
     border: '1px solid var(--border-strong)',
-    borderRadius: 6,
+    minHeight: 'var(--control-compact)',
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-primary)',
-    fontSize: 12,
-    padding: '4px 10px',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
     display: 'inline-flex',
     alignItems: 'center',
@@ -694,14 +721,15 @@ const styles = {
   runBtn: {
     display: 'inline-flex',
     alignItems: 'center',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 6,
-    color: 'var(--text-primary)',
-    fontSize: 11,
+    minHeight: 'var(--control-compact)',
+    background: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: 'var(--radius-group)',
+    color: 'var(--text-on-accent)',
+    fontSize: 'var(--text-sm)',
     fontWeight: 600,
-    padding: '4px 10px',
-    margin: '6px 4px 6px 8px',
+    padding: '0 var(--space-3)',
+    margin: 0,
     whiteSpace: 'nowrap',
   },
   runBtnDisabled: {
@@ -713,8 +741,9 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     border: '1px solid var(--border)',
-    borderRadius: 6,
-    margin: '6px 4px 6px 8px',
+    minHeight: 'var(--control-compact)',
+    borderRadius: 'var(--radius-group)',
+    margin: 0,
     overflow: 'hidden',
     background: 'var(--bg-tertiary)',
   },
@@ -722,9 +751,10 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '4px 8px',
+    minHeight: 'calc(var(--control-compact) - 2px)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 500,
+    padding: '0 var(--space-2)',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
     minWidth: 26,
@@ -740,9 +770,10 @@ const styles = {
     borderLeft: '1px solid var(--border)',
     borderRight: '1px solid var(--border)',
     color: 'var(--text-primary)',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '4px 8px',
+    minHeight: 'calc(var(--control-compact) - 2px)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 500,
+    padding: '0 var(--space-2)',
     cursor: 'pointer',
     minWidth: 26,
     fontVariantNumeric: 'tabular-nums',

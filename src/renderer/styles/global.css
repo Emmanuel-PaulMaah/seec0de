@@ -10,8 +10,6 @@
  *     on top so components don't reach for raw hex.
  * ------------------------------------------------------------------------- */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 * {
   margin: 0;
   padding: 0;
@@ -19,7 +17,31 @@
 }
 
 :root {
+  /* Compact workspace foundation. Keep typography local and deterministic:
+     the app remains visually stable when Electron is offline. */
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --control-compact: 28px;
+  --control-standard: 32px;
+  --control-primary: 36px;
+  --panel-header-height: 36px;
+
+  --radius-control: 4px;
+  --radius-group: 6px;
+  --radius-card: 8px;
 
   /* Surfaces — pure black throughout, matching VS Code "Dark High Contrast"
      (hc-black). No elevation tint; depth is conveyed by borders instead. */
@@ -74,6 +96,7 @@
 
   /* Modal / drawer chrome. */
   --scrim:          rgba(0, 0, 0, 0.55);
+  --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.28);
   --shadow-lg:      0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
@@ -123,8 +146,9 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-feature-settings: 'cv11', 'ss01', 'ss03';   /* cleaner Inter variants */
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: 1.5;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -155,6 +179,32 @@ samp {
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* Shared workspace interaction states. Component styles still own layout;
+   these classes make equivalent controls feel equivalent. */
+.ui-icon-button:hover:not(:disabled),
+.ui-toolbar-button:hover:not(:disabled) {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-strong) !important;
+}
+
+.ui-tab:hover:not(:disabled),
+.ui-segmented-button:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+.ui-menu-item:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+.ui-primary-button:hover:not(:disabled) {
+  color: var(--text-on-accent) !important;
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
 }
 
 input, textarea {
