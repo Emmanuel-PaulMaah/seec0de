@@ -74,6 +74,7 @@ export default function InstructionPanel({
     return (
       <button
         type="button"
+        className="ui-panel-rail"
         style={styles.rail}
         onClick={onToggleCollapsed}
         title="Show instruction panel"
@@ -89,26 +90,26 @@ export default function InstructionPanel({
   // ---- expanded panel --------------------------------------------------
   return (
     <div style={styles.panel}>
-      <div style={styles.inner}>
-
-        {/* Header — gentle context label, with collapse control */}
-        <div style={styles.header}>
-          <div style={styles.headerText}>
-            <div style={styles.headerLabel}>Instruction</div>
-          </div>
-          {onToggleCollapsed && (
-            <button
-              type="button"
-              style={styles.collapseBtn}
-              onClick={onToggleCollapsed}
-              title="Collapse instruction panel"
-              aria-label="Collapse instruction panel"
-            >
-              <ChevronLeft size={14} />
-            </button>
-          )}
+      {/* Header — gentle context label, with collapse control */}
+      <div style={styles.header}>
+        <div style={styles.headerText}>
+          <div style={styles.headerLabel}>Instruction</div>
         </div>
+        {onToggleCollapsed && (
+          <button
+            type="button"
+            className="ui-icon-button"
+            style={styles.collapseBtn}
+            onClick={onToggleCollapsed}
+            title="Collapse instruction panel"
+            aria-label="Collapse instruction panel"
+          >
+            <ChevronLeft size={14} />
+          </button>
+        )}
+      </div>
 
+      <div style={styles.inner}>
         <div style={styles.scrollContent}>
           <div style={styles.buildStack}>
               <p style={styles.headerHint}>
@@ -116,7 +117,7 @@ export default function InstructionPanel({
               </p>
 
               {/* Read-out: which languages will be generated */}
-              <button style={styles.langStrip} onClick={onOpenSettings} title="Manage languages in Settings">
+              <button className="ui-toolbar-button" style={styles.langStrip} onClick={onOpenSettings} title="Manage languages in Settings">
                 <span style={styles.langStripChip}>Pseudocode</span>
                 {practicalLanguage && (
                   <>
@@ -141,6 +142,7 @@ export default function InstructionPanel({
                 <span style={styles.suggestionsLabel}>Try one of these</span>
                 <button
                   type="button"
+                  className="ui-icon-button"
                   style={styles.shuffleBtn}
                   onClick={() => setSeed((s) => s + 1)}
                   title="Shuffle suggestions"
@@ -154,6 +156,7 @@ export default function InstructionPanel({
                   <button
                     key={s.label}
                     type="button"
+                    className="ui-toolbar-button"
                     style={styles.suggestionChip}
                     onClick={() => handleSuggestion(s.instruction)}
                     title={s.instruction}
@@ -173,6 +176,7 @@ export default function InstructionPanel({
 
               <div style={styles.actions}>
                 <button
+                  className="ui-primary-button"
                   style={{
                     ...styles.generateBtn,
                     ...(aiLoading ? styles.disabledBtn : {}),
@@ -193,6 +197,7 @@ export default function InstructionPanel({
                     <div style={styles.errorMessage}>{aiError.message}</div>
                     <button
                       type="button"
+                      className="ui-icon-button"
                       style={styles.errorClose}
                       onClick={onClearAiError}
                       title="Dismiss"
@@ -204,6 +209,7 @@ export default function InstructionPanel({
                   {(aiError.kind === 'no-key' || aiError.kind === 'invalid-key') && (
                     <button
                       type="button"
+                      className="ui-toolbar-button"
                       style={styles.errorAction}
                       onClick={() => { onClearAiError?.(); onOpenSettings?.(); }}
                     >
@@ -246,8 +252,8 @@ const styles = {
   railText: {
     writingMode: 'vertical-rl',
     transform: 'rotate(180deg)',
-    fontSize: 10,
-    letterSpacing: 1.5,
+    fontSize: 'var(--text-xs)',
+    letterSpacing: 1,
     color: 'var(--text-muted)',
     marginTop: 8,
   },
@@ -261,18 +267,23 @@ const styles = {
     borderRight: '1px solid var(--border)',
   },
   inner: {
-    padding: 16,
+    padding: 'var(--space-4)',
     display: 'flex',
     flexDirection: 'column',
-    gap: 14,
+    gap: 'var(--space-4)',
     flex: 1,
     overflow: 'hidden',
   },
 
   header: {
+    height: 'var(--panel-header-height)',
+    flexShrink: 0,
     display: 'flex',
-    alignItems: 'flex-start',
-    gap: 8,
+    alignItems: 'center',
+    gap: 'var(--space-2)',
+    padding: '0 var(--space-3)',
+    background: 'var(--bg-secondary)',
+    borderBottom: '1px solid var(--border)',
   },
   headerText: {
     flex: 1,
@@ -281,9 +292,8 @@ const styles = {
     gap: 4,
   },
   headerLabel: {
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    fontSize: 'var(--text-sm)',
+    letterSpacing: 0.2,
     color: 'var(--text-secondary)',
     fontWeight: 600,
   },
@@ -297,8 +307,10 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-muted)',
-    padding: 4,
-    borderRadius: 4,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
     flexShrink: 0,
@@ -313,7 +325,7 @@ const styles = {
   buildStack: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 14,
+    gap: 'var(--space-3)',
     flex: 1,
   },
   langStrip: {
@@ -323,10 +335,11 @@ const styles = {
     gap: 6,
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border)',
-    borderRadius: 6,
-    padding: '8px 10px',
+    minHeight: 'var(--control-standard)',
+    borderRadius: 'var(--radius-group)',
+    padding: 'var(--space-2) var(--space-3)',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
+    fontSize: 'var(--text-sm)',
     textAlign: 'left',
     transition: 'border-color var(--motion-fast) var(--ease-out)',
   },
@@ -368,9 +381,9 @@ const styles = {
     marginTop: 2,
   },
   suggestionsLabel: {
-    fontSize: 10.5,
+    fontSize: 'var(--text-xs)',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 0.8,
     color: 'var(--text-muted)',
     fontWeight: 600,
   },
@@ -378,8 +391,11 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-muted)',
-    padding: 4,
-    borderRadius: 4,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     display: 'inline-flex',
     alignItems: 'center',
     cursor: 'pointer',
@@ -393,8 +409,10 @@ const styles = {
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border-strong)',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    padding: '5px 10px',
+    minHeight: 'var(--control-compact)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     borderRadius: 999,
     cursor: 'pointer',
     textAlign: 'left',
@@ -406,10 +424,10 @@ const styles = {
     minHeight: 200,
     background: 'var(--bg-input)',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-primary)',
-    fontSize: 13,
-    padding: 12,
+    fontSize: 'var(--text-md)',
+    padding: 'var(--space-3)',
     resize: 'none',
     outline: 'none',
     lineHeight: 1.55,
@@ -425,13 +443,14 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 6,
-    color: 'var(--text-primary)',
-    fontSize: 13,
+    minHeight: 'var(--control-primary)',
+    background: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: 'var(--radius-group)',
+    color: 'var(--text-on-accent)',
+    fontSize: 'var(--text-md)',
     fontWeight: 600,
-    padding: '9px 0',
+    padding: 0,
   },
   disabledBtn: {
     background: 'var(--bg-tertiary)',

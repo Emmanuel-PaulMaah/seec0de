@@ -207,6 +207,13 @@ button:disabled {
   border-color: var(--accent-hover) !important;
 }
 
+.ui-panel-rail:hover:not(:disabled),
+.ui-tree-row:hover:not(:disabled),
+.ui-accordion-row:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
 input, textarea {
   font-family: inherit;
 }

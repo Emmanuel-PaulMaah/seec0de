@@ -38,6 +38,7 @@ export default function ExplanationSidebar({
     return (
       <button
         type="button"
+        className="ui-panel-rail"
         style={styles.rail}
         onClick={onToggleCollapsed}
         title="Show explanation panel"
@@ -59,6 +60,7 @@ export default function ExplanationSidebar({
         {onToggleCollapsed && (
           <button
             type="button"
+            className="ui-icon-button"
             style={styles.collapseBtn}
             onClick={onToggleCollapsed}
             title="Collapse explanation panel"
@@ -69,88 +71,91 @@ export default function ExplanationSidebar({
         )}
       </div>
 
-      {loading && (
-        <div style={styles.loadingBlock}>
-          <Loader
-            size={16}
-            style={{
-              animation: 'spin 1s linear infinite',
-              color: 'var(--text-secondary)',
-            }}
-          />
-          <span style={styles.loadingText}>Thinking…</span>
-          <span style={styles.loadingHint}>
-            Asking the AI to explain the selection.
-          </span>
-        </div>
-      )}
+      <div style={styles.content}>
+        {loading && (
+          <div style={styles.loadingBlock}>
+            <Loader
+              size={16}
+              style={{
+                animation: 'spin 1s linear infinite',
+                color: 'var(--text-secondary)',
+              }}
+            />
+            <span style={styles.loadingText}>Thinking…</span>
+            <span style={styles.loadingHint}>
+              Asking the AI to explain the selection.
+            </span>
+          </div>
+        )}
 
-      {!loading && explanation && (
-        <div style={styles.section}>
-          <div style={styles.summary}>{explanation.summary}</div>
+        {!loading && explanation && (
+          <div style={styles.section}>
+            <div style={styles.summary}>{explanation.summary}</div>
 
-          {explanation.lineByLine?.length > 0 && (
-            <>
-              <div style={styles.subLabelRow}>
-                <span style={styles.subLabel}>Line by Line</span>
-                <span style={styles.subLabelHint}>
-                  click a line to expand
-                </span>
-              </div>
+            {explanation.lineByLine?.length > 0 && (
+              <>
+                <div style={styles.subLabelRow}>
+                  <span style={styles.subLabel}>Line by Line</span>
+                  <span style={styles.subLabelHint}>
+                    click a line to expand
+                  </span>
+                </div>
 
-              <div style={styles.lines}>
-                {explanation.lineByLine.map((item, i) => {
-                  const isOpen = openIndex === i;
+                <div style={styles.lines}>
+                  {explanation.lineByLine.map((item, i) => {
+                    const isOpen = openIndex === i;
 
-                  return (
-                    <div key={i} style={styles.lineItem}>
-                      <button
-                        type="button"
-                        style={{
-                          ...styles.lineHeader,
-                          ...(isOpen ? styles.lineHeaderOpen : {}),
-                        }}
-                        onClick={() =>
-                          setOpenIndex(isOpen ? -1 : i)
-                        }
-                        aria-expanded={isOpen}
-                      >
-                        <span style={styles.lineChevron}>
-                          {isOpen ? (
-                            <ChevronDown size={14} />
-                          ) : (
-                            <ChevronRight size={14} />
-                          )}
-                        </span>
+                    return (
+                      <div key={i} style={styles.lineItem}>
+                        <button
+                          type="button"
+                          className="ui-accordion-row"
+                          style={{
+                            ...styles.lineHeader,
+                            ...(isOpen ? styles.lineHeaderOpen : {}),
+                          }}
+                          onClick={() =>
+                            setOpenIndex(isOpen ? -1 : i)
+                          }
+                          aria-expanded={isOpen}
+                        >
+                          <span style={styles.lineChevron}>
+                            {isOpen ? (
+                              <ChevronDown size={14} />
+                            ) : (
+                              <ChevronRight size={14} />
+                            )}
+                          </span>
 
-                        <pre style={styles.lineCode}>
-                          {item.line}
-                        </pre>
-                      </button>
+                          <pre style={styles.lineCode}>
+                            {item.line}
+                          </pre>
+                        </button>
 
-                      {isOpen && (
-                        <div style={styles.lineExplanation}>
-                          {item.explanation}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      )}
+                        {isOpen && (
+                          <div style={styles.lineExplanation}>
+                            {item.explanation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
-      {!loading && !explanation && (
-        <div style={styles.placeholder}>
-          <MessageSquareText
-            size={20}
-            color="var(--text-muted)"
-          />
-          <span>Select code to see explanations</span>
-        </div>
-      )}
+        {!loading && !explanation && (
+          <div style={styles.placeholder}>
+            <MessageSquareText
+              size={20}
+              color="var(--text-muted)"
+            />
+            <span>Select code to see explanations</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -174,8 +179,8 @@ const styles = {
   railText: {
     writingMode: 'vertical-rl',
     transform: 'rotate(180deg)',
-    fontSize: 10,
-    letterSpacing: 1.5,
+    fontSize: 'var(--text-xs)',
+    letterSpacing: 1,
     color: 'var(--text-muted)',
     marginTop: 8,
   },
@@ -187,22 +192,23 @@ const styles = {
     flexDirection: 'column',
     background: 'var(--bg-secondary)',
     borderLeft: '1px solid var(--border)',
-    padding: 20,
-    gap: 28,
-    overflow: 'auto',
+    overflow: 'hidden',
   },
 
   headerRow: {
+    height: 'var(--panel-header-height)',
+    flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
-    gap: 8,
+    gap: 'var(--space-2)',
+    padding: '0 var(--space-3)',
+    borderBottom: '1px solid var(--border)',
   },
 
   headerLabel: {
     flex: 1,
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    fontSize: 'var(--text-sm)',
+    letterSpacing: 0.2,
     fontWeight: 600,
     color: 'var(--text-secondary)',
   },
@@ -211,32 +217,45 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-muted)',
-    padding: 4,
-    borderRadius: 4,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
     cursor: 'pointer',
   },
 
+  content: {
+    flex: 1,
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 'var(--space-4)',
+    padding: 'var(--space-4)',
+    overflow: 'auto',
+  },
+
   section: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 24,
+    gap: 'var(--space-4)',
   },
 
   summary: {
-    fontSize: 14,
-    lineHeight: 1.85,
+    fontSize: 'var(--text-md)',
+    lineHeight: 1.6,
     color: 'var(--text-primary)',
     borderLeft: '3px solid var(--border-strong)',
-    paddingLeft: 14,
+    paddingLeft: 'var(--space-3)',
   },
 
   subLabelRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 18,
+    paddingTop: 'var(--space-4)',
     borderTop: '1px solid var(--border)',
   },
 
@@ -267,8 +286,8 @@ const styles = {
     width: '100%',
     display: 'flex',
     alignItems: 'flex-start',
-    gap: 12,
-    padding: '18px 0',
+    gap: 'var(--space-2)',
+    padding: 'var(--space-3) var(--space-2)',
     border: 'none',
     background: 'transparent',
     cursor: 'pointer',
@@ -276,7 +295,7 @@ const styles = {
   },
 
   lineHeaderOpen: {
-    paddingBottom: 12,
+    paddingBottom: 'var(--space-2)',
   },
 
   lineChevron: {
@@ -300,9 +319,9 @@ const styles = {
   },
 
   lineExplanation: {
-    padding: '0 0 22px 26px',
-    fontSize: 13,
-    lineHeight: 1.8,
+    padding: '0 var(--space-2) var(--space-4) 34px',
+    fontSize: 'var(--text-md)',
+    lineHeight: 1.6,
     color: 'var(--text-secondary)',
   },
 

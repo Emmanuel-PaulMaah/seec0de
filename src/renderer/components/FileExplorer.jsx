@@ -235,7 +235,7 @@ export default function FileExplorer({
         </div>
         <div style={styles.emptyState}>
           <p style={styles.emptyText}>No folder open.</p>
-          <button style={styles.primaryBtn} onClick={onPickFolder}>
+          <button className="ui-primary-button" style={styles.primaryBtn} onClick={onPickFolder}>
             Open folder
           </button>
         </div>
@@ -248,6 +248,7 @@ export default function FileExplorer({
       <div style={styles.header}>
         <button
           type="button"
+          className="ui-toolbar-button"
           style={{ ...styles.headerLabel, ...(selectedDir === rootPath ? styles.headerLabelSelected : {}) }}
           title="Select project root as the creation target"
           onClick={() => setSelectedDir(rootPath)}
@@ -255,16 +256,16 @@ export default function FileExplorer({
           {basename(rootPath) || rootPath}
         </button>
         <div style={styles.headerActions}>
-          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
             <Plus size={12} />
           </button>
-          <button style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title={`New folder in ${basename(selectedDir) || 'project root'}`}>
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title={`New folder in ${basename(selectedDir) || 'project root'}`}>
             <FolderPlus size={12} />
           </button>
-          <button style={styles.iconBtn} onClick={handleRefresh} title="Refresh">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={handleRefresh} title="Refresh">
             <RefreshCw size={12} />
           </button>
-          <button style={styles.iconBtn} onClick={onCloseFolder} title="Close folder">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={onCloseFolder} title="Close folder">
             <X size={12} />
           </button>
         </div>
@@ -378,6 +379,7 @@ function TreeNode({ path, name, isDir, depth, tree, onToggleDir, onOpenFile, act
   return (
     <div>
       <button
+        className="ui-tree-row"
         style={{
           ...styles.row,
           ...(isActive ? styles.rowActive : {}),
@@ -503,22 +505,24 @@ const styles = {
   overflow: 'hidden',
 },
   header: {
+    height: 'var(--panel-header-height)',
+    flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '8px 10px',
+    padding: '0 var(--space-2) 0 var(--space-3)',
     borderBottom: '1px solid var(--border)',
-    background: 'var(--bg-tertiary)',
+    background: 'var(--bg-secondary)',
   },
   headerLabel: {
     minWidth: 0,
-    padding: '2px 4px',
+    minHeight: 'var(--control-compact)',
+    padding: '0 var(--space-1)',
     border: 'none',
     borderRadius: 3,
     background: 'transparent',
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontSize: 'var(--text-sm)',
+    letterSpacing: 0.2,
     color: 'var(--text-secondary)',
     fontWeight: 600,
     overflow: 'hidden',
@@ -537,8 +541,10 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-secondary)',
-    padding: 3,
-    borderRadius: 3,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -557,9 +563,9 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 18,
-    height: 18,
-    borderRadius: 3,
+    width: 24,
+    height: 24,
+    borderRadius: 'var(--radius-control)',
     color: 'var(--text-muted)',
   },
 
@@ -661,12 +667,13 @@ const styles = {
     color: 'var(--text-secondary)',
   },
   primaryBtn: {
+    minHeight: 'var(--control-standard)',
     background: 'var(--accent)',
     border: 'none',
-    borderRadius: 3,
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-on-accent)',
-    fontSize: 12,
-    padding: '6px 12px',
+    fontSize: 'var(--text-sm)',
+    padding: '0 var(--space-3)',
     fontWeight: 600,
   },
   tree: {
@@ -694,8 +701,9 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-primary)',
-    fontSize: 12,
-    padding: '3px 8px',
+    minHeight: 'var(--control-compact)',
+    fontSize: 'var(--text-sm)',
+    padding: '0 var(--space-2)',
     textAlign: 'left',
     whiteSpace: 'nowrap',
     overflow: 'hidden',

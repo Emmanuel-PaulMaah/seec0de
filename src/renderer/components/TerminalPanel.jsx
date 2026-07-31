@@ -162,7 +162,7 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
 
   if (!visible) {
     return (
-      <button style={styles.collapsedBar} onClick={onToggle} title="Open terminal (Ctrl+`)">
+      <button className="ui-toolbar-button" style={styles.collapsedBar} onClick={onToggle} title="Open terminal (Ctrl+`)">
         <TermIcon size={12} />
         <span style={{ marginLeft: 6 }}>Terminal</span>
         <ChevronUp size={12} style={{ marginLeft: 'auto' }} />
@@ -179,10 +179,10 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
           <span style={styles.cwd} title={cwd}>{shortenPath(cwd)}</span>
         </div>
         <div style={styles.headerActions}>
-          <button style={styles.iconBtn} onClick={() => setEntries([])} title="Clear (Ctrl+L)">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => setEntries([])} title="Clear (Ctrl+L)">
             <Trash2 size={12} />
           </button>
-          <button style={styles.iconBtn} onClick={onToggle} title="Hide terminal">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={onToggle} title="Hide terminal">
             <ChevronDown size={12} />
           </button>
         </div>
@@ -211,7 +211,7 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
           autoComplete="off"
           disabled={running}
         />
-        <button type="submit" style={styles.runBtn} disabled={running || !input.trim()}>
+        <button type="submit" className="ui-primary-button" style={styles.runBtn} disabled={running || !input.trim()}>
           {running ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Play size={11} />}
           <span style={{ marginLeft: 4 }}>Run</span>
         </button>
@@ -261,14 +261,15 @@ function shortenPath(p) {
 
 const styles = {
   collapsedBar: {
-    height: 28,
+    height: 'var(--control-standard)',
     display: 'flex',
     alignItems: 'center',
     background: 'var(--bg-secondary)',
     borderTop: '1px solid var(--border)',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    padding: '0 12px',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     border: 'none',
     width: '100%',
     textAlign: 'left',
@@ -280,15 +281,15 @@ const styles = {
     flexDirection: 'column',
     background: 'var(--bg-input)',
     borderTop: '1px solid var(--border)',
-    fontFamily: '"JetBrains Mono", "Cascadia Code", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
   },
   header: {
-    height: 26,
+    height: 'var(--panel-header-height)',
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 8px',
+    padding: '0 var(--space-2) 0 var(--space-3)',
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border)',
   },
@@ -297,18 +298,17 @@ const styles = {
     alignItems: 'center',
     gap: 6,
     color: 'var(--text-secondary)',
-    fontSize: 11,
+    fontSize: 'var(--text-sm)',
   },
   headerLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.2,
     fontWeight: 600,
   },
   cwd: {
     color: 'var(--text-muted)',
-    fontSize: 10,
+    fontSize: 'var(--text-xs)',
     marginLeft: 8,
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -319,8 +319,11 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-secondary)',
-    padding: 3,
-    borderRadius: 3,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
   },
@@ -332,8 +335,8 @@ const styles = {
   empty: {
     padding: '14px 16px',
     color: 'var(--text-muted)',
-    fontSize: 12,
-    fontFamily: 'Inter, sans-serif',
+    fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--font-ui)',
     lineHeight: 1.6,
   },
   kbd: {
@@ -345,14 +348,14 @@ const styles = {
     color: 'var(--text-primary)',
   },
   entry: {
-    padding: '6px 12px',
+    padding: 'var(--space-2) var(--space-3)',
     borderBottom: '1px solid rgba(255,255,255,0.03)',
   },
   entryHeader: {
     display: 'flex',
     alignItems: 'baseline',
     gap: 6,
-    fontSize: 12,
+    fontSize: 'var(--text-sm)',
     flexWrap: 'wrap',
   },
   entryCwd: {
@@ -371,19 +374,19 @@ const styles = {
   },
   entryStatus: {
     fontSize: 10,
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: 'var(--font-ui)',
   },
   explanation: {
-    fontSize: 11,
+    fontSize: 'var(--text-xs)',
     color: '#79c2ff',
     fontStyle: 'italic',
     margin: '3px 0 4px 14px',
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: 'var(--font-ui)',
     lineHeight: 1.4,
   },
   output: {
     margin: '4px 0 0 14px',
-    fontSize: 12,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-primary)',
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-all',
@@ -405,7 +408,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 6,
-    padding: '6px 8px',
+    minHeight: 40,
+    padding: 'var(--space-1) var(--space-2)',
     borderTop: '1px solid var(--border)',
     background: 'var(--bg-secondary)',
   },
@@ -420,20 +424,21 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-primary)',
-    fontSize: 13,
+    fontSize: 'var(--text-md)',
     fontFamily: 'inherit',
     outline: 'none',
   },
   runBtn: {
     display: 'flex',
     alignItems: 'center',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 6,
-    color: 'var(--text-primary)',
-    fontSize: 11,
-    padding: '4px 10px',
-    fontFamily: 'Inter, sans-serif',
+    minHeight: 'var(--control-compact)',
+    background: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: 'var(--radius-group)',
+    color: 'var(--text-on-accent)',
+    fontSize: 'var(--text-sm)',
+    padding: '0 var(--space-3)',
+    fontFamily: 'var(--font-ui)',
     fontWeight: 600,
     whiteSpace: 'nowrap',
   }

@@ -217,6 +217,7 @@ export default function LivePreviewPanel({
     return (
       <button
         type="button"
+        className="ui-panel-rail"
         style={styles.rail}
         onClick={onToggle}
         title="Show live preview"
@@ -235,6 +236,7 @@ export default function LivePreviewPanel({
       <div style={styles.header}>
         <div style={styles.tabs}>
           <button
+            className="ui-tab"
             style={{ ...styles.tab, ...(view === 'preview' ? styles.tabActive : {}) }}
             onClick={() => setView('preview')}
             title="Visual preview"
@@ -243,6 +245,7 @@ export default function LivePreviewPanel({
             <span style={{ marginLeft: 6 }}>Preview</span>
           </button>
           <button
+            className="ui-tab"
             style={{ ...styles.tab, ...(view === 'console' ? styles.tabActive : {}) }}
             onClick={() => setView('console')}
             title="Console output (logs, runner output)"
@@ -259,6 +262,7 @@ export default function LivePreviewPanel({
           {view === 'console' && consoleEntries.length > 0 && (
             <button
               type="button"
+              className="ui-icon-button"
               style={styles.iconBtn}
               onClick={() => {
                 setConsoleEntries([]);
@@ -276,6 +280,7 @@ export default function LivePreviewPanel({
           {view === 'preview' && previewable && (
             <button
               type="button"
+              className="ui-icon-button"
               style={styles.iconBtn}
               onClick={handleRefresh}
               title="Refresh preview"
@@ -287,6 +292,7 @@ export default function LivePreviewPanel({
           {collapsible && (
             <button
               type="button"
+              className="ui-icon-button"
               style={styles.iconBtn}
               onClick={onToggle}
               title="Hide preview"
@@ -553,8 +559,8 @@ const styles = {
   railText: {
     writingMode: 'vertical-rl',
     transform: 'rotate(180deg)',
-    fontSize: 10,
-    letterSpacing: 1.5,
+    fontSize: 'var(--text-xs)',
+    letterSpacing: 1,
     color: 'var(--text-muted)',
     marginTop: 8,
   },
@@ -575,7 +581,7 @@ const styles = {
     alignItems: 'stretch',
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border)',
-    minHeight: 36,
+    minHeight: 'var(--panel-header-height)',
   },
   tabs: {
     display: 'flex',
@@ -591,8 +597,10 @@ const styles = {
     borderBottomStyle: 'solid',
     borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
-    fontSize: 12,
-    padding: '8px 14px',
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     whiteSpace: 'nowrap',
     transition: 'color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
@@ -624,8 +632,11 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-secondary)',
-    padding: 6,
-    borderRadius: 4,
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
   },
@@ -651,20 +662,20 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: 'var(--space-6)',
     textAlign: 'center',
     gap: 6,
     color: 'var(--text-muted)',
     background: 'var(--bg-primary)',
   },
   placeholderTitle: {
-    fontSize: 14,
+    fontSize: 'var(--text-lg)',
     color: 'var(--text-primary)',
     fontWeight: 600,
     margin: '8px 0 0',
   },
   placeholderText: {
-    fontSize: 12.5,
+    fontSize: 'var(--text-md)',
     color: 'var(--text-secondary)',
     lineHeight: 1.6,
     maxWidth: 320,
@@ -702,7 +713,7 @@ const styles = {
     flexShrink: 0,
     margin: 8,
     padding: '10px 12px 12px',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-card)',
     background: 'rgba(255, 80, 80, 0.06)',
     border: '1px solid rgba(255, 80, 80, 0.35)',
     color: 'var(--text-primary)',
@@ -739,7 +750,7 @@ const styles = {
   },
   errTitle: {
     flex: 1,
-    fontSize: 12.5,
+    fontSize: 'var(--text-md)',
     fontWeight: 600,
     color: 'var(--text-primary)',
     lineHeight: 1.4,
@@ -756,8 +767,8 @@ const styles = {
   },
   errPlain: {
     margin: '0 0 10px',
-    fontSize: 12,
-    lineHeight: 1.55,
+    fontSize: 'var(--text-sm)',
+    lineHeight: 1.6,
     color: 'var(--text-secondary)',
   },
   errFixes: {
@@ -779,8 +790,8 @@ const styles = {
     paddingLeft: 18,
   },
   errFixItem: {
-    fontSize: 12,
-    lineHeight: 1.55,
+    fontSize: 'var(--text-sm)',
+    lineHeight: 1.6,
     color: 'var(--text-secondary)',
     marginBottom: 4,
   },
@@ -832,7 +843,7 @@ const styles = {
     padding: '4px 12px',
     borderBottom: '1px solid rgba(255,255,255,0.03)',
     color: 'var(--text-primary)',
-    fontSize: 12,
+    fontSize: 'var(--text-sm)',
     lineHeight: 1.5,
   },
   consoleLevel: {
@@ -849,7 +860,7 @@ const styles = {
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
     fontFamily: 'inherit',
-    fontSize: 12,
+    fontSize: 'var(--text-sm)',
   },
 
   statusBar: {
