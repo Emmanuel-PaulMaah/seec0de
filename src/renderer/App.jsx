@@ -11,6 +11,7 @@ import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer, { ProfileManagerCard } from './components/SettingsDrawer';
 import ProfileGate from './components/ProfileGate';
 import HomeScreen from './components/HomeScreen';
+import LearnHomeScreen from './components/LearnHomeScreen';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
@@ -112,6 +113,12 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [showHome, setShowHome] = useState(true);
+  const [learnCatalogLanguage, setLearnCatalogLanguage] = useState(
+    () => restoredLearningState().lesson?.language || null
+  );
+  const [learnCatalogSection, setLearnCatalogSection] = useState(
+    () => (restoredLearningState().lesson ? 'courses' : null)
+  );
 
   useEffect(() => {
     const theme = settings.theme === 'seec0de-green' ? 'seec0de-green' : 'seec0de-dark';
@@ -179,6 +186,10 @@ export default function App() {
   // the lesson but leaves the editor as-is (so the learner can still
   // tinker with their last attempt).
   const handleSelectLesson = useCallback((lesson) => {
+    if (lesson?.language) {
+      setLearnCatalogLanguage(lesson.language);
+      setLearnCatalogSection('courses');
+    }
     setActiveLesson(lesson);
     setLessonStatus('idle');
     setLessonVerification(null);
@@ -905,6 +916,8 @@ export default function App() {
     const restored = restoredLearningState(nextSettings);
     setLearnMode(!!nextSettings.learnMode);
     setActiveLesson(restored.lesson);
+    setLearnCatalogLanguage(restored.lesson?.language || null);
+    setLearnCatalogSection(restored.lesson ? 'courses' : null);
     setLearnPhase(restored.phase);
     setLessonStatus(restored.status);
     setLessonVerification(restored.verification);
@@ -1135,6 +1148,10 @@ const beginExplanationResize = useCallback((event) => {
       workspaceGeneratedCodeRef.current = generatedCode;
       setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
       setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
+      if (!activeLesson) {
+        setLearnCatalogLanguage(null);
+        setLearnCatalogSection(null);
+      }
       setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn Mode opened. Choose a course.');
     } else {
       if (activeLesson) learnDraftRef.current = generatedCode;
@@ -1166,6 +1183,15 @@ const beginExplanationResize = useCallback((event) => {
           hasActiveLesson={!!activeLesson}
           onOpenWorkspace={() => handleModeChange('workspace')}
           onOpenLearnMode={() => handleModeChange('learn')}
+        />
+      ) : learnMode && !activeLesson ? (
+        <LearnHomeScreen
+          selectedLanguage={learnCatalogLanguage}
+          selectedSection={learnCatalogSection}
+          completedLessons={completedLessons}
+          onSelectLanguage={setLearnCatalogLanguage}
+          onSelectSection={setLearnCatalogSection}
+          onSelectLesson={handleSelectLesson}
         />
       ) : (
       <div style={styles.body}>

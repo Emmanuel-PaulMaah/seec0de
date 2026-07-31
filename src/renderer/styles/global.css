@@ -180,13 +180,26 @@ a:focus-visible,
   transform: translateY(-2px);
 }
 
+.learn-home-card:hover {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  transform: translateY(-2px);
+}
+
 @media (max-width: 720px) {
   .home-content {
     width: calc(100% - 32px) !important;
     padding-bottom: 90px !important;
   }
 
-  .home-launch-grid {
+  .learn-home-content {
+    width: calc(100% - 32px) !important;
+    padding-top: 36px !important;
+  }
+
+  .home-launch-grid,
+  .learn-home-card-grid,
+  .learn-home-course-grid {
     grid-template-columns: 1fr !important;
   }
 
