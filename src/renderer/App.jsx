@@ -431,17 +431,42 @@ export default function App() {
   }, [settings.activeProfileId, learnMode, activeLesson?.id]);
 
   // ---- keyboard shortcuts ---------------------------------------------
-  // Ctrl+`  → toggle terminal (matches VS Code).
+  // Ctrl+` toggles Terminal, Ctrl+B toggles Explorer, and F6 cycles the
+  // visible workspace panels. Text inputs keep ownership of Ctrl+B.
   useEffect(() => {
     const onKey = (e) => {
+      if (document.querySelector('[aria-modal="true"]')) return;
+
       if ((e.ctrlKey || e.metaKey) && e.key === '`') {
         e.preventDefault();
         setTerminalVisible((v) => !v);
+        return;
+      }
+
+      const target = e.target;
+      const inMonaco = target instanceof Element && !!target.closest('.monaco-editor');
+      const typing = target instanceof HTMLElement && (
+        target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+      ) && !inMonaco;
+
+      if (!showHome && !learnMode && !typing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setExplorerVisible((v) => !v);
+        return;
+      }
+
+      if (!showHome && e.key === 'F6' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const panels = Array.from(document.querySelectorAll('[data-workspace-panel]'))
+          .filter((panel) => panel instanceof HTMLElement && panel.offsetParent !== null);
+        if (panels.length === 0) return;
+        e.preventDefault();
+        const current = panels.findIndex((panel) => panel.contains(document.activeElement));
+        panels[(current + 1) % panels.length].focus();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [showHome, learnMode]);
 
   // ---- file actions ----------------------------------------------------
   const handlePickFolder = useCallback(async () => {
@@ -1152,6 +1177,14 @@ const beginExplanationResize = useCallback((event) => {
   window.addEventListener('mouseup', handleMouseUp);
 }, [explanationWidth]);
 
+  const resizePanelWithKeyboard = useCallback((event, setWidth, direction, min, max) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const step = event.shiftKey ? 32 : 8;
+    const arrowDirection = event.key === 'ArrowRight' ? 1 : -1;
+    setWidth((width) => Math.max(min, Math.min(max, width + arrowDirection * direction * step)));
+  }, []);
+
   const learnResultVisible = learnMode && !!activeLesson && ['run', 'fix', 'complete'].includes(learnPhase);
   const resultVisible = learnMode ? learnResultVisible : previewVisible;
   const guidanceLevel = ['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
@@ -1229,7 +1262,12 @@ const beginExplanationResize = useCallback((event) => {
         <div style={styles.workspace} className={learnMode ? 'app-workspace learn-mode-workspace' : 'app-workspace'}>
           {!learnMode && explorerVisible && (
   <>
-    <div style={{ ...styles.explorerShell, width: explorerWidth }}>
+    <div
+      data-workspace-panel="explorer"
+      tabIndex={-1}
+      aria-label="File explorer panel"
+      style={{ ...styles.explorerShell, width: explorerWidth }}
+    >
       <FileExplorer
         rootPath={rootPath}
         onPickFolder={handlePickFolder}
@@ -1242,17 +1280,27 @@ const beginExplanationResize = useCallback((event) => {
     </div>
 
     <div
+      className="workspace-resize-handle"
       style={styles.verticalResizeHandle}
       onMouseDown={beginExplorerResize}
-      title="Resize file explorer"
+      onKeyDown={(event) => resizePanelWithKeyboard(event, setExplorerWidth, 1, 180, 420)}
+      title="Resize file explorer (Arrow keys)"
       role="separator"
+      tabIndex={0}
       aria-orientation="vertical"
+      aria-label="Resize file explorer"
+      aria-valuemin={180}
+      aria-valuemax={420}
+      aria-valuenow={Math.round(explorerWidth)}
     />
   </>
 )}
 
           <div
             className={learnMode ? 'learn-mode-guide-shell' : undefined}
+            data-workspace-panel="guide"
+            tabIndex={-1}
+            aria-label={learnMode ? 'Learn guide panel' : 'Instruction panel'}
             style={{
               ...styles.instructionShell,
               width: learnMode ? 360 : (instructionCollapsed ? 32 : instructionWidth),
@@ -1302,15 +1350,27 @@ const beginExplanationResize = useCallback((event) => {
 
           {!learnMode && !instructionCollapsed && (
             <div
+              className="workspace-resize-handle"
               style={styles.verticalResizeHandle}
               onMouseDown={beginInstructionResize}
-              title="Resize instruction panel"
+              onKeyDown={(event) => resizePanelWithKeyboard(event, setInstructionWidth, 1, 240, 520)}
+              title="Resize instruction panel (Arrow keys)"
               role="separator"
+              tabIndex={0}
               aria-orientation="vertical"
+              aria-label="Resize instruction panel"
+              aria-valuemin={240}
+              aria-valuemax={520}
+              aria-valuenow={Math.round(instructionWidth)}
             />
           )}
 
-          <div className={learnMode ? 'workspace-editor-shell learn-mode-editor-shell' : 'workspace-editor-shell'}>
+          <div
+            className={learnMode ? 'workspace-editor-shell learn-mode-editor-shell' : 'workspace-editor-shell'}
+            data-workspace-panel="editor"
+            tabIndex={-1}
+            aria-label="Code editor panel"
+          >
             <CodePanel
               generatedCode={generatedCode}
               selectedLanguages={effectiveLanguages}
@@ -1336,17 +1396,27 @@ const beginExplanationResize = useCallback((event) => {
 
           {resultVisible && !learnMode && (
             <div
+              className="workspace-resize-handle"
               style={styles.verticalResizeHandle}
               onMouseDown={beginPreviewResize}
-              title="Resize live preview"
+              onKeyDown={(event) => resizePanelWithKeyboard(event, setPreviewWidth, -1, 300, 680)}
+              title="Resize live preview (Arrow keys)"
               role="separator"
+              tabIndex={0}
               aria-orientation="vertical"
+              aria-label="Resize live preview"
+              aria-valuemin={300}
+              aria-valuemax={680}
+              aria-valuenow={Math.round(previewWidth)}
             />
           )}
 
           {(!learnMode || resultVisible) && (
             <div
               className={learnMode ? 'learn-mode-result-shell' : undefined}
+              data-workspace-panel="result"
+              tabIndex={-1}
+              aria-label="Preview and console panel"
               style={{
                 ...styles.previewShell,
                 width: resultVisible ? (learnMode ? 360 : previewWidth) : 32,
@@ -1369,16 +1439,26 @@ const beginExplanationResize = useCallback((event) => {
 
           {!learnMode && !explanationCollapsed && (
             <div
+              className="workspace-resize-handle"
               style={styles.verticalResizeHandle}
               onMouseDown={beginExplanationResize}
-              title="Resize explanation sidebar"
+              onKeyDown={(event) => resizePanelWithKeyboard(event, setExplanationWidth, -1, 240, 520)}
+              title="Resize explanation panel (Arrow keys)"
               role="separator"
+              tabIndex={0}
               aria-orientation="vertical"
+              aria-label="Resize explanation panel"
+              aria-valuemin={240}
+              aria-valuemax={520}
+              aria-valuenow={Math.round(explanationWidth)}
             />
           )}
 
           {!learnMode && (
             <div
+              data-workspace-panel="explanation"
+              tabIndex={-1}
+              aria-label="Explanation panel"
               style={{
                 ...styles.explanationShell,
                 width: explanationCollapsed ? 32 : explanationWidth,

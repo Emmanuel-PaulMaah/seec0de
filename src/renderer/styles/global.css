@@ -214,6 +214,18 @@ button:disabled {
   background: var(--bg-tertiary) !important;
 }
 
+[data-workspace-panel]:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.workspace-resize-handle:hover,
+.workspace-resize-handle:focus-visible {
+  background: var(--border-focus) !important;
+  border-color: var(--border-focus) !important;
+  outline: none;
+}
+
 input, textarea {
   font-family: inherit;
 }
@@ -304,6 +316,19 @@ a:focus-visible,
     min-width: 0 !important;
     min-height: 260px;
     flex: 0 0 260px !important;
+  }
+}
+
+/* Preserve every workspace panel on narrower windows. Horizontal scrolling is
+ * preferable to compressing the editor and sidebars into unusable slivers. */
+@media (max-width: 1100px) {
+  .app-workspace:not(.learn-mode-workspace) {
+    overflow-x: auto !important;
+  }
+
+  .app-workspace:not(.learn-mode-workspace) .workspace-editor-shell {
+    flex: 0 0 420px;
+    min-width: 420px;
   }
 }
 

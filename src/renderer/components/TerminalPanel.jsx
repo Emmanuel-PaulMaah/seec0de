@@ -162,7 +162,13 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
 
   if (!visible) {
     return (
-      <button className="ui-toolbar-button" style={styles.collapsedBar} onClick={onToggle} title="Open terminal (Ctrl+`)">
+      <button
+        className="ui-toolbar-button"
+        data-workspace-panel="terminal"
+        style={styles.collapsedBar}
+        onClick={onToggle}
+        title="Open terminal (Ctrl+`)"
+      >
         <TermIcon size={12} />
         <span style={{ marginLeft: 6 }}>Terminal</span>
         <ChevronUp size={12} style={{ marginLeft: 'auto' }} />
@@ -171,7 +177,7 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
   }
 
   return (
-    <div style={styles.panel}>
+    <div data-workspace-panel="terminal" tabIndex={-1} aria-label="Terminal panel" style={styles.panel}>
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <TermIcon size={12} />

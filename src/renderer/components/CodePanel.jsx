@@ -287,6 +287,25 @@ export default function CodePanel({
     onRunCode({ language: runLanguage, source: value, filename: runFilename });
   }, [canRun, onRunCode, runLanguage, value, runFilename]);
 
+  // Run from the editor with the familiar build-tool shortcut. Ignore other
+  // text inputs (for example the instruction panel) even though this listener
+  // is attached to window.
+  useEffect(() => {
+    const onKey = (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
+      const target = event.target;
+      const inMonaco = target instanceof Element && !!target.closest('.monaco-editor');
+      const inOtherInput = target instanceof HTMLElement && (
+        target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+      );
+      if (inOtherInput && !inMonaco) return;
+      event.preventDefault();
+      handleRun();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleRun]);
+
   const handleActivateGenerated = (tab) => {
     onActivatePath?.(null);
     onActivateGeneratedTab?.(tab);

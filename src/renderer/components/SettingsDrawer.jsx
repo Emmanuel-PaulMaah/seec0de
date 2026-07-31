@@ -3,7 +3,7 @@ import {
   X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
-  Users, UserPlus, Lock, Trash2, GraduationCap,
+  Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
@@ -290,17 +290,22 @@ export default function SettingsDrawer({
             />
           </Section>
 
-          {/* ---- 5. Toolchains ----------------------------------------- */}
+          {/* ---- 5. Keyboard shortcuts --------------------------------- */}
+          <Section icon={<Keyboard size={13} />} title="Keyboard shortcuts">
+            <ShortcutList />
+          </Section>
+
+          {/* ---- 6. Toolchains ----------------------------------------- */}
           <Section icon={<Cpu size={13} />} title="Toolchains">
             <ToolchainPanel onRunInTerminal={onRunInTerminal} />
           </Section>
 
-          {/* ---- 6. About & Updates ----------------------------------- */}
+          {/* ---- 7. About & Updates ----------------------------------- */}
           <Section icon={<Info size={13} />} title="About & Updates">
             <UpdatePanel update={update} />
           </Section>
 
-          {/* ---- 7. Onboarding ---------------------------------------- */}
+          {/* ---- 8. Onboarding ---------------------------------------- */}
           <Section title="Onboarding">
             <button style={styles.ghostBtn} onClick={handleRerun}>
               Rerun onboarding
@@ -579,6 +584,31 @@ function Section({ icon, title, children }) {
       </div>
       <div style={styles.sectionBody}>{children}</div>
     </section>
+  );
+}
+
+function ShortcutList() {
+  const shortcuts = [
+    ['Run active code', 'Ctrl', 'Enter'],
+    ['Toggle file explorer', 'Ctrl', 'B'],
+    ['Toggle terminal', 'Ctrl', '`'],
+    ['Save active file', 'Ctrl', 'S'],
+    ['Cycle visible panels', 'F6'],
+    ['Resize focused divider', '\u2190 / \u2192'],
+  ];
+
+  return (
+    <div style={styles.shortcutList}>
+      {shortcuts.map(([label, ...keys]) => (
+        <div key={label} style={styles.shortcutRow}>
+          <span style={styles.shortcutLabel}>{label}</span>
+          <span style={styles.shortcutKeys}>
+            {keys.map((key) => <kbd key={key} style={styles.keycap}>{key}</kbd>)}
+          </span>
+        </div>
+      ))}
+      <p style={styles.shortcutHint}>Hold Shift while resizing to move a divider 32px at a time.</p>
+    </div>
   );
 }
 
@@ -1106,6 +1136,52 @@ const styles = {
   sectionBody: {
     display: 'flex', flexDirection: 'column', gap: 16,
     paddingBottom: 18,
+  },
+
+  shortcutList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0,
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-card)',
+    overflow: 'hidden',
+  },
+  shortcutRow: {
+    minHeight: 'var(--control-standard)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 'var(--space-3)',
+    padding: 'var(--space-2) var(--space-3)',
+    borderBottom: '1px solid var(--border)',
+  },
+  shortcutLabel: {
+    color: 'var(--text-secondary)',
+    fontSize: 'var(--text-sm)',
+  },
+  shortcutKeys: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--space-1)',
+  },
+  keycap: {
+    minWidth: 24,
+    padding: '2px 6px',
+    border: '1px solid var(--border-strong)',
+    borderBottomWidth: 2,
+    borderRadius: 'var(--radius-control)',
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'var(--text-xs)',
+    textAlign: 'center',
+  },
+  shortcutHint: {
+    margin: 0,
+    padding: 'var(--space-2) var(--space-3)',
+    color: 'var(--text-muted)',
+    fontSize: 'var(--text-xs)',
+    lineHeight: 1.5,
   },
 
   field: { display: 'flex', flexDirection: 'column', gap: 6 },
