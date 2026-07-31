@@ -1586,5 +1586,1192 @@
 }
 ]
 }
+,
+
+  {
+    "id": "py-core-operators",
+    "name": "Values and Operators",
+    "language": "python",
+    "description": "Work confidently with missing values, types, conversion, and numeric operators.",
+    "lessons": [
+      {
+        "id": "py-51-none-types-conversion",
+        "title": "51. None, types, and conversion",
+        "concept": "None, type(), int(), float(), str()",
+        "summary": "`None` marks a missing value; type checks and explicit conversion make value changes visible.",
+        "activities": [
+          {
+            "id": "py-51-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small None, type(), int(), float(), str() pattern before writing your own.",
+            "example": "value = None"
+          },
+          {
+            "id": "py-51-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses None, type(), int(), float(), str(), then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-51-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "`None` marks a missing value; type checks and explicit conversion make value changes visible."
+          },
+          {
+            "type": "code",
+            "text": "value = None"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates none, types, and conversion and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "True\nint 7",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for None, type(), int(), float(), str().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "value = None\nprint(value is None)\ncount = int('7')\nprint(type(count).__name__, count)\n"
+      },
+      {
+        "id": "py-52-numeric-operators",
+        "title": "52. Remainder, division, and powers",
+        "concept": "%, //, **, precedence",
+        "summary": "Remainder, floor division, powers, and precedence solve precise numeric calculations.",
+        "activities": [
+          {
+            "id": "py-52-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on %, //, **, precedence?",
+            "choices": [
+              "%, //, **, precedence",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "%, //, **, precedence",
+            "explanation": "Remainder, floor division, powers, and precedence solve precise numeric calculations."
+          },
+          {
+            "id": "py-52-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central %, //, **, precedence operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-52-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Remainder, floor division, powers, and precedence solve precise numeric calculations."
+          },
+          {
+            "type": "code",
+            "text": "minutes = 137"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates remainder, division, and powers and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "2 17\n11",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for %, //, **, precedence.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "minutes = 137\nprint(minutes // 60, minutes % 60)\nprint(2 + 3 ** 2)\n"
+      },
+      {
+        "id": "py-53-strings-sequences",
+        "title": "53. Strings are sequences",
+        "concept": "indexing and slicing",
+        "summary": "Strings support indexing, slicing, length, and iteration because they are sequences.",
+        "activities": [
+          {
+            "id": "py-53-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small indexing and slicing pattern before writing your own.",
+            "example": "word = 'Python'"
+          },
+          {
+            "id": "py-53-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central indexing and slicing operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-53-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Strings support indexing, slicing, length, and iteration because they are sequences."
+          },
+          {
+            "type": "code",
+            "text": "word = 'Python'"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates strings are sequences and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "P n\nyth\n6",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for indexing and slicing.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "word = 'Python'\nprint(word[0], word[-1])\nprint(word[1:4])\nprint(len(word))\n"
+      },
+      {
+        "id": "py-54-split-join-cleanup",
+        "title": "54. Split, join, and clean strings",
+        "concept": "strip(), split(), join()",
+        "summary": "Cleanup methods normalize text, while split and join move between strings and lists.",
+        "activities": [
+          {
+            "id": "py-54-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on strip(), split(), join()?",
+            "choices": [
+              "strip(), split(), join()",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "strip(), split(), join()",
+            "explanation": "Cleanup methods normalize text, while split and join move between strings and lists."
+          },
+          {
+            "id": "py-54-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses strip(), split(), join(), then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-54-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Cleanup methods normalize text, while split and join move between strings and lists."
+          },
+          {
+            "type": "code",
+            "text": "raw = '  red, blue,green  '"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates split, join, and clean strings and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nraw = '  red, blue,green  '\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "red | blue | green",
+        "matchType": "contains",
+        "hints": [
+          "Start with the lesson pattern for strip(), split(), join().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "raw = '  red, blue,green  '\ncolors = [part.strip() for part in raw.strip().split(',')]\nprint(' | '.join(colors))\n"
+      },
+      {
+        "id": "py-55-continue-nested-loops",
+        "title": "55. Continue and nested loops",
+        "concept": "continue and nested loops",
+        "summary": "`continue` skips one iteration, and nested loops visit combinations of values.",
+        "activities": [
+          {
+            "id": "py-55-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small continue and nested loops pattern before writing your own.",
+            "example": "for row in range(1, 3):"
+          },
+          {
+            "id": "py-55-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central continue and nested loops operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-55-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "`continue` skips one iteration, and nested loops visit combinations of values."
+          },
+          {
+            "type": "code",
+            "text": "for row in range(1, 3):"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates continue and nested loops and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "1:1\n1:3\n2:1\n2:3",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for continue and nested loops.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "for row in range(1, 3):\n    for column in range(1, 4):\n        if column == 2:\n            continue\n        print(f'{row}:{column}')\n"
+      }
+    ]
+  },
+  {
+    "id": "py-sequences-loops",
+    "name": "Sequences and Loops",
+    "language": "python",
+    "description": "Transform text and coordinate iteration across sequence data.",
+    "lessons": [
+      {
+        "id": "py-56-enumerate",
+        "title": "56. Count with enumerate",
+        "concept": "enumerate()",
+        "summary": "`enumerate()` yields an index and value together without a manual counter.",
+        "activities": [
+          {
+            "id": "py-56-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on enumerate()?",
+            "choices": [
+              "enumerate()",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "enumerate()",
+            "explanation": "`enumerate()` yields an index and value together without a manual counter."
+          },
+          {
+            "id": "py-56-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central enumerate() operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-56-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "`enumerate()` yields an index and value together without a manual counter."
+          },
+          {
+            "type": "code",
+            "text": "names = ['Ada', 'Linus', 'Grace']"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates count with enumerate and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nnames = ['Ada', 'Linus', 'Grace']\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "1. Ada\n2. Linus\n3. Grace",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for enumerate().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "names = ['Ada', 'Linus', 'Grace']\nfor position, name in enumerate(names, start=1):\n    print(f'{position}. {name}')\n"
+      },
+      {
+        "id": "py-57-zip",
+        "title": "57. Pair values with zip",
+        "concept": "zip()",
+        "summary": "`zip()` aligns items from multiple iterables and stops at the shortest one.",
+        "activities": [
+          {
+            "id": "py-57-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small zip() pattern before writing your own.",
+            "example": "names = ['Ada', 'Grace']"
+          },
+          {
+            "id": "py-57-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses zip(), then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-57-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "`zip()` aligns items from multiple iterables and stops at the shortest one."
+          },
+          {
+            "type": "code",
+            "text": "names = ['Ada', 'Grace']"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates pair values with zip and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nnames = ['Ada', 'Grace']\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "Ada: 92\nGrace: 98",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for zip().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "names = ['Ada', 'Grace']\nscores = [92, 98]\nfor name, score in zip(names, scores):\n    print(f'{name}: {score}')\n"
+      },
+      {
+        "id": "py-58-dictionary-access",
+        "title": "58. Dictionary get, items, and membership",
+        "concept": "get(), items(), in",
+        "summary": "Dictionary membership tests keys; get supplies a fallback; items yields key-value pairs.",
+        "activities": [
+          {
+            "id": "py-58-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on get(), items(), in?",
+            "choices": [
+              "get(), items(), in",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "get(), items(), in",
+            "explanation": "Dictionary membership tests keys; get supplies a fallback; items yields key-value pairs."
+          },
+          {
+            "id": "py-58-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central get(), items(), in operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-58-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Dictionary membership tests keys; get supplies a fallback; items yields key-value pairs."
+          },
+          {
+            "type": "code",
+            "text": "profile = {'name': 'Ada', 'level': 3}"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates dictionary get, items, and membership and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nprofile = {'name': 'Ada', 'level': 3}\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "unknown\nTrue\nname=Ada\nlevel=3",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for get(), items(), in.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "profile = {'name': 'Ada', 'level': 3}\nprint(profile.get('city', 'unknown'))\nprint('name' in profile)\nfor key, value in profile.items():\n    print(f'{key}={value}')\n"
+      },
+      {
+        "id": "py-59-list-methods",
+        "title": "59. Insert, remove, sort, and copy lists",
+        "concept": "insert(), remove(), sort(), copy()",
+        "summary": "List methods mutate order and membership; copy creates an independent shallow list.",
+        "activities": [
+          {
+            "id": "py-59-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small insert(), remove(), sort(), copy() pattern before writing your own.",
+            "example": "original = ['pear', 'apple', 'plum']"
+          },
+          {
+            "id": "py-59-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central insert(), remove(), sort(), copy() operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-59-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "List methods mutate order and membership; copy creates an independent shallow list."
+          },
+          {
+            "type": "code",
+            "text": "original = ['pear', 'apple', 'plum']"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates insert, remove, sort, and copy lists and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\noriginal = ['pear', 'apple', 'plum']\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "['apple', 'kiwi', 'plum']\n['pear', 'apple', 'plum']",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for insert(), remove(), sort(), copy().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "original = ['pear', 'apple', 'plum']\nfoods = original.copy()\nfoods.insert(1, 'kiwi')\nfoods.remove('pear')\nfoods.sort()\nprint(foods)\nprint(original)\n"
+      },
+      {
+        "id": "py-60-nested-data",
+        "title": "60. Navigate nested data",
+        "concept": "nested lists and dictionaries",
+        "summary": "Combine lists and dictionaries to model records, then access one layer at a time.",
+        "activities": [
+          {
+            "id": "py-60-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on nested lists and dictionaries?",
+            "choices": [
+              "nested lists and dictionaries",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "nested lists and dictionaries",
+            "explanation": "Combine lists and dictionaries to model records, then access one layer at a time."
+          },
+          {
+            "id": "py-60-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses nested lists and dictionaries, then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-60-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Combine lists and dictionaries to model records, then access one layer at a time."
+          },
+          {
+            "type": "code",
+            "text": "courses = [{'title': 'Python', 'scores': [8, 10]}, {'title': 'Git', 'scores': [7]}]"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates navigate nested data and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\ncourses = [{'title': 'Python', 'scores': [8, 10]}, {'title': 'Git', 'scores': [7]}]\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "Python\n10",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for nested lists and dictionaries.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "courses = [{'title': 'Python', 'scores': [8, 10]}, {'title': 'Git', 'scores': [7]}]\nprint(courses[0]['title'])\nprint(courses[0]['scores'][-1])\n"
+      }
+    ]
+  },
+  {
+    "id": "py-collections-functions",
+    "name": "Collections and Flexible Functions",
+    "language": "python",
+    "description": "Manage collection data and write functions that accept flexible arguments.",
+    "lessons": [
+      {
+        "id": "py-61-unpacking",
+        "title": "61. Unpack tuples and dictionaries",
+        "concept": "sequence and dictionary unpacking",
+        "summary": "Unpacking assigns sequence items or dictionary keys to several names in one statement.",
+        "activities": [
+          {
+            "id": "py-61-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small sequence and dictionary unpacking pattern before writing your own.",
+            "example": "name, score = ('Ada', 95)"
+          },
+          {
+            "id": "py-61-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central sequence and dictionary unpacking operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-61-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Unpacking assigns sequence items or dictionary keys to several names in one statement."
+          },
+          {
+            "type": "code",
+            "text": "name, score = ('Ada', 95)"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates unpack tuples and dictionaries and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "Ada 95\nname score",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for sequence and dictionary unpacking.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "name, score = ('Ada', 95)\nrecord = {'name': name, 'score': score}\nkey_name, key_score = record\nprint(name, score)\nprint(key_name, key_score)\n"
+      },
+      {
+        "id": "py-62-args",
+        "title": "62. Collect positional arguments",
+        "concept": "*args",
+        "summary": "A starred parameter gathers extra positional arguments into a tuple.",
+        "activities": [
+          {
+            "id": "py-62-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on *args?",
+            "choices": [
+              "*args",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "*args",
+            "explanation": "A starred parameter gathers extra positional arguments into a tuple."
+          },
+          {
+            "id": "py-62-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central *args operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-62-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "A starred parameter gathers extra positional arguments into a tuple."
+          },
+          {
+            "type": "code",
+            "text": "def total(*numbers):"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates collect positional arguments and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "20",
+        "matchType": "regex",
+        "hints": [
+          "Start with the lesson pattern for *args.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "def total(*numbers):\n    return sum(numbers)\n\nprint(total(4, 6, 10))\n"
+      },
+      {
+        "id": "py-63-kwargs-unpacking",
+        "title": "63. Keyword and argument unpacking",
+        "concept": "**kwargs, * and ** calls",
+        "summary": "`**kwargs` gathers named arguments, while `*` and `**` unpack collections into a call.",
+        "activities": [
+          {
+            "id": "py-63-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small **kwargs, * and ** calls pattern before writing your own.",
+            "example": "def label(name, **details):"
+          },
+          {
+            "id": "py-63-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses **kwargs, * and ** calls, then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-63-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "`**kwargs` gathers named arguments, while `*` and `**` unpack collections into a call."
+          },
+          {
+            "type": "code",
+            "text": "def label(name, **details):"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates keyword and argument unpacking and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "Ada: 4",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for **kwargs, * and ** calls.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "def label(name, **details):\n    return f\"{name}: {details['level']}\"\n\nvalues = ['Ada']\noptions = {'level': 4}\nprint(label(*values, **options))\n"
+      },
+      {
+        "id": "py-64-dict-set-comprehensions",
+        "title": "64. Build dictionaries and sets compactly",
+        "concept": "dictionary and set comprehensions",
+        "summary": "Dictionary comprehensions create key-value mappings; set comprehensions keep unique results.",
+        "activities": [
+          {
+            "id": "py-64-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on dictionary and set comprehensions?",
+            "choices": [
+              "dictionary and set comprehensions",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "dictionary and set comprehensions",
+            "explanation": "Dictionary comprehensions create key-value mappings; set comprehensions keep unique results."
+          },
+          {
+            "id": "py-64-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central dictionary and set comprehensions operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-64-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Dictionary comprehensions create key-value mappings; set comprehensions keep unique results."
+          },
+          {
+            "type": "code",
+            "text": "words = ['ant', 'bear', 'ape']"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates build dictionaries and sets compactly and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nwords = ['ant', 'bear', 'ape']\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "{'ant': 3, 'bear': 4, 'ape': 3}\n['a', 'b']",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for dictionary and set comprehensions.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "words = ['ant', 'bear', 'ape']\nlengths = {word: len(word) for word in words}\ninitials = {word[0] for word in words}\nprint(lengths)\nprint(sorted(initials))\n"
+      },
+      {
+        "id": "py-65-recursion",
+        "title": "65. Recurse toward a base case",
+        "concept": "recursion and base cases",
+        "summary": "A recursive function calls itself on a smaller problem and must stop at a base case.",
+        "activities": [
+          {
+            "id": "py-65-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small recursion and base cases pattern before writing your own.",
+            "example": "def countdown(number):"
+          },
+          {
+            "id": "py-65-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central recursion and base cases operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-65-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "A recursive function calls itself on a smaller problem and must stop at a base case."
+          },
+          {
+            "type": "code",
+            "text": "def countdown(number):"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates recurse toward a base case and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "3 2 1 go",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for recursion and base cases.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "def countdown(number):\n    if number == 0:\n        return ['go']\n    return [str(number)] + countdown(number - 1)\n\nprint(' '.join(countdown(3)))\n"
+      }
+    ]
+  },
+  {
+    "id": "py-data-files-capstones",
+    "name": "Data, Files, and Capstones",
+    "language": "python",
+    "description": "Process structured data, persist it safely, and build complete reports.",
+    "lessons": [
+      {
+        "id": "py-66-file-io",
+        "title": "66. Write and read files safely",
+        "concept": "with and open()",
+        "summary": "A `with` block closes files reliably after writing or reading.",
+        "activities": [
+          {
+            "id": "py-66-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on with and open()?",
+            "choices": [
+              "with and open()",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "with and open()",
+            "explanation": "A `with` block closes files reliably after writing or reading."
+          },
+          {
+            "id": "py-66-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses with and open(), then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-66-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "A `with` block closes files reliably after writing or reading."
+          },
+          {
+            "type": "code",
+            "text": "path = 'lesson_notes.txt'"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates write and read files safely and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\n",
+        "expectedOutput": "['alpha', 'beta']",
+        "matchType": "contains",
+        "hints": [
+          "Start with the lesson pattern for with and open().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "path = 'lesson_notes.txt'\nwith open(path, 'w', encoding='utf-8') as file:\n    file.write('alpha\\nbeta\\n')\nwith open(path, 'r', encoding='utf-8') as file:\n    lines = file.read().splitlines()\nprint(lines)\n"
+      },
+      {
+        "id": "py-67-text-capstone",
+        "title": "67. Text processing capstone",
+        "concept": "text normalization and counting",
+        "summary": "A text pipeline can clean, tokenize, count, sort, and format a useful summary.",
+        "activities": [
+          {
+            "id": "py-67-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small text normalization and counting pattern before writing your own.",
+            "example": "text = 'Python, code! Python tests; code.'"
+          },
+          {
+            "id": "py-67-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central text normalization and counting operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-67-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "A text pipeline can clean, tokenize, count, sort, and format a useful summary."
+          },
+          {
+            "type": "code",
+            "text": "text = 'Python, code! Python tests; code.'"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates text processing capstone and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\ntext = 'Python, code! Python tests; code.'\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "code: 2\npython: 2\ntests: 1",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for text normalization and counting.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "text = 'Python, code! Python tests; code.'\nclean = ''.join(char.lower() if char.isalnum() else ' ' for char in text)\ncounts = {}\nfor word in clean.split():\n    counts[word] = counts.get(word, 0) + 1\nfor word in sorted(counts):\n    print(f'{word}: {counts[word]}')\n"
+      },
+      {
+        "id": "py-68-json",
+        "title": "68. Serialize and deserialize JSON",
+        "concept": "json.dumps() and json.loads()",
+        "summary": "The standard `json` module converts Python data to text and restores it.",
+        "activities": [
+          {
+            "id": "py-68-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on json.dumps() and json.loads()?",
+            "choices": [
+              "json.dumps() and json.loads()",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "json.dumps() and json.loads()",
+            "explanation": "The standard `json` module converts Python data to text and restores it."
+          },
+          {
+            "id": "py-68-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central json.dumps() and json.loads() operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-68-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "The standard `json` module converts Python data to text and restores it."
+          },
+          {
+            "type": "code",
+            "text": "import json"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates serialize and deserialize json and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nimport json\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "{\"active\": true, \"name\": \"Ada\"}\nAda",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for json.dumps() and json.loads().",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "import json\nrecord = {'name': 'Ada', 'active': True}\ntext = json.dumps(record, sort_keys=True)\nrestored = json.loads(text)\nprint(text)\nprint(restored['name'])\n"
+      },
+      {
+        "id": "py-69-assertions-exceptions",
+        "title": "69. Assert rules and catch targeted errors",
+        "concept": "assert and specific exceptions",
+        "summary": "Assertions document internal assumptions; targeted handlers recover only from expected failures.",
+        "activities": [
+          {
+            "id": "py-69-example",
+            "type": "worked-example",
+            "title": "Read the pattern",
+            "instruction": "Review a small assert and specific exceptions pattern before writing your own.",
+            "example": "def parse_score(text):"
+          },
+          {
+            "id": "py-69-drill",
+            "type": "drill",
+            "title": "Practice the core syntax",
+            "instruction": "Write a tiny example that uses assert and specific exceptions, then compare it with the lesson task.",
+            "successCriteria": "The snippet runs without input and prints a deterministic result."
+          },
+          {
+            "id": "py-69-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Assertions document internal assumptions; targeted handlers recover only from expected failures."
+          },
+          {
+            "type": "code",
+            "text": "def parse_score(text):"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates assert rules and catch targeted errors and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\ndef parse_score(text):\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "88\nnot a number\nout of range",
+        "matchType": "exact",
+        "hints": [
+          "Start with the lesson pattern for assert and specific exceptions.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "def parse_score(text):\n    score = int(text)\n    assert 0 <= score <= 100, 'score out of range'\n    return score\nfor value in ['88', 'high', '120']:\n    try:\n        print(parse_score(value))\n    except ValueError:\n        print('not a number')\n    except AssertionError:\n        print('out of range')\n"
+      },
+      {
+        "id": "py-70-records-report-capstone",
+        "title": "70. Final records and report capstone",
+        "concept": "records, aggregation, and reports",
+        "summary": "Combine validation, nested records, aggregation, sorting, and formatting into a final report.",
+        "activities": [
+          {
+            "id": "py-70-predict",
+            "type": "prediction",
+            "title": "Predict the behavior",
+            "question": "Which idea is central to this lesson on records, aggregation, and reports?",
+            "choices": [
+              "records, aggregation, and reports",
+              "network requests",
+              "third-party packages"
+            ],
+            "answer": "records, aggregation, and reports",
+            "explanation": "Combine validation, nested records, aggregation, sorting, and formatting into a final report."
+          },
+          {
+            "id": "py-70-code",
+            "type": "code-along",
+            "title": "Build the core operation",
+            "instruction": "Write the central records, aggregation, and reports operation.",
+            "steps": [
+              "Copy the provided data or function header.",
+              "Add the core operation yourself.",
+              "Print and check the deterministic result."
+            ]
+          },
+          {
+            "id": "py-70-edit",
+            "type": "edit",
+            "title": "Complete the lesson program",
+            "instruction": "Edit the starter code to satisfy the task and expected output."
+          }
+        ],
+        "teaching": [
+          {
+            "type": "p",
+            "text": "Combine validation, nested records, aggregation, sorting, and formatting into a final report."
+          },
+          {
+            "type": "code",
+            "text": "records = [{'name': 'Ada', 'scores': [90, 96]}, {'name': 'Grace', 'scores': [88, 92]}, {'name': 'Linus', 'scores': [70, 80]}]"
+          },
+          {
+            "type": "note",
+            "text": "Prefer clear, explicit code before making the solution more compact."
+          }
+        ],
+        "task": "Write and run a deterministic example that demonstrates final records and report capstone and prints exactly the shown result.",
+        "starterCode": "# TODO: write the program described in the task\nrecords = [{'name': 'Ada', 'scores': [90, 96]}, {'name': 'Grace', 'scores': [88, 92]}, {'name': 'Linus', 'scores': [70, 80]}]\n# TODO: complete the remaining logic\n",
+        "expectedOutput": "REPORT\nAda: 93.0\nGrace: 90.0\nLinus: 75.0",
+        "matchType": "regex",
+        "hints": [
+          "Start with the lesson pattern for records, aggregation, and reports.",
+          "Build one operation at a time, then print the result.",
+          "Compare spaces, capitalization, and line order with the expected output."
+        ],
+        "solution": "records = [{'name': 'Ada', 'scores': [90, 96]}, {'name': 'Grace', 'scores': [88, 92]}, {'name': 'Linus', 'scores': [70, 80]}]\nrows = []\nfor record in records:\n    average = sum(record['scores']) / len(record['scores'])\n    rows.append((average, record['name']))\nrows.sort(reverse=True)\nprint('REPORT')\nfor average, name in rows:\n    print(f'{name}: {average:.1f}')\n"
+      }
+    ]
+  }
+
 ]
 }
