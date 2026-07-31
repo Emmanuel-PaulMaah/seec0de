@@ -1612,7 +1612,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, convert `'4.5'` to float and print `float 4.5`.",
-            "successCriteria": "The program runs without input and prints exactly `float 4.5`."
+            "successCriteria": "The program runs without input and prints exactly `float 4.5`.",
+          "starterCode": "text = '4.5'\nnumber = # Convert text to a float\nprint(type(number).__name__, number)",
+          "expectedOutput": "float 4.5",
+          "matchType": "exact",
+          "hints": [
+            "Use the built-in conversion function named after the target type.",
+            "Pass `text` to `float()` and store the result in `number`."
+          ],
+          "solution": "text = '4.5'\nnumber = float(text)\nprint(type(number).__name__, number)"
           },
           {
             "id": "py-51-edit",
@@ -1674,7 +1682,15 @@
               "Set `number = 14`.",
               "Print `number // 4` and `number % 4` in one call.",
               "Run the code and verify the output is exactly `3 2`."
-            ]
+            ],
+          "starterCode": "number = 14\nquotient = # Use floor division by 4\nremainder = # Use remainder division by 4\nprint(quotient, remainder)",
+          "expectedOutput": "3 2",
+          "matchType": "exact",
+          "hints": [
+            "Floor division uses `//` and remainder uses `%`.",
+            "Apply both operators to `number` with `4`."
+          ],
+          "solution": "number = 14\nquotient = number // 4\nremainder = number % 4\nprint(quotient, remainder)"
           },
           {
             "id": "py-52-edit",
@@ -1730,7 +1746,15 @@
               "Set `word = 'planet'`.",
               "Slice indexes 1 through 4 with `word[1:5]` and print the slice.",
               "Run the code and verify the output is exactly `lane`."
-            ]
+            ],
+          "starterCode": "word = 'planet'\nslice_of_word = # Slice indexes 1 through 4\nprint(slice_of_word)",
+          "expectedOutput": "lane",
+          "matchType": "exact",
+          "hints": [
+            "A slice excludes its stop index.",
+            "Use `word[1:5]` to include characters at indexes 1, 2, 3, and 4."
+          ],
+          "solution": "word = 'planet'\nslice_of_word = word[1:5]\nprint(slice_of_word)"
           },
           {
             "id": "py-53-edit",
@@ -1788,7 +1812,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, clean `' a / b '` and print `a-b`.",
-            "successCriteria": "The program runs without input and prints exactly `a-b`."
+            "successCriteria": "The program runs without input and prints exactly `a-b`.",
+          "starterCode": "text = ' a / b '\nparts = # Split on '/'\ncleaned = # Strip each part, then join with '-'\nprint(cleaned)",
+          "expectedOutput": "a-b",
+          "matchType": "exact",
+          "hints": [
+            "Use `text.split('/')` to separate the two pieces.",
+            "Strip each piece and pass the resulting sequence to `'-'.join(...)`."
+          ],
+          "solution": "text = ' a / b '\nparts = text.split('/')\ncleaned = '-'.join(part.strip() for part in parts)\nprint(cleaned)"
           },
           {
             "id": "py-54-edit",
@@ -1844,7 +1876,15 @@
               "Loop over `number` in `range(1, 4)`.",
               "When `number == 2`, use `continue`; print `number` for every other iteration.",
               "Run the code and verify that the output lines are `1` and `3`."
-            ]
+            ],
+          "starterCode": "for number in range(1, 4):\n    if number == 2:\n        # Skip this iteration\n    print(number)",
+          "expectedOutput": "1\n3",
+          "matchType": "exact",
+          "hints": [
+            "The `continue` statement immediately starts the next loop iteration.",
+            "Place `continue` inside the `if number == 2` block."
+          ],
+          "solution": "for number in range(1, 4):\n    if number == 2:\n        continue\n    print(number)"
           },
           {
             "id": "py-55-edit",
@@ -1914,7 +1954,15 @@
               "Set `colors = ['red', 'blue']`.",
               "Loop over `enumerate(colors, start=1)` and unpack `position, color`.",
               "Print `f'{position}. {color}'` and verify the lines are `1. red` and `2. blue`."
-            ]
+            ],
+          "starterCode": "colors = ['red', 'blue']\nfor # Unpack enumerate(colors, start=1):\n    print(f'{position}. {color}')",
+          "expectedOutput": "1. red\n2. blue",
+          "matchType": "exact",
+          "hints": [
+            "`enumerate` can produce positions beginning at 1 with `start=1`.",
+            "Complete the header as `for position, color in enumerate(colors, start=1):`."
+          ],
+          "solution": "colors = ['red', 'blue']\nfor position, color in enumerate(colors, start=1):\n    print(f'{position}. {color}')"
           },
           {
             "id": "py-56-edit",
@@ -1966,7 +2014,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, zip `['x','y']` with `[1,2]` and print `x=1` then `y=2`.",
-            "successCriteria": "The program runs without input and prints `x=1` and `y=2` on separate lines."
+            "successCriteria": "The program runs without input and prints `x=1` and `y=2` on separate lines.",
+          "starterCode": "letters = ['x', 'y']\nnumbers = [1, 2]\nfor # Pair and unpack the two lists:\n    print(f'{letter}={number}')",
+          "expectedOutput": "x=1\ny=2",
+          "matchType": "exact",
+          "hints": [
+            "Pass both lists to `zip()` to iterate over matching positions.",
+            "Unpack each pair with `for letter, number in zip(letters, numbers):`."
+          ],
+          "solution": "letters = ['x', 'y']\nnumbers = [1, 2]\nfor letter, number in zip(letters, numbers):\n    print(f'{letter}={number}')"
           },
           {
             "id": "py-57-edit",
@@ -2028,7 +2084,15 @@
               "Set `values = {'a': 1}`.",
               "Call `values.get('b', 0)` and print the returned value.",
               "Run the code and verify the output is exactly `0`."
-            ]
+            ],
+          "starterCode": "values = {'a': 1}\nmissing_value = # Get 'b', defaulting to 0\nprint(missing_value)",
+          "expectedOutput": "0",
+          "matchType": "exact",
+          "hints": [
+            "Dictionary `get` accepts a key followed by a default value.",
+            "Use `values.get('b', 0)`."
+          ],
+          "solution": "values = {'a': 1}\nmissing_value = values.get('b', 0)\nprint(missing_value)"
           },
           {
             "id": "py-58-edit",
@@ -2084,7 +2148,15 @@
               "Set `original = [2, 1]`, then create `changed = original.copy()`.",
               "Call `changed.sort()` without sorting `original`.",
               "Print both lists and verify the output lines are `[1, 2]` and `[2, 1]`."
-            ]
+            ],
+          "starterCode": "original = [2, 1]\nchanged = # Make an independent shallow copy\n# Sort only changed\nprint(changed)\nprint(original)",
+          "expectedOutput": "[1, 2]\n[2, 1]",
+          "matchType": "exact",
+          "hints": [
+            "Call the list's `copy()` method so the two variables refer to different lists.",
+            "After `changed = original.copy()`, call `changed.sort()`."
+          ],
+          "solution": "original = [2, 1]\nchanged = original.copy()\nchanged.sort()\nprint(changed)\nprint(original)"
           },
           {
             "id": "py-59-edit",
@@ -2142,7 +2214,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, create `[{'city':'Lima','temps':[18,21]}]` and print `Lima` then `21`.",
-            "successCriteria": "The program runs without input and prints `Lima` and `21` on separate lines."
+            "successCriteria": "The program runs without input and prints `Lima` and `21` on separate lines.",
+          "starterCode": "records = # Create the requested nested list and dictionary\nprint(records[0][# Access the city key])\nprint(# Access the second temperature)",
+          "expectedOutput": "Lima\n21",
+          "matchType": "exact",
+          "hints": [
+            "The outer list contains one dictionary with `city` and `temps` keys.",
+            "Use `records[0]['city']` and `records[0]['temps'][1]`."
+          ],
+          "solution": "records = [{'city': 'Lima', 'temps': [18, 21]}]\nprint(records[0]['city'])\nprint(records[0]['temps'][1])"
           },
           {
             "id": "py-60-edit",
@@ -2206,7 +2286,15 @@
               "Unpack the tuple with `left, right = (3, 4)`.",
               "Add the two unpacked values and print the sum.",
               "Run the code and verify the output is exactly `7`."
-            ]
+            ],
+          "starterCode": "# Unpack (3, 4) into left and right\nresult = # Add the unpacked values\nprint(result)",
+          "expectedOutput": "7",
+          "matchType": "exact",
+          "hints": [
+            "Put two variable names on the left of `=` to unpack the tuple.",
+            "Use `left, right = (3, 4)`, then add `left + right`."
+          ],
+          "solution": "left, right = (3, 4)\nresult = left + right\nprint(result)"
           },
           {
             "id": "py-61-edit",
@@ -2268,7 +2356,15 @@
               "Define `total(*numbers)` so `numbers` gathers every positional argument.",
               "Return `sum(numbers)`, then call `total(2, 3, 4)`.",
               "Print the return value and verify the output is exactly `9`."
-            ]
+            ],
+          "starterCode": "def total(# Collect all positional arguments):\n    return # Sum the collected numbers\n\nprint(total(2, 3, 4))",
+          "expectedOutput": "9",
+          "matchType": "exact",
+          "hints": [
+            "Prefix a parameter with `*` to collect positional arguments into a tuple.",
+            "Define `total(*numbers)` and return `sum(numbers)`."
+          ],
+          "solution": "def total(*numbers):\n    return sum(numbers)\n\nprint(total(2, 3, 4))"
           },
           {
             "id": "py-62-edit",
@@ -2320,7 +2416,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, unpack `[3]` and `{'height':4}` into an area function and print `12`.",
-            "successCriteria": "The program runs without input and prints exactly `12` by unpacking both argument collections."
+            "successCriteria": "The program runs without input and prints exactly `12` by unpacking both argument collections.",
+          "starterCode": "def area(width, height):\n    return width * height\n\nargs = [3]\nkwargs = {'height': 4}\nprint(area(# Unpack both collections))",
+          "expectedOutput": "12",
+          "matchType": "exact",
+          "hints": [
+            "Use `*` to unpack positional arguments and `**` for keyword arguments.",
+            "Call `area(*args, **kwargs)`."
+          ],
+          "solution": "def area(width, height):\n    return width * height\n\nargs = [3]\nkwargs = {'height': 4}\nprint(area(*args, **kwargs))"
           },
           {
             "id": "py-63-edit",
@@ -2382,7 +2486,15 @@
               "Set `numbers = [1, 2, 3]`.",
               "Build `squares = {number: number ** 2 for number in numbers}`.",
               "Print `squares` and verify the output is exactly `{1: 1, 2: 4, 3: 9}`."
-            ]
+            ],
+          "starterCode": "numbers = [1, 2, 3]\nsquares = {# Map each number to its square}\nprint(squares)",
+          "expectedOutput": "{1: 1, 2: 4, 3: 9}",
+          "matchType": "exact",
+          "hints": [
+            "A dictionary comprehension needs `key: value` before its `for` clause.",
+            "Use `{number: number ** 2 for number in numbers}`."
+          ],
+          "solution": "numbers = [1, 2, 3]\nsquares = {number: number ** 2 for number in numbers}\nprint(squares)"
           },
           {
             "id": "py-64-edit",
@@ -2438,7 +2550,15 @@
               "Define `sum_down(number)` with a base case that returns `0` when `number == 0`.",
               "For other values, return `number + sum_down(number - 1)`.",
               "Print `sum_down(3)` and verify the output is exactly `6`."
-            ]
+            ],
+          "starterCode": "def sum_down(number):\n    if number == 0:\n        # Return the base-case value\n    return # Add number to the recursive result\n\nprint(sum_down(3))",
+          "expectedOutput": "6",
+          "matchType": "exact",
+          "hints": [
+            "The base case must return `0` to stop the recursion.",
+            "For other values, return `number + sum_down(number - 1)`."
+          ],
+          "solution": "def sum_down(number):\n    if number == 0:\n        return 0\n    return number + sum_down(number - 1)\n\nprint(sum_down(3))"
           },
           {
             "id": "py-65-edit",
@@ -2504,7 +2624,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, write `ready` to `status.txt`, read it back, and print `ready`.",
-            "successCriteria": "The program runs without input, creates `status.txt`, and prints exactly `ready` after reading it."
+            "successCriteria": "The program runs without input, creates `status.txt`, and prints exactly `ready` after reading it.",
+          "starterCode": "filename = 'status.txt'\nwith open(filename, # Open for writing) as file:\n    file.write(# Write ready)\nwith open(filename, # Open for reading) as file:\n    status = file.read()\nprint(status)",
+          "expectedOutput": "ready",
+          "matchType": "exact",
+          "hints": [
+            "Open `status.txt` with mode `'w'` and write the string `'ready'`.",
+            "Then open the same filename with mode `'r'` and call `read()`."
+          ],
+          "solution": "filename = 'status.txt'\nwith open(filename, 'w') as file:\n    file.write('ready')\nwith open(filename, 'r') as file:\n    status = file.read()\nprint(status)"
           },
           {
             "id": "py-66-edit",
@@ -2560,7 +2688,15 @@
               "Set `text = 'red blue red'`, split it into words, and create an empty `counts` dictionary.",
               "Loop over the words and update each entry with `counts.get(word, 0) + 1`.",
               "Print `f\"red: {counts['red']}\"` and verify the output is exactly `red: 2`."
-            ]
+            ],
+          "starterCode": "text = 'red blue red'\nwords = # Split text into words\ncounts = {}\nfor word in words:\n    counts[word] = # Increment the current count\nprint(f\"red: {counts['red']}\")",
+          "expectedOutput": "red: 2",
+          "matchType": "exact",
+          "hints": [
+            "Call `text.split()` to create the list of words.",
+            "Assign `counts.get(word, 0) + 1` to `counts[word]` on each iteration."
+          ],
+          "solution": "text = 'red blue red'\nwords = text.split()\ncounts = {}\nfor word in words:\n    counts[word] = counts.get(word, 0) + 1\nprint(f\"red: {counts['red']}\")"
           },
           {
             "id": "py-67-edit",
@@ -2622,7 +2758,15 @@
               "Import `json` and serialize `{'count': 2}` with `json.dumps`.",
               "Deserialize the resulting text with `json.loads` and read the restored `count` value.",
               "Print that value and verify the output is exactly `2`."
-            ]
+            ],
+          "starterCode": "import json\n\ndata = {'count': 2}\nserialized = # Convert data to JSON text\nrestored = # Convert the JSON text back to Python data\nprint(restored['count'])",
+          "expectedOutput": "2",
+          "matchType": "exact",
+          "hints": [
+            "Use `json.dumps(data)` to serialize the dictionary.",
+            "Pass `serialized` to `json.loads()` to restore it."
+          ],
+          "solution": "import json\n\ndata = {'count': 2}\nserialized = json.dumps(data)\nrestored = json.loads(serialized)\nprint(restored['count'])"
           },
           {
             "id": "py-68-edit",
@@ -2674,7 +2818,15 @@
             "type": "drill",
             "title": "Practice the core syntax",
             "instruction": "From memory, assert that 7 is even, catch `AssertionError`, and print `odd`.",
-            "successCriteria": "The program runs without input, catches the failed assertion, and prints exactly `odd`."
+            "successCriteria": "The program runs without input, catches the failed assertion, and prints exactly `odd`.",
+          "starterCode": "number = 7\ntry:\n    # Assert that number is even\nexcept # Catch only the failed assertion:\n    print('odd')",
+          "expectedOutput": "odd",
+          "matchType": "exact",
+          "hints": [
+            "An even number has a remainder of `0` when divided by 2.",
+            "Use `assert number % 2 == 0`, then `except AssertionError:`."
+          ],
+          "solution": "number = 7\ntry:\n    assert number % 2 == 0\nexcept AssertionError:\n    print('odd')"
           },
           {
             "id": "py-69-edit",
@@ -2736,7 +2888,15 @@
               "Set `scores = [8, 10]`.",
               "Calculate `average = sum(scores) / len(scores)`.",
               "Print `average` and verify the output is exactly `9.0`."
-            ]
+            ],
+          "starterCode": "scores = [8, 10]\naverage = # Divide the score total by the number of scores\nprint(average)",
+          "expectedOutput": "9.0",
+          "matchType": "exact",
+          "hints": [
+            "Use `sum(scores)` for the total and `len(scores)` for the count.",
+            "Set `average = sum(scores) / len(scores)`."
+          ],
+          "solution": "scores = [8, 10]\naverage = sum(scores) / len(scores)\nprint(average)"
           },
           {
             "id": "py-70-edit",

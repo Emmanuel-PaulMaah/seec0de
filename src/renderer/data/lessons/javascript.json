@@ -893,7 +893,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Declare `missing` as `null` and declare `total` without assigning it. Print whether each equals its matching missing-value marker, then print `typeof total`.",
-              "successCriteria": "The program prints `true`, `true`, and `undefined`, each on its own line."
+              "successCriteria": "The program prints `true`, `true`, and `undefined`, each on its own line.",
+            "starterCode": "let missing;\nlet total = 0;\n\nconsole.log(missing === null);\nconsole.log(total === undefined);\nconsole.log(typeof total);",
+            "expectedOutput": "true\ntrue\nundefined",
+            "matchType": "exact",
+            "hints": [
+              "Use `null` as the explicit value assigned to `missing`.",
+              "A variable declared with `let` but no assignment has the value `undefined`.",
+              "Compare with strict equality, then pass `total` to `typeof`."
+            ],
+            "solution": "const missing = null;\nlet total;\n\nconsole.log(missing === null);\nconsole.log(total === undefined);\nconsole.log(typeof total);"
             },
             {
               "id": "js-25-edit",
@@ -951,7 +960,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Print the results of `5 === \"5\"`, `Boolean(0)`, and `Boolean(\"hello\")`, one per line.",
-              "successCriteria": "The output is exactly `false`, `false`, then `true`."
+              "successCriteria": "The output is exactly `false`, `false`, then `true`.",
+            "starterCode": "console.log(5 == \"5\");\nconsole.log(Boolean(1));\nconsole.log(Boolean(\"\"));",
+            "expectedOutput": "false\nfalse\ntrue",
+            "matchType": "exact",
+            "hints": [
+              "Use strict equality (`===`) for the first comparison.",
+              "Zero is falsy when converted with `Boolean`.",
+              "A non-empty string is truthy."
+            ],
+            "solution": "console.log(5 === \"5\");\nconsole.log(Boolean(0));\nconsole.log(Boolean(\"hello\"));"
             },
             {
               "id": "js-26-edit",
@@ -1009,7 +1027,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Convert `\"42\"` to a number and `7` to a string. Print each converted value and its `typeof` value.",
-              "successCriteria": "The two lines are exactly `42 number` and `7 string`."
+              "successCriteria": "The two lines are exactly `42 number` and `7 string`.",
+            "starterCode": "const convertedNumber = \"42\";\nconst convertedString = 7;\n\nconsole.log(convertedNumber, typeof convertedNumber);\nconsole.log(convertedString, typeof convertedString);",
+            "expectedOutput": "42 number\n7 string",
+            "matchType": "exact",
+            "hints": [
+              "Pass the text `\"42\"` to `Number`.",
+              "Pass the number `7` to `String`.",
+              "Log each converted value beside `typeof` that same variable."
+            ],
+            "solution": "const convertedNumber = Number(\"42\");\nconst convertedString = String(7);\n\nconsole.log(convertedNumber, typeof convertedNumber);\nconsole.log(convertedString, typeof convertedString);"
             },
             {
               "id": "js-27-edit",
@@ -1067,7 +1094,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Create `const pets = [\"cat\", \"dog\", \"owl\"]`. Print the first pet, the last pet using `length`, and the array length.",
-              "successCriteria": "The output is exactly `cat`, `owl`, and `3` on separate lines."
+              "successCriteria": "The output is exactly `cat`, `owl`, and `3` on separate lines.",
+            "starterCode": "const pets = [];\n\nconsole.log(pets[0]);\nconsole.log(pets[0]);\nconsole.log(pets.length);",
+            "expectedOutput": "cat\nowl\n3",
+            "matchType": "exact",
+            "hints": [
+              "Fill the array with `cat`, `dog`, and `owl` in that order.",
+              "The first element is at index 0.",
+              "The last index can be written as `pets.length - 1`."
+            ],
+            "solution": "const pets = [\"cat\", \"dog\", \"owl\"];\n\nconsole.log(pets[0]);\nconsole.log(pets[pets.length - 1]);\nconsole.log(pets.length);"
             },
             {
               "id": "js-28-edit",
@@ -1125,7 +1161,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Start with `[2, 3]`, add `1` to the front and `4` to the end, remove the last value, then print the removed value and the remaining array joined with commas.",
-              "successCriteria": "The output is exactly `4` followed by `1,2,3` on the next line."
+              "successCriteria": "The output is exactly `4` followed by `1,2,3` on the next line.",
+            "starterCode": "const values = [2, 3];\n\n// Add values at both ends, then remove the last one.\nconst removed = undefined;\n\nconsole.log(removed);\nconsole.log(values.join(\",\"));",
+            "expectedOutput": "4\n1,2,3",
+            "matchType": "exact",
+            "hints": [
+              "Use `unshift` to add `1` at the front.",
+              "Use `push` to add `4` at the end.",
+              "Assign the value returned by `pop()` to `removed`."
+            ],
+            "solution": "const values = [2, 3];\n\nvalues.unshift(1);\nvalues.push(4);\nconst removed = values.pop();\n\nconsole.log(removed);\nconsole.log(values.join(\",\"));"
             },
             {
               "id": "js-29-edit",
@@ -1183,7 +1228,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Create `original = [\"a\", \"b\", \"c\"]`. Make one copy with `slice()` and one with spread, change index 0 in both copies, then print `original.join(\"\")`.",
-              "successCriteria": "The original still prints exactly `abc`."
+              "successCriteria": "The original still prints exactly `abc`.",
+            "starterCode": "const original = [\"a\", \"b\", \"c\"];\nconst slicedCopy = original;\nconst spreadCopy = original;\n\nslicedCopy[0] = \"x\";\nspreadCopy[0] = \"y\";\n\nconsole.log(original.join(\"\"));",
+            "expectedOutput": "abc",
+            "matchType": "exact",
+            "hints": [
+              "Calling `original.slice()` creates a shallow copy.",
+              "Spread the elements into a new array with `[...original]`.",
+              "Mutating index 0 of either separate array will not change `original`."
+            ],
+            "solution": "const original = [\"a\", \"b\", \"c\"];\nconst slicedCopy = original.slice();\nconst spreadCopy = [...original];\n\nslicedCopy[0] = \"x\";\nspreadCopy[0] = \"y\";\n\nconsole.log(original.join(\"\"));"
             },
             {
               "id": "js-30-edit",
@@ -1241,7 +1295,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Create `{ title: \"Book\", pages: 80 }`. Change pages to 96, add `inStock: true`, and print `Book 96 true` from its properties.",
-              "successCriteria": "One line prints exactly `Book 96 true`."
+              "successCriteria": "One line prints exactly `Book 96 true`.",
+            "starterCode": "const item = { title: \"Book\", pages: 80 };\n\n// Update pages and add inStock.\n\nconsole.log(item.title, item.pages, item.inStock);",
+            "expectedOutput": "Book 96 true",
+            "matchType": "exact",
+            "hints": [
+              "Assign `96` to the object's `pages` property.",
+              "A new property can be added with `item.inStock = true`.",
+              "Log the three properties in title, pages, inStock order."
+            ],
+            "solution": "const item = { title: \"Book\", pages: 80 };\n\nitem.pages = 96;\nitem.inStock = true;\n\nconsole.log(item.title, item.pages, item.inStock);"
             },
             {
               "id": "js-31-edit",
@@ -1299,7 +1362,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Create `{ classroom: { students: [\"Ivy\", \"Kai\"] } }` and print `Kai` by navigating the nested structure.",
-              "successCriteria": "The program prints exactly `Kai`."
+              "successCriteria": "The program prints exactly `Kai`.",
+            "starterCode": "const school = { classroom: { students: [] } };\n\nconsole.log(school.classroom.students[0]);",
+            "expectedOutput": "Kai",
+            "matchType": "exact",
+            "hints": [
+              "Put `Ivy` and `Kai` into the nested `students` array in that order.",
+              "Navigate from `school` to `classroom`, then to `students`.",
+              "`Kai` is at array index 1."
+            ],
+            "solution": "const school = { classroom: { students: [\"Ivy\", \"Kai\"] } };\n\nconsole.log(school.classroom.students[1]);"
             },
             {
               "id": "js-32-edit",
@@ -1365,7 +1437,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Loop from 1 through 6. Skip 3, stop at 5, and print every other visited number.",
-              "successCriteria": "The output is exactly `1`, `2`, and `4` on separate lines."
+              "successCriteria": "The output is exactly `1`, `2`, and `4` on separate lines.",
+            "starterCode": "for (let number = 1; number <= 6; number++) {\n  console.log(number);\n}",
+            "expectedOutput": "1\n2\n4",
+            "matchType": "exact",
+            "hints": [
+              "Inside the loop, use `continue` when `number === 3`.",
+              "Use `break` when `number === 5` so 5 and later values are not printed.",
+              "Place both checks before `console.log`."
+            ],
+            "solution": "for (let number = 1; number <= 6; number++) {\n  if (number === 3) continue;\n  if (number === 5) break;\n  console.log(number);\n}"
             },
             {
               "id": "js-33-edit",
@@ -1423,7 +1504,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Use an indexed loop over `[\"x\", \"y\", \"z\"]` and print each line as `index:value`.",
-              "successCriteria": "The output is exactly `0:x`, `1:y`, and `2:z`."
+              "successCriteria": "The output is exactly `0:x`, `1:y`, and `2:z`.",
+            "starterCode": "const letters = [\"x\", \"y\", \"z\"];\n\nfor (let index = 0; index < 0; index++) {\n  console.log(index);\n}",
+            "expectedOutput": "0:x\n1:y\n2:z",
+            "matchType": "exact",
+            "hints": [
+              "Continue the loop while `index < letters.length`.",
+              "Read the current value with `letters[index]`.",
+              "A template literal can combine them as `${index}:${letters[index]}`."
+            ],
+            "solution": "const letters = [\"x\", \"y\", \"z\"];\n\nfor (let index = 0; index < letters.length; index++) {\n  console.log(`${index}:${letters[index]}`);\n}"
             },
             {
               "id": "js-34-edit",
@@ -1481,7 +1571,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Create `{ red: 2, blue: 4 }`. Print its keys joined by commas, then use `Object.entries` to print `red=2` and `blue=4`.",
-              "successCriteria": "The output is exactly `red,blue`, `red=2`, and `blue=4`."
+              "successCriteria": "The output is exactly `red,blue`, `red=2`, and `blue=4`.",
+            "starterCode": "const counts = { red: 2, blue: 4 };\n\nconsole.log(\"\");\n\n// Loop over the object's entries and print each pair.",
+            "expectedOutput": "red,blue\nred=2\nblue=4",
+            "matchType": "exact",
+            "hints": [
+              "Get the property names with `Object.keys(counts)` and join them with commas.",
+              "`Object.entries(counts)` produces `[key, value]` pairs.",
+              "Destructure each pair and print it as `${key}=${value}`."
+            ],
+            "solution": "const counts = { red: 2, blue: 4 };\n\nconsole.log(Object.keys(counts).join(\",\"));\n\nfor (const [key, value] of Object.entries(counts)) {\n  console.log(`${key}=${value}`);\n}"
             },
             {
               "id": "js-35-edit",
@@ -1539,7 +1638,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Write `apply(value, callback)` that returns `callback(value)`. Call it with `5` and a callback that adds `2`, then print the result.",
-              "successCriteria": "The program prints exactly `7`."
+              "successCriteria": "The program prints exactly `7`.",
+            "starterCode": "function apply(value, callback) {\n  return value;\n}\n\nconst result = apply(5, (number) => number);\nconsole.log(result);",
+            "expectedOutput": "7",
+            "matchType": "exact",
+            "hints": [
+              "Inside `apply`, call the callback with `value` and return its result.",
+              "The callback passed to `apply` should return its number plus 2.",
+              "Print the value returned from `apply(5, callback)`."
+            ],
+            "solution": "function apply(value, callback) {\n  return callback(value);\n}\n\nconst result = apply(5, (number) => number + 2);\nconsole.log(result);"
             },
             {
               "id": "js-36-edit",
@@ -1605,7 +1713,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Map `[2, 4, 6]` to their squares and print the new array joined by commas.",
-              "successCriteria": "The output is exactly `4,16,36`."
+              "successCriteria": "The output is exactly `4,16,36`.",
+            "starterCode": "const numbers = [2, 4, 6];\nconst squares = numbers.map((number) => number);\n\nconsole.log(squares.join(\",\"));",
+            "expectedOutput": "4,16,36",
+            "matchType": "exact",
+            "hints": [
+              "`map` should return one transformed value for each number.",
+              "Square a number by multiplying it by itself.",
+              "Keep the final `join(\",\")` to format the output."
+            ],
+            "solution": "const numbers = [2, 4, 6];\nconst squares = numbers.map((number) => number * number);\n\nconsole.log(squares.join(\",\"));"
             },
             {
               "id": "js-37-edit",
@@ -1663,7 +1780,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "From `[1, 4, 7, 10]`, filter all values at least 7 and find the first even value. Print the filtered list, then the found number.",
-              "successCriteria": "The output is exactly `7,10` and then `4`."
+              "successCriteria": "The output is exactly `7,10` and then `4`.",
+            "starterCode": "const numbers = [1, 4, 7, 10];\nconst filtered = numbers.filter(() => true);\nconst found = numbers.find(() => false);\n\nconsole.log(filtered.join(\",\"));\nconsole.log(found);",
+            "expectedOutput": "7,10\n4",
+            "matchType": "exact",
+            "hints": [
+              "The filter predicate should test whether each value is greater than or equal to 7.",
+              "An even value has a remainder of 0 when divided by 2.",
+              "`find` stops at the first value that passes its predicate."
+            ],
+            "solution": "const numbers = [1, 4, 7, 10];\nconst filtered = numbers.filter((number) => number >= 7);\nconst found = numbers.find((number) => number % 2 === 0);\n\nconsole.log(filtered.join(\",\"));\nconsole.log(found);"
             },
             {
               "id": "js-38-edit",
@@ -1721,7 +1847,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Use `reduce` with an initial value of 0 to total `[5, 10, 15]`, then print the total.",
-              "successCriteria": "The program prints exactly `30`."
+              "successCriteria": "The program prints exactly `30`.",
+            "starterCode": "const numbers = [5, 10, 15];\nconst total = numbers.reduce((sum, number) => sum, 0);\n\nconsole.log(total);",
+            "expectedOutput": "30",
+            "matchType": "exact",
+            "hints": [
+              "The reducer receives the running `sum` and current `number`.",
+              "Return `sum + number` from the reducer.",
+              "Keep `0` as the second argument to `reduce`."
+            ],
+            "solution": "const numbers = [5, 10, 15];\nconst total = numbers.reduce((sum, number) => sum + number, 0);\n\nconsole.log(total);"
             },
             {
               "id": "js-39-edit",
@@ -1779,7 +1914,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "From `[1, 2, 3, 4, 5]`, keep odd values, double them, and print the resulting list.",
-              "successCriteria": "The output is exactly `2,6,10`."
+              "successCriteria": "The output is exactly `2,6,10`.",
+            "starterCode": "const numbers = [1, 2, 3, 4, 5];\nconst result = numbers\n  .filter(() => true)\n  .map((number) => number);\n\nconsole.log(result.join(\",\"));",
+            "expectedOutput": "2,6,10",
+            "matchType": "exact",
+            "hints": [
+              "Odd numbers have a nonzero remainder when divided by 2.",
+              "After filtering, map each remaining number to `number * 2`.",
+              "Join the transformed array with commas before printing."
+            ],
+            "solution": "const numbers = [1, 2, 3, 4, 5];\nconst result = numbers\n  .filter((number) => number % 2 !== 0)\n  .map((number) => number * 2);\n\nconsole.log(result.join(\",\"));"
             },
             {
               "id": "js-40-edit",
@@ -1845,7 +1989,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Declare `count = 1`. Inside a block, declare a new `count = 2` and print it; outside, print the original.",
-              "successCriteria": "The output is exactly `2` then `1`."
+              "successCriteria": "The output is exactly `2` then `1`.",
+            "starterCode": "const count = 1;\n\n{\n  console.log(count);\n}\n\nconsole.log(count);",
+            "expectedOutput": "2\n1",
+            "matchType": "exact",
+            "hints": [
+              "Declare another variable named `count` inside the braces.",
+              "Use `const count = 2` so that declaration is scoped to the block.",
+              "Print inside the block before printing the outer variable."
+            ],
+            "solution": "const count = 1;\n\n{\n  const count = 2;\n  console.log(count);\n}\n\nconsole.log(count);"
             },
             {
               "id": "js-41-edit",
@@ -1903,7 +2056,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Write `makeAdder(amount)` returning a function that adds `amount`. Create an add-3 function and print its result for 4.",
-              "successCriteria": "The program prints exactly `7`."
+              "successCriteria": "The program prints exactly `7`.",
+            "starterCode": "function makeAdder(amount) {\n  return function (value) {\n    return value;\n  };\n}\n\nconst addThree = makeAdder(0);\nconsole.log(addThree(4));",
+            "expectedOutput": "7",
+            "matchType": "exact",
+            "hints": [
+              "The inner function can still access the outer `amount` parameter.",
+              "Return `value + amount` from the inner function.",
+              "Create `addThree` by calling `makeAdder(3)`."
+            ],
+            "solution": "function makeAdder(amount) {\n  return function (value) {\n    return value + amount;\n  };\n}\n\nconst addThree = makeAdder(3);\nconsole.log(addThree(4));"
             },
             {
               "id": "js-42-edit",
@@ -1961,7 +2123,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Destructure `title` and `year` from `{ title: \"Node\", year: 2009 }`, and the first value from `[7, 8]`. Print all three.",
-              "successCriteria": "One line prints exactly `Node 2009 7`."
+              "successCriteria": "One line prints exactly `Node 2009 7`.",
+            "starterCode": "const runtime = { title: \"Node\", year: 2009 };\nconst values = [7, 8];\n\nconst title = runtime;\nconst first = values;\n\nconsole.log(title, undefined, first);",
+            "expectedOutput": "Node 2009 7",
+            "matchType": "exact",
+            "hints": [
+              "Use object destructuring: `const { ... } = runtime`.",
+              "List both `title` and `year` inside the object pattern.",
+              "Use `[first]` as the array pattern to capture only the first value."
+            ],
+            "solution": "const runtime = { title: \"Node\", year: 2009 };\nconst values = [7, 8];\n\nconst { title, year } = runtime;\nconst [first] = values;\n\nconsole.log(title, year, first);"
             },
             {
               "id": "js-43-edit",
@@ -2019,7 +2190,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Write `list(first, ...others)` that prints the first value and the remaining values joined by commas. Call it with `a`, `b`, `c`.",
-              "successCriteria": "The output is exactly `a` then `b,c`."
+              "successCriteria": "The output is exactly `a` then `b,c`.",
+            "starterCode": "function list(first) {\n  console.log(first);\n}\n\nlist(\"a\", \"b\", \"c\");",
+            "expectedOutput": "a\nb,c",
+            "matchType": "exact",
+            "hints": [
+              "Add a rest parameter named `others` after `first`.",
+              "A rest parameter collects the remaining arguments into an array.",
+              "Print `others.join(\",\")` after printing `first`."
+            ],
+            "solution": "function list(first, ...others) {\n  console.log(first);\n  console.log(others.join(\",\"));\n}\n\nlist(\"a\", \"b\", \"c\");"
             },
             {
               "id": "js-44-edit",
@@ -2085,7 +2265,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Throw `new Error(\"too small\")` inside `try`, catch it, print its message, then print `recovered` after the block.",
-              "successCriteria": "The output is exactly `too small` then `recovered`."
+              "successCriteria": "The output is exactly `too small` then `recovered`.",
+            "starterCode": "try {\n  // Throw the requested error here.\n} catch (error) {\n  console.log(error);\n}\n\nconsole.log(\"recovered\");",
+            "expectedOutput": "too small\nrecovered",
+            "matchType": "exact",
+            "hints": [
+              "Inside `try`, use `throw new Error(...)` with the requested message.",
+              "The caught Error object stores its text in the `message` property.",
+              "Keep the `recovered` log after the entire try/catch block."
+            ],
+            "solution": "try {\n  throw new Error(\"too small\");\n} catch (error) {\n  console.log(error.message);\n}\n\nconsole.log(\"recovered\");"
             },
             {
               "id": "js-45-edit",
@@ -2143,7 +2332,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Write `isValidAge(age)` that returns true only for a number from 0 through 120. Print results for `20`, `-1`, and `\"20\"`.",
-              "successCriteria": "The output is exactly `true`, `false`, and `false`."
+              "successCriteria": "The output is exactly `true`, `false`, and `false`.",
+            "starterCode": "function isValidAge(age) {\n  return true;\n}\n\nconsole.log(isValidAge(20));\nconsole.log(isValidAge(-1));\nconsole.log(isValidAge(\"20\"));",
+            "expectedOutput": "true\nfalse\nfalse",
+            "matchType": "exact",
+            "hints": [
+              "First require `typeof age === \"number\"`.",
+              "The lower bound check is `age >= 0`.",
+              "Combine the type check and both inclusive bounds with `&&`."
+            ],
+            "solution": "function isValidAge(age) {\n  return typeof age === \"number\" && age >= 0 && age <= 120;\n}\n\nconsole.log(isValidAge(20));\nconsole.log(isValidAge(-1));\nconsole.log(isValidAge(\"20\"));"
             },
             {
               "id": "js-46-edit",
@@ -2201,7 +2399,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Parse `{\"ready\":true}`, print the Boolean property, then stringify `{ score: 8 }` and print the JSON text.",
-              "successCriteria": "The output is exactly `true` then `{\"score\":8}`."
+              "successCriteria": "The output is exactly `true` then `{\"score\":8}`.",
+            "starterCode": "const parsed = { ready: false };\nconst jsonText = \"\";\n\nconsole.log(parsed.ready);\nconsole.log(jsonText);",
+            "expectedOutput": "true\n{\"score\":8}",
+            "matchType": "exact",
+            "hints": [
+              "Pass the JSON text to `JSON.parse` to create `parsed`.",
+              "Read the resulting object's `ready` property.",
+              "Pass `{ score: 8 }` to `JSON.stringify`."
+            ],
+            "solution": "const parsed = JSON.parse('{\"ready\":true}');\nconst jsonText = JSON.stringify({ score: 8 });\n\nconsole.log(parsed.ready);\nconsole.log(jsonText);"
             },
             {
               "id": "js-47-edit",
@@ -2259,7 +2466,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Create `Promise.resolve(5)`, use `.then` to double the value, and print the result.",
-              "successCriteria": "The program prints exactly `10`."
+              "successCriteria": "The program prints exactly `10`.",
+            "starterCode": "const valuePromise = Promise.resolve(5);\n\nvaluePromise.then((value) => {\n  console.log(value);\n});",
+            "expectedOutput": "10",
+            "matchType": "exact",
+            "hints": [
+              "The `.then` callback receives the resolved value, which is 5.",
+              "Double that callback parameter before printing it.",
+              "Logging `value * 2` produces the requested result."
+            ],
+            "solution": "const valuePromise = Promise.resolve(5);\n\nvaluePromise.then((value) => {\n  console.log(value * 2);\n});"
             },
             {
               "id": "js-48-edit",
@@ -2317,7 +2533,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "Write async `getValue()` returning `9`. In another async function, await it and print the value.",
-              "successCriteria": "The program prints exactly `9`."
+              "successCriteria": "The program prints exactly `9`.",
+            "starterCode": "async function getValue() {\n  return 0;\n}\n\nasync function showValue() {\n  console.log(getValue());\n}\n\nshowValue();",
+            "expectedOutput": "9",
+            "matchType": "exact",
+            "hints": [
+              "Return `9` from the async `getValue` function.",
+              "Inside `showValue`, use `await getValue()` to obtain the resolved number.",
+              "Store the awaited number or pass it directly to `console.log`."
+            ],
+            "solution": "async function getValue() {\n  return 9;\n}\n\nasync function showValue() {\n  const value = await getValue();\n  console.log(value);\n}\n\nshowValue();"
             },
             {
               "id": "js-49-edit",
@@ -2375,7 +2600,16 @@
               "type": "drill",
               "title": "Write it from memory",
               "instruction": "From `[{ok:true,n:2},{ok:false,n:8},{ok:true,n:3}]`, keep valid rows, map to `n`, total them, and print `5`.",
-              "successCriteria": "The program prints exactly `5` after using filter, map, and reduce."
+              "successCriteria": "The program prints exactly `5` after using filter, map, and reduce.",
+            "starterCode": "const rows = [\n  { ok: true, n: 2 },\n  { ok: false, n: 8 },\n  { ok: true, n: 3 }\n];\n\nconst total = rows\n  .filter(() => true)\n  .map((row) => row)\n  .reduce((sum) => sum, 0);\n\nconsole.log(total);",
+            "expectedOutput": "5",
+            "matchType": "exact",
+            "hints": [
+              "Filter rows by returning each row's `ok` property.",
+              "Map each remaining row to its `n` property.",
+              "Reduce the numbers with `sum + number`, starting from 0."
+            ],
+            "solution": "const rows = [\n  { ok: true, n: 2 },\n  { ok: false, n: 8 },\n  { ok: true, n: 3 }\n];\n\nconst total = rows\n  .filter((row) => row.ok)\n  .map((row) => row.n)\n  .reduce((sum, number) => sum + number, 0);\n\nconsole.log(total);"
             },
             {
               "id": "js-50-edit",
