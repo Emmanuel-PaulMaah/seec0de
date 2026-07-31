@@ -11,6 +11,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import lessonsData from '../data/lessons/index.js';
+import { flattenExercises } from '../data/exerciseCatalog';
 
 const LANGUAGE_LABELS = {
   python: 'Python',
@@ -28,15 +29,18 @@ export default function LearnHomeScreen({
   onSelectLanguage,
   onSelectSection,
   onSelectLesson,
+  onSelectExercise,
 }) {
   const headingRef = useRef(null);
   const [activeTrackId, setActiveTrackId] = useState(null);
   const tracks = lessonsData.tracks || [];
+  const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
     const available = Array.from(new Set(tracks.map((track) => track.language).filter(Boolean)));
     return ['python', 'javascript'].filter((language) => available.includes(language));
   }, [tracks]);
   const languageTracks = tracks.filter((track) => track.language === selectedLanguage);
+  const languageExercises = exercises.filter((exercise) => exercise.language === selectedLanguage);
   const activeTrack = languageTracks.find((track) => track.id === activeTrackId) || null;
 
   useEffect(() => {
@@ -191,13 +195,34 @@ export default function LearnHomeScreen({
 
         {selectedLanguage && selectedSection === 'exercises' && (
           <>
-            <p style={styles.intro}>This space is ready for language-specific practice outside the course sequence.</p>
-            <div style={styles.emptyState}>
-              <span style={{ ...styles.cardIcon, ...styles.exerciseIcon }}><Sparkles size={20} /></span>
-              <div>
-                <strong style={styles.emptyTitle}>Exercises are coming next</strong>
-                <p style={styles.emptyText}>This will hold retrieval drills, fix-the-code tasks, output-first builds, constraints, refactoring exercises, and capstone challenges for {languageLabel(selectedLanguage)}.</p>
-              </div>
+            <p style={styles.intro}>Standalone retrieval drills and code-alongs use their own starter code, hints, expected output, and completion state.</p>
+            <div className="learn-home-course-grid" style={styles.courseGrid}>
+              {languageExercises.map((exercise) => {
+                const complete = completedLessons.includes(exercise.id);
+                const formatLabel = exercise.exerciseType === 'code-along' ? 'Code-along' : 'Retrieval drill';
+                return (
+                  <button
+                    key={exercise.id}
+                    type="button"
+                    className="learn-home-card"
+                    style={styles.exerciseCard}
+                    onClick={() => onSelectExercise(exercise)}
+                  >
+                    <span style={styles.exerciseTopline}>
+                      {complete
+                        ? <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
+                        : exercise.exerciseType === 'code-along'
+                          ? <Sparkles size={14} />
+                          : <Wrench size={14} />}
+                      {formatLabel}
+                    </span>
+                    <strong style={styles.courseTitle}>{exercise.concept}</strong>
+                    <span style={styles.courseText}>{renderInline(exercise.task)}</span>
+                    <span style={styles.exerciseSource}>From {exercise.sourceLessonTitle}</span>
+                    <span style={styles.openCourse}>{complete ? 'Practise again' : 'Start exercise'} <ArrowRight size={13} /></span>
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
@@ -206,6 +231,20 @@ export default function LearnHomeScreen({
       <div style={styles.wordmark} aria-hidden="true">learn</div>
     </main>
   );
+}
+
+function renderInline(text) {
+  if (!text) return null;
+  return String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (!part) return null;
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={index} style={styles.inlineCode}>{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={index}>{part}</React.Fragment>;
+  });
 }
 
 const styles = {
@@ -335,6 +374,42 @@ const styles = {
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     textAlign: 'left',
+  },
+  exerciseCard: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    minHeight: 174,
+    padding: 17,
+    border: '1px solid var(--border-strong)',
+    borderRadius: 10,
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    textAlign: 'left',
+  },
+  exerciseTopline: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    color: 'var(--algorithm)',
+    fontSize: 10.5,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  exerciseSource: {
+    marginTop: 8,
+    color: 'var(--text-muted)',
+    fontSize: 9.5,
+  },
+  inlineCode: {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.92em',
+    padding: '1px 3px',
+    border: '1px solid var(--border)',
+    borderRadius: 3,
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
   },
   courseTopline: { display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 10.5, fontWeight: 700 },
   courseTitle: { marginTop: 13, color: 'var(--text-primary)', fontSize: 14 },

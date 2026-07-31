@@ -20,6 +20,7 @@ import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 import { verifyLessonOutput, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
 import { translateError } from './engine/errorTranslator';
 import lessonsData from './data/lessons/index.js';
+import { findExercise, isCourseActivity } from './data/exerciseCatalog';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
 // last time comes back the next time. Settings.showTerminal/showFileExplorer
@@ -61,7 +62,9 @@ const LEARN_PHASES = new Set(['learn', 'run', 'fix', 'complete']);
 function restoredLearningState(settings = loadSettings()) {
   const session = settings?.learningSession;
   const lesson = session?.lessonId
-    ? flattenLessons(lessonsData).find((item) => item.id === session.lessonId) || null
+    ? flattenLessons(lessonsData).find((item) => item.id === session.lessonId)
+      || findExercise(lessonsData, session.lessonId)
+      || null
     : null;
   const language = lesson?.language || 'javascript';
   const status = lesson && ['idle', 'pass', 'fail'].includes(session?.status) ? session.status : 'idle';
@@ -73,6 +76,9 @@ function restoredLearningState(settings = loadSettings()) {
       : status === 'fail'
         ? 'fix'
         : 'learn';
+  const restorableActivities = lesson?.kind === 'exercise'
+    ? lesson.activities || []
+    : (lesson?.activities || []).filter(isCourseActivity);
   return {
     lesson,
     phase,
@@ -81,9 +87,9 @@ function restoredLearningState(settings = loadSettings()) {
     revealedHints: lesson && Number.isFinite(session?.revealedHints) ? Math.max(0, session.revealedHints) : 0,
     verification: lesson ? session?.verification || null : null,
     errorCoaching: lesson && Array.isArray(session?.errorCoaching) ? session.errorCoaching : [],
-    activityId: lesson && (lesson.activities || []).some((activity) => activity.id === session?.activityId)
+    activityId: lesson && restorableActivities.some((activity) => activity.id === session?.activityId)
       ? session.activityId
-      : lesson?.activities?.[0]?.id || null,
+      : restorableActivities[0]?.id || null,
     generatedCode: lesson
       ? { pseudocode: '', code: { [language]: typeof session?.draftCode === 'string' ? session.draftCode : lesson.starterCode ?? '' } }
       : { pseudocode: '', code: {} },
@@ -117,7 +123,10 @@ export default function App() {
     () => restoredLearningState().lesson?.language || null
   );
   const [learnCatalogSection, setLearnCatalogSection] = useState(
-    () => (restoredLearningState().lesson ? 'courses' : null)
+    () => {
+      const restoredItem = restoredLearningState().lesson;
+      return restoredItem ? (restoredItem.kind === 'exercise' ? 'exercises' : 'courses') : null;
+    }
   );
 
   useEffect(() => {
@@ -188,7 +197,7 @@ export default function App() {
   const handleSelectLesson = useCallback((lesson) => {
     if (lesson?.language) {
       setLearnCatalogLanguage(lesson.language);
-      setLearnCatalogSection('courses');
+      setLearnCatalogSection(lesson.kind === 'exercise' ? 'exercises' : 'courses');
     }
     setActiveLesson(lesson);
     setLessonStatus('idle');
@@ -197,8 +206,13 @@ export default function App() {
     setLearnPhase('learn');
     setLessonAttempts(0);
     setRevealedHints(0);
-    setActiveActivityId(lesson?.activities?.[0]?.id || null);
-    setLearnAnnouncement(lesson ? `${lesson.title} opened. Start with the first activity.` : 'Course list opened.');
+    const initialActivities = lesson?.kind === 'exercise'
+      ? lesson.activities || []
+      : (lesson?.activities || []).filter(isCourseActivity);
+    setActiveActivityId(initialActivities[0]?.id || null);
+    setLearnAnnouncement(lesson
+      ? `${lesson.title} opened. ${lesson.kind === 'exercise' ? 'Complete the standalone exercise.' : 'Start with the first activity.'}`
+      : 'Learning catalog opened.');
     runOwnerRef.current += 1;
     setRunLoading(false);
     if (lesson) {
@@ -254,7 +268,7 @@ export default function App() {
   );
 
   const hasNextLesson = useMemo(
-    () => !!(activeLesson && nextLessonAfter(lessonsData, activeLesson.id)),
+    () => !!(activeLesson && activeLesson.kind !== 'exercise' && nextLessonAfter(lessonsData, activeLesson.id)),
     [activeLesson]
   );
 
@@ -815,7 +829,7 @@ export default function App() {
     if (inLessonMode) {
       setLearnPhase('run');
       setLessonAttempts((count) => count + 1);
-      setLearnAnnouncement(`Running ${payload.language} lesson…`);
+      setLearnAnnouncement(`Running ${payload.language} ${activeLesson.kind === 'exercise' ? 'exercise' : 'lesson'}…`);
     }
 
     try {
@@ -849,13 +863,13 @@ export default function App() {
         ));
         setLearnPhase(verdict.pass ? 'complete' : 'fix');
         setLearnAnnouncement(verdict.pass
-          ? 'Lesson passed. Your progress is saved and the next lesson is available.'
+          ? `${activeLesson.kind === 'exercise' ? 'Exercise' : 'Lesson'} passed. Your progress is saved.`
           : describeLessonRunFailure(normalisedOutput.stderr, payload.language));
         if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
-          const nextStreak = revealedHints === 0
+          const nextStreak = activeLesson.kind !== 'exercise' && revealedHints === 0
             ? (settings.guidanceSuccessStreak || 0) + 1
-            : 0;
+            : activeLesson.kind === 'exercise' ? (settings.guidanceSuccessStreak || 0) : 0;
           const nextSettings = updateSettings({
             completedLessons: next,
             guidanceSuccessStreak: nextStreak,
@@ -906,11 +920,14 @@ export default function App() {
     const next = updateSettings({ guidanceLevel, guidanceSuccessStreak: 0 });
     setSettings(next);
     const activities = activeLesson?.activities || [];
-    const visible = guidanceLevel === 'supported'
+    const availableActivities = activeLesson?.kind === 'exercise'
       ? activities
+      : activities.filter(isCourseActivity);
+    const visible = guidanceLevel === 'supported'
+      ? availableActivities
       : guidanceLevel === 'guided'
-        ? activities.filter((activity) => activity.type !== 'worked-example')
-        : activities.filter((activity) => ['code-along', 'drill', 'edit'].includes(activity.type));
+        ? availableActivities.filter((activity) => activity.type !== 'worked-example')
+        : availableActivities.filter((activity) => activity.type === 'edit');
     setActiveActivityId(visible[0]?.id || null);
   }, [activeLesson]);
 
@@ -925,7 +942,9 @@ export default function App() {
     setLearnMode(!!nextSettings.learnMode);
     setActiveLesson(restored.lesson);
     setLearnCatalogLanguage(restored.lesson?.language || null);
-    setLearnCatalogSection(restored.lesson ? 'courses' : null);
+    setLearnCatalogSection(restored.lesson
+      ? (restored.lesson.kind === 'exercise' ? 'exercises' : 'courses')
+      : null);
     setLearnPhase(restored.phase);
     setLessonStatus(restored.status);
     setLessonVerification(restored.verification);
@@ -1203,6 +1222,7 @@ const beginExplanationResize = useCallback((event) => {
           onSelectLanguage={setLearnCatalogLanguage}
           onSelectSection={setLearnCatalogSection}
           onSelectLesson={handleSelectLesson}
+          onSelectExercise={handleSelectLesson}
         />
       ) : (
       <div style={styles.body}>

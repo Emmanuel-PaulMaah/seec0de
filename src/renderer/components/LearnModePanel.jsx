@@ -2,6 +2,7 @@ import React from 'react';
 import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft } from 'lucide-react';
 import LessonsPanel, { formatLanguage } from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
+import { isCourseActivity } from '../data/exerciseCatalog';
 
 const PHASES = [
   { id: 'learn', label: 'Learn', icon: BookOpen },
@@ -37,7 +38,9 @@ export default function LearnModePanel({
   const mountedRef = React.useRef(false);
   const [catalogLanguage, setCatalogLanguage] = React.useState(activeLesson?.language || null);
   const activePhase = phase === 'complete' ? 'run' : phase;
-  const allActivities = activeLesson?.activities || [];
+  const allActivities = activeLesson?.kind === 'exercise'
+    ? activeLesson?.activities || []
+    : (activeLesson?.activities || []).filter(isCourseActivity);
   const activities = guidanceLevel === 'supported'
     ? allActivities
     : guidanceLevel === 'guided'
@@ -76,7 +79,7 @@ export default function LearnModePanel({
           </h2>
           {activeLesson && (
             <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
-              <ChevronLeft size={11} /> Courses
+              <ChevronLeft size={11} /> {activeLesson.kind === 'exercise' ? 'Exercises' : 'Courses'}
             </button>
           )}
         </div>

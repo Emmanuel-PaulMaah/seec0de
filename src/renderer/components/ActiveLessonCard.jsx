@@ -65,9 +65,9 @@ export default function ActiveLessonCard({
     <div style={styles.card}>
       {/* Header */}
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onClear} title="Back to all lessons">
+        <button style={styles.backBtn} onClick={onClear} title={lesson.kind === 'exercise' ? 'Back to exercises' : 'Back to all lessons'}>
           <ChevronLeft size={12} />
-          <span style={{ marginLeft: 2 }}>Lessons</span>
+          <span style={{ marginLeft: 2 }}>{lesson.kind === 'exercise' ? 'Exercises' : 'Lessons'}</span>
         </button>
         <div style={styles.headerMeta}>
           {lesson.concept && <span style={styles.conceptChip}>{lesson.concept}</span>}
