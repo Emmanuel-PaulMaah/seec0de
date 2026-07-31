@@ -1604,15 +1604,15 @@
             "id": "py-51-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small None, type(), int(), float(), str() pattern before writing your own.",
-            "example": "value = None"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "value = None\nprint(value is None)"
           },
           {
             "id": "py-51-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses None, type(), int(), float(), str(), then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, convert `'4.5'` to float and print `float 4.5`.",
+            "successCriteria": "The program runs without input and prints exactly `float 4.5`."
           },
           {
             "id": "py-51-edit",
@@ -1632,17 +1632,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "`None` is not the string `'None'`; use `is None`. Conversion creates a new value."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates none, types, and conversion and prints exactly the shown result.",
+        "task": "Set `value` to `None` and print the result of testing it with `is None`. Convert the supplied text `'7'` to an integer named `count`, then print its type name and value separated by one space.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "True\nint 7",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for None, type(), int(), float(), str().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Assign `None` to `value`, then test the singleton with `value is None`.",
+          "Create `count` with `int('7')`; `type(count).__name__` produces the required type label.",
+          "Print the Boolean first, then pass the type name and `count` as two arguments to the second `print` call."
         ],
         "solution": "value = None\nprint(value is None)\ncount = int('7')\nprint(type(count).__name__, count)\n"
       },
@@ -1656,24 +1656,24 @@
             "id": "py-52-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on %, //, **, precedence?",
+            "question": "What does `print(17 // 5, 17 % 5, 2 + 2 ** 3)` output?",
             "choices": [
-              "%, //, **, precedence",
-              "network requests",
-              "third-party packages"
+              "3 2 10",
+              "3.4 2 64",
+              "3 2 32"
             ],
-            "answer": "%, //, **, precedence",
-            "explanation": "Remainder, floor division, powers, and precedence solve precise numeric calculations."
+            "answer": "3 2 10",
+            "explanation": "Floor division gives 3, remainder gives 2, and the power 2 ** 3 is evaluated before adding 2."
           },
           {
             "id": "py-52-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central %, //, **, precedence operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `number = 14`.",
+              "Print `number // 4` and `number % 4` in one call.",
+              "Run the code and verify the output is exactly `3 2`."
             ]
           },
           {
@@ -1694,17 +1694,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "`/` and `//` differ, and powers are evaluated before addition."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates remainder, division, and powers and prints exactly the shown result.",
+        "task": "Given `minutes = 137`, print its whole hours and leftover minutes on one line. On the next line, print `2 + 3 ** 2` using normal operator precedence.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "2 17\n11",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for %, //, **, precedence.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Use `minutes // 60` for the two whole hours and `minutes % 60` for the 17 leftover minutes.",
+          "Pass the quotient and remainder to one `print` call so Python separates them with one space.",
+          "Print `2 + 3 ** 2` directly; exponentiation runs before addition and produces `11`."
         ],
         "solution": "minutes = 137\nprint(minutes // 60, minutes % 60)\nprint(2 + 3 ** 2)\n"
       },
@@ -1718,18 +1718,18 @@
             "id": "py-53-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small indexing and slicing pattern before writing your own.",
-            "example": "word = 'Python'"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "word = 'Python'\nprint(word[0], word[-1])"
           },
           {
             "id": "py-53-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central indexing and slicing operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `word = 'planet'`.",
+              "Slice indexes 1 through 4 with `word[1:5]` and print the slice.",
+              "Run the code and verify the output is exactly `lane`."
             ]
           },
           {
@@ -1750,17 +1750,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Slice stop indexes are excluded; `word[1:4]` ends at index 3."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates strings are sequences and prints exactly the shown result.",
+        "task": "Given `word = 'Python'`, print its first and last characters separated by a space, print characters at indexes 1 through 3, then print its length.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "P n\nyth\n6",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for indexing and slicing.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Use `word[0]` and `word[-1]` to select `P` and `n` from opposite ends.",
+          "The slice `word[1:4]` includes indexes 1, 2, and 3, producing `yth`.",
+          "Call `len(word)` for the final line; print the endpoints together on the first line."
         ],
         "solution": "word = 'Python'\nprint(word[0], word[-1])\nprint(word[1:4])\nprint(len(word))\n"
       },
@@ -1774,21 +1774,21 @@
             "id": "py-54-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on strip(), split(), join()?",
+            "question": "What does `print('-'.join(part.strip() for part in ' tea, milk '.split(',')))` output?",
             "choices": [
-              "strip(), split(), join()",
-              "network requests",
-              "third-party packages"
+              "tea-milk",
+              " tea- milk ",
+              "['tea', 'milk']"
             ],
-            "answer": "strip(), split(), join()",
-            "explanation": "Cleanup methods normalize text, while split and join move between strings and lists."
+            "answer": "tea-milk",
+            "explanation": "Splitting creates two pieces, strip removes edge spaces, and join places one hyphen between them."
           },
           {
             "id": "py-54-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses strip(), split(), join(), then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, clean `' a / b '` and print `a-b`.",
+            "successCriteria": "The program runs without input and prints exactly `a-b`."
           },
           {
             "id": "py-54-edit",
@@ -1808,17 +1808,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "`strip()` cleans only the ends, and `join()` is called on the separator."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates split, join, and clean strings and prints exactly the shown result.",
+        "task": "Given `raw = '  red, blue,green  '`, split at commas, strip surrounding spaces from every piece, and print the colors joined by ` | `.",
         "starterCode": "# TODO: write the program described in the task\nraw = '  red, blue,green  '\n# TODO: complete the remaining logic\n",
         "expectedOutput": "red | blue | green",
         "matchType": "contains",
         "hints": [
-          "Start with the lesson pattern for strip(), split(), join().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Call `raw.strip().split(',')` to remove outer padding and separate the three comma-delimited pieces.",
+          "Strip each `part` so the inconsistent spaces around `red`, `blue`, and `green` do not remain.",
+          "Use `' | '.join(colors)` to produce exactly `red | blue | green`."
         ],
         "solution": "raw = '  red, blue,green  '\ncolors = [part.strip() for part in raw.strip().split(',')]\nprint(' | '.join(colors))\n"
       },
@@ -1832,18 +1832,18 @@
             "id": "py-55-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small continue and nested loops pattern before writing your own.",
-            "example": "for row in range(1, 3):"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "for row in range(1, 3):\n    for column in range(1, 4):"
           },
           {
             "id": "py-55-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central continue and nested loops operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Loop over `number` in `range(1, 4)`.",
+              "When `number == 2`, use `continue`; print `number` for every other iteration.",
+              "Run the code and verify that the output lines are `1` and `3`."
             ]
           },
           {
@@ -1864,17 +1864,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "`continue` advances only the nearest loop, which is the inner loop here."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates continue and nested loops and prints exactly the shown result.",
+        "task": "Loop through rows 1–2 and columns 1–3. Skip every pair with column 2 and print each remaining pair as `row:column` in loop order.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "1:1\n1:3\n2:1\n2:3",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for continue and nested loops.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Nest `for column in range(1, 4)` inside `for row in range(1, 3)`.",
+          "Inside the inner loop, run `continue` when `column == 2` so no pair with column 2 reaches `print`.",
+          "Format each remaining pair with `f'{row}:{column}'`; the nested loop order starts with `1:1` and ends with `2:3`."
         ],
         "solution": "for row in range(1, 3):\n    for column in range(1, 4):\n        if column == 2:\n            continue\n        print(f'{row}:{column}')\n"
       }
@@ -1896,24 +1896,24 @@
             "id": "py-56-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on enumerate()?",
+            "question": "What prints from `for i, x in enumerate(['a','b'], start=3): print(i, x)`?",
             "choices": [
-              "enumerate()",
-              "network requests",
-              "third-party packages"
+              "3 a then 4 b",
+              "0 a then 1 b",
+              "3 b then 4 a"
             ],
-            "answer": "enumerate()",
-            "explanation": "`enumerate()` yields an index and value together without a manual counter."
+            "answer": "3 a then 4 b",
+            "explanation": "The start value sets the first generated position to 3 without changing item order."
           },
           {
             "id": "py-56-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central enumerate() operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `colors = ['red', 'blue']`.",
+              "Loop over `enumerate(colors, start=1)` and unpack `position, color`.",
+              "Print `f'{position}. {color}'` and verify the lines are `1. red` and `2. blue`."
             ]
           },
           {
@@ -1934,17 +1934,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Without `start=1`, `enumerate` begins counting at zero."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates count with enumerate and prints exactly the shown result.",
+        "task": "Given `names = ['Ada', 'Linus', 'Grace']`, use `enumerate` starting at 1 and print each entry as its position, a period, one space, and its name.",
         "starterCode": "# TODO: write the program described in the task\nnames = ['Ada', 'Linus', 'Grace']\n# TODO: complete the remaining logic\n",
         "expectedOutput": "1. Ada\n2. Linus\n3. Grace",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for enumerate().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Call `enumerate(names, start=1)` so the generated positions are 1, 2, and 3.",
+          "Unpack each generated pair as `position, name` in the loop header.",
+          "Format each line with `f'{position}. {name}'` to include the period and one required space."
         ],
         "solution": "names = ['Ada', 'Linus', 'Grace']\nfor position, name in enumerate(names, start=1):\n    print(f'{position}. {name}')\n"
       },
@@ -1958,15 +1958,15 @@
             "id": "py-57-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small zip() pattern before writing your own.",
-            "example": "names = ['Ada', 'Grace']"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "names = ['Ada', 'Grace']\nscores = [92, 98]"
           },
           {
             "id": "py-57-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses zip(), then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, zip `['x','y']` with `[1,2]` and print `x=1` then `y=2`.",
+            "successCriteria": "The program runs without input and prints `x=1` and `y=2` on separate lines."
           },
           {
             "id": "py-57-edit",
@@ -1986,17 +1986,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "`zip` stops at the shortest iterable, so validate lengths when every item must pair."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates pair values with zip and prints exactly the shown result.",
+        "task": "Pair `names = ['Ada', 'Grace']` with scores `[92, 98]` using `zip`, then print each pair as `name: score`.",
         "starterCode": "# TODO: write the program described in the task\nnames = ['Ada', 'Grace']\n# TODO: complete the remaining logic\n",
         "expectedOutput": "Ada: 92\nGrace: 98",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for zip().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Call `zip(names, scores)` to pair Ada with 92 and Grace with 98 in source order.",
+          "Unpack each pair as `name, score` directly in the `for` loop header.",
+          "Print `f'{name}: {score}'` so each line has a colon followed by one space."
         ],
         "solution": "names = ['Ada', 'Grace']\nscores = [92, 98]\nfor name, score in zip(names, scores):\n    print(f'{name}: {score}')\n"
       },
@@ -2010,24 +2010,24 @@
             "id": "py-58-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on get(), items(), in?",
+            "question": "For `d = {'name': 'pen'}`, what do `print('pen' in d)` and `print(d.get('price', 0))` print?",
             "choices": [
-              "get(), items(), in",
-              "network requests",
-              "third-party packages"
+              "False then 0",
+              "True then 0",
+              "False then KeyError"
             ],
-            "answer": "get(), items(), in",
-            "explanation": "Dictionary membership tests keys; get supplies a fallback; items yields key-value pairs."
+            "answer": "False then 0",
+            "explanation": "Membership checks keys, not values, and get returns its fallback for a missing key."
           },
           {
             "id": "py-58-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central get(), items(), in operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `values = {'a': 1}`.",
+              "Call `values.get('b', 0)` and print the returned value.",
+              "Run the code and verify the output is exactly `0`."
             ]
           },
           {
@@ -2048,17 +2048,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Dictionary membership checks keys; bracket access to a missing key raises `KeyError`."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates dictionary get, items, and membership and prints exactly the shown result.",
+        "task": "Given `profile = {'name': 'Ada', 'level': 3}`, print `unknown` for missing `city`, print whether `name` is a key, then print every stored item as `key=value`.",
         "starterCode": "# TODO: write the program described in the task\nprofile = {'name': 'Ada', 'level': 3}\n# TODO: complete the remaining logic\n",
         "expectedOutput": "unknown\nTrue\nname=Ada\nlevel=3",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for get(), items(), in.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Use `profile.get('city', 'unknown')` so the missing key returns the required fallback instead of raising `KeyError`.",
+          "Test `'name' in profile`; dictionary membership checks keys and prints `True` here.",
+          "Iterate `for key, value in profile.items()` and print `f'{key}={value}'` in insertion order."
         ],
         "solution": "profile = {'name': 'Ada', 'level': 3}\nprint(profile.get('city', 'unknown'))\nprint('name' in profile)\nfor key, value in profile.items():\n    print(f'{key}={value}')\n"
       },
@@ -2072,18 +2072,18 @@
             "id": "py-59-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small insert(), remove(), sort(), copy() pattern before writing your own.",
-            "example": "original = ['pear', 'apple', 'plum']"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "original = ['pear', 'apple', 'plum']\nfoods = original.copy()\nfoods.insert(1, 'kiwi')"
           },
           {
             "id": "py-59-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central insert(), remove(), sort(), copy() operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `original = [2, 1]`, then create `changed = original.copy()`.",
+              "Call `changed.sort()` without sorting `original`.",
+              "Print both lists and verify the output lines are `[1, 2]` and `[2, 1]`."
             ]
           },
           {
@@ -2104,17 +2104,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "List methods mutate and return `None`; copy before changing data that must be preserved."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates insert, remove, sort, and copy lists and prints exactly the shown result.",
+        "task": "Copy `original = ['pear', 'apple', 'plum']`. In the copy, insert `kiwi` at index 1, remove `pear`, and sort. Print the changed copy and unchanged original.",
         "starterCode": "# TODO: write the program described in the task\noriginal = ['pear', 'apple', 'plum']\n# TODO: complete the remaining logic\n",
         "expectedOutput": "['apple', 'kiwi', 'plum']\n['pear', 'apple', 'plum']",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for insert(), remove(), sort(), copy().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Start with `foods = original.copy()` so mutations do not change `original`.",
+          "Apply `foods.insert(1, 'kiwi')`, `foods.remove('pear')`, and `foods.sort()` in that order.",
+          "Print `foods` first to show `['apple', 'kiwi', 'plum']`, then print the unchanged `original`."
         ],
         "solution": "original = ['pear', 'apple', 'plum']\nfoods = original.copy()\nfoods.insert(1, 'kiwi')\nfoods.remove('pear')\nfoods.sort()\nprint(foods)\nprint(original)\n"
       },
@@ -2128,21 +2128,21 @@
             "id": "py-60-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on nested lists and dictionaries?",
+            "question": "What does `print([{'scores': [4, 9]}][0]['scores'][-1])` output?",
             "choices": [
-              "nested lists and dictionaries",
-              "network requests",
-              "third-party packages"
+              "4",
+              "9",
+              "scores"
             ],
-            "answer": "nested lists and dictionaries",
-            "explanation": "Combine lists and dictionaries to model records, then access one layer at a time."
+            "answer": "9",
+            "explanation": "The indexes select the first record, its scores list, and that list's final value."
           },
           {
             "id": "py-60-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses nested lists and dictionaries, then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, create `[{'city':'Lima','temps':[18,21]}]` and print `Lima` then `21`.",
+            "successCriteria": "The program runs without input and prints `Lima` and `21` on separate lines."
           },
           {
             "id": "py-60-edit",
@@ -2162,17 +2162,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Read nested access left to right: list indexes and dictionary keys are different operations."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates navigate nested data and prints exactly the shown result.",
+        "task": "From the supplied `courses`, print the first course's title and then the final score in that same course's nested scores list.",
         "starterCode": "# TODO: write the program described in the task\ncourses = [{'title': 'Python', 'scores': [8, 10]}, {'title': 'Git', 'scores': [7]}]\n# TODO: complete the remaining logic\n",
         "expectedOutput": "Python\n10",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for nested lists and dictionaries.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Select the first record with `courses[0]`, then read its title with `['title']`.",
+          "From that same record, select `['scores'][-1]` to get the final score, `10`.",
+          "Print the title and score in separate calls so the output is `Python` followed by `10`."
         ],
         "solution": "courses = [{'title': 'Python', 'scores': [8, 10]}, {'title': 'Git', 'scores': [7]}]\nprint(courses[0]['title'])\nprint(courses[0]['scores'][-1])\n"
       }
@@ -2194,18 +2194,18 @@
             "id": "py-61-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small sequence and dictionary unpacking pattern before writing your own.",
-            "example": "name, score = ('Ada', 95)"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "name, score = ('Ada', 95)\nrecord = {'name': name, 'score': score}"
           },
           {
             "id": "py-61-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central sequence and dictionary unpacking operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Unpack the tuple with `left, right = (3, 4)`.",
+              "Add the two unpacked values and print the sum.",
+              "Run the code and verify the output is exactly `7`."
             ]
           },
           {
@@ -2226,17 +2226,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Unpacking a dictionary directly yields keys, not values or key-value pairs."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates unpack tuples and dictionaries and prints exactly the shown result.",
+        "task": "Unpack `('Ada', 95)` into `name` and `score`. Build the shown record, unpack the dictionary itself into two key names, then print the values and keys on separate lines.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "Ada 95\nname score",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for sequence and dictionary unpacking.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Unpack the tuple with `name, score = ('Ada', 95)` before building the record.",
+          "Insert the values into `{'name': name, 'score': score}`; iterating or unpacking this dictionary yields its keys.",
+          "Use `key_name, key_score = record`, then print the values on one line and the keys on the next."
         ],
         "solution": "name, score = ('Ada', 95)\nrecord = {'name': name, 'score': score}\nkey_name, key_score = record\nprint(name, score)\nprint(key_name, key_score)\n"
       },
@@ -2250,24 +2250,24 @@
             "id": "py-62-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on *args?",
+            "question": "What does `def f(*x): print(x); f(2, 4)` output?",
             "choices": [
-              "*args",
-              "network requests",
-              "third-party packages"
+              "(2, 4)",
+              "[2, 4]",
+              "2 4"
             ],
-            "answer": "*args",
-            "explanation": "A starred parameter gathers extra positional arguments into a tuple."
+            "answer": "(2, 4)",
+            "explanation": "A starred parameter gathers positional arguments into a tuple."
           },
           {
             "id": "py-62-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central *args operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Define `total(*numbers)` so `numbers` gathers every positional argument.",
+              "Return `sum(numbers)`, then call `total(2, 3, 4)`.",
+              "Print the return value and verify the output is exactly `9`."
             ]
           },
           {
@@ -2288,17 +2288,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "The star gathers arguments into a tuple; the name `args` itself is only a convention."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates collect positional arguments and prints exactly the shown result.",
+        "task": "Define `total(*numbers)` to return the sum of all gathered positional arguments. Call it with 4, 6, and 10 and print the result.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "20",
         "matchType": "regex",
         "hints": [
-          "Start with the lesson pattern for *args.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Declare the function as `def total(*numbers):`; calls gather all positional arguments into the `numbers` tuple.",
+          "Return `sum(numbers)` so the function works for all the supplied positional values.",
+          "Call `total(4, 6, 10)` inside `print`; the required result is `20`."
         ],
         "solution": "def total(*numbers):\n    return sum(numbers)\n\nprint(total(4, 6, 10))\n"
       },
@@ -2312,15 +2312,15 @@
             "id": "py-63-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small **kwargs, * and ** calls pattern before writing your own.",
-            "example": "def label(name, **details):"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "def label(name, **details):\n    return f\"{name}: {details['level']}\"\n"
           },
           {
             "id": "py-63-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses **kwargs, * and ** calls, then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, unpack `[3]` and `{'height':4}` into an area function and print `12`.",
+            "successCriteria": "The program runs without input and prints exactly `12` by unpacking both argument collections."
           },
           {
             "id": "py-63-edit",
@@ -2340,17 +2340,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "One star unpacks positions; two stars unpack keyword pairs whose keys must match parameters."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates keyword and argument unpacking and prints exactly the shown result.",
+        "task": "Define `label(name, **details)` to return `name: level`. Unpack `['Ada']` and `{'level': 4}` into the call and print its return value.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "Ada: 4",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for **kwargs, * and ** calls.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Define `label(name, **details)` and read the level with `details['level']`.",
+          "Return an f-string in the exact form `f\"{name}: {details['level']}\"`.",
+          "Call `label(*values, **options)` so `['Ada']` supplies `name` and `{'level': 4}` supplies the keyword detail."
         ],
         "solution": "def label(name, **details):\n    return f\"{name}: {details['level']}\"\n\nvalues = ['Ada']\noptions = {'level': 4}\nprint(label(*values, **options))\n"
       },
@@ -2364,24 +2364,24 @@
             "id": "py-64-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on dictionary and set comprehensions?",
+            "question": "What does `sorted({word[0] for word in ['sun','sea']})` produce?",
             "choices": [
-              "dictionary and set comprehensions",
-              "network requests",
-              "third-party packages"
+              "['s']",
+              "['s', 's']",
+              "{'sun', 'sea'}"
             ],
-            "answer": "dictionary and set comprehensions",
-            "explanation": "Dictionary comprehensions create key-value mappings; set comprehensions keep unique results."
+            "answer": "['s']",
+            "explanation": "A set removes the duplicate initial and sorted returns a deterministic list."
           },
           {
             "id": "py-64-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central dictionary and set comprehensions operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `numbers = [1, 2, 3]`.",
+              "Build `squares = {number: number ** 2 for number in numbers}`.",
+              "Print `squares` and verify the output is exactly `{1: 1, 2: 4, 3: 9}`."
             ]
           },
           {
@@ -2402,17 +2402,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Sets have no reliable display order, so sort them before deterministic output."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates build dictionaries and sets compactly and prints exactly the shown result.",
+        "task": "Given `words = ['ant', 'bear', 'ape']`, build and print a word-to-length dictionary. Build a set of first letters and print it as a sorted list.",
         "starterCode": "# TODO: write the program described in the task\nwords = ['ant', 'bear', 'ape']\n# TODO: complete the remaining logic\n",
         "expectedOutput": "{'ant': 3, 'bear': 4, 'ape': 3}\n['a', 'b']",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for dictionary and set comprehensions.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Build `lengths` with `{word: len(word) for word in words}` to map each complete word to its length.",
+          "Build `initials` with `{word[0] for word in words}`; the set keeps only one `a`.",
+          "Print `lengths`, then `sorted(initials)` so the set result has deterministic order `['a', 'b']`."
         ],
         "solution": "words = ['ant', 'bear', 'ape']\nlengths = {word: len(word) for word in words}\ninitials = {word[0] for word in words}\nprint(lengths)\nprint(sorted(initials))\n"
       },
@@ -2426,18 +2426,18 @@
             "id": "py-65-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small recursion and base cases pattern before writing your own.",
-            "example": "def countdown(number):"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "def countdown(number):\n    if number == 0:\n        return ['go']"
           },
           {
             "id": "py-65-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central recursion and base cases operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Define `sum_down(number)` with a base case that returns `0` when `number == 0`.",
+              "For other values, return `number + sum_down(number - 1)`.",
+              "Print `sum_down(3)` and verify the output is exactly `6`."
             ]
           },
           {
@@ -2458,17 +2458,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Every recursive path must move toward a base case or it ends in `RecursionError`."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates recurse toward a base case and prints exactly the shown result.",
+        "task": "Define recursive `countdown(number)`: return `['go']` at 0; otherwise prepend the current number as text to the result for one less. Join and print `countdown(3)`.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "3 2 1 go",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for recursion and base cases.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Make `number == 0` the base case and return `['go']` without another recursive call.",
+          "For other values, return `[str(number)] + countdown(number - 1)` to prepend each decreasing number.",
+          "Call `countdown(3)`, join its four strings with spaces, and print `3 2 1 go`."
         ],
         "solution": "def countdown(number):\n    if number == 0:\n        return ['go']\n    return [str(number)] + countdown(number - 1)\n\nprint(' '.join(countdown(3)))\n"
       }
@@ -2490,21 +2490,21 @@
             "id": "py-66-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on with and open()?",
+            "question": "After writing `'one\\ntwo\\n'`, what does `file.read().splitlines()` return?",
             "choices": [
-              "with and open()",
-              "network requests",
-              "third-party packages"
+              "['one', 'two']",
+              "'one\\ntwo\\n'",
+              "FileNotFoundError"
             ],
-            "answer": "with and open()",
-            "explanation": "A `with` block closes files reliably after writing or reading."
+            "answer": "['one', 'two']",
+            "explanation": "splitlines returns each line without its newline character."
           },
           {
             "id": "py-66-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses with and open(), then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, write `ready` to `status.txt`, read it back, and print `ready`.",
+            "successCriteria": "The program runs without input, creates `status.txt`, and prints exactly `ready` after reading it."
           },
           {
             "id": "py-66-edit",
@@ -2524,17 +2524,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Opening with `w` replaces existing contents; use only the fixed lesson file and specify encoding."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates write and read files safely and prints exactly the shown result.",
+        "task": "Write exactly `alpha\\nbeta\\n` to `lesson_notes.txt` with UTF-8 in a `with` block. Reopen it, read its lines without newline characters, and print the resulting list.",
         "starterCode": "# TODO: write the program described in the task\n",
         "expectedOutput": "['alpha', 'beta']",
         "matchType": "contains",
         "hints": [
-          "Start with the lesson pattern for with and open().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Open `lesson_notes.txt` in write mode with `encoding='utf-8'` and write the literal text `alpha\\nbeta\\n`.",
+          "After the first `with` block closes the file, reopen the same path in read mode with UTF-8.",
+          "Use `file.read().splitlines()` to remove newline characters, then print `['alpha', 'beta']`."
         ],
         "solution": "path = 'lesson_notes.txt'\nwith open(path, 'w', encoding='utf-8') as file:\n    file.write('alpha\\nbeta\\n')\nwith open(path, 'r', encoding='utf-8') as file:\n    lines = file.read().splitlines()\nprint(lines)\n"
       },
@@ -2548,18 +2548,18 @@
             "id": "py-67-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small text normalization and counting pattern before writing your own.",
-            "example": "text = 'Python, code! Python tests; code.'"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "text = 'Python, code! Python tests; code.'\nclean = ''.join(char.lower() if char.isalnum() else ' ' for char in text)\ncounts = {}"
           },
           {
             "id": "py-67-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central text normalization and counting operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `text = 'red blue red'`, split it into words, and create an empty `counts` dictionary.",
+              "Loop over the words and update each entry with `counts.get(word, 0) + 1`.",
+              "Print `f\"red: {counts['red']}\"` and verify the output is exactly `red: 2`."
             ]
           },
           {
@@ -2580,17 +2580,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Splitting before removing punctuation would count `code` and `code!` separately."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates text processing capstone and prints exactly the shown result.",
+        "task": "Normalize the supplied text by lowercasing letters and replacing non-alphanumeric characters with spaces. Count the words and print `word: count` in alphabetical order.",
         "starterCode": "# TODO: write the program described in the task\ntext = 'Python, code! Python tests; code.'\n# TODO: complete the remaining logic\n",
         "expectedOutput": "code: 2\npython: 2\ntests: 1",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for text normalization and counting.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Create `clean` by lowercasing alphanumeric characters and replacing every punctuation character with a space.",
+          "Loop over `clean.split()` and update each count with `counts.get(word, 0) + 1`.",
+          "Iterate over `sorted(counts)` and print `f'{word}: {counts[word]}'` to produce code, python, then tests alphabetically."
         ],
         "solution": "text = 'Python, code! Python tests; code.'\nclean = ''.join(char.lower() if char.isalnum() else ' ' for char in text)\ncounts = {}\nfor word in clean.split():\n    counts[word] = counts.get(word, 0) + 1\nfor word in sorted(counts):\n    print(f'{word}: {counts[word]}')\n"
       },
@@ -2604,24 +2604,24 @@
             "id": "py-68-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on json.dumps() and json.loads()?",
+            "question": "After `text = json.dumps({'ready': True})` and `value = json.loads(text)`, what are their types?",
             "choices": [
-              "json.dumps() and json.loads()",
-              "network requests",
-              "third-party packages"
+              "str and dict",
+              "dict and str",
+              "str and str"
             ],
-            "answer": "json.dumps() and json.loads()",
-            "explanation": "The standard `json` module converts Python data to text and restores it."
+            "answer": "str and dict",
+            "explanation": "dumps creates JSON text; loads parses that text back into Python data."
           },
           {
             "id": "py-68-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central json.dumps() and json.loads() operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Import `json` and serialize `{'count': 2}` with `json.dumps`.",
+              "Deserialize the resulting text with `json.loads` and read the restored `count` value.",
+              "Print that value and verify the output is exactly `2`."
             ]
           },
           {
@@ -2642,17 +2642,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "JSON uses lowercase `true`, unlike Python's `True`; let `json.dumps` create valid JSON."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates serialize and deserialize json and prints exactly the shown result.",
+        "task": "Serialize `{'name': 'Ada', 'active': True}` with sorted JSON keys, deserialize it, print the JSON text, then print the restored name.",
         "starterCode": "# TODO: write the program described in the task\nimport json\n# TODO: complete the remaining logic\n",
         "expectedOutput": "{\"active\": true, \"name\": \"Ada\"}\nAda",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for json.dumps() and json.loads().",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Import `json`, then call `json.dumps(record, sort_keys=True)` so `active` appears before `name`.",
+          "Pass the JSON text to `json.loads` to restore a dictionary, not another string.",
+          "Print the serialized `text` first, then print `restored['name']` for the final `Ada` line."
         ],
         "solution": "import json\nrecord = {'name': 'Ada', 'active': True}\ntext = json.dumps(record, sort_keys=True)\nrestored = json.loads(text)\nprint(text)\nprint(restored['name'])\n"
       },
@@ -2666,15 +2666,15 @@
             "id": "py-69-example",
             "type": "worked-example",
             "title": "Read the pattern",
-            "instruction": "Review a small assert and specific exceptions pattern before writing your own.",
-            "example": "def parse_score(text):"
+            "instruction": "Study this smaller pattern before attempting the main task.",
+            "example": "def parse_score(text):\n    score = int(text)\n    assert 0 <= score <= 100, 'score out of range'\n    return score\nfor value in ['88', 'high', '120']:"
           },
           {
             "id": "py-69-drill",
             "type": "drill",
             "title": "Practice the core syntax",
-            "instruction": "Write a tiny example that uses assert and specific exceptions, then compare it with the lesson task.",
-            "successCriteria": "The snippet runs without input and prints a deterministic result."
+            "instruction": "From memory, assert that 7 is even, catch `AssertionError`, and print `odd`.",
+            "successCriteria": "The program runs without input, catches the failed assertion, and prints exactly `odd`."
           },
           {
             "id": "py-69-edit",
@@ -2694,17 +2694,17 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "Catch specific exceptions; a bare `except` can hide unrelated programming errors."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates assert rules and catch targeted errors and prints exactly the shown result.",
+        "task": "Complete `parse_score`: convert text to an integer, assert it is 0–100, and return it. Process `'88'`, `'high'`, and `'120'`, printing the valid score or the specified message for each targeted exception.",
         "starterCode": "# TODO: write the program described in the task\ndef parse_score(text):\n# TODO: complete the remaining logic\n",
         "expectedOutput": "88\nnot a number\nout of range",
         "matchType": "exact",
         "hints": [
-          "Start with the lesson pattern for assert and specific exceptions.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "Inside `parse_score`, convert with `int(text)` before asserting `0 <= score <= 100`.",
+          "Catch `ValueError` to print `not a number` for `'high'`, and catch `AssertionError` separately for `'120'`.",
+          "Loop through `['88', 'high', '120']` in order so the three lines are `88`, `not a number`, and `out of range`."
         ],
         "solution": "def parse_score(text):\n    score = int(text)\n    assert 0 <= score <= 100, 'score out of range'\n    return score\nfor value in ['88', 'high', '120']:\n    try:\n        print(parse_score(value))\n    except ValueError:\n        print('not a number')\n    except AssertionError:\n        print('out of range')\n"
       },
@@ -2718,24 +2718,24 @@
             "id": "py-70-predict",
             "type": "prediction",
             "title": "Predict the behavior",
-            "question": "Which idea is central to this lesson on records, aggregation, and reports?",
+            "question": "Which average prints first after reverse-sorting `(average, name)` rows for Ana=10.0 and Bo=9.0?",
             "choices": [
-              "records, aggregation, and reports",
-              "network requests",
-              "third-party packages"
+              "Ana: 10.0",
+              "Bo: 9.0",
+              "Ana: 20.0"
             ],
-            "answer": "records, aggregation, and reports",
-            "explanation": "Combine validation, nested records, aggregation, sorting, and formatting into a final report."
+            "answer": "Ana: 10.0",
+            "explanation": "Tuples sort by their first item, and reverse order puts the larger average first."
           },
           {
             "id": "py-70-code",
             "type": "code-along",
             "title": "Build the core operation",
-            "instruction": "Write the central records, aggregation, and reports operation.",
+            "instruction": "Build a smaller version of this lesson program.",
             "steps": [
-              "Copy the provided data or function header.",
-              "Add the core operation yourself.",
-              "Print and check the deterministic result."
+              "Set `scores = [8, 10]`.",
+              "Calculate `average = sum(scores) / len(scores)`.",
+              "Print `average` and verify the output is exactly `9.0`."
             ]
           },
           {
@@ -2756,22 +2756,21 @@
           },
           {
             "type": "note",
-            "text": "Prefer clear, explicit code before making the solution more compact."
+            "text": "An empty scores list would divide by zero, so real records should be validated first."
           }
         ],
-        "task": "Write and run a deterministic example that demonstrates final records and report capstone and prints exactly the shown result.",
+        "task": "For every supplied record, calculate the average of its non-empty scores and store `(average, name)`. Sort descending, print `REPORT`, then each name and average with one decimal place.",
         "starterCode": "# TODO: write the program described in the task\nrecords = [{'name': 'Ada', 'scores': [90, 96]}, {'name': 'Grace', 'scores': [88, 92]}, {'name': 'Linus', 'scores': [70, 80]}]\n# TODO: complete the remaining logic\n",
         "expectedOutput": "REPORT\nAda: 93.0\nGrace: 90.0\nLinus: 75.0",
         "matchType": "regex",
         "hints": [
-          "Start with the lesson pattern for records, aggregation, and reports.",
-          "Build one operation at a time, then print the result.",
-          "Compare spaces, capitalization, and line order with the expected output."
+          "For each record, calculate `sum(record['scores']) / len(record['scores'])` and append `(average, record['name'])` to `rows`.",
+          "Call `rows.sort(reverse=True)` so the largest average tuple is reported first.",
+          "Print `REPORT`, then unpack each tuple and use `f'{name}: {average:.1f}'` for exactly one decimal place."
         ],
         "solution": "records = [{'name': 'Ada', 'scores': [90, 96]}, {'name': 'Grace', 'scores': [88, 92]}, {'name': 'Linus', 'scores': [70, 80]}]\nrows = []\nfor record in records:\n    average = sum(record['scores']) / len(record['scores'])\n    rows.append((average, record['name']))\nrows.sort(reverse=True)\nprint('REPORT')\nfor average, name in rows:\n    print(f'{name}: {average:.1f}')\n"
       }
     ]
   }
-
 ]
 }
