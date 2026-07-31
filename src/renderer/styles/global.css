@@ -19,6 +19,8 @@
 }
 
 :root {
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+
   /* Surfaces — pure black throughout, matching VS Code "Dark High Contrast"
      (hc-black). No elevation tint; depth is conveyed by borders instead. */
   --bg-primary:     #000000;
@@ -142,6 +144,13 @@ button {
               border-color var(--motion-fast) var(--ease-out),
               opacity    var(--motion-fast) var(--ease-out),
               transform  var(--motion-fast) var(--ease-out);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
 }
 
 button:disabled {

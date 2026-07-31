@@ -200,6 +200,10 @@ export default function CodePanel({
     editorRef.current = editor;
 
     editor.onDidChangeCursorSelection((e) => {
+      if (lessonMode) {
+        clearSelection();
+        return;
+      }
       const model = editor.getModel();
       if (!model) return;
       const selectedText = model.getValueInRange(e.selection);
@@ -213,7 +217,7 @@ export default function CodePanel({
     });
 
     editor.onMouseDown((e) => {
-      if (isPseudocode || showingFile) return;
+      if (lessonMode || isPseudocode || showingFile) return;
       const pos = e.target.position;
       if (!pos) return;
       const model = editor.getModel();
@@ -236,7 +240,7 @@ export default function CodePanel({
         position: { top: coords.top + 24, left: coords.left + 20 },
       });
     });
-  }, [generatedDisplayTab, isPseudocode, showingFile, clearSelection]);
+  }, [generatedDisplayTab, isPseudocode, showingFile, lessonMode, clearSelection]);
 
   const handleChange = useCallback((val) => {
     const next = val ?? '';
@@ -263,7 +267,7 @@ export default function CodePanel({
     }
   }, [selection, isPseudocode, showingFile, explainLanguage, onSelectionExplain, clearSelection]);
 
-  const showExplainButtons = (showingFile || ((editable || lessonMode) && !isPseudocode)) && selection && btnPos;
+  const showExplainButtons = !lessonMode && (showingFile || (editable && !isPseudocode)) && selection && btnPos;
 
   // ---- run button: figure out language + source for the runner ----------
   let runLanguage = null;
@@ -491,14 +495,16 @@ export default function CodePanel({
             </button>
           </div>
         )}
-        <KeywordTooltip
-          keyword={tooltip?.keyword}
-          definition={tooltip?.definition}
-          example={tooltip?.example}
-          language={tooltip?.language}
-          position={tooltip?.position}
-          onClose={() => setTooltip(null)}
-        />
+        {!lessonMode && (
+          <KeywordTooltip
+            keyword={tooltip?.keyword}
+            definition={tooltip?.definition}
+            example={tooltip?.example}
+            language={tooltip?.language}
+            position={tooltip?.position}
+            onClose={() => setTooltip(null)}
+          />
+        )}
       </div>
     </div>
   );

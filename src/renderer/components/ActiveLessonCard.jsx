@@ -89,7 +89,7 @@ export default function ActiveLessonCard({
       {/* Task callout */}
       <div style={styles.taskBox}>
         <div style={styles.taskLabel}>Your turn</div>
-        <div style={styles.taskText}>{lesson.task}</div>
+        <div style={styles.taskText}>{renderInline(lesson.task)}</div>
         <div style={styles.taskHint}>
           Edit the code in the editor → click <strong>Run</strong> in the toolbar.
         </div>
@@ -135,10 +135,10 @@ export default function ActiveLessonCard({
           {errorCoaching.map((item, index) => (
             <div key={`${item.title || 'fix'}-${index}`} style={styles.fixItem}>
               {item.title && <div style={styles.fixTitle}>{item.title}</div>}
-              {item.plain && <div style={styles.fixText}>{item.plain}</div>}
+              {item.plain && <div style={styles.fixText}>{renderInline(item.plain)}</div>}
               {Array.isArray(item.fixes) && item.fixes.length > 0 && (
                 <ul style={styles.fixList}>
-                  {item.fixes.slice(0, 3).map((fix, i) => <li key={i}>{fix}</li>)}
+                  {item.fixes.slice(0, 3).map((fix, i) => <li key={i}>{renderInline(fix)}</li>)}
                 </ul>
               )}
             </div>
@@ -152,7 +152,7 @@ export default function ActiveLessonCard({
           {visibleHints.map((h, i) => (
             <div key={i} style={styles.hintItem}>
               <Lightbulb size={11} style={{ color: 'var(--algorithm)', flexShrink: 0, marginTop: 2 }} />
-              <div style={styles.hintText}>{h}</div>
+              <div style={styles.hintText}>{renderInline(h)}</div>
             </div>
           ))}
         </div>

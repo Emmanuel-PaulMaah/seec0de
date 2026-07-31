@@ -59,6 +59,7 @@ export default function LivePreviewPanel({
   runnerOutput = null,
   runLoading = false,
   collapsible = true,
+  showErrorExplanations = true,
 }) {
   const previewable = PREVIEWABLE.has(language);
   const runnable    = RUNNABLE.has(language);
@@ -85,6 +86,14 @@ export default function LivePreviewPanel({
   // Monotonic counter so a late AI response from a previous run can't
   // overwrite the current run's state if the user re-runs quickly.
   const runIdRef = useRef(0);
+
+  useEffect(() => {
+    if (showErrorExplanations) return;
+    setErrorTranslations([]);
+    setDismissedTitles(new Set());
+    setAiExplainLoading(false);
+    runIdRef.current += 1;
+  }, [showErrorExplanations]);
 
   // Debounce live updates while typing.
   useEffect(() => {
@@ -145,7 +154,7 @@ export default function LivePreviewPanel({
     const runLang = runnerOutput.language || language;
     const runId = ++runIdRef.current; // claim this run's slot
 
-    if (failed && runnerOutput.stderr) {
+    if (showErrorExplanations && failed && runnerOutput.stderr) {
       const offline = translateError(runnerOutput.stderr, runLang);
       setErrorTranslations(offline);
 
@@ -185,7 +194,7 @@ export default function LivePreviewPanel({
     }
     setDismissedTitles(new Set());
     setView('console');
-  }, [runnerOutput, language, code]);
+  }, [runnerOutput, language, code, showErrorExplanations]);
 
   const srcDoc = useMemo(
     () => (previewable ? buildSrcDoc(language, debouncedCode) : null),

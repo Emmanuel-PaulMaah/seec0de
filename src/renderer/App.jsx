@@ -266,6 +266,10 @@ export default function App() {
   const [rootPath, setRootPath] = useState(() => localStorage.getItem(STORAGE_KEY_FOLDER));
   const [openFiles, setOpenFiles] = useState([]);
   const [activePath, setActivePath] = useState(null);
+  const workspaceCodePanelViewRef = useRef({
+    activeGeneratedTab: 'pseudocode',
+    activePath: null,
+  });
   const [explorerVisible, setExplorerVisible] = useState(() => initialPanelVisible(
     STORAGE_KEY_EXPLORER_OPEN, loadSettings().showFileExplorer,
   ));
@@ -838,7 +842,11 @@ export default function App() {
         const verdict = verifyLessonOutput(normalisedOutput, activeLesson);
         setLessonVerification(verdict);
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
-        setLessonErrorCoaching(verdict.pass ? [] : buildLessonErrorCoaching(normalisedOutput.stderr, normalisedOutput.language));
+        setLessonErrorCoaching(verdict.pass ? [] : buildLessonErrorCoaching(
+          normalisedOutput.stderr,
+          normalisedOutput.language,
+          activeLesson
+        ));
         setLearnPhase(verdict.pass ? 'complete' : 'fix');
         setLearnAnnouncement(verdict.pass
           ? 'Lesson passed. Your progress is saved and the next lesson is available.'
@@ -875,7 +883,7 @@ export default function App() {
           actual: '',
           reason: 'Your code did not run — check the Fix-it coach, then try again.',
         });
-        setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language));
+        setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language, activeLesson));
         setLearnAnnouncement(describeLessonRunFailure(stderr, payload.language));
       }
     } finally {
@@ -927,6 +935,7 @@ export default function App() {
     setActiveActivityId(restored.activityId);
     learnDraftRef.current = restored.generatedCode;
     workspaceGeneratedCodeRef.current = { pseudocode: '', code: {} };
+    workspaceCodePanelViewRef.current = { activeGeneratedTab: 'pseudocode', activePath: null };
     setGeneratedCode(nextSettings.learnMode ? restored.generatedCode : workspaceGeneratedCodeRef.current);
     setActiveGeneratedTab(nextSettings.learnMode && restored.lesson ? restored.lesson.language : 'pseudocode');
     setActivePath(null);
@@ -1146,6 +1155,7 @@ const beginExplanationResize = useCallback((event) => {
     setRunLoading(false);
     if (enteringLearnMode) {
       workspaceGeneratedCodeRef.current = generatedCode;
+      workspaceCodePanelViewRef.current = { activeGeneratedTab, activePath };
       setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
       setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
       if (!activeLesson) {
@@ -1156,7 +1166,8 @@ const beginExplanationResize = useCallback((event) => {
     } else {
       if (activeLesson) learnDraftRef.current = generatedCode;
       setGeneratedCode(workspaceGeneratedCodeRef.current);
-      setActiveGeneratedTab('pseudocode');
+      setActiveGeneratedTab(workspaceCodePanelViewRef.current.activeGeneratedTab);
+      setActivePath(workspaceCodePanelViewRef.current.activePath);
     }
     setLearnMode(enteringLearnMode);
   };
@@ -1285,7 +1296,7 @@ const beginExplanationResize = useCallback((event) => {
               selectedLanguages={effectiveLanguages}
               appTheme={settings.theme}
               onCodeChange={handleCodeChange}
-              onSelectionExplain={handleSelectionExplain}
+              onSelectionExplain={learnMode ? undefined : handleSelectionExplain}
               aiLoading={aiLoading}
               openFiles={openFiles}
               activePath={activePath}
@@ -1330,6 +1341,7 @@ const beginExplanationResize = useCallback((event) => {
                 filename={livePreview.filename}
                 runnerOutput={runnerOutput}
                 runLoading={runLoading}
+                showErrorExplanations={!learnMode}
               />
             </div>
           )}
@@ -1465,8 +1477,15 @@ function deriveLanguages(settings) {
   return [practical, ...comparisons];
 }
 
-function buildLessonErrorCoaching(stderr, language) {
-  if (!stderr || !String(stderr).trim()) return [];
+function buildLessonErrorCoaching(stderr, language, lesson) {
+  if (!stderr || !String(stderr).trim()) {
+    if (!lesson) return [];
+    return [{
+      title: 'Your code ran, but the result differs',
+      plain: `There is no runtime error to fix. Trace the values used for ${lesson.concept || 'this lesson'} and compare the order and formatting of each printed line.`,
+      fixes: buildLessonContextFixes('', lesson).slice(0, 3),
+    }];
+  }
   const raw = String(stderr);
   if (/not found on PATH/i.test(raw)) {
     const runtime = language === 'python' ? 'Python' : language === 'javascript' ? 'Node.js' : 'the required toolchain';
@@ -1481,16 +1500,56 @@ function buildLessonErrorCoaching(stderr, language) {
     }];
   }
   const translated = translateError(stderr, language);
-  if (translated.length > 0) return translated;
+  const contextFixes = buildLessonContextFixes(raw, lesson);
+  if (translated.length > 0) {
+    return translated.map((item) => ({
+      ...item,
+      plain: lesson?.concept
+        ? `${item.plain} In this lesson, keep your attention on ${lesson.concept}.`
+        : item.plain,
+      fixes: [...contextFixes, ...(item.fixes || [])].filter((fix, index, all) => all.indexOf(fix) === index).slice(0, 3),
+    }));
+  }
   return [{
     title: 'Runtime error',
-    plain: 'The program stopped before the lesson could check its output. Read the first error line, fix that line, then run again.',
+    plain: lesson?.concept
+      ? `The program stopped before its output could be checked. This lesson is practising ${lesson.concept}, so inspect the first failing line in that part of your code.`
+      : 'The program stopped before the lesson could check its output. Read the first error line, fix that line, then run again.',
     fixes: [
-      'Check for missing quotes, brackets, parentheses, or semicolons near the first error line.',
-      'Make sure every variable you use has been declared or assigned first.',
-      'Compare your code with the lesson hints one small line at a time.',
-    ],
+      ...contextFixes,
+      'Check for missing quotes, brackets, parentheses, or punctuation near the first error line.',
+      'Make sure each required variable is created before the line that uses it.',
+    ].slice(0, 3),
   }];
+}
+
+function buildLessonContextFixes(stderr, lesson) {
+  if (!lesson) return [];
+  const fixes = [];
+  const raw = String(stderr || '');
+  const solution = String(lesson.solution || '');
+  const missingName = raw.match(/(?:ReferenceError:\s*)?([A-Za-z_$][\w$]*) is not defined/i)
+    || raw.match(/name ['"]([A-Za-z_$][\w$]*)['"] is not defined/i);
+
+  if (missingName?.[1]) {
+    const name = missingName[1];
+    fixes.push(solution.includes(name)
+      ? `\`${name}\` belongs in this lesson. Check that you created it before using it and kept the spelling exactly the same.`
+      : `\`${name}\` is not one of the names the lesson runner can currently find. Check it against the names in the task and starter code.`);
+  } else {
+    const requiredNames = Array.from(String(lesson.task || '').matchAll(/`([A-Za-z_$][\w$]*)`/g))
+      .map((match) => match[1])
+      .filter((name, index, all) => all.indexOf(name) === index)
+      .slice(0, 3);
+    if (requiredNames.length > 0) {
+      fixes.push(`Check the lesson's required names: ${requiredNames.map((name) => `\`${name}\``).join(', ')}. Spelling and capitalization must match.`);
+    }
+  }
+
+  const firstHint = (lesson.hints || []).find((hint) => String(hint).trim());
+  if (firstHint) fixes.push(`Use this nudge without copying the solution: ${firstHint}`);
+  fixes.push('Compare the failing line with the starter code structure, then change one thing and run again.');
+  return fixes;
 }
 
 function describeLessonRunFailure(stderr, language) {

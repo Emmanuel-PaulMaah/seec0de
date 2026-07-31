@@ -219,7 +219,7 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
     <section style={styles.activityCard} aria-labelledby={`activity-${activity.id}`}>
       <div style={styles.activityMeta}>Activity {index + 1} of {total} · {activity.type.replace('-', ' ')}</div>
       <h3 ref={headingRef} tabIndex={-1} id={`activity-${activity.id}`} style={styles.activityTitle}>{activity.title}</h3>
-      {activity.instruction && <p style={styles.activityText}>{activity.instruction}</p>}
+      {activity.instruction && <p style={styles.activityText}>{renderActivityInline(activity.instruction)}</p>}
       {activity.example && <pre style={styles.activityCode}>{activity.example}</pre>}
 
       {isCodeAlong && steps.length > 0 && (
@@ -235,7 +235,7 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
                 onClick={() => toggleStep(stepIndex)}
               >
                 {checked ? <CheckCircle2 size={13} /> : <Circle size={13} />}
-                <span><strong>{stepIndex + 1}.</strong> {step}</span>
+                <span><strong>{stepIndex + 1}.</strong> {renderActivityInline(step)}</span>
               </button>
             );
           })}
@@ -246,13 +246,13 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
       {isDrill && (
         <div style={styles.drillPrompt}>
           <strong>Retrieval drill:</strong> write this from memory in the editor before opening a hint.
-          {activity.successCriteria && <span style={styles.drillCriteria}>Done when: {activity.successCriteria}</span>}
+          {activity.successCriteria && <span style={styles.drillCriteria}>Done when: {renderActivityInline(activity.successCriteria)}</span>}
         </div>
       )}
 
       {isPrediction && (
         <div style={styles.predictionGroup}>
-          <div style={styles.predictionQuestion}>{activity.question}</div>
+          <div style={styles.predictionQuestion}>{renderActivityInline(activity.question)}</div>
           {(activity.choices || []).map((choice) => (
             <button
               key={choice}
@@ -261,13 +261,13 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
               aria-pressed={answer === choice}
               onClick={() => setAnswer(choice)}
             >
-              {choice}
+              {renderActivityInline(choice)}
             </button>
           ))}
           {answered && (
             <div style={{ ...styles.predictionFeedback, color: answerCorrect ? 'var(--success)' : 'var(--text-secondary)' }} role="status">
               {answerCorrect ? 'That prediction is right. ' : `The result is ${activity.answer}. `}
-              {activity.explanation}
+              {renderActivityInline(activity.explanation)}
             </div>
           )}
         </div>
@@ -289,6 +289,20 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
       )}
     </section>
   );
+}
+
+function renderActivityInline(text) {
+  if (!text) return null;
+  return String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (!part) return null;
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={index} style={styles.inlineCode}>{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return <React.Fragment key={index}>{part}</React.Fragment>;
+  });
 }
 
 const styles = {
@@ -457,6 +471,15 @@ const styles = {
     color: 'var(--text-primary)',
     fontSize: 11,
     lineHeight: 1.45,
+  },
+  inlineCode: {
+    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", Consolas, monospace)',
+    fontSize: '0.92em',
+    padding: '1px 4px',
+    border: '1px solid var(--border)',
+    borderRadius: 3,
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
   },
   codeAlongSteps: {
     display: 'flex',

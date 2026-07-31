@@ -198,6 +198,8 @@ function MenuItem({ icon, label, onClick }) {
 
 const styles = {
   titleBar: {
+    position: 'relative',
+    zIndex: 20,
     height: 32,
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border)',
