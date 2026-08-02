@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   PanelLeft, PanelLeftClose, Terminal as TermIcon,
-  Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap, House,
+  Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap, House, CircleHelp,
 } from 'lucide-react';
 import UpdatePill from './UpdatePill';
 import { Avatar } from './ProfileForm';
@@ -18,6 +18,7 @@ export default function TitleBar({
   onToggleExplorer,
   terminalVisible = false,
   onToggleTerminal,
+  onStartTour,
   onOpenSettings,
   activeProfile = null,
   onSwitchProfile,
@@ -51,7 +52,7 @@ export default function TitleBar({
           </ToolBtn>
         )}
         {onModeChange && (
-          <div style={styles.modeSwitch} aria-label="Application mode">
+          <div data-tour="mode-switch" style={styles.modeSwitch} aria-label="Application mode">
             <button
               type="button"
               className="ui-segmented-button"
@@ -94,6 +95,15 @@ export default function TitleBar({
       {/* Right side: update pill + settings + profile */}
       <div style={{ ...styles.side, justifyContent: 'flex-end' }}>
         <UpdatePill />
+        {onStartTour && (
+          <ToolBtn
+            onClick={onStartTour}
+            title="Workspace tour"
+            ariaLabel="Start workspace tour"
+          >
+            <CircleHelp size={14} />
+          </ToolBtn>
+        )}
         {onOpenSettings && (
           <ToolBtn
             onClick={onOpenSettings}
