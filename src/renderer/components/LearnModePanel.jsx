@@ -24,6 +24,8 @@ export default function LearnModePanel({
   activeActivityId = null,
   guidanceLevel = 'supported',
   guidanceSuccessStreak = 0,
+  reflection = '',
+  checkpointComplete = false,
   announcement = '',
   onSelectLesson,
   onResetLessonCode,
@@ -32,6 +34,8 @@ export default function LearnModePanel({
   onActivityChange,
   onGuidanceChange,
   onGuidanceSuggestionLater,
+  onReflectionChange,
+  onCompleteCheckpoint,
   onNextLesson,
 }) {
   const headingRef = React.useRef(null);
@@ -79,7 +83,7 @@ export default function LearnModePanel({
           </h2>
           {activeLesson && (
             <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
-              <ChevronLeft size={11} /> {activeLesson.kind === 'exercise' ? 'Exercises' : 'Courses'}
+              <ChevronLeft size={11} /> {activeLesson.kind === 'exercise' ? 'Exercises' : activeLesson.kind === 'project-checkpoint' ? 'Projects' : 'Courses'}
             </button>
           )}
         </div>
@@ -145,6 +149,10 @@ export default function LearnModePanel({
                 showTeaching={!activeActivity}
                 guidanceLevel={guidanceLevel}
                 attempts={attempts}
+                reflection={reflection}
+                checkpointComplete={checkpointComplete}
+                onReflectionChange={onReflectionChange}
+                onCompleteCheckpoint={onCompleteCheckpoint}
               />
             )}
             {suggestLessGuidance && (

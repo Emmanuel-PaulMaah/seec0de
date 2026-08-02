@@ -32,6 +32,10 @@ export default function ActiveLessonCard({
   showTeaching = true,
   guidanceLevel = 'supported',
   attempts = 0,
+  reflection = '',
+  checkpointComplete = false,
+  onReflectionChange,
+  onCompleteCheckpoint,
 }) {
   const language = lesson?.language || 'javascript';
   const [solutionShown, setSolutionShown] = useState(false);
@@ -55,19 +59,26 @@ export default function ActiveLessonCard({
   const solutionAvailable = guidanceLevel === 'supported'
     || (guidanceLevel === 'guided' && status === 'fail')
     || (guidanceLevel === 'independent' && status === 'fail' && attempts >= 2);
+  const isProjectCheckpoint = lesson.kind === 'project-checkpoint';
+  const reflectionReady = reflection.trim().length > 0;
 
   const handleRevealSolution = () => {
     setSolutionShown(true);
     onRevealSolution?.();
   };
 
+  const handleNext = () => {
+    if (isProjectCheckpoint && !checkpointComplete) onCompleteCheckpoint?.();
+    onNext?.();
+  };
+
   return (
     <div style={styles.card}>
       {/* Header */}
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onClear} title={lesson.kind === 'exercise' ? 'Back to exercises' : 'Back to all lessons'}>
+        <button style={styles.backBtn} onClick={onClear} title={lesson.kind === 'exercise' ? 'Back to exercises' : lesson.kind === 'project-checkpoint' ? 'Back to project' : 'Back to all lessons'}>
           <ChevronLeft size={12} />
-          <span style={{ marginLeft: 2 }}>{lesson.kind === 'exercise' ? 'Exercises' : 'Lessons'}</span>
+          <span style={{ marginLeft: 2 }}>{lesson.kind === 'exercise' ? 'Exercises' : lesson.kind === 'project-checkpoint' ? 'Project' : 'Lessons'}</span>
         </button>
         <div style={styles.headerMeta}>
           {lesson.concept && <span style={styles.conceptChip}>{lesson.concept}</span>}
@@ -146,6 +157,40 @@ export default function ActiveLessonCard({
         </div>
       )}
 
+      {isProjectCheckpoint && (
+        <div style={styles.reflectionBox}>
+          <label htmlFor={`reflection-${lesson.id}`} style={styles.reflectionLabel}>Explain one decision</label>
+          <div style={styles.reflectionPrompt}>{lesson.reflectionPrompt}</div>
+          <textarea
+            id={`reflection-${lesson.id}`}
+            style={styles.reflectionInput}
+            rows={4}
+            value={reflection}
+            onChange={(event) => onReflectionChange?.(event.target.value)}
+            placeholder="Write a short explanation in your own words…"
+          />
+          {!checkpointComplete && (
+            <button
+              type="button"
+              style={{ ...styles.completeCheckpointBtn, ...(!reflectionReady || status !== 'pass' ? styles.completeCheckpointBtnDisabled : {}) }}
+              disabled={!reflectionReady || status !== 'pass'}
+              onClick={onCompleteCheckpoint}
+            >
+              <CheckCircle2 size={13} /> Save reflection & complete
+            </button>
+          )}
+          <div style={styles.reflectionStatus}>
+            {checkpointComplete
+              ? 'Checkpoint complete — code verified and reflection saved.'
+              : status !== 'pass'
+                ? 'Run passing code, then save your reflection.'
+                : reflectionReady
+                  ? 'Ready to complete.'
+                  : 'Code passed. Add your reflection to complete this checkpoint.'}
+          </div>
+        </div>
+      )}
+
       {/* Hints — progressive reveal */}
       {visibleHints.length > 0 && (
         <div style={styles.hintsBox}>
@@ -203,8 +248,12 @@ export default function ActiveLessonCard({
       </div>
 
       {status === 'pass' && hasNext && (
-        <button style={styles.nextBtn} onClick={onNext}>
-          <span>Next lesson</span>
+        <button
+          style={{ ...styles.nextBtn, ...(isProjectCheckpoint && !reflectionReady ? styles.nextBtnDisabled : {}) }}
+          onClick={handleNext}
+          disabled={isProjectCheckpoint && !reflectionReady}
+        >
+          <span>{isProjectCheckpoint ? 'Next checkpoint' : 'Next lesson'}</span>
           <ArrowRight size={13} />
         </button>
       )}
@@ -666,6 +715,45 @@ const styles = {
     fontSize: 11.5,
     lineHeight: 1.45,
   },
+  reflectionBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 7,
+    padding: 11,
+    border: '1px solid var(--border-strong)',
+    borderRadius: 7,
+    background: 'var(--bg-tertiary)',
+  },
+  reflectionLabel: { color: 'var(--text-primary)', fontSize: 11, fontWeight: 700 },
+  reflectionPrompt: { color: 'var(--text-secondary)', fontSize: 10.5, lineHeight: 1.45 },
+  reflectionInput: {
+    width: '100%',
+    boxSizing: 'border-box',
+    resize: 'vertical',
+    padding: 8,
+    border: '1px solid var(--border)',
+    borderRadius: 5,
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
+    font: 'inherit',
+    fontSize: 11,
+    lineHeight: 1.45,
+  },
+  completeCheckpointBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    padding: '7px 9px',
+    border: 0,
+    borderRadius: 5,
+    background: 'var(--success)',
+    color: 'var(--bg-primary)',
+    fontSize: 10.5,
+    fontWeight: 700,
+  },
+  completeCheckpointBtnDisabled: { opacity: 0.42, cursor: 'not-allowed' },
+  reflectionStatus: { color: 'var(--text-muted)', fontSize: 9.5, lineHeight: 1.4 },
   hintsBox: {
     display: 'flex',
     flexDirection: 'column',
@@ -753,4 +841,5 @@ const styles = {
     cursor: 'pointer',
     marginTop: 4,
   },
+  nextBtnDisabled: { opacity: 0.42, cursor: 'not-allowed' },
 };

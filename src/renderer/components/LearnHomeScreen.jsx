@@ -7,15 +7,18 @@ import {
   Circle,
   Code2,
   GraduationCap,
+  Hammer,
   Sparkles,
   Wrench,
 } from 'lucide-react';
 import lessonsData from '../data/lessons/index.js';
 import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
+import projects, { projectCheckpoint } from '../data/projects';
 
 const LANGUAGE_LABELS = {
   python: 'Python',
   javascript: 'JavaScript',
+  typescript: 'TypeScript',
 };
 
 function languageLabel(language) {
@@ -25,11 +28,15 @@ function languageLabel(language) {
 export default function LearnHomeScreen({
   selectedLanguage,
   selectedSection,
+  selectedProjectId,
   completedLessons = [],
+  completedProjectCheckpoints = [],
   onSelectLanguage,
   onSelectSection,
+  onSelectProject,
   onSelectLesson,
   onSelectExercise,
+  onSelectProjectCheckpoint,
 }) {
   const headingRef = useRef(null);
   const [activeTrackId, setActiveTrackId] = useState(null);
@@ -38,7 +45,7 @@ export default function LearnHomeScreen({
   const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
     const available = Array.from(new Set(tracks.map((track) => track.language).filter(Boolean)));
-    return ['python', 'javascript'].filter((language) => available.includes(language));
+    return ['python', 'javascript', 'typescript'].filter((language) => available.includes(language));
   }, [tracks]);
   const languageTracks = tracks.filter((track) => track.language === selectedLanguage);
   const languageExercises = exercises.filter((exercise) => exercise.language === selectedLanguage);
@@ -47,11 +54,13 @@ export default function LearnHomeScreen({
   const visibleExercises = activeChallengeType
     ? languageExercises.filter((exercise) => exercise.challengeType === activeChallengeType.id)
     : [];
+  const languageProjects = projects.filter((project) => project.language === selectedLanguage);
   const activeTrack = languageTracks.find((track) => track.id === activeTrackId) || null;
+  const activeProject = languageProjects.find((project) => project.id === selectedProjectId) || null;
 
   useEffect(() => {
     headingRef.current?.focus();
-  }, [selectedLanguage, selectedSection, activeTrackId, activeChallengeTypeId]);
+  }, [selectedLanguage, selectedSection, activeTrackId, selectedProjectId, activeChallengeTypeId]);
 
   useEffect(() => {
     setActiveTrackId(null);
@@ -59,13 +68,21 @@ export default function LearnHomeScreen({
   }, [selectedLanguage, selectedSection]);
 
   const chooseLanguage = (language) => {
+    onSelectProject(null);
     onSelectLanguage(language);
     onSelectSection(null);
+  };
+
+  const chooseSection = (section) => {
+    onSelectProject(null);
+    onSelectSection(section);
   };
 
   const goBack = () => {
     if (activeTrack) {
       setActiveTrackId(null);
+    } else if (activeProject) {
+      onSelectProject(null);
     } else if (activeChallengeType) {
       setActiveChallengeTypeId(null);
     } else if (selectedSection) {
@@ -79,12 +96,16 @@ export default function LearnHomeScreen({
     ? 'Choose a language.'
     : activeTrack
       ? activeTrack.name
+      : activeProject
+        ? activeProject.title
       : activeChallengeType
         ? activeChallengeType.title
       : selectedSection === 'courses'
         ? `${languageLabel(selectedLanguage)} courses.`
         : selectedSection === 'exercises'
           ? `${languageLabel(selectedLanguage)} exercises.`
+          : selectedSection === 'projects'
+            ? `${languageLabel(selectedLanguage)} projects.`
           : `Learn ${languageLabel(selectedLanguage)}.`;
 
   return (
@@ -93,14 +114,16 @@ export default function LearnHomeScreen({
       <div style={styles.glow} aria-hidden="true" />
 
       <section className="learn-home-content" style={styles.content}>
-        {(selectedLanguage || selectedSection || activeTrack || activeChallengeType) && (
+        {(selectedLanguage || selectedSection || activeTrack || activeProject || activeChallengeType) && (
           <button type="button" style={styles.backButton} onClick={goBack}>
             <ChevronLeft size={14} />
             {activeTrack
               ? 'All courses'
-              : activeChallengeType
-                ? 'All challenge types'
-                : selectedSection ? languageLabel(selectedLanguage) : 'All languages'}
+              : activeProject
+                ? 'All projects'
+                : activeChallengeType
+                  ? 'All challenge types'
+                  : selectedSection ? languageLabel(selectedLanguage) : 'All languages'}
           </button>
         )}
 
@@ -133,9 +156,9 @@ export default function LearnHomeScreen({
 
         {selectedLanguage && !selectedSection && (
           <>
-            <p style={styles.intro}>Choose a guided course or practise with standalone exercises.</p>
+            <p style={styles.intro}>Choose guided lessons, focused practice, or build a complete project through tested checkpoints.</p>
             <div className="learn-home-card-grid" style={styles.cardGrid}>
-              <button type="button" className="learn-home-card" style={styles.launchCard} onClick={() => onSelectSection('courses')}>
+              <button type="button" className="learn-home-card" style={styles.launchCard} onClick={() => chooseSection('courses')}>
                 <span style={styles.cardIcon}><BookOpen size={20} /></span>
                 <span style={styles.cardCopy}>
                   <span style={styles.cardEyebrow}>Guided path</span>
@@ -145,12 +168,22 @@ export default function LearnHomeScreen({
                 <ArrowRight size={18} style={styles.arrow} />
               </button>
 
-              <button type="button" className="learn-home-card" style={styles.launchCard} onClick={() => onSelectSection('exercises')}>
+              <button type="button" className="learn-home-card" style={styles.launchCard} onClick={() => chooseSection('exercises')}>
                 <span style={{ ...styles.cardIcon, ...styles.exerciseIcon }}><Wrench size={20} /></span>
                 <span style={styles.cardCopy}>
                   <span style={styles.cardEyebrow}>Focused practice</span>
                   <strong style={styles.cardTitle}>Exercises</strong>
                   <span style={styles.cardText}>Debugging drills, output-first builds, refactoring, and mini-projects.</span>
+                </span>
+                <ArrowRight size={18} style={styles.arrow} />
+              </button>
+
+              <button type="button" className="learn-home-card" style={styles.launchCard} onClick={() => chooseSection('projects')}>
+                <span style={{ ...styles.cardIcon, ...styles.projectIcon }}><Hammer size={20} /></span>
+                <span style={styles.cardCopy}>
+                  <span style={styles.cardEyebrow}>Applied learning</span>
+                  <strong style={styles.cardTitle}>Projects</strong>
+                  <span style={styles.cardText}>Plan, build, debug, and modify useful programs with verified milestones.</span>
                 </span>
                 <ArrowRight size={18} style={styles.arrow} />
               </button>
@@ -260,6 +293,53 @@ export default function LearnHomeScreen({
                       {exercise.sourceLessonId ? `From ${exercise.sourceLessonTitle}` : exercise.summary}
                     </span>
                     <span style={styles.openCourse}>{complete ? 'Practise again' : 'Start exercise'} <ArrowRight size={13} /></span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {selectedLanguage && selectedSection === 'projects' && !activeProject && (
+          <>
+            <p style={styles.intro}>Each project ends with a transfer task. Checkpoints are complete only after your code passes and you explain one decision.</p>
+            <div className="learn-home-course-grid" style={styles.courseGrid}>
+              {languageProjects.map((project) => {
+                const done = project.checkpoints.filter((checkpoint) => completedProjectCheckpoints.includes(checkpoint.id)).length;
+                return (
+                  <button key={project.id} type="button" className="learn-home-card" style={styles.courseCard} onClick={() => onSelectProject(project.id)}>
+                    <span style={{ ...styles.courseTopline, color: 'var(--string)' }}><Hammer size={14} /> {done}/{project.checkpoints.length} checkpoints</span>
+                    <strong style={styles.courseTitle}>{project.title}</strong>
+                    <span style={styles.courseText}>{project.summary}</span>
+                    <span style={styles.openCourse}>{done === project.checkpoints.length ? 'Build again' : 'Open project'} <ArrowRight size={13} /></span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {selectedLanguage && selectedSection === 'projects' && activeProject && (
+          <>
+            <p style={styles.intro}>{activeProject.brief}</p>
+            <div style={styles.lessonList}>
+              {activeProject.checkpoints.map((checkpoint, checkpointIndex) => {
+                const complete = completedProjectCheckpoints.includes(checkpoint.id);
+                return (
+                  <button
+                    key={checkpoint.id}
+                    type="button"
+                    style={styles.lessonButton}
+                    onClick={() => onSelectProjectCheckpoint(projectCheckpoint(activeProject, checkpoint, checkpointIndex))}
+                  >
+                    {complete ? <CheckCircle2 size={16} style={{ color: 'var(--success)' }} /> : <Circle size={16} style={{ color: 'var(--text-muted)' }} />}
+                    <span style={styles.checkpointNumber}>{String(checkpointIndex + 1).padStart(2, '0')}</span>
+                    <span style={styles.lessonCopy}>
+                      <span style={styles.phaseBadge}>{checkpoint.phase}</span>
+                      <strong style={styles.lessonTitle}>{checkpoint.title}</strong>
+                      <span style={styles.lessonSummary}>{checkpoint.task}</span>
+                    </span>
+                    <ArrowRight size={15} style={styles.arrow} />
                   </button>
                 );
               })}
@@ -392,6 +472,7 @@ const styles = {
     background: 'var(--algorithm-soft)',
     color: 'var(--algorithm)',
   },
+  projectIcon: { background: 'color-mix(in srgb, var(--string) 14%, transparent)', color: 'var(--string)' },
   cardCopy: { minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 },
   cardEyebrow: { color: 'var(--text-muted)', fontSize: 9.5, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' },
   cardTitle: { color: 'var(--text-primary)', fontSize: 14 },
@@ -490,6 +571,8 @@ const styles = {
     textAlign: 'left',
   },
   lessonCopy: { display: 'flex', flex: 1, minWidth: 0, flexDirection: 'column', gap: 3 },
+  checkpointNumber: { color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: 10 },
+  phaseBadge: { width: 'fit-content', color: 'var(--string)', fontSize: 8.5, fontWeight: 700, letterSpacing: 0.9, textTransform: 'uppercase' },
   lessonTitle: { color: 'var(--text-primary)', fontSize: 12.5 },
   lessonSummary: { color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.4 },
   emptyState: {
