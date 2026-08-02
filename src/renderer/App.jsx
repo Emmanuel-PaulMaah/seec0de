@@ -12,6 +12,8 @@ import SettingsDrawer, { ProfileManagerCard } from './components/SettingsDrawer'
 import ProfileGate from './components/ProfileGate';
 import HomeScreen from './components/HomeScreen';
 import LearnHomeScreen from './components/LearnHomeScreen';
+import LearningLibraryModal from './components/LearningLibraryModal';
+import WorkspaceTour from './components/WorkspaceTour';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
@@ -21,6 +23,7 @@ import { verifyLessonOutput, nextLessonAfter, flattenLessons } from './engine/le
 import { translateError } from './engine/errorTranslator';
 import lessonsData from './data/lessons/index.js';
 import { findExercise, isCourseActivity } from './data/exerciseCatalog';
+import { findProjectCheckpoint, nextProjectCheckpoint } from './data/projects';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
 // last time comes back the next time. Settings.showTerminal/showFileExplorer
@@ -59,11 +62,38 @@ const EXT_FOR_LANG = {
 
 const LEARN_PHASES = new Set(['learn', 'run', 'fix', 'complete']);
 
+function learningSectionFor(item) {
+  if (item?.kind === 'exercise') return 'exercises';
+  if (item?.kind === 'project-checkpoint') return 'projects';
+  return 'courses';
+}
+
+function scheduleLearningReminder(reminders = [], item, days = 1) {
+  if (!item?.id || !item?.title) return reminders;
+  const sourceId = item.kind === 'postcard' ? `postcard:${item.id}` : `learning:${item.id}`;
+  const existing = reminders.find((reminder) => reminder.sourceId === sourceId && !reminder.dismissedAt);
+  if (existing) return reminders;
+  const dueAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  return [...reminders, {
+    id: `${sourceId}:${Date.now()}`,
+    sourceId,
+    title: item.title,
+    message: item.kind === 'postcard'
+      ? 'Explain this postcard, then change one small part without looking at the original first.'
+      : 'Try to rebuild the key idea or explain why your solution worked before looking back.',
+    dueAt,
+    createdAt: new Date().toISOString(),
+    openLearnMode: item.kind !== 'postcard',
+    dismissedAt: null,
+  }];
+}
+
 function restoredLearningState(settings = loadSettings()) {
   const session = settings?.learningSession;
   const lesson = session?.lessonId
     ? flattenLessons(lessonsData).find((item) => item.id === session.lessonId)
       || findExercise(lessonsData, session.lessonId)
+      || findProjectCheckpoint(session.lessonId)
       || null
     : null;
   const language = lesson?.language || 'javascript';
@@ -86,6 +116,9 @@ function restoredLearningState(settings = loadSettings()) {
     attempts: lesson && Number.isFinite(session?.attempts) ? Math.max(0, session.attempts) : 0,
     revealedHints: lesson && Number.isFinite(session?.revealedHints) ? Math.max(0, session.revealedHints) : 0,
     verification: lesson ? session?.verification || null : null,
+    reflection: lesson?.kind === 'project-checkpoint'
+      ? (typeof session?.reflection === 'string' ? session.reflection : settings.projectReflections?.[lesson.id] || '')
+      : '',
     errorCoaching: lesson && Array.isArray(session?.errorCoaching) ? session.errorCoaching : [],
     activityId: lesson && restorableActivities.some((activity) => activity.id === session?.activityId)
       ? session.activityId
@@ -118,6 +151,9 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
+  const [learningLibraryView, setLearningLibraryView] = useState(null);
+  const [showWorkspaceTour, setShowWorkspaceTour] = useState(false);
+  const tourLayoutRef = useRef(null);
   const [showHome, setShowHome] = useState(true);
   const [learnCatalogLanguage, setLearnCatalogLanguage] = useState(
     () => restoredLearningState().lesson?.language || null
@@ -125,8 +161,11 @@ export default function App() {
   const [learnCatalogSection, setLearnCatalogSection] = useState(
     () => {
       const restoredItem = restoredLearningState().lesson;
-      return restoredItem ? (restoredItem.kind === 'exercise' ? 'exercises' : 'courses') : null;
+      return restoredItem ? learningSectionFor(restoredItem) : null;
     }
+  );
+  const [learnCatalogProjectId, setLearnCatalogProjectId] = useState(
+    () => restoredLearningState().lesson?.projectId || null
   );
 
   useEffect(() => {
@@ -177,12 +216,17 @@ export default function App() {
   const [lessonAttempts, setLessonAttempts] = useState(() => restoredLearningState().attempts);
   const [revealedHints, setRevealedHints] = useState(() => restoredLearningState().revealedHints);
   const [activeActivityId, setActiveActivityId] = useState(() => restoredLearningState().activityId);
+  const [activeReflection, setActiveReflection] = useState(() => restoredLearningState().reflection);
   const [learnAnnouncement, setLearnAnnouncement] = useState('');
   const learnDraftRef = useRef(restoredLearningState().generatedCode);
   const workspaceGeneratedCodeRef = useRef({ pseudocode: '', code: {} });
 
   // ---- settings + completion -------------------------------------------
   const completedLessons = useMemo(() => settings.completedLessons || [], [settings.completedLessons]);
+  const completedProjectCheckpoints = useMemo(
+    () => settings.completedProjectCheckpoints || [],
+    [settings.completedProjectCheckpoints]
+  );
 
   // Lifted from CodePanel so the LivePreviewPanel can read the same active
   // tab without prop-drilling editor state up on every keystroke.
@@ -197,7 +241,8 @@ export default function App() {
   const handleSelectLesson = useCallback((lesson) => {
     if (lesson?.language) {
       setLearnCatalogLanguage(lesson.language);
-      setLearnCatalogSection(lesson.kind === 'exercise' ? 'exercises' : 'courses');
+      setLearnCatalogSection(learningSectionFor(lesson));
+      if (lesson.kind === 'project-checkpoint') setLearnCatalogProjectId(lesson.projectId);
     }
     setActiveLesson(lesson);
     setLessonStatus('idle');
@@ -206,6 +251,9 @@ export default function App() {
     setLearnPhase('learn');
     setLessonAttempts(0);
     setRevealedHints(0);
+    setActiveReflection(lesson?.kind === 'project-checkpoint'
+      ? loadSettings().projectReflections?.[lesson.id] || ''
+      : '');
     const initialActivities = lesson?.kind === 'exercise'
       ? lesson.activities || []
       : (lesson?.activities || []).filter(isCourseActivity);
@@ -248,7 +296,9 @@ export default function App() {
 
   const handleNextLesson = useCallback(() => {
     if (!activeLesson) return;
-    const next = nextLessonAfter(lessonsData, activeLesson.id);
+    const next = activeLesson.kind === 'project-checkpoint'
+      ? nextProjectCheckpoint(activeLesson.id)
+      : nextLessonAfter(lessonsData, activeLesson.id);
     if (next) handleSelectLesson(next);
   }, [activeLesson, handleSelectLesson]);
 
@@ -268,9 +318,31 @@ export default function App() {
   );
 
   const hasNextLesson = useMemo(
-    () => !!(activeLesson && activeLesson.kind !== 'exercise' && nextLessonAfter(lessonsData, activeLesson.id)),
+    () => !!(activeLesson && activeLesson.kind !== 'exercise' && (
+      activeLesson.kind === 'project-checkpoint'
+        ? nextProjectCheckpoint(activeLesson.id)
+        : nextLessonAfter(lessonsData, activeLesson.id)
+    )),
     [activeLesson]
   );
+
+  const handleCompleteCheckpoint = useCallback(() => {
+    if (activeLesson?.kind !== 'project-checkpoint' || lessonStatus !== 'pass' || !activeReflection.trim()) return;
+    const checkpointIds = settings.completedProjectCheckpoints || [];
+    const nextSettings = updateSettings({
+      completedProjectCheckpoints: checkpointIds.includes(activeLesson.id)
+        ? checkpointIds
+        : [...checkpointIds, activeLesson.id],
+      projectReflections: {
+        ...(settings.projectReflections || {}),
+        [activeLesson.id]: activeReflection.trim(),
+      },
+      learningReminders: scheduleLearningReminder(settings.learningReminders, activeLesson),
+    });
+    setSettings(nextSettings);
+    setActiveReflection(activeReflection.trim());
+    setLearnAnnouncement('Checkpoint complete. Your verified code and reflection are saved.');
+  }, [activeLesson, activeReflection, lessonStatus, settings.completedProjectCheckpoints, settings.projectReflections, settings.learningReminders]);
 
   useEffect(() => {
     setSelectedLanguages(deriveLanguages(settings));
@@ -402,6 +474,7 @@ export default function App() {
       status: lessonStatus,
       verification: lessonVerification,
       errorCoaching: lessonErrorCoaching,
+      reflection: activeLesson.kind === 'project-checkpoint' ? activeReflection : '',
     } : null;
     const timer = setTimeout(() => {
       if (loadSettings().activeProfileId === ownerProfileId) {
@@ -422,6 +495,7 @@ export default function App() {
     lessonStatus,
     lessonVerification,
     lessonErrorCoaching,
+    activeReflection,
   ]);
 
   // A mode, profile, or lesson change invalidates any run that is still in
@@ -888,9 +962,11 @@ export default function App() {
         ));
         setLearnPhase(verdict.pass ? 'complete' : 'fix');
         setLearnAnnouncement(verdict.pass
-          ? `${activeLesson.kind === 'exercise' ? 'Exercise' : 'Lesson'} passed. Your progress is saved.`
+          ? activeLesson.kind === 'project-checkpoint'
+            ? 'Code passed. Write and save your reflection to complete this checkpoint.'
+            : `${activeLesson.kind === 'exercise' ? 'Exercise' : 'Lesson'} passed. Your progress is saved.`
           : describeLessonRunFailure(normalisedOutput.stderr, payload.language));
-        if (verdict.pass && !completedLessons.includes(activeLesson.id)) {
+        if (verdict.pass && activeLesson.kind !== 'project-checkpoint' && !completedLessons.includes(activeLesson.id)) {
           const next = [...completedLessons, activeLesson.id];
           const nextStreak = activeLesson.kind !== 'exercise' && revealedHints === 0
             ? (settings.guidanceSuccessStreak || 0) + 1
@@ -898,6 +974,7 @@ export default function App() {
           const nextSettings = updateSettings({
             completedLessons: next,
             guidanceSuccessStreak: nextStreak,
+            learningReminders: scheduleLearningReminder(settings.learningReminders, activeLesson),
           });
           setSettings(nextSettings);
         }
@@ -937,6 +1014,7 @@ export default function App() {
     inLessonMode,
     settings.activeProfileId,
     settings.guidanceSuccessStreak,
+    settings.learningReminders,
     revealedHints,
   ]);
 
@@ -968,8 +1046,9 @@ export default function App() {
     setActiveLesson(restored.lesson);
     setLearnCatalogLanguage(restored.lesson?.language || null);
     setLearnCatalogSection(restored.lesson
-      ? (restored.lesson.kind === 'exercise' ? 'exercises' : 'courses')
+      ? learningSectionFor(restored.lesson)
       : null);
+    setLearnCatalogProjectId(restored.lesson?.projectId || null);
     setLearnPhase(restored.phase);
     setLessonStatus(restored.status);
     setLessonVerification(restored.verification);
@@ -977,6 +1056,7 @@ export default function App() {
     setLessonAttempts(restored.attempts);
     setRevealedHints(restored.revealedHints);
     setActiveActivityId(restored.activityId);
+    setActiveReflection(restored.reflection);
     learnDraftRef.current = restored.generatedCode;
     workspaceGeneratedCodeRef.current = { pseudocode: '', code: {} };
     workspaceCodePanelViewRef.current = { activeGeneratedTab: 'pseudocode', activePath: null };
@@ -1003,8 +1083,24 @@ export default function App() {
     setShowOnboarding(false);
     setOnboardingMode('setup');
     setGate(null);
-    setShowHome(true);
-  }, [hydrateLearningProfile]);
+    if (onboardingMode === 'setup') {
+      startWorkspaceTour();
+    } else {
+      setShowHome(true);
+    }
+  }, [hydrateLearningProfile, onboardingMode, startWorkspaceTour]);
+
+  const handleCloseWorkspaceTour = useCallback(() => {
+    const previous = tourLayoutRef.current;
+    if (previous) {
+      setTerminalVisible(previous.terminalVisible);
+      setPreviewVisible(previous.previewVisible);
+      setInstructionCollapsed(previous.instructionCollapsed);
+      setExplanationCollapsed(previous.explanationCollapsed);
+    }
+    tourLayoutRef.current = null;
+    setShowWorkspaceTour(false);
+  }, []);
 
   const handleSettingsChange = useCallback((next) => {
     setSettings(next);
@@ -1191,7 +1287,7 @@ const beginExplanationResize = useCallback((event) => {
     ? settings.guidanceLevel
     : 'supported';
 
-  const handleModeChange = (mode) => {
+  function handleModeChange(mode) {
     if (mode === 'home') {
       runOwnerRef.current += 1;
       setRunLoading(false);
@@ -1222,7 +1318,88 @@ const beginExplanationResize = useCallback((event) => {
       setActivePath(workspaceCodePanelViewRef.current.activePath);
     }
     setLearnMode(enteringLearnMode);
+  }
+
+  function startWorkspaceTour() {
+    if (showWorkspaceTour) return;
+    tourLayoutRef.current = {
+      terminalVisible,
+      previewVisible,
+      instructionCollapsed,
+      explanationCollapsed,
+    };
+    handleModeChange('workspace');
+    setTerminalVisible(true);
+    setPreviewVisible(true);
+    setInstructionCollapsed(false);
+    setExplanationCollapsed(false);
+    setShowWorkspaceTour(true);
+  }
+
+  const saveLearningLibrary = (patch) => {
+    const next = updateSettings(patch);
+    setSettings(next);
   };
+
+  const handleCreatePostcard = ({ title, explanation: postcardExplanation }) => {
+    if (!livePreview.code?.trim()) return;
+    const postcard = {
+      id: `postcard-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      explanation: postcardExplanation,
+      language: livePreview.language || 'plaintext',
+      filename: livePreview.filename || null,
+      code: livePreview.code,
+      output: runnerOutput?.stdout?.trim() || '',
+      createdAt: new Date().toISOString(),
+    };
+    saveLearningLibrary({ codePostcards: [postcard, ...(settings.codePostcards || [])] });
+  };
+
+  const handleDeletePostcard = (postcardId) => {
+    saveLearningLibrary({ codePostcards: (settings.codePostcards || []).filter((postcard) => postcard.id !== postcardId) });
+  };
+
+  const handleSchedulePostcard = (postcard, days) => {
+    saveLearningLibrary({
+      learningReminders: scheduleLearningReminder(settings.learningReminders, { ...postcard, kind: 'postcard' }, days),
+    });
+  };
+
+  const handleDismissReminder = (reminderId) => {
+    saveLearningLibrary({
+      learningReminders: (settings.learningReminders || []).map((reminder) => reminder.id === reminderId
+        ? { ...reminder, dismissedAt: new Date().toISOString() }
+        : reminder),
+    });
+  };
+
+  const handleSnoozeReminder = (reminderId, days) => {
+    const dueAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    saveLearningLibrary({
+      learningReminders: (settings.learningReminders || []).map((reminder) => reminder.id === reminderId
+        ? { ...reminder, dueAt }
+        : reminder),
+    });
+  };
+
+  const handleContinueLearningReminder = (reminder) => {
+    const itemId = reminder?.sourceId?.startsWith('learning:')
+      ? reminder.sourceId.slice('learning:'.length)
+      : null;
+    const item = itemId
+      ? flattenLessons(lessonsData).find((lesson) => lesson.id === itemId)
+        || findExercise(lessonsData, itemId)
+        || findProjectCheckpoint(itemId)
+      : null;
+    setLearningLibraryView(null);
+    handleModeChange('learn');
+    if (item) handleSelectLesson(item);
+  };
+
+  const dueReminderCount = (settings.learningReminders || []).filter((reminder) => (
+    !reminder.dismissedAt && new Date(reminder.dueAt).getTime() <= Date.now()
+  )).length;
 
   return (
     <div style={styles.container}>
@@ -1231,6 +1408,7 @@ const beginExplanationResize = useCallback((event) => {
         onToggleExplorer={showHome || learnMode ? undefined : () => setExplorerVisible((v) => !v)}
         terminalVisible={terminalVisible}
         onToggleTerminal={showHome || learnMode ? undefined : () => setTerminalVisible((v) => !v)}
+        onStartTour={startWorkspaceTour}
         onOpenSettings={() => setShowSettings(true)}
         activeProfile={settings.activeProfileId ? { username: settings.username, avatar: settings.avatar } : null}
         onSwitchProfile={handleSwitchProfile}
@@ -1244,18 +1422,26 @@ const beginExplanationResize = useCallback((event) => {
         <HomeScreen
           username={settings.username}
           hasActiveLesson={!!activeLesson}
+          postcardCount={(settings.codePostcards || []).length}
+          dueReminderCount={dueReminderCount}
           onOpenWorkspace={() => handleModeChange('workspace')}
           onOpenLearnMode={() => handleModeChange('learn')}
+          onOpenPostcards={() => setLearningLibraryView('postcards')}
+          onOpenPulse={() => setLearningLibraryView('pulse')}
         />
       ) : learnMode && !activeLesson ? (
         <LearnHomeScreen
           selectedLanguage={learnCatalogLanguage}
           selectedSection={learnCatalogSection}
+          selectedProjectId={learnCatalogProjectId}
           completedLessons={completedLessons}
+          completedProjectCheckpoints={completedProjectCheckpoints}
           onSelectLanguage={setLearnCatalogLanguage}
           onSelectSection={setLearnCatalogSection}
+          onSelectProject={setLearnCatalogProjectId}
           onSelectLesson={handleSelectLesson}
           onSelectExercise={handleSelectLesson}
+          onSelectProjectCheckpoint={handleSelectLesson}
         />
       ) : (
       <div style={styles.body}>
@@ -1321,6 +1507,8 @@ const beginExplanationResize = useCallback((event) => {
                 activeActivityId={activeActivityId}
                 guidanceLevel={guidanceLevel}
                 guidanceSuccessStreak={settings.guidanceSuccessStreak || 0}
+                reflection={activeReflection}
+                checkpointComplete={completedProjectCheckpoints.includes(activeLesson?.id)}
                 announcement={learnAnnouncement}
                 onSelectLesson={handleSelectLesson}
                 onResetLessonCode={handleResetLessonCode}
@@ -1329,6 +1517,8 @@ const beginExplanationResize = useCallback((event) => {
                 onActivityChange={setActiveActivityId}
                 onGuidanceChange={handleGuidanceChange}
                 onGuidanceSuggestionLater={handleGuidanceSuggestionLater}
+                onReflectionChange={setActiveReflection}
+                onCompleteCheckpoint={handleCompleteCheckpoint}
                 onNextLesson={handleNextLesson}
               />
             ) : (
@@ -1491,6 +1681,8 @@ const beginExplanationResize = useCallback((event) => {
         mode={onboardingMode}
       />
 
+      <WorkspaceTour open={showWorkspaceTour} onClose={handleCloseWorkspaceTour} />
+
       <SettingsDrawer
         open={showSettings}
         onClose={() => setShowSettings(false)}
@@ -1506,6 +1698,24 @@ const beginExplanationResize = useCallback((event) => {
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={handleAddProfile}
         onDeleteProfile={handleDeleteProfile}
+      />
+
+      <LearningLibraryModal
+        open={!!learningLibraryView}
+        initialView={learningLibraryView || 'postcards'}
+        postcards={settings.codePostcards || []}
+        reminders={settings.learningReminders || []}
+        codeCandidate={{
+          ...livePreview,
+          output: runnerOutput?.stdout?.trim() || '',
+        }}
+        onClose={() => setLearningLibraryView(null)}
+        onCreatePostcard={handleCreatePostcard}
+        onDeletePostcard={handleDeletePostcard}
+        onSchedulePostcard={handleSchedulePostcard}
+        onDismissReminder={handleDismissReminder}
+        onSnoozeReminder={handleSnoozeReminder}
+        onContinueLearning={handleContinueLearningReminder}
       />
 
       {/* Auth gate — the "who's learning?" picker + PIN unlock. Sits above

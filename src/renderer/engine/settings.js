@@ -85,6 +85,12 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   showTerminal:        false,
   // List of lesson IDs the user has completed.
   completedLessons:    [],
+  // Project checkpoints require both verified output and a written reflection.
+  completedProjectCheckpoints: [],
+  projectReflections:  {},
+  // Small, learner-authored portfolio artifacts and gentle local review cues.
+  codePostcards:       [],
+  learningReminders:   [],
   // Learn Mode is optional and profile-specific. The session stores only
   // resumable lesson state; transient runner output is intentionally omitted.
   learnMode:           false,
