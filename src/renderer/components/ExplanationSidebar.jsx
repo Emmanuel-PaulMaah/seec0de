@@ -83,7 +83,7 @@ export default function ExplanationSidebar({
             />
             <span style={styles.loadingText}>Thinking…</span>
             <span style={styles.loadingHint}>
-              Asking the AI to explain the selection.
+              AI is explaining.
             </span>
           </div>
         )}
