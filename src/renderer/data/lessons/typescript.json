@@ -1,0 +1,2132 @@
+{
+  "tracks": [
+    {
+      "id": "ts-foundations",
+      "name": "TypeScript Foundations",
+      "language": "typescript",
+      "description": "Add useful type information to JavaScript values, functions, arrays, and objects.",
+      "lessons": [
+        {
+          "id": "ts-01-typed-values",
+          "title": "1. Give values a type",
+          "concept": "type annotations",
+          "summary": "Describe the kind of value a variable is allowed to hold.",
+          "activities": [
+            {
+              "id": "ts-01-see",
+              "type": "worked-example",
+              "title": "Read a type annotation",
+              "instruction": "A colon after a variable name introduces its type. TypeScript checks the annotation before the program runs.",
+              "example": "const course: string = 'TypeScript';\nconst lessons: number = 10;"
+            },
+            {
+              "id": "ts-01-predict",
+              "type": "prediction",
+              "title": "Match a value to its type",
+              "question": "Which type describes the value true?",
+              "choices": [
+                "boolean",
+                "string",
+                "number"
+              ],
+              "answer": "boolean",
+              "explanation": "A boolean is either true or false."
+            },
+            {
+              "id": "ts-01-edit",
+              "type": "edit",
+              "title": "Annotate a course name",
+              "instruction": "Create a string variable named course, store TypeScript, and print it."
+            },
+            {
+              "id": "ts-01-drill",
+              "type": "drill",
+              "title": "Recall primitive annotations",
+              "instruction": "Add string, number, and boolean annotations, then print the three values on one line.",
+              "successCriteria": "Print exactly: Ada 3 true",
+              "starterCode": "const learner = 'Ada';\nconst level = 3;\nconst active = true;\nconsole.log(learner, level, active);",
+              "expectedOutput": "Ada 3 true",
+              "matchType": "exact",
+              "hints": [
+                "Write the annotation between each variable name and its equals sign."
+              ],
+              "solution": "const learner: string = 'Ada';\nconst level: number = 3;\nconst active: boolean = true;\nconsole.log(learner, level, active);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "TypeScript is JavaScript with a type checker. A type annotation documents which values belong in a variable."
+            },
+            {
+              "type": "code",
+              "text": "const language: string = 'TypeScript';\nconst version: number = 5;\nconst ready: boolean = true;"
+            },
+            {
+              "type": "note",
+              "text": "Types are checked during development and removed when TypeScript becomes JavaScript."
+            }
+          ],
+          "task": "Create `course` with the type `string`, store `TypeScript`, then print it.",
+          "starterCode": "// Add a string type annotation.\nconst course = 'TypeScript';\nconsole.log(course);",
+          "expectedOutput": "TypeScript",
+          "matchType": "exact",
+          "hints": [
+            "Put `: string` after the variable name."
+          ],
+          "solution": "const course: string = 'TypeScript';\nconsole.log(course);"
+        },
+        {
+          "id": "ts-02-inference",
+          "title": "2. Let TypeScript infer",
+          "concept": "type inference",
+          "summary": "Let TypeScript discover obvious types from initial values.",
+          "activities": [
+            {
+              "id": "ts-02-see",
+              "type": "worked-example",
+              "title": "Read an inferred type",
+              "instruction": "TypeScript infers number from the initial value, so a repeated annotation is unnecessary.",
+              "example": "const score = 8; // inferred as number"
+            },
+            {
+              "id": "ts-02-predict",
+              "type": "prediction",
+              "title": "Predict the inferred type",
+              "question": "What type is inferred for const city = 'Lagos'?",
+              "choices": [
+                "string",
+                "number",
+                "unknown"
+              ],
+              "answer": "string",
+              "explanation": "The quoted initial value tells TypeScript that city is text."
+            },
+            {
+              "id": "ts-02-edit",
+              "type": "edit",
+              "title": "Use inference",
+              "instruction": "Keep the obvious values unannotated, calculate the total, and print 12."
+            },
+            {
+              "id": "ts-02-code-along",
+              "type": "code-along",
+              "title": "Build an inferred calculation",
+              "instruction": "Create two inferred numeric values, add them, and print Total: 12.",
+              "successCriteria": "Print exactly: Total: 12",
+              "starterCode": "const completed = 7;\n// Add 5 remaining lessons and print the total.",
+              "expectedOutput": "Total: 12",
+              "matchType": "exact",
+              "hints": [
+                "Create `remaining = 5`, then add both variables."
+              ],
+              "solution": "const completed = 7;\nconst remaining = 5;\nconst total = completed + remaining;\nconsole.log(`Total: ${total}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Type inference means TypeScript can determine a type from context. Prefer inference when the value makes the type clear."
+            },
+            {
+              "type": "code",
+              "text": "const name = 'Ada'; // string\nconst score = 8;    // number"
+            },
+            {
+              "type": "note",
+              "text": "Annotations are most useful at boundaries such as function parameters and object contracts."
+            }
+          ],
+          "task": "Add `completed` and `remaining`, then print the total.",
+          "starterCode": "const completed = 7;\nconst remaining = 5;\n// Calculate and print the total.",
+          "expectedOutput": "12",
+          "matchType": "exact",
+          "hints": [
+            "TypeScript already infers both values as numbers."
+          ],
+          "solution": "const completed = 7;\nconst remaining = 5;\nconsole.log(completed + remaining);"
+        },
+        {
+          "id": "ts-03-functions",
+          "title": "3. Type function contracts",
+          "concept": "parameter and return types",
+          "summary": "State what a function accepts and what it returns.",
+          "activities": [
+            {
+              "id": "ts-03-see",
+              "type": "worked-example",
+              "title": "Read a function contract",
+              "instruction": "Parameter types follow parameter names. The return type follows the closing parenthesis.",
+              "example": "function double(value: number): number {\n  return value * 2;\n}"
+            },
+            {
+              "id": "ts-03-predict",
+              "type": "prediction",
+              "title": "Find the return type",
+              "question": "What return type belongs on a function that returns a greeting?",
+              "choices": [
+                "string",
+                "void",
+                "boolean"
+              ],
+              "answer": "string",
+              "explanation": "A greeting is text, so the return value is a string."
+            },
+            {
+              "id": "ts-03-edit",
+              "type": "edit",
+              "title": "Type a greeting function",
+              "instruction": "Add parameter and return types, then print Hello, Ada!."
+            },
+            {
+              "id": "ts-03-drill",
+              "type": "drill",
+              "title": "Recall a numeric function contract",
+              "instruction": "Type both parameters and the return value of multiply, then print 42.",
+              "successCriteria": "Print exactly: 42",
+              "starterCode": "function multiply(left, right) {\n  return left * right;\n}\nconsole.log(multiply(6, 7));",
+              "expectedOutput": "42",
+              "matchType": "exact",
+              "hints": [
+                "All three annotations use `number`."
+              ],
+              "solution": "function multiply(left: number, right: number): number {\n  return left * right;\n}\nconsole.log(multiply(6, 7));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A typed function contract lets the editor catch invalid calls and explain the result to callers."
+            },
+            {
+              "type": "code",
+              "text": "function greet(name: string): string {\n  return `Hello, ${name}!`;\n}"
+            },
+            {
+              "type": "note",
+              "text": "Use `void` when a function performs work but does not return a useful value."
+            }
+          ],
+          "task": "Add a string parameter type and string return type to `greet`, then call it with Ada.",
+          "starterCode": "function greet(name) {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet('Ada'));",
+          "expectedOutput": "Hello, Ada!",
+          "matchType": "exact",
+          "hints": [
+            "Use `name: string` and place `: string` before the opening brace."
+          ],
+          "solution": "function greet(name: string): string {\n  return `Hello, ${name}!`;\n}\n\nconsole.log(greet('Ada'));"
+        },
+        {
+          "id": "ts-04-arrays-tuples",
+          "title": "4. Type arrays and tuples",
+          "concept": "arrays and tuples",
+          "summary": "Describe repeated values and fixed-position records.",
+          "activities": [
+            {
+              "id": "ts-04-see",
+              "type": "worked-example",
+              "title": "Compare arrays and tuples",
+              "instruction": "An array repeats one item type. A tuple gives each position its own type.",
+              "example": "const scores: number[] = [8, 9];\nconst result: [string, number] = ['Ada', 9];"
+            },
+            {
+              "id": "ts-04-predict",
+              "type": "prediction",
+              "title": "Choose a collection type",
+              "question": "Which type fits a list containing only course names?",
+              "choices": [
+                "string[]",
+                "[string, number]",
+                "number[]"
+              ],
+              "answer": "string[]",
+              "explanation": "Every item in the list is a string."
+            },
+            {
+              "id": "ts-04-edit",
+              "type": "edit",
+              "title": "Type a score list",
+              "instruction": "Annotate scores as a number array and print the joined values."
+            },
+            {
+              "id": "ts-04-drill",
+              "type": "drill",
+              "title": "Build a typed tuple",
+              "instruction": "Annotate result as a string-number tuple, then print Ada: 9.",
+              "successCriteria": "Print exactly: Ada: 9",
+              "starterCode": "const result = ['Ada', 9];\nconsole.log(`${result[0]}: ${result[1]}`);",
+              "expectedOutput": "Ada: 9",
+              "matchType": "exact",
+              "hints": [
+                "Use `[string, number]`."
+              ],
+              "solution": "const result: [string, number] = ['Ada', 9];\nconsole.log(`${result[0]}: ${result[1]}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Use `Type[]` for a variable-length list of similar values. Use a tuple for a fixed number of meaningful positions."
+            },
+            {
+              "type": "code",
+              "text": "const tags: string[] = ['types', 'tools'];\nconst point: [number, number] = [4, 7];"
+            }
+          ],
+          "task": "Annotate `scores` as an array of numbers, then print its values separated by commas.",
+          "starterCode": "const scores = [8, 10, 9];\nconsole.log(scores.join(','));",
+          "expectedOutput": "8,10,9",
+          "matchType": "exact",
+          "hints": [
+            "Place `: number[]` after `scores`."
+          ],
+          "solution": "const scores: number[] = [8, 10, 9];\nconsole.log(scores.join(','));"
+        },
+        {
+          "id": "ts-05-object-types",
+          "title": "5. Describe object shapes",
+          "concept": "type aliases",
+          "summary": "Name the required properties and types of an object.",
+          "activities": [
+            {
+              "id": "ts-05-see",
+              "type": "worked-example",
+              "title": "Read an object type",
+              "instruction": "A type alias names a reusable object shape.",
+              "example": "type Learner = { name: string; score: number };"
+            },
+            {
+              "id": "ts-05-predict",
+              "type": "prediction",
+              "title": "Check an object shape",
+              "question": "Which property value satisfies score: number?",
+              "choices": [
+                "9",
+                "'nine'",
+                "true"
+              ],
+              "answer": "9",
+              "explanation": "The unquoted numeric value has the required number type."
+            },
+            {
+              "id": "ts-05-edit",
+              "type": "edit",
+              "title": "Create a typed learner",
+              "instruction": "Define Learner, type the object, and print Ada scored 9."
+            },
+            {
+              "id": "ts-05-code-along",
+              "type": "code-along",
+              "title": "Build an object formatter",
+              "instruction": "Create a Course type and a typed formatCourse function that prints TypeScript (10 lessons).",
+              "successCriteria": "Print exactly: TypeScript (10 lessons)",
+              "starterCode": "// Define Course with name and lessons properties.\n// Write formatCourse and call it.",
+              "expectedOutput": "TypeScript (10 lessons)",
+              "matchType": "exact",
+              "hints": [
+                "`name` is string and `lessons` is number."
+              ],
+              "solution": "type Course = { name: string; lessons: number };\nfunction formatCourse(course: Course): string {\n  return `${course.name} (${course.lessons} lessons)`;\n}\nconsole.log(formatCourse({ name: 'TypeScript', lessons: 10 }));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A type alias gives a meaningful name to an object shape and keeps its contract reusable."
+            },
+            {
+              "type": "code",
+              "text": "type Learner = {\n  name: string;\n  score: number;\n};"
+            },
+            {
+              "type": "note",
+              "text": "TypeScript uses structural typing: matching properties matter more than where the object was created."
+            }
+          ],
+          "task": "Define the `Learner` type, use it for the object, and print the report.",
+          "starterCode": "// Define Learner with name: string and score: number.\nconst learner = { name: 'Ada', score: 9 };\nconsole.log(`${learner.name} scored ${learner.score}`);",
+          "expectedOutput": "Ada scored 9",
+          "matchType": "exact",
+          "hints": [
+            "Start with `type Learner = { ... }`, then annotate the variable."
+          ],
+          "solution": "type Learner = { name: string; score: number };\nconst learner: Learner = { name: 'Ada', score: 9 };\nconsole.log(`${learner.name} scored ${learner.score}`);"
+        }
+      ]
+    },
+    {
+      "id": "ts-safe-programs",
+      "name": "Safe Programs",
+      "language": "typescript",
+      "description": "Model alternatives, optional data, reusable contracts, and safe transformations.",
+      "lessons": [
+        {
+          "id": "ts-06-unions-narrowing",
+          "title": "1. Model alternatives",
+          "concept": "union types and narrowing",
+          "summary": "Allow several types, then narrow before using a value.",
+          "activities": [
+            {
+              "id": "ts-06-see",
+              "type": "worked-example",
+              "title": "Narrow a union",
+              "instruction": "typeof lets TypeScript identify which member of a union is currently present.",
+              "example": "function label(value: string | number) {\n  return typeof value === 'number' ? value.toFixed(1) : value.toUpperCase();\n}"
+            },
+            {
+              "id": "ts-06-predict",
+              "type": "prediction",
+              "title": "Choose a narrowing check",
+              "question": "Which check narrows string | number to string?",
+              "choices": [
+                "typeof value === 'string'",
+                "value === true",
+                "typeof value === 'object'"
+              ],
+              "answer": "typeof value === 'string'",
+              "explanation": "typeof reports string for text values."
+            },
+            {
+              "id": "ts-06-edit",
+              "type": "edit",
+              "title": "Format two input types",
+              "instruction": "Complete formatId so numbers gain ID- and strings become uppercase."
+            },
+            {
+              "id": "ts-06-drill",
+              "type": "drill",
+              "title": "Recall union narrowing",
+              "instruction": "Type and complete describe so it prints TEXT: READY and NUMBER: 7.",
+              "successCriteria": "Print exactly two labelled lines.",
+              "starterCode": "function describe(value) {\n  // Narrow value and return TEXT: ... or NUMBER: ...\n}\nconsole.log(describe('ready'));\nconsole.log(describe(7));",
+              "expectedOutput": "TEXT: READY\nNUMBER: 7",
+              "matchType": "exact",
+              "hints": [
+                "Give value the type `string | number` and check typeof."
+              ],
+              "solution": "function describe(value: string | number): string {\n  if (typeof value === 'string') return `TEXT: ${value.toUpperCase()}`;\n  return `NUMBER: ${value}`;\n}\nconsole.log(describe('ready'));\nconsole.log(describe(7));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A union uses `|` to model genuine alternatives. Narrowing proves which alternative is safe in the current branch."
+            },
+            {
+              "type": "code",
+              "text": "type Id = string | number;\nif (typeof id === 'string') {\n  console.log(id.toUpperCase());\n}"
+            }
+          ],
+          "task": "Type `id` as string or number. Prefix numbers with ID- and uppercase strings.",
+          "starterCode": "function formatId(id) {\n  // Narrow id before formatting it.\n}\nconsole.log(formatId(42));\nconsole.log(formatId('abc'));",
+          "expectedOutput": "ID-42\nABC",
+          "matchType": "exact",
+          "hints": [
+            "Use `id: string | number` and a typeof check."
+          ],
+          "solution": "function formatId(id: string | number): string {\n  return typeof id === 'number' ? `ID-${id}` : id.toUpperCase();\n}\nconsole.log(formatId(42));\nconsole.log(formatId('abc'));"
+        },
+        {
+          "id": "ts-07-optional-properties",
+          "title": "2. Handle optional data",
+          "concept": "optional properties",
+          "summary": "Mark data that may be absent and provide a safe fallback.",
+          "activities": [
+            {
+              "id": "ts-07-see",
+              "type": "worked-example",
+              "title": "Read an optional property",
+              "instruction": "A question mark means a property may be missing.",
+              "example": "type Profile = { name: string; bio?: string };"
+            },
+            {
+              "id": "ts-07-predict",
+              "type": "prediction",
+              "title": "Choose a fallback operator",
+              "question": "Which operator supplies a value only for null or undefined?",
+              "choices": [
+                "??",
+                "&&",
+                "+"
+              ],
+              "answer": "??",
+              "explanation": "Nullish coalescing preserves valid values such as an empty string or zero."
+            },
+            {
+              "id": "ts-07-edit",
+              "type": "edit",
+              "title": "Print a safe nickname",
+              "instruction": "Make nickname optional and print anonymous when it is absent."
+            },
+            {
+              "id": "ts-07-drill",
+              "type": "drill",
+              "title": "Recall optional access",
+              "instruction": "Type the optional email and print no email when it is missing.",
+              "successCriteria": "Print exactly: Ada: no email",
+              "starterCode": "type User = { name: string; email: string };\nconst user = { name: 'Ada' };\nconsole.log(`${user.name}: ${user.email}`);",
+              "expectedOutput": "Ada: no email",
+              "matchType": "exact",
+              "hints": [
+                "Make email optional with `?` and use `??`."
+              ],
+              "solution": "type User = { name: string; email?: string };\nconst user: User = { name: 'Ada' };\nconsole.log(`${user.name}: ${user.email ?? 'no email'}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Optional properties model data that may legitimately be absent. Code must account for `undefined` before treating it as present."
+            },
+            {
+              "type": "code",
+              "text": "type Profile = { nickname?: string };\nconst label = profile.nickname ?? 'anonymous';"
+            }
+          ],
+          "task": "Make `nickname` optional and print a safe fallback for the profile.",
+          "starterCode": "type Profile = { nickname: string };\nconst profile = {};\nconsole.log(profile.nickname);",
+          "expectedOutput": "anonymous",
+          "matchType": "exact",
+          "hints": [
+            "Write `nickname?: string` and use `?? 'anonymous'`."
+          ],
+          "solution": "type Profile = { nickname?: string };\nconst profile: Profile = {};\nconsole.log(profile.nickname ?? 'anonymous');"
+        },
+        {
+          "id": "ts-08-interfaces",
+          "title": "3. Share contracts with interfaces",
+          "concept": "interfaces",
+          "summary": "Define a named object contract that other interfaces can extend.",
+          "activities": [
+            {
+              "id": "ts-08-see",
+              "type": "worked-example",
+              "title": "Read an interface",
+              "instruction": "An interface names required object members and can extend another interface.",
+              "example": "interface Named { name: string }\ninterface Learner extends Named { score: number }"
+            },
+            {
+              "id": "ts-08-predict",
+              "type": "prediction",
+              "title": "Follow extension",
+              "question": "What does Learner require after extending Named?",
+              "choices": [
+                "name and score",
+                "score only",
+                "name only"
+              ],
+              "answer": "name and score",
+              "explanation": "An extending interface includes inherited and newly declared members."
+            },
+            {
+              "id": "ts-08-edit",
+              "type": "edit",
+              "title": "Implement a report contract",
+              "instruction": "Create Report with title and completed, then print TypeScript: 8."
+            },
+            {
+              "id": "ts-08-code-along",
+              "type": "code-along",
+              "title": "Extend a base interface",
+              "instruction": "Define Named and Scored interfaces, type the learner, and print Ada scored 10.",
+              "successCriteria": "Print exactly: Ada scored 10",
+              "starterCode": "// Define Named, then make Scored extend it.\nconst learner = { name: 'Ada', score: 10 };\nconsole.log(`${learner.name} scored ${learner.score}`);",
+              "expectedOutput": "Ada scored 10",
+              "matchType": "exact",
+              "hints": [
+                "Use `interface Scored extends Named`."
+              ],
+              "solution": "interface Named { name: string }\ninterface Scored extends Named { score: number }\nconst learner: Scored = { name: 'Ada', score: 10 };\nconsole.log(`${learner.name} scored ${learner.score}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Interfaces are especially useful for public object contracts that may be extended. Type aliases remain useful for unions and tuples."
+            },
+            {
+              "type": "code",
+              "text": "interface Report {\n  title: string;\n  completed: number;\n}"
+            }
+          ],
+          "task": "Define `Report`, type the report object, and print its title and completed count.",
+          "starterCode": "const report = { title: 'TypeScript', completed: 8 };\nconsole.log(`${report.title}: ${report.completed}`);",
+          "expectedOutput": "TypeScript: 8",
+          "matchType": "exact",
+          "hints": [
+            "Create `interface Report` with string and number members."
+          ],
+          "solution": "interface Report { title: string; completed: number }\nconst report: Report = { title: 'TypeScript', completed: 8 };\nconsole.log(`${report.title}: ${report.completed}`);"
+        },
+        {
+          "id": "ts-09-generics",
+          "title": "4. Preserve types with generics",
+          "concept": "generics",
+          "summary": "Write reusable code without losing information about its values.",
+          "activities": [
+            {
+              "id": "ts-09-see",
+              "type": "worked-example",
+              "title": "Read a generic function",
+              "instruction": "T is a type parameter. The output keeps the same type as the input.",
+              "example": "function first<T>(items: T[]): T | undefined {\n  return items[0];\n}"
+            },
+            {
+              "id": "ts-09-predict",
+              "type": "prediction",
+              "title": "Follow a type parameter",
+              "question": "What type comes back from identity<string>('Ada')?",
+              "choices": [
+                "string",
+                "unknown",
+                "number"
+              ],
+              "answer": "string",
+              "explanation": "T is string for that call, so both input and output are strings."
+            },
+            {
+              "id": "ts-09-edit",
+              "type": "edit",
+              "title": "Write identity",
+              "instruction": "Complete a generic identity function and print TypeScript."
+            },
+            {
+              "id": "ts-09-drill",
+              "type": "drill",
+              "title": "Recall a generic array helper",
+              "instruction": "Type last so it works for any item type, then print 3 and c.",
+              "successCriteria": "Print exactly two final values.",
+              "starterCode": "function last(items) {\n  return items[items.length - 1];\n}\nconsole.log(last([1, 2, 3]));\nconsole.log(last(['a', 'b', 'c']));",
+              "expectedOutput": "3\nc",
+              "matchType": "exact",
+              "hints": [
+                "Add `<T>`, accept `T[]`, and return `T | undefined`."
+              ],
+              "solution": "function last<T>(items: T[]): T | undefined {\n  return items[items.length - 1];\n}\nconsole.log(last([1, 2, 3]));\nconsole.log(last(['a', 'b', 'c']));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A generic represents a relationship between types. It is better than `any` when output types depend on input types."
+            },
+            {
+              "type": "code",
+              "text": "function identity<T>(value: T): T {\n  return value;\n}"
+            },
+            {
+              "type": "note",
+              "text": "Use a generic only when the type parameter connects two or more meaningful positions."
+            }
+          ],
+          "task": "Complete the generic `identity` function and call it with TypeScript.",
+          "starterCode": "function identity(value) {\n  return value;\n}\nconsole.log(identity('TypeScript'));",
+          "expectedOutput": "TypeScript",
+          "matchType": "exact",
+          "hints": [
+            "Add `<T>`, then use T for the parameter and return type."
+          ],
+          "solution": "function identity<T>(value: T): T {\n  return value;\n}\nconsole.log(identity('TypeScript'));"
+        },
+        {
+          "id": "ts-10-discriminated-unions",
+          "title": "5. Model safe states",
+          "concept": "discriminated unions",
+          "summary": "Give each possible state a literal tag and handle every case.",
+          "activities": [
+            {
+              "id": "ts-10-see",
+              "type": "worked-example",
+              "title": "Read a tagged union",
+              "instruction": "A shared literal property lets TypeScript narrow the rest of each object.",
+              "example": "type Result =\n  | { status: 'ok'; value: number }\n  | { status: 'error'; message: string };"
+            },
+            {
+              "id": "ts-10-predict",
+              "type": "prediction",
+              "title": "Choose the safe property",
+              "question": "After result.status === 'error', which property is safe?",
+              "choices": [
+                "message",
+                "value",
+                "both"
+              ],
+              "answer": "message",
+              "explanation": "The status tag narrows result to the error member."
+            },
+            {
+              "id": "ts-10-edit",
+              "type": "edit",
+              "title": "Render loading states",
+              "instruction": "Model loading and ready states, then print Loading... and Ready: 3."
+            },
+            {
+              "id": "ts-10-drill",
+              "type": "drill",
+              "title": "Recall tagged-state handling",
+              "instruction": "Complete the union and formatter to print Saved and Error: offline.",
+              "successCriteria": "Print exactly two status messages.",
+              "starterCode": "// Define SaveResult as saved or error with a message.\nfunction describe(result) {\n  // Return the correct label.\n}\nconsole.log(describe({ status: 'saved' }));\nconsole.log(describe({ status: 'error', message: 'offline' }));",
+              "expectedOutput": "Saved\nError: offline",
+              "matchType": "exact",
+              "hints": [
+                "Use `status` as the shared literal tag."
+              ],
+              "solution": "type SaveResult = { status: 'saved' } | { status: 'error'; message: string };\nfunction describe(result: SaveResult): string {\n  return result.status === 'saved' ? 'Saved' : `Error: ${result.message}`;\n}\nconsole.log(describe({ status: 'saved' }));\nconsole.log(describe({ status: 'error', message: 'offline' }));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Discriminated unions make impossible combinations unrepresentable. Each member has a literal tag and only the data valid for that state."
+            },
+            {
+              "type": "code",
+              "text": "type LoadState =\n  | { status: 'loading' }\n  | { status: 'ready'; count: number };"
+            }
+          ],
+          "task": "Define `LoadState`, write a typed formatter, and print both example states.",
+          "starterCode": "// Define loading and ready states.\nfunction formatState(state) {\n  // Return Loading... or Ready: count.\n}\nconsole.log(formatState({ status: 'loading' }));\nconsole.log(formatState({ status: 'ready', count: 3 }));",
+          "expectedOutput": "Loading...\nReady: 3",
+          "matchType": "exact",
+          "hints": [
+            "Use a union whose members share `status` with different literal values."
+          ],
+          "solution": "type LoadState = { status: 'loading' } | { status: 'ready'; count: number };\nfunction formatState(state: LoadState): string {\n  return state.status === 'loading' ? 'Loading...' : `Ready: ${state.count}`;\n}\nconsole.log(formatState({ status: 'loading' }));\nconsole.log(formatState({ status: 'ready', count: 3 }));"
+        }
+      ]
+    },
+    {
+      "id": "ts-type-toolkit",
+      "name": "Type Toolkit",
+      "language": "typescript",
+      "description": "Use precise value types and transform object contracts.",
+      "lessons": [
+        {
+          "id": "ts-11-literal-types",
+          "title": "1. Literal types",
+          "concept": "literal types",
+          "summary": "Restrict values to an exact set of strings.",
+          "activities": [
+            {
+              "id": "ts-11-see",
+              "type": "worked-example",
+              "title": "See literal types in context",
+              "instruction": "Read the types and follow how the example uses literal types safely.",
+              "example": "type Direction = \"left\" | \"right\";\nfunction move(d: Direction): string { return `Move ${d}`; }\nconsole.log(move(\"left\"));"
+            },
+            {
+              "id": "ts-11-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed literal types example print?",
+              "choices": [
+                "Move left",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Move left",
+              "explanation": "The declared contracts make the operation produce \"Move left\"."
+            },
+            {
+              "id": "ts-11-edit",
+              "type": "edit",
+              "title": "Complete the literal types example",
+              "instruction": "Add the missing literal types declarations and produce the shown output."
+            },
+            {
+              "id": "ts-11-drill",
+              "type": "drill",
+              "title": "Practice literal types",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Move left",
+              "starterCode": "// Use literal types to produce the required output.\n",
+              "expectedOutput": "Move left",
+              "matchType": "exact",
+              "hints": [
+                "Start from the literal types contract shown in the teaching example."
+              ],
+              "solution": "type Direction = \"left\" | \"right\";\nfunction move(d: Direction): string { return `Move ${d}`; }\nconsole.log(move(\"left\"));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Restrict values to an exact set of strings. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Direction = \"left\" | \"right\";\nfunction move(d: Direction): string { return `Move ${d}`; }\nconsole.log(move(\"left\"));"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use literal types to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with literal types.\n",
+          "expectedOutput": "Move left",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Move left\"."
+          ],
+          "solution": "type Direction = \"left\" | \"right\";\nfunction move(d: Direction): string { return `Move ${d}`; }\nconsole.log(move(\"left\"));"
+        },
+        {
+          "id": "ts-12-readonly-data",
+          "title": "2. Readonly data",
+          "concept": "readonly data",
+          "summary": "Protect data from mutation with readonly and as const.",
+          "activities": [
+            {
+              "id": "ts-12-see",
+              "type": "worked-example",
+              "title": "See readonly data in context",
+              "instruction": "Read the types and follow how the example uses readonly data safely.",
+              "example": "type Point = { readonly x: number; readonly y: number };\nconst origin: Point = { x: 0, y: 0 };\nconst modes = [\"learn\", \"practice\"] as const;\nconsole.log(`${origin.x},${origin.y} ${modes[1]}`);"
+            },
+            {
+              "id": "ts-12-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed readonly data example print?",
+              "choices": [
+                "0,0 practice",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "0,0 practice",
+              "explanation": "The declared contracts make the operation produce \"0,0 practice\"."
+            },
+            {
+              "id": "ts-12-edit",
+              "type": "edit",
+              "title": "Complete the readonly data example",
+              "instruction": "Add the missing readonly data declarations and produce the shown output."
+            },
+            {
+              "id": "ts-12-drill",
+              "type": "code-along",
+              "title": "Practice readonly data",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: 0,0 practice",
+              "starterCode": "// Use readonly data to produce the required output.\n",
+              "expectedOutput": "0,0 practice",
+              "matchType": "exact",
+              "hints": [
+                "Start from the readonly data contract shown in the teaching example."
+              ],
+              "solution": "type Point = { readonly x: number; readonly y: number };\nconst origin: Point = { x: 0, y: 0 };\nconst modes = [\"learn\", \"practice\"] as const;\nconsole.log(`${origin.x},${origin.y} ${modes[1]}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Protect data from mutation with readonly and as const. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Point = { readonly x: number; readonly y: number };\nconst origin: Point = { x: 0, y: 0 };\nconst modes = [\"learn\", \"practice\"] as const;\nconsole.log(`${origin.x},${origin.y} ${modes[1]}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use readonly data to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with readonly data.\n",
+          "expectedOutput": "0,0 practice",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"0,0 practice\"."
+          ],
+          "solution": "type Point = { readonly x: number; readonly y: number };\nconst origin: Point = { x: 0, y: 0 };\nconst modes = [\"learn\", \"practice\"] as const;\nconsole.log(`${origin.x},${origin.y} ${modes[1]}`);"
+        },
+        {
+          "id": "ts-13-keyof-indexed",
+          "title": "3. Keyof and indexed access",
+          "concept": "keyof and indexed access",
+          "summary": "Derive safe property names and value types.",
+          "activities": [
+            {
+              "id": "ts-13-see",
+              "type": "worked-example",
+              "title": "See keyof and indexed access in context",
+              "instruction": "Read the types and follow how the example uses keyof and indexed access safely.",
+              "example": "type Course = { title: string; lessons: number };\nfunction read<K extends keyof Course>(course: Course, key: K): Course[K] { return course[key]; }\nconsole.log(read({ title: \"TS\", lessons: 30 }, \"lessons\"));"
+            },
+            {
+              "id": "ts-13-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed keyof and indexed access example print?",
+              "choices": [
+                "30",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "30",
+              "explanation": "The declared contracts make the operation produce \"30\"."
+            },
+            {
+              "id": "ts-13-edit",
+              "type": "edit",
+              "title": "Complete the keyof and indexed access example",
+              "instruction": "Add the missing keyof and indexed access declarations and produce the shown output."
+            },
+            {
+              "id": "ts-13-drill",
+              "type": "drill",
+              "title": "Practice keyof and indexed access",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: 30",
+              "starterCode": "// Use keyof and indexed access to produce the required output.\n",
+              "expectedOutput": "30",
+              "matchType": "exact",
+              "hints": [
+                "Start from the keyof and indexed access contract shown in the teaching example."
+              ],
+              "solution": "type Course = { title: string; lessons: number };\nfunction read<K extends keyof Course>(course: Course, key: K): Course[K] { return course[key]; }\nconsole.log(read({ title: \"TS\", lessons: 30 }, \"lessons\"));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Derive safe property names and value types. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Course = { title: string; lessons: number };\nfunction read<K extends keyof Course>(course: Course, key: K): Course[K] { return course[key]; }\nconsole.log(read({ title: \"TS\", lessons: 30 }, \"lessons\"));"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use keyof and indexed access to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with keyof and indexed access.\n",
+          "expectedOutput": "30",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"30\"."
+          ],
+          "solution": "type Course = { title: string; lessons: number };\nfunction read<K extends keyof Course>(course: Course, key: K): Course[K] { return course[key]; }\nconsole.log(read({ title: \"TS\", lessons: 30 }, \"lessons\"));"
+        },
+        {
+          "id": "ts-14-record",
+          "title": "4. Record",
+          "concept": "Record",
+          "summary": "Build an object whose keys and values follow one contract.",
+          "activities": [
+            {
+              "id": "ts-14-see",
+              "type": "worked-example",
+              "title": "See Record in context",
+              "instruction": "Read the types and follow how the example uses Record safely.",
+              "example": "type Level = \"beginner\" | \"advanced\";\nconst counts: Record<Level, number> = { beginner: 12, advanced: 8 };\nconsole.log(counts.beginner + counts.advanced);"
+            },
+            {
+              "id": "ts-14-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed Record example print?",
+              "choices": [
+                "20",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "20",
+              "explanation": "The declared contracts make the operation produce \"20\"."
+            },
+            {
+              "id": "ts-14-edit",
+              "type": "edit",
+              "title": "Complete the Record example",
+              "instruction": "Add the missing Record declarations and produce the shown output."
+            },
+            {
+              "id": "ts-14-drill",
+              "type": "code-along",
+              "title": "Practice Record",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: 20",
+              "starterCode": "// Use Record to produce the required output.\n",
+              "expectedOutput": "20",
+              "matchType": "exact",
+              "hints": [
+                "Start from the Record contract shown in the teaching example."
+              ],
+              "solution": "type Level = \"beginner\" | \"advanced\";\nconst counts: Record<Level, number> = { beginner: 12, advanced: 8 };\nconsole.log(counts.beginner + counts.advanced);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Build an object whose keys and values follow one contract. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Level = \"beginner\" | \"advanced\";\nconst counts: Record<Level, number> = { beginner: 12, advanced: 8 };\nconsole.log(counts.beginner + counts.advanced);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use Record to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with Record.\n",
+          "expectedOutput": "20",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"20\"."
+          ],
+          "solution": "type Level = \"beginner\" | \"advanced\";\nconst counts: Record<Level, number> = { beginner: 12, advanced: 8 };\nconsole.log(counts.beginner + counts.advanced);"
+        },
+        {
+          "id": "ts-15-utility-types",
+          "title": "5. Utility types",
+          "concept": "utility types",
+          "summary": "Transform contracts with Pick, Omit, Partial, and Required.",
+          "activities": [
+            {
+              "id": "ts-15-see",
+              "type": "worked-example",
+              "title": "See utility types in context",
+              "instruction": "Read the types and follow how the example uses utility types safely.",
+              "example": "type Profile = { id: number; name: string; bio?: string };\nconst card: Pick<Profile, \"name\"> = { name: \"Ada\" };\nconst update: Partial<Omit<Profile, \"id\">> = { bio: \"Coder\" };\nconst complete: Required<Profile> = { id: 1, name: card.name, bio: update.bio ?? \"\" };\nconsole.log(`${complete.name}: ${complete.bio}`);"
+            },
+            {
+              "id": "ts-15-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed utility types example print?",
+              "choices": [
+                "Ada: Coder",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Ada: Coder",
+              "explanation": "The declared contracts make the operation produce \"Ada: Coder\"."
+            },
+            {
+              "id": "ts-15-edit",
+              "type": "edit",
+              "title": "Complete the utility types example",
+              "instruction": "Add the missing utility types declarations and produce the shown output."
+            },
+            {
+              "id": "ts-15-drill",
+              "type": "drill",
+              "title": "Practice utility types",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Ada: Coder",
+              "starterCode": "// Use utility types to produce the required output.\n",
+              "expectedOutput": "Ada: Coder",
+              "matchType": "exact",
+              "hints": [
+                "Start from the utility types contract shown in the teaching example."
+              ],
+              "solution": "type Profile = { id: number; name: string; bio?: string };\nconst card: Pick<Profile, \"name\"> = { name: \"Ada\" };\nconst update: Partial<Omit<Profile, \"id\">> = { bio: \"Coder\" };\nconst complete: Required<Profile> = { id: 1, name: card.name, bio: update.bio ?? \"\" };\nconsole.log(`${complete.name}: ${complete.bio}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Transform contracts with Pick, Omit, Partial, and Required. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Profile = { id: number; name: string; bio?: string };\nconst card: Pick<Profile, \"name\"> = { name: \"Ada\" };\nconst update: Partial<Omit<Profile, \"id\">> = { bio: \"Coder\" };\nconst complete: Required<Profile> = { id: 1, name: card.name, bio: update.bio ?? \"\" };\nconsole.log(`${complete.name}: ${complete.bio}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use utility types to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with utility types.\n",
+          "expectedOutput": "Ada: Coder",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Ada: Coder\"."
+          ],
+          "solution": "type Profile = { id: number; name: string; bio?: string };\nconst card: Pick<Profile, \"name\"> = { name: \"Ada\" };\nconst update: Partial<Omit<Profile, \"id\">> = { bio: \"Coder\" };\nconst complete: Required<Profile> = { id: 1, name: card.name, bio: update.bio ?? \"\" };\nconsole.log(`${complete.name}: ${complete.bio}`);"
+        }
+      ]
+    },
+    {
+      "id": "ts-classes-contracts",
+      "name": "Classes and Contracts",
+      "language": "typescript",
+      "description": "Create encapsulated, extensible, and reusable class contracts.",
+      "lessons": [
+        {
+          "id": "ts-16-typed-class",
+          "title": "1. Typed class fields and constructors",
+          "concept": "typed class fields and constructors",
+          "summary": "Declare typed fields and initialize them through a constructor.",
+          "activities": [
+            {
+              "id": "ts-16-see",
+              "type": "worked-example",
+              "title": "See typed class fields and constructors in context",
+              "instruction": "Read the types and follow how the example uses typed class fields and constructors safely.",
+              "example": "class Course {\n  title: string;\n  lessons: number;\n  constructor(title: string, lessons: number) { this.title = title; this.lessons = lessons; }\n  label(): string { return `${this.title}: ${this.lessons}`; }\n}\nconsole.log(new Course(\"TypeScript\", 30).label());"
+            },
+            {
+              "id": "ts-16-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed typed class fields and constructors example print?",
+              "choices": [
+                "TypeScript: 30",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "TypeScript: 30",
+              "explanation": "The declared contracts make the operation produce \"TypeScript: 30\"."
+            },
+            {
+              "id": "ts-16-edit",
+              "type": "edit",
+              "title": "Complete the typed class fields and constructors example",
+              "instruction": "Add the missing typed class fields and constructors declarations and produce the shown output."
+            },
+            {
+              "id": "ts-16-drill",
+              "type": "drill",
+              "title": "Practice typed class fields and constructors",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: TypeScript: 30",
+              "starterCode": "// Use typed class fields and constructors to produce the required output.\n",
+              "expectedOutput": "TypeScript: 30",
+              "matchType": "exact",
+              "hints": [
+                "Start from the typed class fields and constructors contract shown in the teaching example."
+              ],
+              "solution": "class Course {\n  title: string;\n  lessons: number;\n  constructor(title: string, lessons: number) { this.title = title; this.lessons = lessons; }\n  label(): string { return `${this.title}: ${this.lessons}`; }\n}\nconsole.log(new Course(\"TypeScript\", 30).label());"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Declare typed fields and initialize them through a constructor. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "class Course {\n  title: string;\n  lessons: number;\n  constructor(title: string, lessons: number) { this.title = title; this.lessons = lessons; }\n  label(): string { return `${this.title}: ${this.lessons}`; }\n}\nconsole.log(new Course(\"TypeScript\", 30).label());"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use typed class fields and constructors to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with typed class fields and constructors.\n",
+          "expectedOutput": "TypeScript: 30",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"TypeScript: 30\"."
+          ],
+          "solution": "class Course {\n  title: string;\n  lessons: number;\n  constructor(title: string, lessons: number) { this.title = title; this.lessons = lessons; }\n  label(): string { return `${this.title}: ${this.lessons}`; }\n}\nconsole.log(new Course(\"TypeScript\", 30).label());"
+        },
+        {
+          "id": "ts-17-access-modifiers",
+          "title": "2. Public, private, and protected",
+          "concept": "public, private, and protected",
+          "summary": "Control which class members callers and subclasses can access.",
+          "activities": [
+            {
+              "id": "ts-17-see",
+              "type": "worked-example",
+              "title": "See public, private, and protected in context",
+              "instruction": "Read the types and follow how the example uses public, private, and protected safely.",
+              "example": "class Account {\n  public name: string;\n  private score = 7;\n  protected prefix = \"Score\";\n  constructor(name: string) { this.name = name; }\n  summary(): string { return `${this.prefix}: ${this.score}`; }\n}\nconsole.log(`${new Account(\"Ada\").name} ${new Account(\"Ada\").summary()}`);"
+            },
+            {
+              "id": "ts-17-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed public, private, and protected example print?",
+              "choices": [
+                "Ada Score: 7",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Ada Score: 7",
+              "explanation": "The declared contracts make the operation produce \"Ada Score: 7\"."
+            },
+            {
+              "id": "ts-17-edit",
+              "type": "edit",
+              "title": "Complete the public, private, and protected example",
+              "instruction": "Add the missing public, private, and protected declarations and produce the shown output."
+            },
+            {
+              "id": "ts-17-drill",
+              "type": "code-along",
+              "title": "Practice public, private, and protected",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Ada Score: 7",
+              "starterCode": "// Use public, private, and protected to produce the required output.\n",
+              "expectedOutput": "Ada Score: 7",
+              "matchType": "exact",
+              "hints": [
+                "Start from the public, private, and protected contract shown in the teaching example."
+              ],
+              "solution": "class Account {\n  public name: string;\n  private score = 7;\n  protected prefix = \"Score\";\n  constructor(name: string) { this.name = name; }\n  summary(): string { return `${this.prefix}: ${this.score}`; }\n}\nconsole.log(`${new Account(\"Ada\").name} ${new Account(\"Ada\").summary()}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Control which class members callers and subclasses can access. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "class Account {\n  public name: string;\n  private score = 7;\n  protected prefix = \"Score\";\n  constructor(name: string) { this.name = name; }\n  summary(): string { return `${this.prefix}: ${this.score}`; }\n}\nconsole.log(`${new Account(\"Ada\").name} ${new Account(\"Ada\").summary()}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use public, private, and protected to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with public, private, and protected.\n",
+          "expectedOutput": "Ada Score: 7",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Ada Score: 7\"."
+          ],
+          "solution": "class Account {\n  public name: string;\n  private score = 7;\n  protected prefix = \"Score\";\n  constructor(name: string) { this.name = name; }\n  summary(): string { return `${this.prefix}: ${this.score}`; }\n}\nconsole.log(`${new Account(\"Ada\").name} ${new Account(\"Ada\").summary()}`);"
+        },
+        {
+          "id": "ts-18-implements",
+          "title": "3. Implements",
+          "concept": "implements",
+          "summary": "Require a class to satisfy an interface contract.",
+          "activities": [
+            {
+              "id": "ts-18-see",
+              "type": "worked-example",
+              "title": "See implements in context",
+              "instruction": "Read the types and follow how the example uses implements safely.",
+              "example": "interface Printable { print(): string; }\nclass Badge implements Printable {\n  constructor(private label: string) {}\n  print(): string { return `[${this.label}]`; }\n}\nconsole.log(new Badge(\"TS\").print());"
+            },
+            {
+              "id": "ts-18-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed implements example print?",
+              "choices": [
+                "[TS]",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "[TS]",
+              "explanation": "The declared contracts make the operation produce \"[TS]\"."
+            },
+            {
+              "id": "ts-18-edit",
+              "type": "edit",
+              "title": "Complete the implements example",
+              "instruction": "Add the missing implements declarations and produce the shown output."
+            },
+            {
+              "id": "ts-18-drill",
+              "type": "drill",
+              "title": "Practice implements",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: [TS]",
+              "starterCode": "// Use implements to produce the required output.\n",
+              "expectedOutput": "[TS]",
+              "matchType": "exact",
+              "hints": [
+                "Start from the implements contract shown in the teaching example."
+              ],
+              "solution": "interface Printable { print(): string; }\nclass Badge implements Printable {\n  constructor(private label: string) {}\n  print(): string { return `[${this.label}]`; }\n}\nconsole.log(new Badge(\"TS\").print());"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Require a class to satisfy an interface contract. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "interface Printable { print(): string; }\nclass Badge implements Printable {\n  constructor(private label: string) {}\n  print(): string { return `[${this.label}]`; }\n}\nconsole.log(new Badge(\"TS\").print());"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use implements to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with implements.\n",
+          "expectedOutput": "[TS]",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"[TS]\"."
+          ],
+          "solution": "interface Printable { print(): string; }\nclass Badge implements Printable {\n  constructor(private label: string) {}\n  print(): string { return `[${this.label}]`; }\n}\nconsole.log(new Badge(\"TS\").print());"
+        },
+        {
+          "id": "ts-19-abstract-classes",
+          "title": "4. Abstract classes",
+          "concept": "abstract classes",
+          "summary": "Share implementation while requiring subclasses to fill in behavior.",
+          "activities": [
+            {
+              "id": "ts-19-see",
+              "type": "worked-example",
+              "title": "See abstract classes in context",
+              "instruction": "Read the types and follow how the example uses abstract classes safely.",
+              "example": "abstract class Lesson {\n  constructor(protected title: string) {}\n  abstract duration(): number;\n  summary(): string { return `${this.title}: ${this.duration()} min`; }\n}\nclass Quiz extends Lesson { duration(): number { return 5; } }\nconsole.log(new Quiz(\"Types quiz\").summary());"
+            },
+            {
+              "id": "ts-19-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed abstract classes example print?",
+              "choices": [
+                "Types quiz: 5 min",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Types quiz: 5 min",
+              "explanation": "The declared contracts make the operation produce \"Types quiz: 5 min\"."
+            },
+            {
+              "id": "ts-19-edit",
+              "type": "edit",
+              "title": "Complete the abstract classes example",
+              "instruction": "Add the missing abstract classes declarations and produce the shown output."
+            },
+            {
+              "id": "ts-19-drill",
+              "type": "code-along",
+              "title": "Practice abstract classes",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Types quiz: 5 min",
+              "starterCode": "// Use abstract classes to produce the required output.\n",
+              "expectedOutput": "Types quiz: 5 min",
+              "matchType": "exact",
+              "hints": [
+                "Start from the abstract classes contract shown in the teaching example."
+              ],
+              "solution": "abstract class Lesson {\n  constructor(protected title: string) {}\n  abstract duration(): number;\n  summary(): string { return `${this.title}: ${this.duration()} min`; }\n}\nclass Quiz extends Lesson { duration(): number { return 5; } }\nconsole.log(new Quiz(\"Types quiz\").summary());"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Share implementation while requiring subclasses to fill in behavior. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "abstract class Lesson {\n  constructor(protected title: string) {}\n  abstract duration(): number;\n  summary(): string { return `${this.title}: ${this.duration()} min`; }\n}\nclass Quiz extends Lesson { duration(): number { return 5; } }\nconsole.log(new Quiz(\"Types quiz\").summary());"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use abstract classes to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with abstract classes.\n",
+          "expectedOutput": "Types quiz: 5 min",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Types quiz: 5 min\"."
+          ],
+          "solution": "abstract class Lesson {\n  constructor(protected title: string) {}\n  abstract duration(): number;\n  summary(): string { return `${this.title}: ${this.duration()} min`; }\n}\nclass Quiz extends Lesson { duration(): number { return 5; } }\nconsole.log(new Quiz(\"Types quiz\").summary());"
+        },
+        {
+          "id": "ts-20-generic-classes",
+          "title": "5. Generic classes",
+          "concept": "generic classes",
+          "summary": "Store and operate on values while preserving their type.",
+          "activities": [
+            {
+              "id": "ts-20-see",
+              "type": "worked-example",
+              "title": "See generic classes in context",
+              "instruction": "Read the types and follow how the example uses generic classes safely.",
+              "example": "class Box<T> {\n  constructor(private value: T) {}\n  map<U>(fn: (value: T) => U): Box<U> { return new Box(fn(this.value)); }\n  get(): T { return this.value; }\n}\nconsole.log(new Box(5).map(n => n * 2).get());"
+            },
+            {
+              "id": "ts-20-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed generic classes example print?",
+              "choices": [
+                "10",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "10",
+              "explanation": "The declared contracts make the operation produce \"10\"."
+            },
+            {
+              "id": "ts-20-edit",
+              "type": "edit",
+              "title": "Complete the generic classes example",
+              "instruction": "Add the missing generic classes declarations and produce the shown output."
+            },
+            {
+              "id": "ts-20-drill",
+              "type": "drill",
+              "title": "Practice generic classes",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: 10",
+              "starterCode": "// Use generic classes to produce the required output.\n",
+              "expectedOutput": "10",
+              "matchType": "exact",
+              "hints": [
+                "Start from the generic classes contract shown in the teaching example."
+              ],
+              "solution": "class Box<T> {\n  constructor(private value: T) {}\n  map<U>(fn: (value: T) => U): Box<U> { return new Box(fn(this.value)); }\n  get(): T { return this.value; }\n}\nconsole.log(new Box(5).map(n => n * 2).get());"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Store and operate on values while preserving their type. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "class Box<T> {\n  constructor(private value: T) {}\n  map<U>(fn: (value: T) => U): Box<U> { return new Box(fn(this.value)); }\n  get(): T { return this.value; }\n}\nconsole.log(new Box(5).map(n => n * 2).get());"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use generic classes to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with generic classes.\n",
+          "expectedOutput": "10",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"10\"."
+          ],
+          "solution": "class Box<T> {\n  constructor(private value: T) {}\n  map<U>(fn: (value: T) => U): Box<U> { return new Box(fn(this.value)); }\n  get(): T { return this.value; }\n}\nconsole.log(new Box(5).map(n => n * 2).get());"
+        }
+      ]
+    },
+    {
+      "id": "ts-trusted-boundaries",
+      "name": "Trusted Boundaries",
+      "language": "typescript",
+      "description": "Validate uncertain external values and type asynchronous failures safely.",
+      "lessons": [
+        {
+          "id": "ts-21-unknown-any",
+          "title": "1. Unknown vs any",
+          "concept": "unknown vs any",
+          "summary": "Prefer unknown so uncertain values must be checked before use.",
+          "activities": [
+            {
+              "id": "ts-21-see",
+              "type": "worked-example",
+              "title": "See unknown vs any in context",
+              "instruction": "Read the types and follow how the example uses unknown vs any safely.",
+              "example": "let loose: any = \"unchecked\";\nconst input: unknown = \"safe\";\nconst label = typeof input === \"string\" ? input.toUpperCase() : \"INVALID\";\nconsole.log(`${typeof loose}: ${label}`);"
+            },
+            {
+              "id": "ts-21-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed unknown vs any example print?",
+              "choices": [
+                "string: SAFE",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "string: SAFE",
+              "explanation": "The declared contracts make the operation produce \"string: SAFE\"."
+            },
+            {
+              "id": "ts-21-edit",
+              "type": "edit",
+              "title": "Complete the unknown vs any example",
+              "instruction": "Add the missing unknown vs any declarations and produce the shown output."
+            },
+            {
+              "id": "ts-21-drill",
+              "type": "drill",
+              "title": "Practice unknown vs any",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: string: SAFE",
+              "starterCode": "// Use unknown vs any to produce the required output.\n",
+              "expectedOutput": "string: SAFE",
+              "matchType": "exact",
+              "hints": [
+                "Start from the unknown vs any contract shown in the teaching example."
+              ],
+              "solution": "let loose: any = \"unchecked\";\nconst input: unknown = \"safe\";\nconst label = typeof input === \"string\" ? input.toUpperCase() : \"INVALID\";\nconsole.log(`${typeof loose}: ${label}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Prefer unknown so uncertain values must be checked before use. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "let loose: any = \"unchecked\";\nconst input: unknown = \"safe\";\nconst label = typeof input === \"string\" ? input.toUpperCase() : \"INVALID\";\nconsole.log(`${typeof loose}: ${label}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use unknown vs any to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with unknown vs any.\n",
+          "expectedOutput": "string: SAFE",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"string: SAFE\"."
+          ],
+          "solution": "let loose: any = \"unchecked\";\nconst input: unknown = \"safe\";\nconst label = typeof input === \"string\" ? input.toUpperCase() : \"INVALID\";\nconsole.log(`${typeof loose}: ${label}`);"
+        },
+        {
+          "id": "ts-22-type-guards",
+          "title": "2. Custom type guards",
+          "concept": "custom type guards",
+          "summary": "Package runtime checks into reusable narrowing functions.",
+          "activities": [
+            {
+              "id": "ts-22-see",
+              "type": "worked-example",
+              "title": "See custom type guards in context",
+              "instruction": "Read the types and follow how the example uses custom type guards safely.",
+              "example": "type User = { name: string };\nfunction isUser(value: unknown): value is User {\n  return typeof value === \"object\" && value !== null && \"name\" in value && typeof value.name === \"string\";\n}\nconst input: unknown = { name: \"Ada\" };\nconsole.log(isUser(input) ? input.name : \"invalid\");"
+            },
+            {
+              "id": "ts-22-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed custom type guards example print?",
+              "choices": [
+                "Ada",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Ada",
+              "explanation": "The declared contracts make the operation produce \"Ada\"."
+            },
+            {
+              "id": "ts-22-edit",
+              "type": "edit",
+              "title": "Complete the custom type guards example",
+              "instruction": "Add the missing custom type guards declarations and produce the shown output."
+            },
+            {
+              "id": "ts-22-drill",
+              "type": "code-along",
+              "title": "Practice custom type guards",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Ada",
+              "starterCode": "// Use custom type guards to produce the required output.\n",
+              "expectedOutput": "Ada",
+              "matchType": "exact",
+              "hints": [
+                "Start from the custom type guards contract shown in the teaching example."
+              ],
+              "solution": "type User = { name: string };\nfunction isUser(value: unknown): value is User {\n  return typeof value === \"object\" && value !== null && \"name\" in value && typeof value.name === \"string\";\n}\nconst input: unknown = { name: \"Ada\" };\nconsole.log(isUser(input) ? input.name : \"invalid\");"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Package runtime checks into reusable narrowing functions. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type User = { name: string };\nfunction isUser(value: unknown): value is User {\n  return typeof value === \"object\" && value !== null && \"name\" in value && typeof value.name === \"string\";\n}\nconst input: unknown = { name: \"Ada\" };\nconsole.log(isUser(input) ? input.name : \"invalid\");"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use custom type guards to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with custom type guards.\n",
+          "expectedOutput": "Ada",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Ada\"."
+          ],
+          "solution": "type User = { name: string };\nfunction isUser(value: unknown): value is User {\n  return typeof value === \"object\" && value !== null && \"name\" in value && typeof value.name === \"string\";\n}\nconst input: unknown = { name: \"Ada\" };\nconsole.log(isUser(input) ? input.name : \"invalid\");"
+        },
+        {
+          "id": "ts-23-safe-json",
+          "title": "3. Safe JSON parsing and validation",
+          "concept": "safe JSON parsing and validation",
+          "summary": "Parse JSON into unknown and validate its shape before use.",
+          "activities": [
+            {
+              "id": "ts-23-see",
+              "type": "worked-example",
+              "title": "See safe JSON parsing and validation in context",
+              "instruction": "Read the types and follow how the example uses safe JSON parsing and validation safely.",
+              "example": "type Settings = { theme: string };\nfunction isSettings(value: unknown): value is Settings {\n  return typeof value === \"object\" && value !== null && \"theme\" in value && typeof value.theme === \"string\";\n}\nconst parsed: unknown = JSON.parse(\"{\\\"theme\\\":\\\"dark\\\"}\");\nconsole.log(isSettings(parsed) ? parsed.theme : \"invalid\");"
+            },
+            {
+              "id": "ts-23-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed safe JSON parsing and validation example print?",
+              "choices": [
+                "dark",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "dark",
+              "explanation": "The declared contracts make the operation produce \"dark\"."
+            },
+            {
+              "id": "ts-23-edit",
+              "type": "edit",
+              "title": "Complete the safe JSON parsing and validation example",
+              "instruction": "Add the missing safe JSON parsing and validation declarations and produce the shown output."
+            },
+            {
+              "id": "ts-23-drill",
+              "type": "drill",
+              "title": "Practice safe JSON parsing and validation",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: dark",
+              "starterCode": "// Use safe JSON parsing and validation to produce the required output.\n",
+              "expectedOutput": "dark",
+              "matchType": "exact",
+              "hints": [
+                "Start from the safe JSON parsing and validation contract shown in the teaching example."
+              ],
+              "solution": "type Settings = { theme: string };\nfunction isSettings(value: unknown): value is Settings {\n  return typeof value === \"object\" && value !== null && \"theme\" in value && typeof value.theme === \"string\";\n}\nconst parsed: unknown = JSON.parse(\"{\\\"theme\\\":\\\"dark\\\"}\");\nconsole.log(isSettings(parsed) ? parsed.theme : \"invalid\");"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Parse JSON into unknown and validate its shape before use. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Settings = { theme: string };\nfunction isSettings(value: unknown): value is Settings {\n  return typeof value === \"object\" && value !== null && \"theme\" in value && typeof value.theme === \"string\";\n}\nconst parsed: unknown = JSON.parse(\"{\\\"theme\\\":\\\"dark\\\"}\");\nconsole.log(isSettings(parsed) ? parsed.theme : \"invalid\");"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use safe JSON parsing and validation to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with safe JSON parsing and validation.\n",
+          "expectedOutput": "dark",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"dark\"."
+          ],
+          "solution": "type Settings = { theme: string };\nfunction isSettings(value: unknown): value is Settings {\n  return typeof value === \"object\" && value !== null && \"theme\" in value && typeof value.theme === \"string\";\n}\nconst parsed: unknown = JSON.parse(\"{\\\"theme\\\":\\\"dark\\\"}\");\nconsole.log(isSettings(parsed) ? parsed.theme : \"invalid\");"
+        },
+        {
+          "id": "ts-24-async-types",
+          "title": "4. Promise and async return types",
+          "concept": "Promise and async return types",
+          "summary": "Describe asynchronous results explicitly with Promise types.",
+          "activities": [
+            {
+              "id": "ts-24-see",
+              "type": "worked-example",
+              "title": "See Promise and async return types in context",
+              "instruction": "Read the types and follow how the example uses Promise and async return types safely.",
+              "example": "async function lessonCount(): Promise<number> { return 30; }\nasync function main(): Promise<void> {\n  const count = await lessonCount();\n  console.log(`Lessons: ${count}`);\n}\nvoid main();"
+            },
+            {
+              "id": "ts-24-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed Promise and async return types example print?",
+              "choices": [
+                "Lessons: 30",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Lessons: 30",
+              "explanation": "The declared contracts make the operation produce \"Lessons: 30\"."
+            },
+            {
+              "id": "ts-24-edit",
+              "type": "edit",
+              "title": "Complete the Promise and async return types example",
+              "instruction": "Add the missing Promise and async return types declarations and produce the shown output."
+            },
+            {
+              "id": "ts-24-drill",
+              "type": "code-along",
+              "title": "Practice Promise and async return types",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Lessons: 30",
+              "starterCode": "// Use Promise and async return types to produce the required output.\n",
+              "expectedOutput": "Lessons: 30",
+              "matchType": "exact",
+              "hints": [
+                "Start from the Promise and async return types contract shown in the teaching example."
+              ],
+              "solution": "async function lessonCount(): Promise<number> { return 30; }\nasync function main(): Promise<void> {\n  const count = await lessonCount();\n  console.log(`Lessons: ${count}`);\n}\nvoid main();"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Describe asynchronous results explicitly with Promise types. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "async function lessonCount(): Promise<number> { return 30; }\nasync function main(): Promise<void> {\n  const count = await lessonCount();\n  console.log(`Lessons: ${count}`);\n}\nvoid main();"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use Promise and async return types to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with Promise and async return types.\n",
+          "expectedOutput": "Lessons: 30",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Lessons: 30\"."
+          ],
+          "solution": "async function lessonCount(): Promise<number> { return 30; }\nasync function main(): Promise<void> {\n  const count = await lessonCount();\n  console.log(`Lessons: ${count}`);\n}\nvoid main();"
+        },
+        {
+          "id": "ts-25-unknown-catches",
+          "title": "5. Typed error handling with unknown catches",
+          "concept": "typed error handling with unknown catches",
+          "summary": "Narrow caught unknown values before reading error details.",
+          "activities": [
+            {
+              "id": "ts-25-see",
+              "type": "worked-example",
+              "title": "See typed error handling with unknown catches in context",
+              "instruction": "Read the types and follow how the example uses typed error handling with unknown catches safely.",
+              "example": "function fail(): never { throw new Error(\"offline\"); }\ntry {\n  fail();\n} catch (error: unknown) {\n  console.log(error instanceof Error ? `Error: ${error.message}` : \"Unknown error\");\n}"
+            },
+            {
+              "id": "ts-25-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed typed error handling with unknown catches example print?",
+              "choices": [
+                "Error: offline",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Error: offline",
+              "explanation": "The declared contracts make the operation produce \"Error: offline\"."
+            },
+            {
+              "id": "ts-25-edit",
+              "type": "edit",
+              "title": "Complete the typed error handling with unknown catches example",
+              "instruction": "Add the missing typed error handling with unknown catches declarations and produce the shown output."
+            },
+            {
+              "id": "ts-25-drill",
+              "type": "drill",
+              "title": "Practice typed error handling with unknown catches",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Error: offline",
+              "starterCode": "// Use typed error handling with unknown catches to produce the required output.\n",
+              "expectedOutput": "Error: offline",
+              "matchType": "exact",
+              "hints": [
+                "Start from the typed error handling with unknown catches contract shown in the teaching example."
+              ],
+              "solution": "function fail(): never { throw new Error(\"offline\"); }\ntry {\n  fail();\n} catch (error: unknown) {\n  console.log(error instanceof Error ? `Error: ${error.message}` : \"Unknown error\");\n}"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Narrow caught unknown values before reading error details. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "function fail(): never { throw new Error(\"offline\"); }\ntry {\n  fail();\n} catch (error: unknown) {\n  console.log(error instanceof Error ? `Error: ${error.message}` : \"Unknown error\");\n}"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use typed error handling with unknown catches to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with typed error handling with unknown catches.\n",
+          "expectedOutput": "Error: offline",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Error: offline\"."
+          ],
+          "solution": "function fail(): never { throw new Error(\"offline\"); }\ntry {\n  fail();\n} catch (error: unknown) {\n  console.log(error instanceof Error ? `Error: ${error.message}` : \"Unknown error\");\n}"
+        }
+      ]
+    },
+    {
+      "id": "ts-advanced-patterns",
+      "name": "Advanced Patterns",
+      "language": "typescript",
+      "description": "Express sophisticated relationships and combine them at trusted boundaries.",
+      "lessons": [
+        {
+          "id": "ts-26-generic-constraints",
+          "title": "1. Generic constraints",
+          "concept": "generic constraints",
+          "summary": "Require generic inputs to provide the members an operation needs.",
+          "activities": [
+            {
+              "id": "ts-26-see",
+              "type": "worked-example",
+              "title": "See generic constraints in context",
+              "instruction": "Read the types and follow how the example uses generic constraints safely.",
+              "example": "function label<T extends { name: string }>(value: T): string { return value.name.toUpperCase(); }\nconsole.log(label({ name: \"Ada\", score: 10 }));"
+            },
+            {
+              "id": "ts-26-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed generic constraints example print?",
+              "choices": [
+                "ADA",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "ADA",
+              "explanation": "The declared contracts make the operation produce \"ADA\"."
+            },
+            {
+              "id": "ts-26-edit",
+              "type": "edit",
+              "title": "Complete the generic constraints example",
+              "instruction": "Add the missing generic constraints declarations and produce the shown output."
+            },
+            {
+              "id": "ts-26-drill",
+              "type": "drill",
+              "title": "Practice generic constraints",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: ADA",
+              "starterCode": "// Use generic constraints to produce the required output.\n",
+              "expectedOutput": "ADA",
+              "matchType": "exact",
+              "hints": [
+                "Start from the generic constraints contract shown in the teaching example."
+              ],
+              "solution": "function label<T extends { name: string }>(value: T): string { return value.name.toUpperCase(); }\nconsole.log(label({ name: \"Ada\", score: 10 }));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Require generic inputs to provide the members an operation needs. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "function label<T extends { name: string }>(value: T): string { return value.name.toUpperCase(); }\nconsole.log(label({ name: \"Ada\", score: 10 }));"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use generic constraints to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with generic constraints.\n",
+          "expectedOutput": "ADA",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"ADA\"."
+          ],
+          "solution": "function label<T extends { name: string }>(value: T): string { return value.name.toUpperCase(); }\nconsole.log(label({ name: \"Ada\", score: 10 }));"
+        },
+        {
+          "id": "ts-27-overloads",
+          "title": "2. Function overloads",
+          "concept": "function overloads",
+          "summary": "Publish distinct call signatures for one implementation.",
+          "activities": [
+            {
+              "id": "ts-27-see",
+              "type": "worked-example",
+              "title": "See function overloads in context",
+              "instruction": "Read the types and follow how the example uses function overloads safely.",
+              "example": "function format(value: number): string;\nfunction format(value: Date): string;\nfunction format(value: number | Date): string { return typeof value === \"number\" ? value.toFixed(1) : value.toISOString().slice(0, 10); }\nconsole.log(format(3));\nconsole.log(format(new Date(\"2026-07-31T00:00:00Z\")));"
+            },
+            {
+              "id": "ts-27-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed function overloads example print?",
+              "choices": [
+                "3.0\n2026-07-31",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "3.0\n2026-07-31",
+              "explanation": "The declared contracts make the operation produce \"3.0\\n2026-07-31\"."
+            },
+            {
+              "id": "ts-27-edit",
+              "type": "edit",
+              "title": "Complete the function overloads example",
+              "instruction": "Add the missing function overloads declarations and produce the shown output."
+            },
+            {
+              "id": "ts-27-drill",
+              "type": "code-along",
+              "title": "Practice function overloads",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: 3.0 / 2026-07-31",
+              "starterCode": "// Use function overloads to produce the required output.\n",
+              "expectedOutput": "3.0\n2026-07-31",
+              "matchType": "exact",
+              "hints": [
+                "Start from the function overloads contract shown in the teaching example."
+              ],
+              "solution": "function format(value: number): string;\nfunction format(value: Date): string;\nfunction format(value: number | Date): string { return typeof value === \"number\" ? value.toFixed(1) : value.toISOString().slice(0, 10); }\nconsole.log(format(3));\nconsole.log(format(new Date(\"2026-07-31T00:00:00Z\")));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Publish distinct call signatures for one implementation. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "function format(value: number): string;\nfunction format(value: Date): string;\nfunction format(value: number | Date): string { return typeof value === \"number\" ? value.toFixed(1) : value.toISOString().slice(0, 10); }\nconsole.log(format(3));\nconsole.log(format(new Date(\"2026-07-31T00:00:00Z\")));"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use function overloads to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with function overloads.\n",
+          "expectedOutput": "3.0\n2026-07-31",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"3.0\\n2026-07-31\"."
+          ],
+          "solution": "function format(value: number): string;\nfunction format(value: Date): string;\nfunction format(value: number | Date): string { return typeof value === \"number\" ? value.toFixed(1) : value.toISOString().slice(0, 10); }\nconsole.log(format(3));\nconsole.log(format(new Date(\"2026-07-31T00:00:00Z\")));"
+        },
+        {
+          "id": "ts-28-mapped-types",
+          "title": "3. Mapped types",
+          "concept": "mapped types",
+          "summary": "Transform every property in a key set consistently.",
+          "activities": [
+            {
+              "id": "ts-28-see",
+              "type": "worked-example",
+              "title": "See mapped types in context",
+              "instruction": "Read the types and follow how the example uses mapped types safely.",
+              "example": "type Flags<T> = { [K in keyof T]: boolean };\ntype Features = { search: string; hints: number };\nconst enabled: Flags<Features> = { search: true, hints: false };\nconsole.log(`${enabled.search} ${enabled.hints}`);"
+            },
+            {
+              "id": "ts-28-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed mapped types example print?",
+              "choices": [
+                "true false",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "true false",
+              "explanation": "The declared contracts make the operation produce \"true false\"."
+            },
+            {
+              "id": "ts-28-edit",
+              "type": "edit",
+              "title": "Complete the mapped types example",
+              "instruction": "Add the missing mapped types declarations and produce the shown output."
+            },
+            {
+              "id": "ts-28-drill",
+              "type": "drill",
+              "title": "Practice mapped types",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: true false",
+              "starterCode": "// Use mapped types to produce the required output.\n",
+              "expectedOutput": "true false",
+              "matchType": "exact",
+              "hints": [
+                "Start from the mapped types contract shown in the teaching example."
+              ],
+              "solution": "type Flags<T> = { [K in keyof T]: boolean };\ntype Features = { search: string; hints: number };\nconst enabled: Flags<Features> = { search: true, hints: false };\nconsole.log(`${enabled.search} ${enabled.hints}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Transform every property in a key set consistently. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Flags<T> = { [K in keyof T]: boolean };\ntype Features = { search: string; hints: number };\nconst enabled: Flags<Features> = { search: true, hints: false };\nconsole.log(`${enabled.search} ${enabled.hints}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use mapped types to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with mapped types.\n",
+          "expectedOutput": "true false",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"true false\"."
+          ],
+          "solution": "type Flags<T> = { [K in keyof T]: boolean };\ntype Features = { search: string; hints: number };\nconst enabled: Flags<Features> = { search: true, hints: false };\nconsole.log(`${enabled.search} ${enabled.hints}`);"
+        },
+        {
+          "id": "ts-29-conditional-types",
+          "title": "4. Conditional types",
+          "concept": "conditional types",
+          "summary": "Choose a resulting type based on a type relationship.",
+          "activities": [
+            {
+              "id": "ts-29-see",
+              "type": "worked-example",
+              "title": "See conditional types in context",
+              "instruction": "Read the types and follow how the example uses conditional types safely.",
+              "example": "type ElementType<T> = T extends readonly (infer U)[] ? U : T;\nconst topic: ElementType<readonly string[]> = \"types\";\nconst count: ElementType<number> = 3;\nconsole.log(`${topic}: ${count}`);"
+            },
+            {
+              "id": "ts-29-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed conditional types example print?",
+              "choices": [
+                "types: 3",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "types: 3",
+              "explanation": "The declared contracts make the operation produce \"types: 3\"."
+            },
+            {
+              "id": "ts-29-edit",
+              "type": "edit",
+              "title": "Complete the conditional types example",
+              "instruction": "Add the missing conditional types declarations and produce the shown output."
+            },
+            {
+              "id": "ts-29-drill",
+              "type": "code-along",
+              "title": "Practice conditional types",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: types: 3",
+              "starterCode": "// Use conditional types to produce the required output.\n",
+              "expectedOutput": "types: 3",
+              "matchType": "exact",
+              "hints": [
+                "Start from the conditional types contract shown in the teaching example."
+              ],
+              "solution": "type ElementType<T> = T extends readonly (infer U)[] ? U : T;\nconst topic: ElementType<readonly string[]> = \"types\";\nconst count: ElementType<number> = 3;\nconsole.log(`${topic}: ${count}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Choose a resulting type based on a type relationship. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type ElementType<T> = T extends readonly (infer U)[] ? U : T;\nconst topic: ElementType<readonly string[]> = \"types\";\nconst count: ElementType<number> = 3;\nconsole.log(`${topic}: ${count}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use conditional types to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with conditional types.\n",
+          "expectedOutput": "types: 3",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"types: 3\"."
+          ],
+          "solution": "type ElementType<T> = T extends readonly (infer U)[] ? U : T;\nconst topic: ElementType<readonly string[]> = \"types\";\nconst count: ElementType<number> = 3;\nconsole.log(`${topic}: ${count}`);"
+        },
+        {
+          "id": "ts-30-capstone",
+          "title": "5. Capstone: validated exhaustive results",
+          "concept": "capstone: validated exhaustive results",
+          "summary": "Combine validated unknown input, generic results, a discriminated union, and exhaustive handling.",
+          "activities": [
+            {
+              "id": "ts-30-see",
+              "type": "worked-example",
+              "title": "See capstone: validated exhaustive results in context",
+              "instruction": "Read the types and follow how the example uses capstone: validated exhaustive results safely.",
+              "example": "type Result<T> = { kind: \"ok\"; value: T } | { kind: \"error\"; message: string };\ntype Command = { type: \"enroll\"; course: string } | { type: \"progress\"; completed: number };\nfunction isCommand(value: unknown): value is Command {\n  if (typeof value !== \"object\" || value === null || !(\"type\" in value)) return false;\n  if (value.type === \"enroll\") return \"course\" in value && typeof value.course === \"string\";\n  if (value.type === \"progress\") return \"completed\" in value && typeof value.completed === \"number\";\n  return false;\n}\nfunction parseCommand(text: string): Result<Command> {\n  try {\n    const value: unknown = JSON.parse(text);\n    return isCommand(value) ? { kind: \"ok\", value } : { kind: \"error\", message: \"invalid command\" };\n  } catch { return { kind: \"error\", message: \"invalid JSON\" }; }\n}\nfunction assertNever(value: never): never { throw new Error(`Unhandled: ${String(value)}`); }\nfunction run(command: Command): string {\n  switch (command.type) {\n    case \"enroll\": return `Enrolled: ${command.course}`;\n    case \"progress\": return `Completed: ${command.completed}`;\n    default: return assertNever(command);\n  }\n}\nconst result = parseCommand(\"{\\\"type\\\":\\\"progress\\\",\\\"completed\\\":12}\");\nconsole.log(result.kind === \"ok\" ? run(result.value) : `Error: ${result.message}`);"
+            },
+            {
+              "id": "ts-30-predict",
+              "type": "prediction",
+              "title": "Predict the safe result",
+              "question": "What does the completed capstone: validated exhaustive results example print?",
+              "choices": [
+                "Completed: 12",
+                "A type error",
+                "undefined"
+              ],
+              "answer": "Completed: 12",
+              "explanation": "The declared contracts make the operation produce \"Completed: 12\"."
+            },
+            {
+              "id": "ts-30-edit",
+              "type": "edit",
+              "title": "Complete the capstone: validated exhaustive results example",
+              "instruction": "Add the missing capstone: validated exhaustive results declarations and produce the shown output."
+            },
+            {
+              "id": "ts-30-drill",
+              "type": "drill",
+              "title": "Practice capstone: validated exhaustive results",
+              "instruction": "Build the typed example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Completed: 12",
+              "starterCode": "// Use capstone: validated exhaustive results to produce the required output.\n",
+              "expectedOutput": "Completed: 12",
+              "matchType": "exact",
+              "hints": [
+                "Start from the capstone: validated exhaustive results contract shown in the teaching example."
+              ],
+              "solution": "type Result<T> = { kind: \"ok\"; value: T } | { kind: \"error\"; message: string };\ntype Command = { type: \"enroll\"; course: string } | { type: \"progress\"; completed: number };\nfunction isCommand(value: unknown): value is Command {\n  if (typeof value !== \"object\" || value === null || !(\"type\" in value)) return false;\n  if (value.type === \"enroll\") return \"course\" in value && typeof value.course === \"string\";\n  if (value.type === \"progress\") return \"completed\" in value && typeof value.completed === \"number\";\n  return false;\n}\nfunction parseCommand(text: string): Result<Command> {\n  try {\n    const value: unknown = JSON.parse(text);\n    return isCommand(value) ? { kind: \"ok\", value } : { kind: \"error\", message: \"invalid command\" };\n  } catch { return { kind: \"error\", message: \"invalid JSON\" }; }\n}\nfunction assertNever(value: never): never { throw new Error(`Unhandled: ${String(value)}`); }\nfunction run(command: Command): string {\n  switch (command.type) {\n    case \"enroll\": return `Enrolled: ${command.course}`;\n    case \"progress\": return `Completed: ${command.completed}`;\n    default: return assertNever(command);\n  }\n}\nconst result = parseCommand(\"{\\\"type\\\":\\\"progress\\\",\\\"completed\\\":12}\");\nconsole.log(result.kind === \"ok\" ? run(result.value) : `Error: ${result.message}`);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Combine validated unknown input, generic results, a discriminated union, and exhaustive handling. The type checker verifies the contract before execution."
+            },
+            {
+              "type": "code",
+              "text": "type Result<T> = { kind: \"ok\"; value: T } | { kind: \"error\"; message: string };\ntype Command = { type: \"enroll\"; course: string } | { type: \"progress\"; completed: number };\nfunction isCommand(value: unknown): value is Command {\n  if (typeof value !== \"object\" || value === null || !(\"type\" in value)) return false;\n  if (value.type === \"enroll\") return \"course\" in value && typeof value.course === \"string\";\n  if (value.type === \"progress\") return \"completed\" in value && typeof value.completed === \"number\";\n  return false;\n}\nfunction parseCommand(text: string): Result<Command> {\n  try {\n    const value: unknown = JSON.parse(text);\n    return isCommand(value) ? { kind: \"ok\", value } : { kind: \"error\", message: \"invalid command\" };\n  } catch { return { kind: \"error\", message: \"invalid JSON\" }; }\n}\nfunction assertNever(value: never): never { throw new Error(`Unhandled: ${String(value)}`); }\nfunction run(command: Command): string {\n  switch (command.type) {\n    case \"enroll\": return `Enrolled: ${command.course}`;\n    case \"progress\": return `Completed: ${command.completed}`;\n    default: return assertNever(command);\n  }\n}\nconst result = parseCommand(\"{\\\"type\\\":\\\"progress\\\",\\\"completed\\\":12}\");\nconsole.log(result.kind === \"ok\" ? run(result.value) : `Error: ${result.message}`);"
+            },
+            {
+              "type": "note",
+              "text": "Keep runtime checks at uncertain boundaries and preserve precise types inside the program."
+            }
+          ],
+          "task": "Use capstone: validated exhaustive results to implement the example and print the required result.",
+          "starterCode": "// Implement this exercise with capstone: validated exhaustive results.\n",
+          "expectedOutput": "Completed: 12",
+          "matchType": "exact",
+          "hints": [
+            "Model the contract first, then produce \"Completed: 12\"."
+          ],
+          "solution": "type Result<T> = { kind: \"ok\"; value: T } | { kind: \"error\"; message: string };\ntype Command = { type: \"enroll\"; course: string } | { type: \"progress\"; completed: number };\nfunction isCommand(value: unknown): value is Command {\n  if (typeof value !== \"object\" || value === null || !(\"type\" in value)) return false;\n  if (value.type === \"enroll\") return \"course\" in value && typeof value.course === \"string\";\n  if (value.type === \"progress\") return \"completed\" in value && typeof value.completed === \"number\";\n  return false;\n}\nfunction parseCommand(text: string): Result<Command> {\n  try {\n    const value: unknown = JSON.parse(text);\n    return isCommand(value) ? { kind: \"ok\", value } : { kind: \"error\", message: \"invalid command\" };\n  } catch { return { kind: \"error\", message: \"invalid JSON\" }; }\n}\nfunction assertNever(value: never): never { throw new Error(`Unhandled: ${String(value)}`); }\nfunction run(command: Command): string {\n  switch (command.type) {\n    case \"enroll\": return `Enrolled: ${command.course}`;\n    case \"progress\": return `Completed: ${command.completed}`;\n    default: return assertNever(command);\n  }\n}\nconst result = parseCommand(\"{\\\"type\\\":\\\"progress\\\",\\\"completed\\\":12}\");\nconsole.log(result.kind === \"ok\" ? run(result.value) : `Error: ${result.message}`);"
+        }
+      ]
+    }
+  ]
+}
