@@ -31,6 +31,8 @@ export default function TitleBar({
     <div style={styles.titleBar}>
       {/* Left side: workspace panel toggles */}
       <div style={styles.side}>
+        <span style={styles.logo}>⟨/⟩</span>
+        <span style={styles.title}>seec0de beta</span>
         {onToggleExplorer && (
           <ToolBtn
             onClick={onToggleExplorer}
@@ -51,6 +53,10 @@ export default function TitleBar({
             <TermIcon size={14} />
           </ToolBtn>
         )}
+      </div>
+
+      {/* Centre: brand */}
+      <div style={styles.center}>
         {onModeChange && (
           <div data-tour="mode-switch" style={styles.modeSwitch} aria-label="Application mode">
             <button
@@ -86,23 +92,16 @@ export default function TitleBar({
         )}
       </div>
 
-      {/* Centre: brand */}
-      <div style={styles.center}>
-        <span style={styles.logo}>⟨/⟩</span>
-        <span style={styles.title}>seec0de beta</span>
-      </div>
-
       {/* Right side: update pill + settings + profile */}
       <div style={{ ...styles.side, justifyContent: 'flex-end' }}>
         <UpdatePill />
-        {onStartTour && (
-          <ToolBtn
-            onClick={onStartTour}
-            title="Workspace tour"
-            ariaLabel="Start workspace tour"
-          >
-            <CircleHelp size={14} />
-          </ToolBtn>
+        {activeProfile && (
+          <ProfileMenu
+            profile={activeProfile}
+            onSwitchProfile={onSwitchProfile}
+            onAddProfile={onAddProfile}
+            onManageProfile={onManageProfile}
+          />
         )}
         {onOpenSettings && (
           <ToolBtn
@@ -113,13 +112,14 @@ export default function TitleBar({
             <SettingsIcon size={14} />
           </ToolBtn>
         )}
-        {activeProfile && (
-          <ProfileMenu
-            profile={activeProfile}
-            onSwitchProfile={onSwitchProfile}
-            onAddProfile={onAddProfile}
-            onManageProfile={onManageProfile}
-          />
+        {onStartTour && (
+          <ToolBtn
+            onClick={onStartTour}
+            title="Workspace tour"
+            ariaLabel="Start workspace tour"
+          >
+            <CircleHelp size={14} />
+          </ToolBtn>
         )}
       </div>
     </div>
@@ -193,9 +193,9 @@ function ProfileMenu({ profile, onSwitchProfile, onAddProfile, onManageProfile }
             </div>
           </div>
           <div style={styles.menuDivider} />
+          <MenuItem icon={<Pencil size={14} />} label="Manage profile" onClick={() => choose(onManageProfile)} />
           <MenuItem icon={<Users size={14} />} label="Switch profile" onClick={() => choose(onSwitchProfile)} />
           <MenuItem icon={<UserPlus size={14} />} label="Add profile" onClick={() => choose(onAddProfile)} />
-          <MenuItem icon={<Pencil size={14} />} label="Manage profile" onClick={() => choose(onManageProfile)} />
         </div>
       )}
     </div>
