@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   PanelLeft, PanelLeftClose, Terminal as TermIcon,
   Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap, House, CircleHelp,
+  Bell, Clock3,
 } from 'lucide-react';
 import UpdatePill from './UpdatePill';
 import { Avatar } from './ProfileForm';
@@ -24,6 +25,11 @@ export default function TitleBar({
   onSwitchProfile,
   onAddProfile,
   onManageProfile,
+  reminders = [],
+  reminderNow = Date.now(),
+  onDismissReminder,
+  onSnoozeReminder,
+  onContinueReminder,
   mode = 'workspace',
   onModeChange,
 }) {
@@ -95,6 +101,13 @@ export default function TitleBar({
       {/* Right side: update pill + settings + profile */}
       <div style={{ ...styles.side, justifyContent: 'flex-end' }}>
         <UpdatePill />
+        <ReminderMenu
+          reminders={reminders}
+          now={reminderNow}
+          onDismiss={onDismissReminder}
+          onSnooze={onSnoozeReminder}
+          onContinue={onContinueReminder}
+        />
         {activeProfile && (
           <ProfileMenu
             profile={activeProfile}
@@ -124,6 +137,94 @@ export default function TitleBar({
       </div>
     </div>
   );
+}
+
+function ReminderMenu({ reminders, now, onDismiss, onSnooze, onContinue }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const dueCount = reminders.filter((reminder) => new Date(reminder.dueAt).getTime() <= now).length;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDocMouseDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
+    };
+    const onKeyDown = (event) => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDocMouseDown);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} style={styles.reminderWrap}>
+      <button
+        type="button"
+        className="ui-icon-button"
+        onClick={() => setOpen((value) => !value)}
+        title="Learning Pulse reminders"
+        aria-label={`Learning Pulse reminders${reminders.length ? `, ${reminders.length} active` : ''}`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        style={{ ...styles.toggleBtn, ...(open ? styles.toggleBtnActive : {}), position: 'relative' }}
+      >
+        <Bell size={14} />
+        {reminders.length > 0 && (
+          <span style={{ ...styles.reminderBadge, ...(dueCount > 0 ? styles.reminderBadgeDue : {}) }}>
+            {reminders.length > 9 ? '9+' : reminders.length}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <section style={styles.reminderMenu} role="dialog" aria-label="Learning Pulse reminders">
+          <header style={styles.reminderHeader}>
+            <div>
+              <strong style={styles.reminderHeading}>Learning Pulse</strong>
+              <span style={styles.reminderSubheading}>{dueCount > 0 ? `${dueCount} ready to practice` : `${reminders.length} upcoming`}</span>
+            </div>
+          </header>
+          <div style={styles.reminderList}>
+            {reminders.length === 0 ? (
+              <div style={styles.reminderEmpty}>No active reminders. Complete learning work to schedule a short review.</div>
+            ) : reminders.map((reminder) => {
+              const due = new Date(reminder.dueAt).getTime() <= now;
+              return (
+                <article key={reminder.id} style={styles.reminderItem}>
+                  <div style={styles.reminderItemTop}>
+                    <strong style={styles.reminderTitle}>{reminder.title}</strong>
+                    <span style={{ ...styles.reminderDate, ...(due ? styles.reminderDateDue : {}) }}>
+                      {due ? 'Ready now' : formatReminderDate(reminder.dueAt)}
+                    </span>
+                  </div>
+                  <span style={styles.reminderMessage}>{reminder.message}</span>
+                  <div style={styles.reminderActions}>
+                    {reminder.openLearnMode && (
+                      <button type="button" style={styles.reminderPrimary} onClick={() => { setOpen(false); onContinue?.(reminder); }}>
+                        Practice
+                      </button>
+                    )}
+                    <button type="button" style={styles.reminderAction} onClick={() => onSnooze?.(reminder.id, 1)}>
+                      <Clock3 size={11} /> Tomorrow
+                    </button>
+                    <button type="button" style={styles.reminderAction} onClick={() => onDismiss?.(reminder.id)}>Dismiss</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function formatReminderDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Upcoming';
+  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 function ToolBtn({ onClick, active = false, title, ariaLabel, children }) {
@@ -267,6 +368,60 @@ const styles = {
     background: 'var(--bg-tertiary)',
     color: 'var(--text-primary)',
   },
+  reminderWrap: {
+    position: 'relative',
+    display: 'flex',
+    WebkitAppRegion: 'no-drag',
+  },
+  reminderBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -3,
+    minWidth: 14,
+    height: 14,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 3px',
+    border: '1px solid var(--bg-secondary)',
+    borderRadius: 999,
+    background: 'var(--text-muted)',
+    color: 'var(--bg-primary)',
+    fontSize: 8,
+    fontWeight: 800,
+  },
+  reminderBadgeDue: { background: 'var(--accent)', color: 'var(--text-on-accent)' },
+  reminderMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 6px)',
+    right: 0,
+    zIndex: 1000,
+    width: 360,
+    maxHeight: 'min(520px, calc(100vh - 56px))',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius-card)',
+    background: 'var(--bg-elevated)',
+    boxShadow: 'var(--shadow-lg)',
+    WebkitAppRegion: 'no-drag',
+    animation: 'seec0de-pop-in var(--motion-base) var(--ease-out)',
+  },
+  reminderHeader: { padding: '12px 14px', borderBottom: '1px solid var(--border)' },
+  reminderHeading: { display: 'block', color: 'var(--text-primary)', fontSize: 12.5 },
+  reminderSubheading: { display: 'block', marginTop: 2, color: 'var(--text-muted)', fontSize: 10 },
+  reminderList: { minHeight: 0, overflowY: 'auto', padding: 6 },
+  reminderEmpty: { padding: '18px 12px', color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.5, textAlign: 'center' },
+  reminderItem: { padding: '10px', borderBottom: '1px solid var(--border)' },
+  reminderItemTop: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  reminderTitle: { minWidth: 0, color: 'var(--text-primary)', fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  reminderDate: { flexShrink: 0, color: 'var(--text-muted)', fontSize: 9 },
+  reminderDateDue: { color: 'var(--accent)', fontWeight: 700 },
+  reminderMessage: { display: 'block', marginTop: 4, color: 'var(--text-secondary)', fontSize: 10, lineHeight: 1.4 },
+  reminderActions: { display: 'flex', alignItems: 'center', gap: 5, marginTop: 8 },
+  reminderPrimary: { padding: '5px 7px', border: 0, borderRadius: 5, background: 'var(--accent)', color: 'var(--text-on-accent)', fontSize: 9.5, fontWeight: 700 },
+  reminderAction: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 6px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontSize: 9.5 },
   modeSwitch: {
     WebkitAppRegion: 'no-drag',
     display: 'flex',

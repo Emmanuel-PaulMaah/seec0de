@@ -1423,13 +1423,16 @@ const beginExplanationResize = useCallback((event) => {
     if (item) handleSelectLesson(item);
   };
 
+  const activeReminders = useMemo(() => (
+    (settings.learningReminders || [])
+      .filter((reminder) => !reminder.dismissedAt)
+      .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())
+  ), [settings.learningReminders]);
   const dueReminders = useMemo(() => (
     settings.practiceRemindersEnabled
-      ? (settings.learningReminders || []).filter((reminder) => (
-        !reminder.dismissedAt && new Date(reminder.dueAt).getTime() <= reminderClock
-      ))
+      ? activeReminders.filter((reminder) => new Date(reminder.dueAt).getTime() <= reminderClock)
       : []
-  ), [settings.practiceRemindersEnabled, settings.learningReminders, reminderClock]);
+  ), [settings.practiceRemindersEnabled, activeReminders, reminderClock]);
 
   useEffect(() => {
     if (!settings.practiceNotificationsEnabled || typeof window.Notification === 'undefined' || window.Notification.permission !== 'granted') return;
@@ -1460,6 +1463,11 @@ const beginExplanationResize = useCallback((event) => {
         onSwitchProfile={handleSwitchProfile}
         onAddProfile={handleAddProfile}
         onManageProfile={() => setShowProfileManager(true)}
+        reminders={activeReminders}
+        reminderNow={reminderClock}
+        onDismissReminder={handleDismissReminder}
+        onSnoozeReminder={handleSnoozeReminder}
+        onContinueReminder={handleContinueLearningReminder}
         mode={showHome ? 'home' : learnMode ? 'learn' : 'workspace'}
         onModeChange={handleModeChange}
       />
