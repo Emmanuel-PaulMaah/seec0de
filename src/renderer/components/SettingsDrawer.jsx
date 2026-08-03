@@ -3,7 +3,7 @@ import {
   X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
-  Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard,
+  Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
@@ -52,6 +52,7 @@ export default function SettingsDrawer({
   const [hasKey, setHasKey]     = useState(false);
   const [showKey, setShowKey]   = useState(false);
   const [keySaved, setKeySaved] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState(() => getNotificationPermission());
   const update = useUpdateStatus();
 
   // Placeholder shown when a key exists. Never saved — see handleSaveKey.
@@ -62,6 +63,7 @@ export default function SettingsDrawer({
     if (open) {
       setSettings(loadSettings());
       setKeySaved(false);
+      setNotificationPermission(getNotificationPermission());
       window.seecode.ai.hasKey().then((exists) => {
         setHasKey(exists);
         setApiKey(exists ? KEY_MASK : '');
@@ -135,6 +137,17 @@ export default function SettingsDrawer({
     onRerunOnboarding?.();
   };
 
+  const handleDesktopNotifications = async () => {
+    if (notificationPermission === 'unsupported' || notificationPermission === 'denied') return;
+    if (notificationPermission === 'granted') {
+      patch({ practiceNotificationsEnabled: !settings.practiceNotificationsEnabled });
+      return;
+    }
+    const permission = await window.Notification.requestPermission();
+    setNotificationPermission(permission);
+    patch({ practiceNotificationsEnabled: permission === 'granted' });
+  };
+
   if (!open) return null;
 
   return (
@@ -190,6 +203,43 @@ export default function SettingsDrawer({
                   : 'supported'}
                 onChange={(guidanceLevel) => patch({ guidanceLevel, guidanceSuccessStreak: 0 })}
               />
+            </Field>
+          </Section>
+
+          <Section icon={<Bell size={13} />} title="Practice reminders">
+            <ToggleRow
+              icon={<Bell size={13} />}
+              label="Learning Pulse reminders"
+              hint="Show a quiet practice bar when completed learning work is ready to revisit."
+              checked={settings.practiceRemindersEnabled}
+              onChange={(checked) => patch({ practiceRemindersEnabled: checked })}
+            />
+            <Field label="Reminder time" hint="New reminders and postponed practice will appear at this local time.">
+              <input
+                type="time"
+                value={settings.practiceReminderTime || '18:00'}
+                onChange={(event) => patch({ practiceReminderTime: event.target.value || '18:00' })}
+                disabled={!settings.practiceRemindersEnabled}
+                style={{ ...styles.input, ...styles.timeInput, ...(!settings.practiceRemindersEnabled ? styles.disabled : {}) }}
+              />
+            </Field>
+            <Field label="Desktop notifications" hint={notificationPermissionHint(notificationPermission)}>
+              <button
+                type="button"
+                style={{ ...styles.ghostBtn, alignSelf: 'flex-start', ...((notificationPermission === 'unsupported' || notificationPermission === 'denied') ? styles.disabled : {}) }}
+                disabled={notificationPermission === 'unsupported' || notificationPermission === 'denied'}
+                onClick={handleDesktopNotifications}
+              >
+                {notificationPermission === 'granted' && settings.practiceNotificationsEnabled
+                  ? 'Turn off desktop notifications'
+                  : notificationPermission === 'granted'
+                    ? 'Turn on desktop notifications'
+                    : notificationPermission === 'denied'
+                      ? 'Permission blocked'
+                      : notificationPermission === 'unsupported'
+                        ? 'Not supported'
+                        : 'Allow notifications'}
+              </button>
             </Field>
           </Section>
 
@@ -620,6 +670,19 @@ function Field({ label, hint, children }) {
       {children}
     </div>
   );
+}
+
+function getNotificationPermission() {
+  return typeof window !== 'undefined' && 'Notification' in window
+    ? window.Notification.permission
+    : 'unsupported';
+}
+
+function notificationPermissionHint(permission) {
+  if (permission === 'granted') return 'Permission granted. Choose whether seec0de may notify you outside the app.';
+  if (permission === 'denied') return 'Notifications are blocked by the system. Re-enable them in your operating system settings.';
+  if (permission === 'unsupported') return 'Desktop notifications are not available on this system.';
+  return 'Optional. seec0de asks your operating system only after you choose Allow.';
 }
 
 const GUIDANCE_LEVELS = ['supported', 'guided', 'independent'];
@@ -1285,6 +1348,7 @@ const styles = {
     outline: 'none',
     fontFamily: '"JetBrains Mono", Consolas, monospace',
   },
+  timeInput: { width: 132, flex: 'none', colorScheme: 'dark' },
 
   iconBtn: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

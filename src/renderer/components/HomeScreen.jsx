@@ -1,15 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, Bell, Code2, GraduationCap, Image, Sparkles } from 'lucide-react';
+import { ArrowRight, Code2, GraduationCap, Image, Sparkles } from 'lucide-react';
 
 export default function HomeScreen({
   username,
   hasActiveLesson,
   postcardCount = 0,
-  dueReminderCount = 0,
   onOpenWorkspace,
   onOpenLearnMode,
   onOpenPostcards,
-  onOpenPulse,
 }) {
   const headingRef = useRef(null);
 
@@ -62,15 +60,6 @@ export default function HomeScreen({
             <ArrowRight size={17} style={styles.arrow} />
           </button>
 
-          <button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenPulse}>
-            <span style={{ ...styles.cardIcon, ...styles.pulseIcon }}><Bell size={18} /></span>
-            <span style={styles.cardCopy}>
-              <span style={styles.cardEyebrow}>Gentle review</span>
-              <strong style={styles.cardTitle}>Learning Pulse</strong>
-              <span style={styles.cardText}>{dueReminderCount > 0 ? `${dueReminderCount} ready for a short review.` : 'Spaced reminders, bundled without pressure.'}</span>
-            </span>
-            <ArrowRight size={17} style={styles.arrow} />
-          </button>
         </div>
 
         <div style={styles.futureLine}>
@@ -176,7 +165,6 @@ const styles = {
     color: 'var(--accent)',
   },
   postcardIcon: { color: 'var(--string)', background: 'color-mix(in srgb, var(--string) 14%, transparent)' },
-  pulseIcon: { color: 'var(--algorithm)', background: 'var(--algorithm-soft)' },
   cardCopy: {
     minWidth: 0,
     display: 'flex',

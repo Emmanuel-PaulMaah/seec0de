@@ -91,6 +91,9 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   // Small, learner-authored portfolio artifacts and gentle local review cues.
   codePostcards:       [],
   learningReminders:   [],
+  practiceRemindersEnabled: true,
+  practiceReminderTime: '18:00',
+  practiceNotificationsEnabled: false,
   // Learn Mode is optional and profile-specific. The session stores only
   // resumable lesson state; transient runner output is intentionally omitted.
   learnMode:           false,

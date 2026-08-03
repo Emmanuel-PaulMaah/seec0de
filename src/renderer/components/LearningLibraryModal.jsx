@@ -1,47 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Bell, CalendarClock, Check, Clock3, Download, Image, Plus, Trash2, X,
+  CalendarClock, Check, Download, Image, Plus, Trash2, X,
 } from 'lucide-react';
 
 export default function LearningLibraryModal({
   open,
-  initialView = 'postcards',
   postcards = [],
-  reminders = [],
   codeCandidate,
   onClose,
   onCreatePostcard,
   onDeletePostcard,
   onSchedulePostcard,
-  onDismissReminder,
-  onSnoozeReminder,
-  onContinueLearning,
 }) {
   const titleRef = useRef(null);
-  const [view, setView] = useState(initialView);
   const [title, setTitle] = useState('');
   const [explanation, setExplanation] = useState('');
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!open) return undefined;
-    setView(initialView);
     titleRef.current?.focus();
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onClose?.();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, initialView, onClose]);
+  }, [open, onClose]);
 
   if (!open) return null;
 
   const canCreate = !!codeCandidate?.code?.trim() && !!title.trim() && !!explanation.trim();
-  const activeReminders = reminders.filter((reminder) => !reminder.dismissedAt);
-  const now = Date.now();
-  const due = activeReminders.filter((reminder) => new Date(reminder.dueAt).getTime() <= now);
-  const upcoming = activeReminders.filter((reminder) => new Date(reminder.dueAt).getTime() > now);
-
   const createPostcard = () => {
     if (!canCreate) return;
     onCreatePostcard?.({ title: title.trim(), explanation: explanation.trim() });
@@ -58,24 +46,14 @@ export default function LearningLibraryModal({
           <div>
             <div style={styles.kicker}>Private · stored on this device</div>
             <h2 ref={titleRef} tabIndex={-1} id="learning-library-title" style={styles.title}>
-              {view === 'postcards' ? 'Code postcards' : 'Learning pulse'}
+              Code postcards
             </h2>
           </div>
           <button type="button" style={styles.iconButton} onClick={onClose} aria-label="Close"><X size={16} /></button>
         </header>
 
-        <div style={styles.tabs} role="tablist" aria-label="Learning library">
-          <button type="button" role="tab" aria-selected={view === 'postcards'} style={{ ...styles.tab, ...(view === 'postcards' ? styles.tabActive : {}) }} onClick={() => setView('postcards')}>
-            <Image size={13} /> Postcards <span style={styles.count}>{postcards.length}</span>
-          </button>
-          <button type="button" role="tab" aria-selected={view === 'pulse'} style={{ ...styles.tab, ...(view === 'pulse' ? styles.tabActive : {}) }} onClick={() => setView('pulse')}>
-            <Bell size={13} /> Pulse {due.length > 0 && <span style={styles.dueCount}>{due.length}</span>}
-          </button>
-        </div>
-
         <div style={styles.body}>
-          {view === 'postcards' ? (
-            <>
+          <>
               <section style={styles.createCard}>
                 <div style={styles.sectionHeading}><Plus size={13} /> Make a postcard from the current editor</div>
                 {codeCandidate?.code?.trim() ? (
@@ -112,43 +90,10 @@ export default function LearningLibraryModal({
                   </article>
                 ))}
               </div>
-            </>
-          ) : (
-            <div style={styles.list}>
-              <p style={styles.pulseIntro}>A quiet inbox for spaced review. Completing learning work schedules one local reminder for tomorrow; you can dismiss or postpone it without penalty.</p>
-              {due.length === 0 && upcoming.length === 0 && <EmptyState icon={<Bell size={18} />} title="Nothing waiting" text="Complete a lesson, exercise, or project checkpoint and seec0de will suggest a short review tomorrow." />}
-              {due.length > 0 && <ReminderGroup title="Ready to review" reminders={due} due onDismiss={onDismissReminder} onSnooze={onSnoozeReminder} onContinue={onContinueLearning} />}
-              {upcoming.length > 0 && <ReminderGroup title="Coming up" reminders={upcoming} onDismiss={onDismissReminder} onSnooze={onSnoozeReminder} onContinue={onContinueLearning} />}
-            </div>
-          )}
+          </>
         </div>
       </section>
     </div>
-  );
-}
-
-function ReminderGroup({ title, reminders, due, onDismiss, onSnooze, onContinue }) {
-  return (
-    <section>
-      <div style={styles.groupTitle}>{title}</div>
-      <div style={styles.reminderList}>
-        {reminders.map((reminder) => (
-          <article key={reminder.id} style={styles.reminder}>
-            <span style={{ ...styles.reminderIcon, ...(due ? styles.reminderIconDue : {}) }}><Clock3 size={14} /></span>
-            <div style={styles.reminderCopy}>
-              <strong style={styles.reminderTitle}>{reminder.title}</strong>
-              <span style={styles.reminderText}>{reminder.message || 'Try to rebuild or explain this without looking first.'}</span>
-              <time style={styles.reminderDate}>{due ? 'Ready now' : `Due ${formatDate(reminder.dueAt)}`}</time>
-            </div>
-            <div style={styles.reminderActions}>
-              {reminder.openLearnMode && <button type="button" style={styles.actionButton} onClick={() => onContinue?.(reminder)}>Open Learn Mode</button>}
-              <button type="button" style={styles.actionButton} onClick={() => onSnooze?.(reminder.id, 1)}>Tomorrow</button>
-              <button type="button" style={styles.actionButton} onClick={() => onDismiss?.(reminder.id)}>Dismiss</button>
-            </div>
-          </article>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -184,11 +129,6 @@ const styles = {
   kicker: { color: 'var(--accent)', fontSize: 9, fontWeight: 700, letterSpacing: 1.1, textTransform: 'uppercase' },
   title: { margin: '5px 0 0', color: 'var(--text-primary)', fontSize: 21, letterSpacing: '-0.025em' },
   iconButton: { display: 'inline-flex', padding: 7, border: '1px solid var(--border)', borderRadius: 7, background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' },
-  tabs: { display: 'flex', gap: 5, padding: '10px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' },
-  tab: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 10px', border: '1px solid transparent', borderRadius: 7, background: 'transparent', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600 },
-  tabActive: { borderColor: 'var(--border-strong)', background: 'var(--bg-elevated)', color: 'var(--text-primary)' },
-  count: { color: 'var(--text-muted)', fontSize: 9 },
-  dueCount: { minWidth: 16, padding: '1px 4px', borderRadius: 999, background: 'var(--accent)', color: 'var(--text-on-accent)', fontSize: 9, textAlign: 'center' },
   body: { minHeight: 0, overflowY: 'auto', padding: 20 },
   createCard: { display: 'flex', flexDirection: 'column', gap: 9, padding: 15, border: '1px solid var(--border-strong)', borderRadius: 10, background: 'var(--bg-secondary)' },
   sectionHeading: { display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-primary)', fontSize: 12, fontWeight: 700 },
@@ -207,17 +147,6 @@ const styles = {
   actions: { display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 },
   actionButton: { display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 7px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', fontSize: 9.5 },
   dangerButton: { marginLeft: 'auto', display: 'inline-flex', padding: 6, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', color: 'var(--danger)' },
-  pulseIntro: { margin: 0, color: 'var(--text-secondary)', fontSize: 11, lineHeight: 1.55 },
-  groupTitle: { margin: '14px 0 7px', color: 'var(--text-muted)', fontSize: 9.5, fontWeight: 700, letterSpacing: 0.9, textTransform: 'uppercase' },
-  reminderList: { display: 'flex', flexDirection: 'column', gap: 7 },
-  reminder: { display: 'grid', gridTemplateColumns: '34px 1fr', gap: 10, padding: 12, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-secondary)' },
-  reminderIcon: { gridRow: '1 / span 2', width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, background: 'var(--bg-tertiary)', color: 'var(--text-muted)' },
-  reminderIconDue: { background: 'var(--accent-soft)', color: 'var(--accent)' },
-  reminderCopy: { display: 'flex', minWidth: 0, flexDirection: 'column', gap: 3 },
-  reminderTitle: { color: 'var(--text-primary)', fontSize: 11.5 },
-  reminderText: { color: 'var(--text-secondary)', fontSize: 10, lineHeight: 1.4 },
-  reminderDate: { color: 'var(--text-muted)', fontSize: 9 },
-  reminderActions: { gridColumn: 2, display: 'flex', gap: 5, flexWrap: 'wrap' },
   empty: { display: 'flex', gap: 11, alignItems: 'flex-start', padding: 17, border: '1px dashed var(--border-strong)', borderRadius: 9, background: 'var(--bg-secondary)' },
   emptyIcon: { color: 'var(--text-muted)' },
   emptyTitle: { color: 'var(--text-primary)', fontSize: 11.5 },

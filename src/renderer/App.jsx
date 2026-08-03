@@ -13,6 +13,7 @@ import ProfileGate from './components/ProfileGate';
 import HomeScreen from './components/HomeScreen';
 import LearnHomeScreen from './components/LearnHomeScreen';
 import LearningLibraryModal from './components/LearningLibraryModal';
+import LearningPulseBar from './components/LearningPulseBar';
 import WorkspaceTour from './components/WorkspaceTour';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
 import { explainCode } from './engine/codeExplainer';
@@ -68,12 +69,20 @@ function learningSectionFor(item) {
   return 'courses';
 }
 
-function scheduleLearningReminder(reminders = [], item, days = 1) {
+function reminderDueAt(days = 1, time = '18:00') {
+  const [hours, minutes] = /^\d{2}:\d{2}$/.test(time) ? time.split(':').map(Number) : [18, 0];
+  const dueAt = new Date();
+  dueAt.setDate(dueAt.getDate() + days);
+  dueAt.setHours(hours, minutes, 0, 0);
+  return dueAt.toISOString();
+}
+
+function scheduleLearningReminder(reminders = [], item, days = 1, time = '18:00') {
   if (!item?.id || !item?.title) return reminders;
   const sourceId = item.kind === 'postcard' ? `postcard:${item.id}` : `learning:${item.id}`;
   const existing = reminders.find((reminder) => reminder.sourceId === sourceId && !reminder.dismissedAt);
   if (existing) return reminders;
-  const dueAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  const dueAt = reminderDueAt(days, time);
   return [...reminders, {
     id: `${sourceId}:${Date.now()}`,
     sourceId,
@@ -152,6 +161,8 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [learningLibraryView, setLearningLibraryView] = useState(null);
+  const [reminderClock, setReminderClock] = useState(() => Date.now());
+  const notifiedRemindersRef = useRef(new Set());
   const [showWorkspaceTour, setShowWorkspaceTour] = useState(false);
   const tourLayoutRef = useRef(null);
   const [showHome, setShowHome] = useState(true);
@@ -172,6 +183,15 @@ export default function App() {
     const theme = settings.theme === 'seec0de-green' ? 'seec0de-green' : 'seec0de-dark';
     document.documentElement.dataset.theme = theme;
   }, [settings.theme]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setReminderClock(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    notifiedRemindersRef.current.clear();
+  }, [settings.activeProfileId]);
 
   // Local profiles ("accounts") + which auth surface is showing.
   //   onboardingMode 'setup'       — create/edit the first (active) profile.
@@ -337,7 +357,9 @@ export default function App() {
         ...(settings.projectReflections || {}),
         [activeLesson.id]: activeReflection.trim(),
       },
-      learningReminders: scheduleLearningReminder(settings.learningReminders, activeLesson),
+      learningReminders: settings.practiceRemindersEnabled
+        ? scheduleLearningReminder(settings.learningReminders, activeLesson, 1, settings.practiceReminderTime)
+        : settings.learningReminders,
     });
     setSettings(nextSettings);
     setActiveReflection(activeReflection.trim());
@@ -974,7 +996,9 @@ export default function App() {
           const nextSettings = updateSettings({
             completedLessons: next,
             guidanceSuccessStreak: nextStreak,
-            learningReminders: scheduleLearningReminder(settings.learningReminders, activeLesson),
+            learningReminders: settings.practiceRemindersEnabled
+              ? scheduleLearningReminder(settings.learningReminders, activeLesson, 1, settings.practiceReminderTime)
+              : settings.learningReminders,
           });
           setSettings(nextSettings);
         }
@@ -1362,7 +1386,9 @@ const beginExplanationResize = useCallback((event) => {
 
   const handleSchedulePostcard = (postcard, days) => {
     saveLearningLibrary({
-      learningReminders: scheduleLearningReminder(settings.learningReminders, { ...postcard, kind: 'postcard' }, days),
+      learningReminders: settings.practiceRemindersEnabled
+        ? scheduleLearningReminder(settings.learningReminders, { ...postcard, kind: 'postcard' }, days, settings.practiceReminderTime)
+        : settings.learningReminders,
     });
   };
 
@@ -1375,7 +1401,7 @@ const beginExplanationResize = useCallback((event) => {
   };
 
   const handleSnoozeReminder = (reminderId, days) => {
-    const dueAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const dueAt = reminderDueAt(days, settings.practiceReminderTime);
     saveLearningLibrary({
       learningReminders: (settings.learningReminders || []).map((reminder) => reminder.id === reminderId
         ? { ...reminder, dueAt }
@@ -1397,9 +1423,29 @@ const beginExplanationResize = useCallback((event) => {
     if (item) handleSelectLesson(item);
   };
 
-  const dueReminderCount = (settings.learningReminders || []).filter((reminder) => (
-    !reminder.dismissedAt && new Date(reminder.dueAt).getTime() <= Date.now()
-  )).length;
+  const dueReminders = useMemo(() => (
+    settings.practiceRemindersEnabled
+      ? (settings.learningReminders || []).filter((reminder) => (
+        !reminder.dismissedAt && new Date(reminder.dueAt).getTime() <= reminderClock
+      ))
+      : []
+  ), [settings.practiceRemindersEnabled, settings.learningReminders, reminderClock]);
+
+  useEffect(() => {
+    if (!settings.practiceNotificationsEnabled || typeof window.Notification === 'undefined' || window.Notification.permission !== 'granted') return;
+    dueReminders.forEach((reminder) => {
+      const notificationKey = `${reminder.id}:${reminder.dueAt}`;
+      if (notifiedRemindersRef.current.has(notificationKey)) return;
+      notifiedRemindersRef.current.add(notificationKey);
+      const notification = new window.Notification('Learning Pulse', {
+        body: `${reminder.title} is ready for a short practice review.`,
+      });
+      notification.onclick = () => {
+        window.focus();
+        if (reminder.openLearnMode) handleContinueLearningReminder(reminder);
+      };
+    });
+  }, [dueReminders, settings.practiceNotificationsEnabled]);
 
   return (
     <div style={styles.container}>
@@ -1418,16 +1464,21 @@ const beginExplanationResize = useCallback((event) => {
         onModeChange={handleModeChange}
       />
 
+      <LearningPulseBar
+        reminders={dueReminders}
+        onDismiss={handleDismissReminder}
+        onSnooze={handleSnoozeReminder}
+        onContinue={handleContinueLearningReminder}
+      />
+
       {showHome ? (
         <HomeScreen
           username={settings.username}
           hasActiveLesson={!!activeLesson}
           postcardCount={(settings.codePostcards || []).length}
-          dueReminderCount={dueReminderCount}
           onOpenWorkspace={() => handleModeChange('workspace')}
           onOpenLearnMode={() => handleModeChange('learn')}
           onOpenPostcards={() => setLearningLibraryView('postcards')}
-          onOpenPulse={() => setLearningLibraryView('pulse')}
         />
       ) : learnMode && !activeLesson ? (
         <LearnHomeScreen
@@ -1702,9 +1753,7 @@ const beginExplanationResize = useCallback((event) => {
 
       <LearningLibraryModal
         open={!!learningLibraryView}
-        initialView={learningLibraryView || 'postcards'}
         postcards={settings.codePostcards || []}
-        reminders={settings.learningReminders || []}
         codeCandidate={{
           ...livePreview,
           output: runnerOutput?.stdout?.trim() || '',
@@ -1713,9 +1762,6 @@ const beginExplanationResize = useCallback((event) => {
         onCreatePostcard={handleCreatePostcard}
         onDeletePostcard={handleDeletePostcard}
         onSchedulePostcard={handleSchedulePostcard}
-        onDismissReminder={handleDismissReminder}
-        onSnoozeReminder={handleSnoozeReminder}
-        onContinueLearning={handleContinueLearningReminder}
       />
 
       {/* Auth gate — the "who's learning?" picker + PIN unlock. Sits above
