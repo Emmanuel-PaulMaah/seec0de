@@ -1,134 +1,115 @@
 # ⟨/⟩ seec0de
 
-**write natural instructions, see pseudocode & code. select code, see explanations. run it. all in one window.**
+**Write natural instructions, see pseudocode & code. Select code, see explanations. Run it. All in one window.**
 
-seec0de is a desktop learning tool for people who want to understand programming — not just copy it. type what you want in plain english & instantly see pseudocode & real code side by side in up to 8 languages. select any chunk of code & get a plain-language breakdown of every line. run javascript, typescript, python, c & c++ right inside the app. every keyword is highlighted & linked to a built-in glossary so you can learn as you go.
+`seec0de` is a modern desktop learning environment and hybrid IDE built to bridge the gap between natural language instructions and real programming code. Designed for students, self-taught developers, and multi-language programmers, `seec0de` allows you to describe what you want to build in plain English and instantly view the logic represented in clear pseudocode alongside real code across up to 8 programming languages.
 
 ---
 
-## quick start
+## ⚡ Quick Start
 
 ```bash
+# Clone the repository and install dependencies
 npm install
+
+# Start the application in development mode
 npm run dev
 ```
 
-that's it. the app opens in its own window.
+The application will launch in its own Electron window with Webpack Hot Module Replacement (HMR) enabled.
 
 ---
 
-## what you can do
+## 🎯 What You Can Do
 
-one workspace, up to five columns: **file explorer · instruction · code · live preview · explanation**, with an explained terminal docked at the bottom. each side panel can be collapsed to a 32 px rail so the editor + preview can claim the screen when you want them to.
+`seec0de` features a flexible, multi-column workspace layout (**File Explorer · Instruction / Learn Panel · Code Panel · Live Preview / Console · Explanation Sidebar**) with an **Explained Terminal** docked at the bottom. Each side panel can be resized or collapsed into a compact 32px rail.
 
-### ⟨/⟩ describe → see code
+### 1. Describe → See Code (Dual-Engine Generation)
+- **Natural Language Prompts:** Type what you want to build (e.g., *"sort a list of numbers"*, *"fizzbuzz from 1 to 20"*, *"check if a word is a palindrome"*, *"read a csv file & print top 5 averages"*), or pick from randomized suggestion chips (shuffle).
+- **Dual-Engine AI & Offline Fallback:** Click **Generate**. If an API key is configured in **Settings → AI** and you are online, `seec0de` leverages Google Gemini API for context-aware code generation. If offline or without an API key, it seamlessly switches to the built-in offline template engine covering common routines (sorting, file I/O, string manipulation, HTTP requests, loops, classes, and algorithms).
+- **Multi-Language Side-by-Side View:** View generated results across up to 8 languages (Python, JavaScript, TypeScript, Java, C++, C, C#, Go, Rust) plus a standardized Pseudocode tab for conceptual learning.
+- **Direct Workspace Integration:** When a folder is open in the File Explorer, clicking **Generate** automatically writes the code directly into scratch files (`scratch-1.py`, `scratch-2.js`, etc.) within your workspace.
 
-1. during onboarding, pick the language you actually want to build in (your "practical language") + a couple of comparison languages. you can change these any time from **Settings → Languages**.
-2. type what you want in plain english, or tap one of the suggestion chips (**Try one of these**, click 🔀 to shuffle) — examples:
-   - *"sort a list of numbers"*
-   - *"fizzbuzz from 1 to 20"*
-   - *"check if a word is a palindrome"*
-   - *"read a csv of student grades & print the top 5 averages"*
-3. hit **Generate**. *one button.* if you've added a free [Google AI Studio](https://aistudio.google.com) gemini key in **Settings → AI** and you're online, it'll use the AI for a polished, real-world answer. if not (or if the AI call fails), it silently falls back to the built-in offline template generator so you always get something runnable. no "which button do i click?" moment.
-4. flip through the tabs in the middle panel to see pseudocode + each language side by side, all with proper syntax colouring. the pseudocode tab is the lesson — every language tab is the same idea in different syntax.
-5. **with a folder open**, Generate writes the result straight to a real `scratch-1.py` / `scratch-2.js` / … file in your folder and opens it as a tab. no in-memory tabs competing with on-disk files.
+### 2. Select Code → Contextual Explanations
+- **Line-by-Line Breakdown:** Highlight any code snippet in the editor to reveal the **Explain** floating action button. Clicking it generates a line-by-line explanation in the right-hand **Explanation Sidebar**.
+- **Single-Open Accordion:** Explanations load in a clean accordion interface where opening a line automatically collapses previous lines, letting you digest code line by line.
+- **Contextual & Offline Modes:** Uses Gemini AI for personalized explanations referencing your exact variable and function names, falling back to an offline glossary explainer when offline.
 
-things seec0de's offline generator recognises out of the box (no API key needed):
+### 3. Sandboxed Multi-Language Code Runner
+- **In-App Execution:** Execute JavaScript (Node.js), TypeScript (tsx / ts-node), Python, C (GCC / Clang / MSVC), and C++ directly within the application.
+- **Console Integration:** Execution output (stdout / stderr) streams directly to the **Console** tab in the Live Preview panel.
+- **Toolchain Auto-Discovery:** `seec0de` checks your system `PATH` on launch for installed compilers and interpreters. Missing tools trigger a friendly setup guide under **Settings → Toolchains**.
 
-| if you mention… | you get |
-|---|---|
-| hello world, print, greet | a hello world program |
-| fizzbuzz | the classic 1-to-N fizzbuzz |
-| palindrome | a palindrome check |
-| prime, sieve | a prime sieve up to N |
-| reverse | reverse a string |
-| word count, frequency | a word-frequency counter |
-| sort, order, arrange | a sorting routine |
-| loop, iterate, repeat | different kinds of loops |
-| function, method, define | example functions |
-| class, object, inheritance | a class hierarchy |
-| file, read file, write file | file reading & writing |
-| array, list, collection, map | filter / map / reduce examples |
-| api, http, fetch, request | HTTP requests with error handling |
-| factorial, fibonacci | math routines |
+### 4. Live HTML/CSS Preview
+- **Real-Time Web Rendering:** Renders HTML and linked CSS in a sandboxed iframe with a ~250ms debounced live update as you type.
+- **Console Toggle:** Quickly switch between live web previews and code execution outputs.
 
-anything else gives you a clean skeleton with your instruction as a comment.
+### 5. Plain-English Error Translation
+- **Human-Readable Diagnostics:** When code execution fails, `seec0de` intercepts the raw `stderr` and displays a clear error card containing a plain-English explanation and 2–5 actionable fixes.
+- **Offline & AI-Powered:** Covers common syntax and runtime errors offline across JS, TS, Python, C, and C++. Recognizes custom variable names and falls back to an AI error translator when connected.
 
-### ▶ Run — execute it where it lives
+### 6. Learn Mode & Interactive Drills
+- **Curated Track & Courses:** Switch the Instruction Panel from *Build* to *Learn Mode* to access curated lessons, practice exercises, and multi-checkpoint capstone projects.
+- **Interactive Exercise Formats:** Includes Code-alongs, Retrieval drills, Fix drills, Parsons problems (line reordering), Faded examples (fill-in-the-blank), Output-first builds, and Micro-capstones.
+- **Auto-Verification & Reminders:** Automatically verifies output against success criteria upon running code, tracks completion across user profiles, and schedules spaced learning reminders.
 
-the **Run** button in the editor toolbar compiles + executes the active code in a sandboxed temp directory & pushes the result into the **Console** tab of the Live Preview panel. supports javascript (node), typescript (tsx / ts-node), python, c (gcc/clang/cl), c++. missing toolchains return a one-line install hint instead of crashing; **Settings → Toolchains** probes your PATH on open and gives you a one-click install for whichever languages you're missing.
+### 7. Explained Terminal
+- **Command Explainer Card:** Integrated collapsible bottom terminal (`Ctrl + ~`) that intercepts shell commands and generates 1-line plain-English explanations alongside output, exit codes, and execution duration.
+- **Wide Tool Support:** Explains commands for Git, npm, pnpm, yarn, Docker, Node.js, Python, Rust (Cargo), Go, .NET, and PowerShell cmdlets.
+- **Smart Client Handling:** Client-side handling for `cd` and `clear` preserves working directory state between commands, with a 50-item persisted command history buffer.
 
-> **Console is Run-only.** typing into the editor does not produce console entries. Run is the single, explicit gesture that produces output — same model for every language including javascript.
+### 8. Keyword Glossary & Typography
+- **Interactive Tooltips:** Click any syntax-highlighted keyword in the Monaco Editor to view a definition and short code snippet (covers 15–30 keywords per language, including `rust match`, `go defer`, `python with`, `typescript interface`).
+- **Font Controls:** On-screen `A-` / `A+` buttons and keyboard shortcuts (`Ctrl/Cmd +` / `-` / `0`) scale Monaco Editor typography smoothly between 10px and 28px.
 
-### 🌐 Live Preview — html renders as you type
-
-the right-side **Live Preview** panel renders **HTML** live into a sandboxed iframe with a ~250ms debounce. every other previewable language (JS, Python, C, C++) shows a "press Run, see output in Console" placeholder so output is always a deliberate gesture. CSS pairs with HTML — open an `.html` file that links to your stylesheet & watch it apply.
-
-### 🔍 select code → see explanations
-
-select any chunk of code in the editor & a floating **Explain** button appears. click it & a line-by-line breakdown lands in the right-side **Explanation** panel.
-
-**single Explain button**, same auto-fallback as Generate: when you're online + have an API key, it uses the AI for a contextual explanation that references your actual function & variable names. otherwise it falls back to the built-in glossary explainer. you don't have to decide.
-
-the line-by-line breakdown is a **single-open accordion** — every line starts collapsed; click one to expand it, & whichever line was previously open auto-closes. lets you focus on one line at a time instead of getting hit with the whole explanation at once.
-
-### 🩹 errors get translated
-
-when Run fails, the **Console** tab stacks a small "what does that mean?" card above the raw stderr — title, plain-english explanation, and 2–5 concrete fixes that reference your actual variable/function names. covers the common beginner errors offline (regex-matched against the stderr you actually hit, no AI needed) across python, javascript, typescript, c, and c++. anything the offline translator doesn't recognise falls through to an **AI-translated** card with the same shape (small "AI" badge so you know the source), when you have a key + connection. the raw stderr stays visible underneath either way.
-
-### 🎓 lessons mode
-
-the instruction panel has a **Build / Lessons** tab strip. *Build* is the existing "write what you want" surface. *Lessons* opens a curated track of starter exercises — pick one, the instruction fills in, an active-lesson card shows the goal + exercise, and the lesson marks itself complete the first time you Run successfully. completion sticks across launches.
-
-### 🅰 editor font controls
-
-the editor toolbar has `A−` / size / `A+` buttons (and `Ctrl/⌘ +` / `Ctrl/⌘ −` / `Ctrl/⌘ 0` shortcuts) to scale Monaco between 10 px and 28 px. preference persists per-install.
-
-### 🔍 keyword glossary
-
-click any highlighted keyword in the code to see:
-
-- a clear **definition** for that language
-- a tiny **example** showing it in use
-
-covers 15–30 keywords per language, including the language-specific ones (rust's `match`, go's `defer`, python's `with`, typescript's `interface` / `keyof` / `readonly`, & more). works in both read-only & editable mode.
-
-### 🗂 file explorer + multi-file editing
-
-toggle the file explorer from the title bar to open any folder. files open as Monaco tabs alongside the pseudocode/language tabs; edits are **auto-saved ~600ms after your last keystroke** so you never have to think about Ctrl+S (it still works if you want it). dirty `•` indicators show the round-trip until the save lands.
-
-### ⌨ explained terminal
-
-bottom-of-window collapsible terminal (`Ctrl + ``) that turns every command into a card with **a one-line explanation, stdout/stderr, exit status, and duration.** built-in explanations cover filesystem builtins, npm / pnpm / yarn, git, docker, node, python, go, cargo, dotnet, and PowerShell `Verb-Noun` cmdlets. `cd` and `clear` are handled client-side so the cwd persists across commands. up/down arrows walk the prompt history (last 50, persisted).
+### 9. User Profiles & Multi-File Workspace
+- **Profile Manager:** Manage multiple user profiles with independent settings, active learning tracks, and progress tracking.
+- **Monaco Multi-Tab Editor:** Edit project files with auto-save (600ms debounce), dirty file state indicators, and customized dark theme (`hc-black`).
 
 ---
 
-## supported languages
+## 🛠 Supported Languages
 
-**generated:** python · javascript · typescript · java · c++ · c · c# · go · rust
-**runnable in-app:** javascript · typescript · python · c · c++
-**live-previewable:** html
-
----
-
-## who it's for
-
-- students learning their first language
-- developers picking up a new language & wanting to see familiar concepts in unfamiliar syntax
-- anyone who finds a snippet online & wants to know what it actually does
-
----
-
-## privacy & security
-
-- **API key never touches the renderer.** The Gemini key is stored encrypted at rest in the main process via Electron `safeStorage` (DPAPI on Windows, Keychain on macOS, libsecret on Linux). The HTTPS call to Google also runs from the main process. The renderer only sees a boolean *"is a key set?"*.
-- **Child processes (Run, Terminal) get a sanitized environment.** A whitelist of safe variables (`PATH`, `HOME`/`USERPROFILE`, locale, temp dirs) is passed to every spawned tool — secrets in the parent process don't leak into your code or shell commands.
-- **Filesystem IPC is scoped to the open folder + OS temp dir** when a project root is set, so an accidental `..` in a path can't wander out of the workspace.
+| Language | Describe → Code | In-App Runner | Live Preview | Glossary Support |
+|---|:---:|:---:|:---:|:---:|
+| **Python** | ✅ | ✅ | — | ✅ |
+| **JavaScript** | ✅ | ✅ | — | ✅ |
+| **TypeScript** | ✅ | ✅ | — | ✅ |
+| **C** | ✅ | ✅ | — | ✅ |
+| **C++** | ✅ | ✅ | — | ✅ |
+| **HTML / CSS** | — | — | ✅ | ✅ |
+| **Java** | ✅ | — | — | ✅ |
+| **C#** | ✅ | — | — | ✅ |
+| **Go** | ✅ | — | — | ✅ |
+| **Rust** | ✅ | — | — | ✅ |
+| **Pseudocode** | ✅ | — | — | ✅ |
 
 ---
 
-## releases & changelog
+## Privacy & Security Architecture
 
-- installer + portable .exe: [GitHub Releases](https://github.com/Emmanuel-PaulMaah/seec0de/releases)
-- detailed release notes: [CHANGELOG.md](CHANGELOG.md)
-- auto-update is wired in via `electron-updater` — installed copies pick up new releases on next launch (delta downloads).
+- **Encrypted API Key Storage:** API keys for Google Gemini API are stored encrypted at rest in the main Electron process using OS-level safe storage (`DPAPI` on Windows, `Keychain` on macOS, `libsecret` on Linux). The renderer process never accesses raw key data.
+- **Sanitized Process Environment:** All child processes (code runner, terminal shell) execute with a whitelisted set of environment variables (`getSafeEnv()`) to prevent sensitive environment variables from leaking into user scripts.
+- **Scoped Filesystem Access:** IPC filesystem operations are strictly validated against the active project workspace root and OS temporary directories.
+
+---
+
+## 📦 Building & Packaging
+
+```bash
+# Build the renderer bundle for production
+npm run build:renderer
+
+# Build Windows installer and portable executable (.exe)
+npm run dist:win
+```
+
+Build outputs land in the `release/` directory. Auto-updates are managed via `electron-updater`.
+
+---
+
+## 📄 License & Release Notes
+
+- **Repository:** [GitHub - Emmanuel-PaulMaah/seec0de](https://github.com/Emmanuel-PaulMaah/seec0de)
+- **Releases:** Download installers from [GitHub Releases](https://github.com/Emmanuel-PaulMaah/seec0de/releases)
+- **Changelog:** See [CHANGELOG.md](CHANGELOG.md) for full version history.
