@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
-  User, Users, UserPlus, Lock, Trash2,
+  Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
@@ -26,12 +26,13 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 // `AboutSettings` blocks that used to live in the left panel.
 //
 // Sections (top → bottom):
-//   1. Profile                — identity, PIN lock, switch / add / delete
-//   2. Languages              — practical + comparison
-//   3. AI                     — Gemini key
-//   4. Workspace              — defaults for explorer / terminal panels
-//   5. About & Updates        — version, last-checked, "Check now"
-//   6. Onboarding             — "Rerun onboarding"
+//   1. Appearance             — app theme
+//   2. Learn Mode             — learner-controlled guidance level
+//   3. Languages              — practical + comparison
+//   4. AI                     — Gemini key
+//   5. Workspace              — defaults for explorer / terminal panels
+//   6. About & Updates        — version, last-checked, "Check now"
+//   7. Onboarding             — "Rerun onboarding"
 //
 // Visual direction: AI-Native UI. Slides in from the right, dimmed scrim
 // behind, generous whitespace, single-column, semantic icons (no emoji).
@@ -45,13 +46,13 @@ const PLATFORM_LABEL = (() => {
 
 export default function SettingsDrawer({
   open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal,
-  onSwitchProfile, onAddProfile, onDeleteProfile,
 }) {
   const [settings, setSettings] = useState(loadSettings());
   const [apiKey, setApiKey]     = useState('');
   const [hasKey, setHasKey]     = useState(false);
   const [showKey, setShowKey]   = useState(false);
   const [keySaved, setKeySaved] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState(() => getNotificationPermission());
   const update = useUpdateStatus();
 
   // Placeholder shown when a key exists. Never saved — see handleSaveKey.
@@ -62,6 +63,7 @@ export default function SettingsDrawer({
     if (open) {
       setSettings(loadSettings());
       setKeySaved(false);
+      setNotificationPermission(getNotificationPermission());
       window.seecode.ai.hasKey().then((exists) => {
         setHasKey(exists);
         setApiKey(exists ? KEY_MASK : '');
@@ -135,6 +137,17 @@ export default function SettingsDrawer({
     onRerunOnboarding?.();
   };
 
+  const handleDesktopNotifications = async () => {
+    if (notificationPermission === 'unsupported' || notificationPermission === 'denied') return;
+    if (notificationPermission === 'granted') {
+      patch({ practiceNotificationsEnabled: !settings.practiceNotificationsEnabled });
+      return;
+    }
+    const permission = await window.Notification.requestPermission();
+    setNotificationPermission(permission);
+    patch({ practiceNotificationsEnabled: permission === 'granted' });
+  };
+
   if (!open) return null;
 
   return (
@@ -159,17 +172,78 @@ export default function SettingsDrawer({
         </header>
 
         <div style={styles.scroll}>
-          {/* ---- 1. Profile ------------------------------------------- */}
-          <Section icon={<User size={13} />} title="Profile">
-            <ProfileSection
-              onSettingsChange={onSettingsChange}
-              onSwitchProfile={onSwitchProfile}
-              onAddProfile={onAddProfile}
-              onDeleteProfile={onDeleteProfile}
-            />
+          {/* ---- 1. Appearance ---------------------------------------- */}
+          <Section icon={<Eye size={13} />} title="Appearance">
+            <Field label="App theme" hint="Choose the palette used across your workspace. Saved to this profile.">
+              <div style={styles.themeGrid}>
+                <ThemeChoice
+                  name="seec0de-dark"
+                  description="High-contrast black and blue"
+                  colors={['#000000', '#2f6fed', '#e6e6e6']}
+                  selected={settings.theme !== 'seec0de-green'}
+                  onClick={() => patch({ theme: 'seec0de-dark' })}
+                />
+                <ThemeChoice
+                  name="seec0de-green"
+                  description="Layered charcoal and lime"
+                  colors={['#0f1110', '#c8ff4d', '#f2f0e9']}
+                  selected={settings.theme === 'seec0de-green'}
+                  onClick={() => patch({ theme: 'seec0de-green' })}
+                />
+              </div>
+            </Field>
           </Section>
 
-          {/* ---- 2. Languages ----------------------------------------- */}
+          {/* ---- 2. Learn Mode ---------------------------------------- */}
+          <Section icon={<GraduationCap size={13} />} title="Learn Mode">
+            <Field label="Guidance level" hint="Choose how much teaching Learn Mode shows. You can change this at any time.">
+              <GuidanceTabs
+                value={['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
+                  ? settings.guidanceLevel
+                  : 'supported'}
+                onChange={(guidanceLevel) => patch({ guidanceLevel, guidanceSuccessStreak: 0 })}
+              />
+            </Field>
+          </Section>
+
+          <Section icon={<Bell size={13} />} title="Practice reminders">
+            <ToggleRow
+              icon={<Bell size={13} />}
+              label="Learning Pulse reminders"
+              hint="Show a quiet practice bar when completed learning work is ready to revisit."
+              checked={settings.practiceRemindersEnabled}
+              onChange={(checked) => patch({ practiceRemindersEnabled: checked })}
+            />
+            <Field label="Reminder time" hint="New reminders and postponed practice will appear at this local time.">
+              <input
+                type="time"
+                value={settings.practiceReminderTime || '18:00'}
+                onChange={(event) => patch({ practiceReminderTime: event.target.value || '18:00' })}
+                disabled={!settings.practiceRemindersEnabled}
+                style={{ ...styles.input, ...styles.timeInput, ...(!settings.practiceRemindersEnabled ? styles.disabled : {}) }}
+              />
+            </Field>
+            <Field label="Desktop notifications" hint={notificationPermissionHint(notificationPermission)}>
+              <button
+                type="button"
+                style={{ ...styles.ghostBtn, alignSelf: 'flex-start', ...((notificationPermission === 'unsupported' || notificationPermission === 'denied') ? styles.disabled : {}) }}
+                disabled={notificationPermission === 'unsupported' || notificationPermission === 'denied'}
+                onClick={handleDesktopNotifications}
+              >
+                {notificationPermission === 'granted' && settings.practiceNotificationsEnabled
+                  ? 'Turn off desktop notifications'
+                  : notificationPermission === 'granted'
+                    ? 'Turn on desktop notifications'
+                    : notificationPermission === 'denied'
+                      ? 'Permission blocked'
+                      : notificationPermission === 'unsupported'
+                        ? 'Not supported'
+                        : 'Allow notifications'}
+              </button>
+            </Field>
+          </Section>
+
+          {/* ---- 3. Languages ----------------------------------------- */}
           <Section icon={<Layers size={13} />} title="Languages">
             <Field label="Practical language" hint="The language you build in. Powers Run, default file extension, and the first language tab.">
               <div style={styles.langGrid}>
@@ -266,17 +340,22 @@ export default function SettingsDrawer({
             />
           </Section>
 
-          {/* ---- 5. Toolchains ----------------------------------------- */}
+          {/* ---- 5. Keyboard shortcuts --------------------------------- */}
+          <Section icon={<Keyboard size={13} />} title="Keyboard shortcuts">
+            <ShortcutList />
+          </Section>
+
+          {/* ---- 6. Toolchains ----------------------------------------- */}
           <Section icon={<Cpu size={13} />} title="Toolchains">
             <ToolchainPanel onRunInTerminal={onRunInTerminal} />
           </Section>
 
-          {/* ---- 6. About & Updates ----------------------------------- */}
+          {/* ---- 7. About & Updates ----------------------------------- */}
           <Section icon={<Info size={13} />} title="About & Updates">
             <UpdatePanel update={update} />
           </Section>
 
-          {/* ---- 7. Onboarding ---------------------------------------- */}
+          {/* ---- 8. Onboarding ---------------------------------------- */}
           <Section title="Onboarding">
             <button style={styles.ghostBtn} onClick={handleRerun}>
               Rerun onboarding
@@ -296,16 +375,65 @@ export default function SettingsDrawer({
 }
 
 // ---------------------------------------------------------------------------
-// ProfileSection — Settings → Profile.
+// ProfileManagerCard — profile-pill → Manage profile.
 //
 // Edits the ACTIVE local profile: identity (avatar / username / bio /
 // languages), an optional PIN lock, and profile management (switch, add,
-// delete). Reads a fresh snapshot from the store on mount so it never shows
-// stale data, and routes every mutation back up through onSettingsChange /
-// the profile callbacks so App's gate + title-bar chip stay in sync.
+// delete). It is intentionally separate from general app settings.
 //
 // The PIN is a courtesy lock for shared machines, not real security (see
 // settings.js) — we say so in the hint copy so we don't over-promise.
+export function ProfileManagerCard({
+  open,
+  onClose,
+  onSettingsChange,
+  onSwitchProfile,
+  onAddProfile,
+  onDeleteProfile,
+}) {
+  const titleRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    titleRef.current?.focus();
+    const onKey = (event) => { if (event.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div style={styles.profileScrim} onClick={onClose} role="presentation">
+      <section
+        style={styles.profileCard}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manage-profile-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header style={styles.header}>
+          <div>
+            <h2 ref={titleRef} tabIndex={-1} id="manage-profile-title" style={styles.title}>Manage profile</h2>
+            <p style={styles.profileCardSubtitle}>Your identity and progress stay on this device.</p>
+          </div>
+          <button style={styles.iconBtn} onClick={onClose} title="Close (Esc)" aria-label="Close profile manager">
+            <X size={16} />
+          </button>
+        </header>
+        <div style={styles.profileCardScroll}>
+          <ProfileSection
+            onSettingsChange={onSettingsChange}
+            onSwitchProfile={onSwitchProfile}
+            onAddProfile={onAddProfile}
+            onDeleteProfile={onDeleteProfile}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDeleteProfile }) {
   const initial = loadSettings();
   const activeId = initial.activeProfileId;
@@ -509,12 +637,85 @@ function Section({ icon, title, children }) {
   );
 }
 
+function ShortcutList() {
+  const shortcuts = [
+    ['Run active code', 'Ctrl', 'Enter'],
+    ['Toggle file explorer', 'Ctrl', 'B'],
+    ['Toggle terminal', 'Ctrl', '`'],
+    ['Save active file', 'Ctrl', 'S'],
+    ['Cycle visible panels', 'F6'],
+    ['Resize focused divider', '\u2190 / \u2192'],
+  ];
+
+  return (
+    <div style={styles.shortcutList}>
+      {shortcuts.map(([label, ...keys]) => (
+        <div key={label} style={styles.shortcutRow}>
+          <span style={styles.shortcutLabel}>{label}</span>
+          <span style={styles.shortcutKeys}>
+            {keys.map((key) => <kbd key={key} style={styles.keycap}>{key}</kbd>)}
+          </span>
+        </div>
+      ))}
+      <p style={styles.shortcutHint}>Hold Shift while resizing to move a divider 32px at a time.</p>
+    </div>
+  );
+}
+
 function Field({ label, hint, children }) {
   return (
     <div style={styles.field}>
       <label style={styles.fieldLabel}>{label}</label>
       {hint && <p style={styles.fieldHint}>{hint}</p>}
       {children}
+    </div>
+  );
+}
+
+function getNotificationPermission() {
+  return typeof window !== 'undefined' && 'Notification' in window
+    ? window.Notification.permission
+    : 'unsupported';
+}
+
+function notificationPermissionHint(permission) {
+  if (permission === 'granted') return 'Permission granted. Choose whether seec0de may notify you outside the app.';
+  if (permission === 'denied') return 'Notifications are blocked by the system. Re-enable them in your operating system settings.';
+  if (permission === 'unsupported') return 'Desktop notifications are not available on this system.';
+  return 'Optional. seec0de asks your operating system only after you choose Allow.';
+}
+
+const GUIDANCE_LEVELS = ['supported', 'guided', 'independent'];
+
+function GuidanceTabs({ value, onChange }) {
+  const handleKeyDown = (event, index) => {
+    let nextIndex = null;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % GUIDANCE_LEVELS.length;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + GUIDANCE_LEVELS.length) % GUIDANCE_LEVELS.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = GUIDANCE_LEVELS.length - 1;
+    if (nextIndex == null) return;
+    event.preventDefault();
+    onChange?.(GUIDANCE_LEVELS[nextIndex]);
+    event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus();
+  };
+
+  return (
+    <div style={styles.guidanceControl} role="radiogroup" aria-label="Guidance level">
+      {GUIDANCE_LEVELS.map((level, index) => (
+        <button
+          key={level}
+          type="button"
+          role="radio"
+          style={{ ...styles.guidanceBtn, ...(value === level ? styles.guidanceBtnActive : {}) }}
+          aria-checked={value === level}
+          tabIndex={value === level ? 0 : -1}
+          onClick={() => onChange?.(level)}
+          onKeyDown={(event) => handleKeyDown(event, index)}
+        >
+          {level[0].toUpperCase() + level.slice(1)}
+        </button>
+      ))}
     </div>
   );
 }
@@ -529,6 +730,26 @@ function Pill({ selected, onClick, children }) {
     >
       {selected && <Check size={10} style={{ marginRight: 4 }} />}
       {children}
+    </button>
+  );
+}
+
+function ThemeChoice({ name, description, colors, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      style={{ ...styles.themeChoice, ...(selected ? styles.themeChoiceSelected : {}) }}
+    >
+      <span style={styles.themeSwatches} aria-hidden="true">
+        {colors.map((color) => <span key={color} style={{ ...styles.themeSwatch, background: color }} />)}
+      </span>
+      <span style={styles.themeChoiceText}>
+        <span style={styles.themeChoiceName}>{name}</span>
+        <span style={styles.themeChoiceDescription}>{description}</span>
+      </span>
+      {selected && <Check size={13} style={styles.themeCheck} />}
     </button>
   );
 }
@@ -890,6 +1111,40 @@ const styles = {
     display: 'flex', justifyContent: 'flex-end',
     animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
   },
+  profileScrim: {
+    position: 'fixed', inset: 0, zIndex: 900,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: 24,
+    background: 'var(--scrim)',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+    animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
+  },
+  profileCard: {
+    width: 560,
+    maxWidth: '100%',
+    maxHeight: 'calc(100vh - 48px)',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 12,
+    boxShadow: 'var(--shadow-lg)',
+    animation: 'seec0de-pop-in var(--motion-slow) var(--ease-out)',
+  },
+  profileCardSubtitle: {
+    marginTop: 3,
+    color: 'var(--text-muted)',
+    fontSize: 11,
+  },
+  profileCardScroll: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 16,
+    overflowY: 'auto',
+    padding: 18,
+  },
   drawer: {
     width: DRAWER_W,
     maxWidth: '100vw',
@@ -946,6 +1201,52 @@ const styles = {
     paddingBottom: 18,
   },
 
+  shortcutList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0,
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-card)',
+    overflow: 'hidden',
+  },
+  shortcutRow: {
+    minHeight: 'var(--control-standard)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 'var(--space-3)',
+    padding: 'var(--space-2) var(--space-3)',
+    borderBottom: '1px solid var(--border)',
+  },
+  shortcutLabel: {
+    color: 'var(--text-secondary)',
+    fontSize: 'var(--text-sm)',
+  },
+  shortcutKeys: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--space-1)',
+  },
+  keycap: {
+    minWidth: 24,
+    padding: '2px 6px',
+    border: '1px solid var(--border-strong)',
+    borderBottomWidth: 2,
+    borderRadius: 'var(--radius-control)',
+    background: 'var(--bg-tertiary)',
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'var(--text-xs)',
+    textAlign: 'center',
+  },
+  shortcutHint: {
+    margin: 0,
+    padding: 'var(--space-2) var(--space-3)',
+    color: 'var(--text-muted)',
+    fontSize: 'var(--text-xs)',
+    lineHeight: 1.5,
+  },
+
   field: { display: 'flex', flexDirection: 'column', gap: 6 },
   fieldLabel: {
     fontSize: 12.5,
@@ -961,6 +1262,61 @@ const styles = {
 
   langGrid: {
     display: 'flex', flexWrap: 'wrap', gap: 6,
+  },
+  themeGrid: {
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
+  },
+  themeChoice: {
+    position: 'relative',
+    display: 'flex', flexDirection: 'column', gap: 8,
+    minWidth: 0,
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    color: 'var(--text-secondary)',
+    padding: 10,
+    textAlign: 'left',
+  },
+  themeChoiceSelected: {
+    background: 'var(--accent-soft)',
+    borderColor: 'var(--accent)',
+  },
+  themeSwatches: { display: 'flex', gap: 4 },
+  themeSwatch: {
+    width: 18, height: 18, borderRadius: 999,
+    border: '1px solid var(--border-strong)',
+  },
+  themeChoiceText: { display: 'flex', flexDirection: 'column', gap: 2 },
+  themeChoiceName: {
+    color: 'var(--text-primary)', fontSize: 11.5, fontWeight: 600,
+  },
+  themeChoiceDescription: {
+    color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.35,
+  },
+  themeCheck: {
+    position: 'absolute', top: 10, right: 10, color: 'var(--accent)',
+  },
+  guidanceControl: {
+    display: 'flex',
+    gap: 2,
+    padding: 2,
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    background: 'var(--bg-tertiary)',
+  },
+  guidanceBtn: {
+    flex: 1,
+    padding: '4px 3px',
+    border: 'none',
+    borderRadius: 4,
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 9.5,
+  },
+  guidanceBtnActive: {
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-primary)',
+    fontWeight: 700,
   },
   pill: {
     display: 'inline-flex', alignItems: 'center',
@@ -992,6 +1348,7 @@ const styles = {
     outline: 'none',
     fontFamily: '"JetBrains Mono", Consolas, monospace',
   },
+  timeInput: { width: 132, flex: 'none', colorScheme: 'dark' },
 
   iconBtn: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -1006,7 +1363,7 @@ const styles = {
     background: 'var(--accent)',
     border: '1px solid var(--accent)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 12.5,
     fontWeight: 600,
     padding: '0 12px',
@@ -1234,7 +1591,7 @@ const toolchainStyles = {
     borderStyle: 'solid',
     borderColor: 'var(--accent)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 11.5,
     fontWeight: 600,
     padding: '5px 10px',

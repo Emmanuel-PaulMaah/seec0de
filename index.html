@@ -3,504 +3,1058 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>seec0de — write natural instructions, see code</title>
-  <meta name="description" content="A desktop tool for learning to code. Type plain English to get pseudocode + 8 languages side by side. Run JS, TS, Python, C, C++ in-app. Live HTML preview. Works offline, AI optional." />
-  <meta name="theme-color" content="#0a0a0a" />
+  <title>seec0de — stop copying code. start understanding it.</title>
+  <meta name="description" content="A local-first desktop workspace for learning programming. Describe what you want, compare real code, run it, and understand every line or error." />
+  <meta name="theme-color" content="#080909" />
+  <meta name="color-scheme" content="dark" />
 
-  <meta property="og:title" content="seec0de — write code, see it happen" />
-  <meta property="og:description" content="Type plain English, see pseudocode + 8 languages. Run Python, JS, TS, C, C++ in-app. Live HTML preview. One Generate button, one Explain button. Works offline, AI optional." />
+  <meta property="og:title" content="seec0de — stop copying code. start understanding it." />
+  <meta property="og:description" content="Write it. Run it. Break it. Understand it. A local-first coding workspace built for learners." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://emmanuel-paulmaah.github.io/seec0de/" />
   <meta name="twitter:card" content="summary_large_image" />
 
-  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23007acc'/><text x='50%25' y='58%25' font-family='Inter,Arial,sans-serif' font-size='15' font-weight='700' text-anchor='middle' fill='white'>⟨/⟩</text></svg>" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0d0c'/%3E%3Cpath d='m12 9-6 7 6 7M20 9l6 7-6 7M18.5 6l-5 20' fill='none' stroke='%23c8ff4d' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 
   <style>
-    /* ---------- design tokens ---------- */
     :root {
-      --bg:        #0a0a0a;
-      --bg-elev:   #111111;
-      --bg-elev-2: #161616;
-      --bg-input:  #060606;
-      --border:    #1c1c1c;
-      --border-strong: #262626;
-      --text:      #ededed;
-      --text-2:    #b8b8b8;
-      --text-3:    #8a8a8a;
-      --text-4:    #5e5e5e;
-      --accent:    #007acc;
-      --accent-2:  #1a8ad4;
-      --accent-soft: rgba(0, 122, 204, 0.14);
-      --keyword:   #569cd6;
-      --string:    #ce9178;
-      --fn:        #dcdcaa;
-      --comment:   #6a9955;
-      --type:      #4ec9b0;
-      --num:       #b5cea8;
-
-      --shadow-sm: 0 2px 6px rgba(0,0,0,0.35);
-      --shadow-md: 0 12px 36px rgba(0,0,0,0.45);
-      --shadow-lg: 0 30px 80px rgba(0,0,0,0.55);
-
-      --r-sm: 6px;
-      --r-md: 10px;
-      --r-lg: 14px;
-      --r-xl: 20px;
-
-      --maxw: 1120px;
-
-      --t-fast: 120ms cubic-bezier(.4,0,.2,1);
-      --t-base: 220ms cubic-bezier(.4,0,.2,1);
+      --canvas: #080909;
+      --canvas-2: #0b0c0c;
+      --surface: #0f1110;
+      --surface-2: #131514;
+      --surface-3: #181a18;
+      --floating: #1c1e1b;
+      --line: #232620;
+      --line-strong: #353a30;
+      --ink: #f2f0e9;
+      --ink-soft: #c7c5bd;
+      --muted: #92938d;
+      --faint: #61645e;
+      --brand: #c8ff4d;
+      --brand-ink: #101507;
+      --brand-soft: rgba(200, 255, 77, 0.1);
+      --brand-line: rgba(200, 255, 77, 0.28);
+      --success: #95e59a;
+      --warning: #e9c46a;
+      --danger: #f08c8c;
+      --code-blue: #9cc9ff;
+      --code-violet: #c8b6ff;
+      --code-orange: #efb78f;
+      --code-green: #a8d8a0;
+      --code-muted: #70756d;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 28px;
+      --shadow-float: 0 28px 90px rgba(0, 0, 0, 0.5);
+      --shadow-lime: 0 12px 36px rgba(200, 255, 77, 0.12);
+      --max: 1240px;
+      --ease: cubic-bezier(.2, .8, .2, 1);
     }
 
-    /* ---------- reset ---------- */
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-width: 320px;
+      margin: 0;
+      overflow-x: hidden;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 16px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-      overflow-x: hidden;
     }
+
     a { color: inherit; text-decoration: none; }
-    button { font-family: inherit; cursor: pointer; }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
     img, svg { display: block; max-width: 100%; }
-    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3, p, ul, ol, pre { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+    code, pre, .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
 
-    /* ---------- ambient backdrop ---------- */
-    .backdrop {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    ::selection { background: var(--brand); color: var(--brand-ink); }
+
+    .skip-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 200;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--brand);
+      color: var(--brand-ink);
+      font-weight: 800;
+      transform: translateY(-160%);
+      transition: transform 160ms var(--ease);
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    .ambient,
+    .noise,
+    .grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+    .ambient {
+      z-index: -3;
       background:
-        radial-gradient(900px 480px at 18% -10%, rgba(0, 122, 204, 0.18), transparent 60%),
-        radial-gradient(700px 400px at 90% 10%, rgba(78, 201, 176, 0.10), transparent 60%),
-        radial-gradient(800px 600px at 50% 110%, rgba(0, 122, 204, 0.08), transparent 60%);
+        radial-gradient(1000px 620px at 72% -12%, rgba(200, 255, 77, 0.075), transparent 67%),
+        radial-gradient(700px 560px at -8% 46%, rgba(200, 255, 77, 0.035), transparent 70%);
     }
-    .grid-overlay {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    .grid {
+      z-index: -2;
+      opacity: .28;
       background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-      background-size: 56px 56px;
-      mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 80%);
-      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 80%);
+        linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, #000 0, rgba(0,0,0,.7) 40%, transparent 92%);
+      -webkit-mask-image: linear-gradient(to bottom, #000 0, rgba(0,0,0,.7) 40%, transparent 92%);
+    }
+    .noise {
+      z-index: -1;
+      opacity: .18;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.10'/%3E%3C/svg%3E");
     }
 
-    /* ---------- layout ---------- */
     .container {
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 0 24px;
-      position: relative; z-index: 1;
+      width: min(calc(100% - 40px), var(--max));
+      margin-inline: auto;
     }
-    main { position: relative; z-index: 1; }
-    section { padding: 96px 0; }
 
-    /* ---------- top nav ---------- */
-    .nav {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(10, 10, 10, 0.72);
-      backdrop-filter: saturate(140%) blur(14px);
-      -webkit-backdrop-filter: saturate(140%) blur(14px);
-      border-bottom: 1px solid var(--border);
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(35, 38, 32, .72);
+      background: rgba(8, 9, 9, .76);
+      backdrop-filter: blur(20px) saturate(120%);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
     }
-    .nav-inner {
-      display: flex; align-items: center; gap: 24px;
-      padding: 14px 0;
+    .nav {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 28px;
     }
     .brand {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-weight: 700; letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.025em;
     }
     .brand-mark {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 26px; height: 26px; border-radius: 7px;
-      background: linear-gradient(135deg, var(--accent), #00bcd4);
-      color: white; font-size: 12px; font-weight: 800;
-      box-shadow: 0 4px 12px rgba(0,122,204,0.4);
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+      background: linear-gradient(180deg, #171a16, #0e100f);
+      color: var(--brand);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
+    .brand-mark svg { width: 18px; height: 18px; }
     .nav-links {
-      display: flex; align-items: center; gap: 22px;
       margin-left: auto;
-      font-size: 14px; color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
     }
-    .nav-links a { transition: color var(--t-fast); }
-    .nav-links a:hover { color: var(--text); }
-    .nav-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+    .nav-links > a:not(.button) { transition: color 140ms ease; }
+    .nav-links > a:not(.button):hover { color: var(--ink); }
 
-    @media (max-width: 720px) {
-      .nav-links a.hide-sm { display: none; }
-    }
-
-    /* ---------- buttons ---------- */
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: 8px;
+    .button {
       min-height: 44px;
-      padding: 10px 18px;
-      border-radius: var(--r-md);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 10px 16px;
       border: 1px solid transparent;
-      font-size: 14px; font-weight: 600;
-      transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast), box-shadow var(--t-fast);
-      will-change: transform;
-    }
-    .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-    .btn-primary {
-      background: linear-gradient(180deg, var(--accent-2), var(--accent));
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 122, 204, 0.32), inset 0 1px 0 rgba(255,255,255,0.15);
-    }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(0, 122, 204, 0.42), inset 0 1px 0 rgba(255,255,255,0.18); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-ghost {
-      background: rgba(255,255,255,0.03);
-      border-color: var(--border-strong);
-      color: var(--text);
-    }
-    .btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: #333; }
-    .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 13px; }
-
-    /* ---------- hero ---------- */
-    .hero { padding: 88px 0 72px; }
-    .eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 5px 11px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      border: 1px solid rgba(0, 122, 204, 0.30);
-      font-size: 12px; font-weight: 600; letter-spacing: 0.4px;
-      color: #79c2ff;
-    }
-    .eyebrow .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #4ade80;
-      box-shadow: 0 0 10px #4ade80;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.55; transform: scale(0.85); }
-    }
-
-    h1.headline {
-      font-size: clamp(40px, 6.5vw, 72px);
+      border-radius: 10px;
+      background: none;
+      color: inherit;
+      font-size: 14px;
       font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -0.03em;
-      margin: 18px 0 18px;
-      max-width: 18ch;
+      line-height: 1;
+      cursor: pointer;
+      transition: transform 140ms var(--ease), background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
     }
-    .headline .grad {
-      background: linear-gradient(135deg, #79c2ff 0%, #4ec9b0 50%, #dcdcaa 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
+    .button svg { width: 16px; height: 16px; flex: none; }
+    .button:hover { transform: translateY(-1px); }
+    .button:active { transform: translateY(0); }
+    .button-primary {
+      background: var(--brand);
+      color: var(--brand-ink);
+      box-shadow: var(--shadow-lime), inset 0 1px 0 rgba(255,255,255,.32);
+    }
+    .button-primary:hover { background: #d4ff73; box-shadow: 0 14px 42px rgba(200, 255, 77, .17); }
+    .button-secondary {
+      border-color: var(--line-strong);
+      background: rgba(255,255,255,.025);
+      color: var(--ink-soft);
+    }
+    .button-secondary:hover { border-color: #4b5144; background: rgba(255,255,255,.05); color: var(--ink); }
+    .button-quiet {
+      min-height: 36px;
+      padding: 8px 11px;
+      border-color: var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .button-quiet:hover { border-color: var(--line-strong); background: var(--surface-3); color: var(--ink); }
+    .button[disabled] { opacity: .45; cursor: not-allowed; transform: none; }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--brand);
+      outline-offset: 3px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--ink-soft);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: .02em;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 16px rgba(200,255,77,.8);
+    }
+
+    .hero {
+      padding: 112px 0 88px;
+    }
+    .hero-copy {
+      max-width: 980px;
+    }
+    .hero h1 {
+      max-width: 13.5ch;
+      margin-top: 24px;
+      font-size: clamp(52px, 8vw, 112px);
+      font-weight: 780;
+      line-height: .91;
+      letter-spacing: -.065em;
+      text-wrap: balance;
+    }
+    .hero h1 .outline {
+      display: block;
       color: transparent;
+      -webkit-text-stroke: 1px rgba(242, 240, 233, .48);
+      text-stroke: 1px rgba(242, 240, 233, .48);
     }
-    .lede {
-      font-size: clamp(16px, 1.6vw, 19px);
-      color: var(--text-2);
-      max-width: 60ch;
+    .hero-lower {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 48px;
+    }
+    .hero-lede {
+      max-width: 650px;
+      color: var(--ink-soft);
+      font-size: clamp(18px, 2vw, 22px);
       line-height: 1.55;
+      letter-spacing: -.02em;
     }
+    .hero-lede strong { color: var(--ink); font-weight: 700; }
     .hero-actions {
-      display: flex; flex-wrap: wrap; gap: 12px;
-      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .hero-meta {
-      display: flex; flex-wrap: wrap; gap: 14px;
-      margin-top: 18px;
-      font-size: 13px; color: var(--text-4);
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
     }
-    .hero-meta .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-    }
+    .hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+    .hero-meta span::before { content: "//"; color: var(--brand); }
 
-    /* ---------- mock app preview ---------- */
-    .preview {
-      margin-top: 64px;
-      border: 1px solid var(--border);
-      border-radius: var(--r-xl);
-      background: linear-gradient(180deg, #0e0e0e, #0a0a0a);
-      box-shadow: var(--shadow-lg);
+    .workbench-wrap { padding-bottom: 120px; }
+    .workbench-stage { position: relative; }
+    .workbench-stage::before {
+      content: "";
+      position: absolute;
+      inset: -30px 6% auto;
+      height: 220px;
+      z-index: -1;
+      background: radial-gradient(ellipse at center, rgba(200,255,77,.08), transparent 68%);
+      filter: blur(24px);
+    }
+    .workbench {
       overflow: hidden;
-      position: relative;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      box-shadow: var(--shadow-float), inset 0 1px 0 rgba(255,255,255,.05);
     }
-    .preview::after {
-      /* subtle inner border highlight */
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      border-radius: var(--r-xl);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-    }
-    .preview-titlebar {
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-      height: 36px;
-      background: #0e0e0e;
-      border-bottom: 1px solid var(--border);
-      padding: 0 12px;
-    }
-    .traffic { display: flex; gap: 6px; }
-    .traffic span { width: 11px; height: 11px; border-radius: 50%; background: #2a2a2a; }
-    .traffic span:nth-child(1) { background: #ff5f57; }
-    .traffic span:nth-child(2) { background: #febc2e; }
-    .traffic span:nth-child(3) { background: #28c840; }
-    .preview-title {
-      font-size: 11px; color: var(--text-3); letter-spacing: 1.5px;
-      display: inline-flex; gap: 6px; align-items: center;
-    }
-    .preview-title .pill-mini {
-      font-size: 9.5px; padding: 2px 6px; border-radius: 999px;
-      background: var(--accent); color: #fff; letter-spacing: 0.4px;
-    }
-    .preview-body {
+    .window-bar {
+      min-height: 52px;
       display: grid;
-      grid-template-columns: 240px 1fr 240px;
-      min-height: 360px;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: #0c0e0d;
     }
-    @media (max-width: 880px) {
-      .preview-body { grid-template-columns: 1fr; }
-      .preview-side { display: none; }
+    .window-dots { display: flex; gap: 7px; }
+    .window-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid #32362f;
+      background: #1c1f1b;
     }
-    .preview-side {
-      background: #0c0c0c;
-      border-right: 1px solid var(--border);
-      padding: 14px 14px;
+    .window-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .window-title b { color: var(--ink-soft); font-weight: 600; }
+    .window-version {
+      justify-self: end;
+      padding: 3px 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+    }
+    .workbench-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      background: #0d0f0e;
+    }
+    .scenario-tab {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
       font-size: 12px;
-      color: var(--text-3);
+      font-weight: 750;
+      cursor: pointer;
+      transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
     }
-    .preview-side.right { border-right: none; border-left: 1px solid var(--border); }
-    .side-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-4); margin-bottom: 8px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-    .chip {
-      font-size: 11px; padding: 3px 9px; border-radius: 999px;
-      background: var(--bg-elev-2); border: 1px solid var(--border);
-      color: var(--text-3);
+    .scenario-tab::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--faint);
     }
-    .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .instruction-box {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--r-sm);
-      padding: 8px 10px;
-      font-size: 12px;
-      color: var(--text-2);
-      min-height: 70px;
+    .scenario-tab:hover { color: var(--ink); background: var(--surface-2); }
+    .scenario-tab[aria-selected="true"] {
+      border-color: var(--brand-line);
+      background: var(--brand-soft);
+      color: var(--ink);
     }
-    .preview-mid {
-      display: flex; flex-direction: column;
-      background: var(--bg);
+    .scenario-tab[aria-selected="true"]::before { background: var(--brand); box-shadow: 0 0 10px rgba(200,255,77,.5); }
+    .workbench-grid {
+      min-height: 550px;
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr) 320px;
     }
-    .tabs {
-      display: flex; gap: 0;
-      background: #0e0e0e; border-bottom: 1px solid var(--border);
+    .pane { min-width: 0; background: var(--surface); }
+    .pane + .pane { border-left: 1px solid var(--line); }
+    .pane-head {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .09em;
+      text-transform: uppercase;
     }
-    .tab {
-      padding: 8px 14px; font-size: 11.5px; color: var(--text-3);
-      border-bottom: 2px solid transparent;
+    .pane-head .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
     }
-    .tab.active { color: var(--text); border-bottom-color: var(--accent); background: var(--bg); }
-    .editor {
-      padding: 14px 18px; flex: 1;
-      font-family: 'JetBrains Mono', Consolas, monospace;
+    .lesson-list { padding: 10px; }
+    .lesson-group-label {
+      padding: 8px 8px 6px;
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+    .lesson-item {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 10px 9px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      text-align: left;
+      cursor: default;
+    }
+    .lesson-item.active {
+      border-color: var(--line);
+      background: var(--surface-2);
+      color: var(--ink);
+    }
+    .lesson-index {
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+    .lesson-item.active .lesson-index { color: var(--brand); }
+    .lesson-name { display: block; font-size: 12px; font-weight: 700; }
+    .lesson-progress { display: block; margin-top: 2px; color: var(--faint); font-size: 10px; }
+    .profile-card {
+      margin: 12px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .profile-row { display: flex; align-items: center; gap: 9px; }
+    .avatar {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--brand);
+      color: var(--brand-ink);
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .profile-card strong { display: block; color: var(--ink-soft); font-size: 11px; }
+
+    .editor-pane { display: flex; flex-direction: column; }
+    .editor-toolbar {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--line);
+      background: #0d0f0e;
+    }
+    .file-tab {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border-radius: 7px;
+      color: var(--muted);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+    }
+    .file-tab.active { background: var(--surface-2); color: var(--ink-soft); }
+    .file-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--warning); }
+    .run-button {
+      min-height: 32px;
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border: 1px solid var(--brand-line);
+      border-radius: 7px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-color 140ms ease, color 140ms ease, transform 140ms ease;
+    }
+    .run-button:hover { background: var(--brand); color: var(--brand-ink); }
+    .run-button:active { transform: scale(.98); }
+    .run-button svg { width: 13px; height: 13px; }
+    .run-button.is-running svg { animation: spin .65s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .code-area {
+      position: relative;
+      flex: 1;
+      overflow: auto;
+      background: #0b0d0c;
+    }
+    .code-block {
+      min-width: 520px;
+      padding: 24px 0 28px;
+      font-family: "SFMono-Regular", Consolas, monospace;
       font-size: 12.5px;
-      line-height: 1.7;
-      color: var(--text-2);
-      overflow: hidden;
+      line-height: 1.85;
+    }
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      min-height: 23px;
+      padding-right: 24px;
       white-space: pre;
     }
-    .kw { color: var(--keyword); }
-    .st { color: var(--string); }
-    .fn { color: var(--fn); }
-    .cm { color: var(--comment); font-style: italic; }
-    .ty { color: var(--type); }
-    .nm { color: var(--num); }
-    .explain {
-      font-size: 11.5px; color: var(--text-3); line-height: 1.55;
+    .code-line.is-focus { background: rgba(200,255,77,.055); }
+    .line-no {
+      padding-right: 14px;
+      color: #41453f;
+      text-align: right;
+      user-select: none;
     }
-    .explain b { color: var(--text); font-weight: 600; display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; }
-    .explain p { margin: 0 0 10px; }
+    .tok-key { color: var(--code-violet); }
+    .tok-fn { color: var(--code-blue); }
+    .tok-str { color: var(--code-orange); }
+    .tok-num { color: var(--code-green); }
+    .tok-comment { color: var(--code-muted); font-style: italic; }
+    .tok-plain { color: #c8cbc4; }
+    .editor-footer {
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      border-top: 1px solid var(--line);
+      background: #0d0f0e;
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .editor-footer span { display: inline-flex; align-items: center; gap: 6px; }
+    .editor-footer i { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 
-    /* ---------- features grid ---------- */
-    .section-head { text-align: center; max-width: 720px; margin: 0 auto 56px; }
-    .section-head .kicker {
-      font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
-      color: var(--accent); margin-bottom: 12px;
+    .coach-pane { display: flex; flex-direction: column; background: #101210; }
+    .coach-body { flex: 1; padding: 14px; overflow: auto; }
+    .coach-kicker {
+      color: var(--brand);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
     }
-    .section-head h2 {
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 700; letter-spacing: -0.02em;
-      line-height: 1.15;
-      margin-bottom: 14px;
+    .coach-title {
+      margin-top: 8px;
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.25;
+      letter-spacing: -.025em;
     }
-    .section-head p { color: var(--text-2); font-size: 16px; }
-
-    .features {
+    .coach-copy { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .explanation-list { margin-top: 16px; border-top: 1px solid var(--line); }
+    .explanation-item { border-bottom: 1px solid var(--line); }
+    .explanation-trigger {
+      width: 100%;
+      min-height: 44px;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
+      grid-template-columns: 28px 1fr 14px;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 2px;
+      border: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      text-align: left;
+      cursor: pointer;
     }
-    @media (max-width: 880px) { .features { grid-template-columns: 1fr; } }
-
-    .card {
-      position: relative;
-      padding: 28px;
-      border-radius: var(--r-lg);
-      background: linear-gradient(180deg, rgba(255,255,255,0.022), rgba(255,255,255,0.008));
-      border: 1px solid var(--border);
-      transition: transform var(--t-base), border-color var(--t-base), background var(--t-base);
+    .explanation-trigger:hover { color: var(--ink); }
+    .explanation-trigger .ln {
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 9px;
     }
-    .card:hover { transform: translateY(-2px); border-color: var(--border-strong); background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012)); }
-    .card-icon {
-      width: 38px; height: 38px;
-      display: inline-flex; align-items: center; justify-content: center;
-      border-radius: 10px;
-      background: var(--accent-soft);
-      color: #79c2ff;
-      margin-bottom: 18px;
+    .explanation-trigger .summary { font-size: 11px; font-weight: 700; }
+    .explanation-trigger svg { width: 13px; transition: transform 160ms var(--ease); }
+    .explanation-trigger[aria-expanded="true"] svg { transform: rotate(45deg); }
+    .explanation-content {
+      display: none;
+      padding: 0 4px 12px 36px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.55;
     }
-    .card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.01em; }
-    .card p { color: var(--text-3); font-size: 14px; line-height: 1.6; }
-
-    /* ---------- languages strip ---------- */
-    .lang-strip {
-      padding: 56px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
-    }
-    .lang-row {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-      margin-top: 22px;
-    }
-    .lang {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 7px 13px;
-      background: var(--bg-elev);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      font-size: 13px; color: var(--text-2);
-      font-family: 'JetBrains Mono', Consolas, monospace;
-    }
-    .lang::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%;
-      background: var(--clr, var(--accent));
-    }
-    .lang-strip h3 {
-      text-align: center; font-size: 13px; color: var(--text-4);
-      letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
-    }
-
-    /* ---------- how it works ---------- */
-    .steps {
+    .explanation-trigger[aria-expanded="true"] + .explanation-content { display: block; }
+    .fix-list { margin-top: 16px; display: grid; gap: 8px; }
+    .fix-step {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-      counter-reset: step;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
     }
-    @media (max-width: 880px) { .steps { grid-template-columns: 1fr; } }
-    .step {
-      counter-increment: step;
-      padding: 28px;
-      border-radius: var(--r-lg);
-      border: 1px solid var(--border);
-      background: var(--bg-elev);
-      position: relative;
+    .fix-step span:first-child {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 9px;
     }
-    .step::before {
-      content: '0' counter(step);
-      font-family: 'JetBrains Mono', Consolas, monospace;
-      font-size: 13px; font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 1px;
+    .console {
+      min-height: 124px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--line);
+      background: #0a0c0b;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.7;
     }
-    .step h3 { font-size: 17px; font-weight: 600; margin: 10px 0 8px; }
-    .step p { color: var(--text-3); font-size: 14px; }
+    .console-head { display: flex; align-items: center; justify-content: space-between; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; }
+    .console-output { margin-top: 8px; color: var(--ink-soft); }
+    .console-output .ok { color: var(--success); }
+    .console-output .err { color: var(--danger); }
+    .console-output .muted { color: var(--faint); }
 
-    /* ---------- final CTA ---------- */
-    .cta-box {
-      margin: 0 auto;
-      max-width: 820px;
-      padding: 56px 40px;
-      border-radius: var(--r-xl);
+    .micro-note {
+      max-width: 920px;
+      margin: 20px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      letter-spacing: .04em;
       text-align: center;
-      background:
-        radial-gradient(600px 200px at 50% -20%, rgba(0,122,204,0.30), transparent 70%),
-        linear-gradient(180deg, #111, #0c0c0c);
-      border: 1px solid var(--border-strong);
-      box-shadow: var(--shadow-md);
     }
-    .cta-box h2 {
-      font-size: clamp(26px, 3.5vw, 38px);
-      font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px;
+    .micro-note svg { width: 13px; height: 13px; color: var(--brand); }
+
+    .language-rail {
+      overflow: hidden;
+      border-block: 1px solid var(--line);
+      background: rgba(255,255,255,.012);
     }
-    .cta-box p { color: var(--text-2); margin-bottom: 26px; }
-    .cta-actions {
-      display: inline-flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    .language-track {
+      width: max-content;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      padding: 18px 0;
+      animation: ticker 32s linear infinite;
     }
-    .cta-note {
-      margin-top: 16px; font-size: 12px; color: var(--text-4);
+    .language-track span {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      white-space: nowrap;
+    }
+    .language-track span::after { content: "/"; color: var(--brand); }
+    @keyframes ticker { to { transform: translateX(-50%); } }
+
+    .section { padding: 128px 0; }
+    .section-label {
+      color: var(--brand);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .11em;
+    }
+    .section-title {
+      max-width: 820px;
+      margin-top: 18px;
+      font-size: clamp(38px, 5vw, 68px);
+      font-weight: 750;
+      line-height: 1.03;
+      letter-spacing: -.055em;
+      text-wrap: balance;
+    }
+    .section-copy {
+      max-width: 650px;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.65;
+      letter-spacing: -.015em;
     }
 
-    /* ---------- footer ---------- */
-    footer {
-      padding: 48px 0 56px;
-      border-top: 1px solid var(--border);
-      color: var(--text-4);
+    .loop-grid {
+      margin-top: 72px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--line);
+    }
+    .loop-row {
+      min-height: 230px;
+      display: grid;
+      grid-template-columns: 66px 1fr;
+      gap: 24px;
+      align-content: start;
+      padding: 36px 32px 36px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .loop-row:nth-child(even) { padding-left: 32px; border-left: 1px solid var(--line); }
+    .loop-number {
+      color: var(--brand);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+    }
+    .loop-row h3 { font-size: 22px; line-height: 1.2; letter-spacing: -.03em; }
+    .loop-row p { max-width: 48ch; margin-top: 12px; color: var(--muted); font-size: 14px; line-height: 1.65; }
+    .loop-meta {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .loop-meta span {
+      padding: 4px 7px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .break-section {
+      padding: 128px 0;
+      border-block: 1px solid var(--line);
+      background: #0a0b0b;
+    }
+    .break-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .85fr) minmax(480px, 1.15fr);
+      align-items: center;
+      gap: 72px;
+    }
+    .error-terminal {
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-lg);
+      background: #0d0f0e;
+      box-shadow: var(--shadow-float);
+    }
+    .terminal-top {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--faint);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .09em;
+    }
+    .terminal-screen { padding: 18px; font-family: "SFMono-Regular", Consolas, monospace; font-size: 11px; line-height: 1.75; }
+    .terminal-screen .cmd { color: var(--ink-soft); }
+    .terminal-screen .path { color: var(--brand); }
+    .terminal-screen .error { margin-top: 10px; color: var(--danger); }
+    .terminal-screen .dim { color: var(--faint); }
+    .human-error {
+      margin: 0 14px 14px;
+      padding: 16px;
+      border: 1px solid rgba(240, 140, 140, .22);
+      border-radius: 10px;
+      background: rgba(240, 140, 140, .055);
+    }
+    .human-error-head { display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 13px; font-weight: 800; }
+    .human-error-head span { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+    .human-error p { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .human-error ol { margin-top: 12px; display: grid; gap: 6px; counter-reset: fixes; }
+    .human-error li { counter-increment: fixes; display: grid; grid-template-columns: 20px 1fr; gap: 8px; color: var(--ink-soft); font-size: 11px; }
+    .human-error li::before { content: counter(fixes); color: var(--brand); font-family: "SFMono-Regular", Consolas, monospace; }
+
+    .trust-grid {
+      margin-top: 72px;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 16px;
+    }
+    .trust-panel {
+      min-height: 360px;
+      position: relative;
+      overflow: hidden;
+      padding: 36px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+    .trust-panel h3 { max-width: 15ch; font-size: 30px; line-height: 1.08; letter-spacing: -.045em; }
+    .trust-panel p { max-width: 55ch; margin-top: 14px; color: var(--muted); font-size: 14px; }
+    .privacy-diagram {
+      position: absolute;
+      inset: auto 32px 28px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 14px;
+    }
+    .diagram-node {
+      min-height: 72px;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--ink-soft);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      text-align: center;
+    }
+    .diagram-link { width: 48px; height: 1px; position: relative; background: var(--line-strong); }
+    .diagram-link::after { content: ""; position: absolute; right: 0; top: -3px; border-left: 5px solid var(--brand); border-block: 3px solid transparent; }
+    .diagram-lock {
+      position: absolute;
+      left: 50%;
+      bottom: 55px;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      transform: translateX(-50%);
+      border: 1px solid var(--brand-line);
+      border-radius: 50%;
+      background: #11150d;
+      color: var(--brand);
+    }
+    .diagram-lock svg { width: 13px; }
+    .trust-list { margin-top: 30px; display: grid; gap: 0; border-top: 1px solid var(--line); }
+    .trust-list li {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 12px;
+      padding: 17px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink-soft);
       font-size: 13px;
     }
-    .foot {
-      display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
-    }
-    .foot a:hover { color: var(--text-2); }
-    .foot-links { display: inline-flex; gap: 18px; flex-wrap: wrap; }
+    .trust-list svg { width: 17px; height: 17px; color: var(--brand); }
+    .trust-list small { display: block; margin-top: 3px; color: var(--faint); font-size: 11px; }
 
-    /* ---------- accessibility helpers ---------- */
-    .sr-only {
-      position: absolute; width: 1px; height: 1px;
-      padding: 0; margin: -1px; overflow: hidden;
-      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    .release {
+      padding: 64px 0 128px;
     }
-    a:focus-visible, button:focus-visible {
-      outline: 2px solid var(--accent-2);
-      outline-offset: 3px;
-      border-radius: 3px;
+    .release-shell {
+      position: relative;
+      overflow: hidden;
+      padding: 56px;
+      border: 1px solid var(--brand-line);
+      border-radius: var(--radius-xl);
+      background: #10130d;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .release-shell::after {
+      content: "3.6";
+      position: absolute;
+      right: -18px;
+      bottom: -88px;
+      color: rgba(200,255,77,.045);
+      font-size: 280px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.11em;
+      pointer-events: none;
+    }
+    .release-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr);
+      gap: 64px;
+      align-items: end;
+    }
+    .release h2 { max-width: 11ch; margin-top: 16px; font-size: clamp(38px, 5vw, 64px); line-height: 1; letter-spacing: -.055em; }
+    .release p { max-width: 49ch; margin-top: 18px; color: var(--muted); font-size: 15px; }
+    .release-actions { margin-top: 28px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .release-list { border-top: 1px solid rgba(200,255,77,.16); }
+    .release-list li {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(200,255,77,.12);
+      color: var(--ink-soft);
+      font-size: 13px;
+    }
+    .release-list span { color: var(--brand); font-family: "SFMono-Regular", Consolas, monospace; font-size: 10px; }
+
+    footer {
+      padding: 28px 0 40px;
+      border-top: 1px solid var(--line);
+    }
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--faint);
+      font-size: 12px;
+    }
+    .footer-left { display: flex; align-items: center; gap: 14px; }
+    .footer-left .brand-mark { width: 26px; height: 26px; border-radius: 7px; }
+    .footer-left .brand-mark svg { width: 15px; height: 15px; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 20px; }
+    .footer-links a:hover { color: var(--ink-soft); }
+
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (max-width: 1080px) {
+      .workbench-grid { grid-template-columns: 190px minmax(0, 1fr) 280px; }
+      .break-grid, .release-grid { grid-template-columns: 1fr; }
+      .break-grid { gap: 48px; }
+      .release-grid { gap: 44px; }
+      .release-list { max-width: 720px; }
+    }
+
+    @media (max-width: 880px) {
+      .hero { padding-top: 88px; }
+      .hero-lower { grid-template-columns: 1fr; align-items: start; gap: 28px; }
+      .hero h1 { max-width: 12ch; }
+      .workbench-grid { grid-template-columns: 1fr; min-height: 0; }
+      .lesson-pane { display: none; }
+      .pane + .pane { border-left: 0; }
+      .coach-pane { border-top: 1px solid var(--line); }
+      .code-area { min-height: 390px; }
+      .coach-body { min-height: 300px; }
+      .loop-grid, .trust-grid { grid-template-columns: 1fr; }
+      .loop-row:nth-child(even) { padding-left: 0; border-left: 0; }
+      .trust-panel { min-height: 380px; }
+      .break-grid { grid-template-columns: 1fr; }
+      .release-shell { padding: 40px 30px; }
+    }
+
+    @media (max-width: 700px) {
+      .container { width: min(calc(100% - 28px), var(--max)); }
+      .nav { min-height: 62px; }
+      .nav-links > a:not(.button) { display: none; }
+      .nav-links { gap: 8px; }
+      .nav-links .button { min-height: 38px; padding: 8px 11px; font-size: 12px; }
+      .hero { padding: 72px 0 60px; }
+      .hero h1 { margin-top: 20px; font-size: clamp(44px, 15vw, 68px); letter-spacing: -.06em; }
+      .hero-lede { font-size: 17px; }
+      .hero-actions { align-items: stretch; }
+      .hero-actions .button { flex: 1 1 180px; }
+      .hero-meta { gap: 7px 14px; font-size: 9px; }
+      .workbench-wrap { padding-bottom: 88px; }
+      .workbench { border-radius: 18px; }
+      .window-bar { grid-template-columns: 1fr auto; }
+      .window-title { justify-self: end; }
+      .window-version { display: none; }
+      .workbench-tabs { overflow-x: auto; }
+      .scenario-tab { flex: none; }
+      .code-block { min-width: 460px; font-size: 11.5px; }
+      .section, .break-section { padding: 92px 0; }
+      .section-title { font-size: 42px; }
+      .section-copy { font-size: 16px; }
+      .loop-grid, .trust-grid { margin-top: 52px; }
+      .loop-row { min-height: 0; grid-template-columns: 44px 1fr; gap: 12px; padding: 28px 0; }
+      .break-grid { gap: 40px; }
+      .trust-panel { min-height: 420px; padding: 28px 24px; }
+      .privacy-diagram { inset-inline: 20px; grid-template-columns: 1fr; gap: 8px; }
+      .diagram-link { width: 1px; height: 24px; justify-self: center; }
+      .diagram-link::after { right: -2px; top: auto; bottom: 0; transform: rotate(90deg); }
+      .diagram-lock { bottom: 82px; }
+      .release { padding: 36px 0 92px; }
+      .release-shell { padding: 32px 22px; border-radius: 20px; }
+      .release-shell::after { font-size: 180px; bottom: -56px; }
+      .release-grid { grid-template-columns: 1fr; min-width: 0; }
+      .release-actions .button { width: 100%; }
+      .footer-row { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 420px) {
+      .brand span:last-child { display: none; }
+      .hero h1 { font-size: 43px; }
+      .window-dots span { width: 8px; height: 8px; }
+      .window-title { font-size: 9px; }
+      .scenario-tab { padding-inline: 9px; }
+      .editor-toolbar { overflow-x: auto; }
+      .file-tab { flex: none; }
+      .loop-row { grid-template-columns: 34px 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        transition: none !important;
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-      }
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+      .reveal { opacity: 1; transform: none; }
     }
   </style>
 </head>
 <body>
-  <a href="#main" class="sr-only">Skip to main content</a>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="grid" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
 
-  <div class="backdrop" aria-hidden="true"></div>
-  <div class="grid-overlay" aria-hidden="true"></div>
-
-  <header class="nav">
-    <div class="container nav-inner">
-      <a href="#" class="brand" aria-label="seec0de home">
-        <span class="brand-mark" aria-hidden="true">⟨/⟩</span>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="seec0de home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m9 7-5 5 5 5M15 7l5 5-5 5M14 4l-4 16"/></svg>
+        </span>
         <span>seec0de</span>
       </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#features" class="hide-sm">Features</a>
-        <a href="#languages" class="hide-sm">Languages</a>
-        <a href="#how" class="hide-sm">How it works</a>
-        <a href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener">GitHub</a>
-        <a class="btn btn-primary btn-sm" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v2.4.0/seec0de-Setup-2.4.0.exe" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#workflow">Workflow</a>
+        <a href="#privacy">Local-first</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener noreferrer">GitHub</a>
+        <a class="button button-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.6.0/seec0de-Setup-3.6.0.exe" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
           Download
         </a>
       </nav>
@@ -508,251 +1062,480 @@
   </header>
 
   <main id="main">
-    <!-- ============== HERO ============== -->
-    <section class="hero">
+    <section class="hero" id="top">
       <div class="container">
-        <span class="eyebrow"><span class="dot" aria-hidden="true"></span> v3.0.0 — one Generate, one Explain, Run-only Console</span>
-
-        <h1 class="headline">
-          Write code, <span class="grad">see it happen.</span>
-        </h1>
-
-        <p class="lede">
-          A desktop tool for learning to code. Type plain English to see pseudocode + 8 real
-          languages side by side. Run Python, JS, TS, C, or C++ in-app. Live HTML preview.
-          Works offline; AI is optional.
-        </p>
-
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.0.0/seec0de-Setup-3.0.0.exe" rel="noopener">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download for Windows
-          </a>
-          <a class="btn btn-ghost" href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.83-.26.83-.58v-2c-3.34.73-4.04-1.41-4.04-1.41-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .1-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.11-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.65 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .3z"/></svg>
-            View source
-          </a>
+        <div class="hero-copy reveal">
+          <div class="eyebrow">Local-first coding workspace · v3.6.0</div>
+          <h1>stop copying code. <span class="outline">start learning it.</span></h1>
+          <div class="hero-lower">
+            <p class="hero-lede">
+              <strong>Write it. Run it. Break it. Understand it.</strong> seec0de turns natural-language ideas, real code, output, and plain-English explanations into one continuous learning loop.
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.6.0/seec0de-Setup-3.6.0.exe" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                Download for Windows
+              </a>
+              <a class="button button-secondary" href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .8A11.5 11.5 0 0 0 8.36 23.2c.58.11.79-.25.79-.56v-2c-3.22.7-3.9-1.36-3.9-1.36-.52-1.34-1.29-1.7-1.29-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.1-.75.4-1.27.74-1.56-2.57-.3-5.28-1.29-5.28-5.73 0-1.27.45-2.3 1.2-3.11-.12-.3-.52-1.47.11-3.08 0 0 .98-.31 3.16 1.19a10.94 10.94 0 0 1 5.75 0c2.18-1.5 3.16-1.19 3.16-1.19.63 1.61.23 2.78.11 3.08.75.81 1.2 1.84 1.2 3.11 0 4.45-2.72 5.43-5.3 5.72.42.36.79 1.06.79 2.14v3.18c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .8Z"/></svg>
+                View source
+              </a>
+            </div>
+          </div>
+          <div class="hero-meta" aria-label="Product details">
+            <span>Free and open source</span>
+            <span>AI optional</span>
+            <span>No account</span>
+            <span>Windows installer + portable</span>
+          </div>
         </div>
+      </div>
+    </section>
 
-        <p class="hero-meta">
-          <span class="pill">⊞ Windows installer + portable</span>
-          <span class="pill">8 languages · 5 runnable</span>
-          <span class="pill">Live HTML preview</span>
-          <span class="pill">Works offline · AI optional</span>
-        </p>
-
-        <!-- ============ MOCK APP PREVIEW ============ -->
-        <div class="preview" role="img" aria-label="Screenshot of seec0de v3.0.0: instruction rail on the left, code editor with Run button in the middle, Live Preview + Console on the right.">
-          <div class="preview-titlebar">
-            <div class="traffic" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="preview-title">SEEC0DE <span class="pill-mini">v3.0.0</span></div>
-            <div></div>
+    <section class="workbench-wrap" aria-label="Interactive product preview">
+      <div class="container workbench-stage reveal">
+        <div class="workbench">
+          <div class="window-bar">
+            <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="window-title"><b>seec0de</b> / learning workspace</div>
+            <div class="window-version">v3.6.0</div>
           </div>
 
-          <div class="preview-body">
-            <aside class="preview-side">
-              <div class="side-label">Practical</div>
-              <div class="chips">
-                <span class="chip on">JavaScript</span>
+          <div class="workbench-tabs" role="tablist" aria-label="Preview scenarios">
+            <button class="scenario-tab" type="button" role="tab" aria-selected="true" data-scenario="learn">01 · Learn</button>
+            <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="run">02 · Run</button>
+            <button class="scenario-tab" type="button" role="tab" aria-selected="false" data-scenario="fix">03 · Fix</button>
+          </div>
+
+          <div class="workbench-grid">
+            <aside class="pane lesson-pane" aria-label="Lessons">
+              <div class="pane-head"><span class="status-dot"></span> Python path</div>
+              <div class="lesson-list">
+                <div class="lesson-group-label">Foundations</div>
+                <div class="lesson-item"><span class="lesson-index">01</span><span><span class="lesson-name">Values &amp; variables</span><span class="lesson-progress">Complete</span></span></div>
+                <div class="lesson-item active"><span class="lesson-index">02</span><span><span class="lesson-name">Loops &amp; conditions</span><span class="lesson-progress">In progress · 2/3</span></span></div>
+                <div class="lesson-item"><span class="lesson-index">03</span><span><span class="lesson-name">Functions</span><span class="lesson-progress">Up next</span></span></div>
+                <div class="lesson-group-label">Build</div>
+                <div class="lesson-item"><span class="lesson-index">04</span><span><span class="lesson-name">Number guessing game</span><span class="lesson-progress">Locked</span></span></div>
               </div>
-              <div class="side-label">Comparisons</div>
-              <div class="chips">
-                <span class="chip">Pseudocode</span>
-                <span class="chip">Python</span>
-                <span class="chip">Rust</span>
+              <div class="profile-card">
+                <div class="profile-row"><span class="avatar">EM</span><span><strong>Emmanuel</strong>7 lessons complete</span></div>
               </div>
-              <div class="side-label">Instruction</div>
-              <div class="instruction-box">make a button that says hello when you click it</div>
             </aside>
 
-            <div class="preview-mid">
-              <div class="tabs">
-                <span class="tab" style="color:#c084fc;">💡 Pseudocode</span>
-                <span class="tab active">index.html</span>
-                <span class="tab">app.js</span>
-                <span class="tab" style="margin-left:auto;color:var(--text-2);">▶ Run</span>
+            <section class="pane editor-pane" aria-label="Code editor">
+              <div class="editor-toolbar">
+                <span class="file-tab active"><span class="file-dot"></span><span id="file-name">lesson_02.py</span></span>
+                <span class="file-tab">pseudocode</span>
+                <button class="run-button" type="button" id="run-demo" aria-label="Run the demo code">
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>
+                  <span>Run</span>
+                </button>
               </div>
-              <pre class="editor"><span class="kw">&lt;!DOCTYPE</span> <span class="ty">html</span><span class="kw">&gt;</span>
-<span class="kw">&lt;html&gt;</span>
-  <span class="kw">&lt;body&gt;</span>
-    <span class="kw">&lt;button</span> <span class="fn">id</span>=<span class="st">"hi"</span><span class="kw">&gt;</span>say hello<span class="kw">&lt;/button&gt;</span>
-    <span class="kw">&lt;script&gt;</span>
-      <span class="cm">// fires when the button is clicked</span>
-      <span class="fn">hi</span>.<span class="fn">onclick</span> = () =&gt; {
-        <span class="fn">console</span>.<span class="fn">log</span>(<span class="st">"hello!"</span>);
-        <span class="fn">alert</span>(<span class="st">"hello!"</span>);
-      };
-    <span class="kw">&lt;/script&gt;</span>
-  <span class="kw">&lt;/body&gt;</span>
-<span class="kw">&lt;/html&gt;</span></pre>
-            </div>
 
-            <aside class="preview-side right">
-              <div class="side-label">Live Preview · Console</div>
-              <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:10px;">
-                <button style="background:#efefef;color:#222;border:1px solid #ccc;border-radius:4px;padding:6px 12px;font-size:12px;font-family:inherit;cursor:default;">say hello</button>
+              <div class="code-area" tabindex="0" aria-label="Python example code">
+                <div class="code-block" id="code-block"></div>
               </div>
-              <div style="font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;color:var(--text-2);background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 10px;line-height:1.6;">
-                <div style="color:var(--text-4);">·&nbsp;&nbsp;&nbsp;&nbsp;$ node main.js</div>
-                <div>OUT&nbsp;&nbsp;hello!</div>
-                <div style="color:var(--text-4);">·&nbsp;&nbsp;&nbsp;&nbsp;✓ exit 0 · 42ms</div>
+
+              <div class="editor-footer">
+                <span><i></i> autosaved</span>
+                <span id="editor-status">Python · UTF-8 · Ln 6, Col 9</span>
               </div>
-              <p style="color: var(--text-4); font-size: 10.5px; margin-top:10px;">Click a keyword in the editor to open the glossary.</p>
+            </section>
+
+            <aside class="pane coach-pane" aria-label="Explanation and console">
+              <div class="pane-head" id="coach-head">Explanation</div>
+              <div class="coach-body" id="coach-body"></div>
+              <div class="console" aria-live="polite">
+                <div class="console-head"><span>Console</span><span id="run-time">Ready</span></div>
+                <div class="console-output" id="console-output"><span class="muted">Press Run to execute the active file.</span></div>
+              </div>
             </aside>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ============== FEATURES ============== -->
-    <section id="features">
-      <div class="container">
-        <header class="section-head">
-          <div class="kicker">What you can do</div>
-          <h2>One workspace. Everything in reach.</h2>
-          <p>Instruction, code, live preview, and explanation — all side by side. Every panel collapses when you want more room.</p>
-        </header>
-
-        <div class="features">
-          <article class="card">
-            <div class="card-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            </div>
-            <h3>Describe → see code</h3>
-            <p>Type plain English. Hit <strong>Generate</strong>. One button — uses AI when you're online with a key, falls back to built-in templates otherwise.</p>
-          </article>
-
-          <article class="card">
-            <div class="card-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </div>
-            <h3>Live HTML preview</h3>
-            <p>Edit an <code>.html</code> file and watch it render as you type. Everything else flows through Run, so output is always a deliberate gesture.</p>
-          </article>
-
-          <article class="card">
-            <div class="card-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-            </div>
-            <h3>Run · Python, JS, TS, C, C++</h3>
-            <p>Hit <strong>Run</strong> in the editor toolbar. Output lands in the Console tab. Missing a toolchain? You get a one-line install hint, not a crash.</p>
-          </article>
-
-          <article class="card">
-            <div class="card-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-            </div>
-            <h3>Select → see explanation</h3>
-            <p>Highlight any chunk of code, click <strong>Explain</strong>. A line-by-line breakdown opens in the right panel as a collapsible accordion — focus on one line at a time.</p>
-          </article>
-
-          <article class="card">
-            <div class="card-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <h3>File explorer &amp; explained terminal</h3>
-            <p>Open any folder. Edit files in Monaco tabs with auto-save. The terminal explains every command — npm, git, docker, python, PowerShell — with exit code and duration.</p>
-          </article>
-
-          <article class="card">
-            <div class="card-icon" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </div>
-            <h3>Onboarding &amp; settings</h3>
-            <p>First launch picks your language and (optional) Gemini key. After that, everything lives in a tidy Settings drawer — including a one-click toolchain installer.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============== LANGUAGES ============== -->
-    <section id="languages" class="lang-strip" style="padding-block: 56px;">
-      <div class="container">
-        <h3>Languages out of the box</h3>
-        <div class="lang-row" aria-label="Supported languages">
-          <span class="lang" style="--clr:#3776ab">Python ▶</span>
-          <span class="lang" style="--clr:#f7df1e">JavaScript ▶</span>
-          <span class="lang" style="--clr:#3178c6">TypeScript ▶</span>
-          <span class="lang" style="--clr:#00599c">C++ ▶</span>
-          <span class="lang" style="--clr:#a8b9cc">C ▶</span>
-          <span class="lang" style="--clr:#f89820">Java</span>
-          <span class="lang" style="--clr:#9b4f96">C#</span>
-          <span class="lang" style="--clr:#00add8">Go</span>
-          <span class="lang" style="--clr:#ce422b">Rust</span>
-          <span class="lang" style="--clr:#e34f26">HTML 👁</span>
-          <span class="lang" style="--clr:#264de4">CSS</span>
-        </div>
-        <p style="text-align:center;color:var(--text-4);font-size:12px;margin-top:14px;letter-spacing:0.3px;">
-          <span style="color:var(--text-3);">▶</span> runnable &nbsp;·&nbsp;
-          <span style="color:var(--text-3);">👁</span> live preview &nbsp;·&nbsp;
-          every keyword has a glossary popup
+        <p class="micro-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="M12 16v-4M12 8h.01"/></svg>
+          This is interactive. Switch modes, run the code, and open line explanations.
         </p>
       </div>
     </section>
 
-    <!-- ============== HOW IT WORKS ============== -->
-    <section id="how">
-      <div class="container">
-        <header class="section-head">
-          <div class="kicker">How it works</div>
-          <h2>Set up once. Learn for years.</h2>
-          <p>Runs on your machine. No accounts, no telemetry. AI is optional and uses your own free Gemini key. Auto-updates when installed.</p>
-        </header>
+    <div class="language-rail" aria-label="Supported languages">
+      <div class="language-track" aria-hidden="true">
+        <span>Python</span><span>JavaScript</span><span>TypeScript</span><span>Java</span><span>C++</span><span>C</span><span>C#</span><span>Go</span><span>Rust</span><span>HTML</span><span>CSS</span>
+        <span>Python</span><span>JavaScript</span><span>TypeScript</span><span>Java</span><span>C++</span><span>C</span><span>C#</span><span>Go</span><span>Rust</span><span>HTML</span><span>CSS</span>
+      </div>
+    </div>
 
-        <div class="steps">
-          <article class="step">
-            <h3>Install &amp; onboard</h3>
-            <p>Grab the Windows installer. A quick onboarding picks your language and (optional) Gemini key.</p>
+    <section class="section" id="workflow">
+      <div class="container">
+        <div class="reveal">
+          <div class="section-label">The learning loop</div>
+          <h2 class="section-title">one workspace. no context switching. <nav></nav>no dead ends.</h2>
+          <p class="section-copy">The shortest path from “I have an idea” to “I understand why this works” stays on one screen.</p>
+        </div>
+
+        <div class="loop-grid reveal">
+          <article class="loop-row">
+            <span class="loop-number">01</span>
+            <div>
+              <h3>Describe the outcome.</h3>
+              <p>Use plain English or pick a structured lesson. Generate a runnable starting point without deciding between a maze of AI and offline modes.</p>
+              <div class="loop-meta"><span>Natural language</span><span>Curated lessons</span><span>Offline fallback</span></div>
+            </div>
           </article>
-          <article class="step">
-            <h3>Describe, write, run</h3>
-            <p>Type plain English to generate code, or write your own. Edit HTML and see it render live. Hit <strong>Run</strong> for Python, JS, TS, C, or C++.</p>
+
+          <article class="loop-row">
+            <span class="loop-number">02</span>
+            <div>
+              <h3>See the same idea in real syntax.</h3>
+              <p>Move between pseudocode and multiple languages while the underlying concept stays constant. Learn differences without losing the plot.</p>
+              <div class="loop-meta"><span>9 generated languages</span><span>Syntax highlighting</span><span>Keyword glossary</span></div>
+            </div>
           </article>
-          <article class="step">
-            <h3>Read, explain, explore</h3>
-            <p>Click any keyword for a glossary popup. Highlight code and click <strong>Explain</strong> for a line-by-line breakdown.</p>
+
+          <article class="loop-row">
+            <span class="loop-number">03</span>
+            <div>
+              <h3>Run code where you wrote it.</h3>
+              <p>Execute Python, JavaScript, TypeScript, C, and C++ from the editor. HTML renders live. Output appears only when you deliberately press Run.</p>
+              <div class="loop-meta"><span>5 runnable</span><span>Live HTML</span><span>Toolchain guidance</span></div>
+            </div>
+          </article>
+
+          <article class="loop-row">
+            <span class="loop-number">04</span>
+            <div>
+              <h3>Interrogate every line.</h3>
+              <p>Select code for a contextual explanation. Click highlighted keywords for tiny definitions. When execution fails, get fixes tied to the actual error.</p>
+              <div class="loop-meta"><span>Line by line</span><span>Error translation</span><span>Fix-it coach</span></div>
+            </div>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- ============== FINAL CTA ============== -->
-    <section style="padding-block: 64px 96px;">
-      <div class="container">
-        <div class="cta-box">
-          <h2>Get the latest seec0de.</h2>
-          <p>Free, open source, Windows installer. Auto-updates once installed.</p>
-          <div class="cta-actions">
-            <a class="btn btn-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.0.0/seec0de-Setup-3.0.0.exe" rel="noopener">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download v3.0.0
-            </a>
-            <a class="btn btn-ghost" href="https://github.com/Emmanuel-PaulMaah/seec0de/blob/main/CHANGELOG.md" rel="noopener">
-              Read changelog
-            </a>
+    <section class="break-section">
+      <div class="container break-grid">
+        <div class="reveal">
+          <div class="section-label">Failure, translated</div>
+          <h2 class="section-title">the error is part of the lesson.</h2>
+          <p class="section-copy">Raw error output stays visible, but seec0de tells you what failed, why it probably failed, and what to change next.</p>
+        </div>
+
+        <div class="error-terminal reveal" aria-label="Example translated error">
+          <div class="terminal-top"><span>Console · lesson_02.py</span><span>exit 1 · 41ms</span></div>
+          <div class="terminal-screen">
+            <div class="cmd"><span class="path">$</span> python lesson_02.py</div>
+            <div class="error">NameError: name 'score' is not defined</div>
+            <div class="dim">&nbsp;&nbsp;at lesson_02.py:6</div>
           </div>
-          <p class="cta-note">First install? Windows SmartScreen may warn you — click <em>More info → Run anyway</em>. The installer isn't code-signed yet.</p>
+          <div class="human-error">
+            <div class="human-error-head"><span></span>Python cannot find a value named <code>score</code>.</div>
+            <p>Line 6 uses <code>score</code>, but the variable created on line 2 is named <code>scores</code>.</p>
+            <ol>
+              <li>Change <code>score</code> to <code>scores</code> on line 6.</li>
+              <li>Run the file again and confirm that three labels print.</li>
+              <li>Notice how the plural name matches a list of values.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="privacy">
+      <div class="container">
+        <div class="reveal">
+          <div class="section-label">Local-first by default</div>
+          <h2 class="section-title">your machine is the classroom.</h2>
+          <p class="section-copy">No account gate. No cloud workspace required. Your files, toolchains, progress, and execution stay under your control.</p>
+        </div>
+
+        <div class="trust-grid reveal">
+          <article class="trust-panel">
+            <h3>AI is an upgrade path, not a dependency.</h3>
+            <p>Generate and Explain work offline with built-in fallbacks. Add your own Gemini key when you want richer context.</p>
+            <div class="privacy-diagram" aria-hidden="true">
+              <div class="diagram-node">Your instruction<br />+ local files</div>
+              <div class="diagram-link"></div>
+              <div class="diagram-node">Encrypted key<br />main process only</div>
+              <div class="diagram-lock">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+              </div>
+            </div>
+          </article>
+
+          <article class="trust-panel">
+            <h3>Built to behave like a real tool.</h3>
+            <ul class="trust-list">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                <span>Encrypted API-key storage<small>The renderer only knows whether a key exists.</small></span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                <span>Sanitized child-process environment<small>Run and Terminal receive only safe environment variables.</small></span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                <span>Workspace-scoped file access<small>Filesystem operations stay inside the open project and temp directory.</small></span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                <span>No account or telemetry requirement<small>Install, open, and start learning.</small></span>
+              </li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="release" id="release">
+      <div class="container">
+        <div class="release-shell reveal">
+          <div class="release-grid">
+            <div>
+              <div class="section-label">Latest release · July 11, 2026</div>
+              <h2>more personal. more interactive.</h2>
+              <p>Version 3.6.0 adds local learner profiles, a deeper JavaScript and Python curriculum, interactive lesson explanations, and a Fix-it coach.</p>
+              <div class="release-actions">
+                <a class="button button-primary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/download/v3.6.0/seec0de-Setup-3.6.0.exe" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+                  Download v3.6.0
+                </a>
+                <a class="button button-secondary" href="https://github.com/Emmanuel-PaulMaah/seec0de/releases/tag/v3.6.0" rel="noopener noreferrer">Read release notes</a>
+              </div>
+            </div>
+
+            <ol class="release-list">
+              <li><span>01</span>Local learner profiles and persistent progress</li>
+              <li><span>02</span>Expanded JavaScript and Python curriculum</li>
+              <li><span>03</span>Interactive lesson explanations</li>
+              <li><span>04</span>Lesson Fix-it coach and toolchain setup guidance</li>
+            </ol>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="container foot">
-      <div>
-        <span class="brand" style="font-size: 13px;">
-          <span class="brand-mark" aria-hidden="true" style="width:20px;height:20px;font-size:10px;">⟨/⟩</span>
-          <span>seec0de</span>
+    <div class="container footer-row">
+      <div class="footer-left">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m9 7-5 5 5 5M15 7l5 5-5 5M14 4l-4 16"/></svg>
         </span>
-        <span style="margin-left: 12px;">© 2026 Emmanuel PaulMaah</span>
+        <span>seec0de · open source · © 2026 Emmanuel PaulMaah</span>
       </div>
-      <nav class="foot-links" aria-label="Footer">
-        <a href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener">GitHub</a>
-        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/releases" rel="noopener">Releases</a>
-        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/blob/main/CHANGELOG.md" rel="noopener">Changelog</a>
-        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/issues" rel="noopener">Issues</a>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/releases" rel="noopener noreferrer">Releases</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/blob/main/CHANGELOG.md" rel="noopener noreferrer">Changelog</a>
+        <a href="https://github.com/Emmanuel-PaulMaah/seec0de/issues" rel="noopener noreferrer">Issues</a>
       </nav>
     </div>
   </footer>
+
+  <script>
+    const scenarios = {
+      learn: {
+        file: "lesson_02.py",
+        status: "Python · UTF-8 · Ln 6, Col 9",
+        head: "Explanation",
+        code: [
+          ["tok-comment", "# label each score as pass or retry"],
+          ["tok-plain", "scores = [72, 48, 91]"],
+          ["tok-plain", ""],
+          ["tok-key", "for", "tok-plain", " score ", "tok-key", "in", "tok-plain", " scores:"],
+          ["tok-plain", "    ", "tok-key", "if", "tok-plain", " score >= ", "tok-num", "60", "tok-plain", ":"],
+          ["tok-plain", "        ", "tok-fn", "print", "tok-plain", "(", "tok-str", "\"pass\"", "tok-plain", ")"],
+          ["tok-plain", "    ", "tok-key", "else", "tok-plain", ":"],
+          ["tok-plain", "        ", "tok-fn", "print", "tok-plain", "(", "tok-str", "\"retry\"", "tok-plain", ")"]
+        ],
+        focus: [4, 5, 6, 7, 8],
+        coach: `
+          <div class="coach-kicker">Selected block · lines 4–8</div>
+          <h3 class="coach-title">A loop that makes one decision per score.</h3>
+          <p class="coach-copy">Open a line to understand its job without losing the surrounding context.</p>
+          <div class="explanation-list">
+            <div class="explanation-item">
+              <button class="explanation-trigger" type="button" aria-expanded="true"><span class="ln">04</span><span class="summary">Visit every score</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+              <div class="explanation-content"><code>for score in scores</code> takes each number from the list and temporarily names it <code>score</code>.</div>
+            </div>
+            <div class="explanation-item">
+              <button class="explanation-trigger" type="button" aria-expanded="false"><span class="ln">05</span><span class="summary">Test the current value</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+              <div class="explanation-content">The condition is true when the current score is 60 or higher.</div>
+            </div>
+            <div class="explanation-item">
+              <button class="explanation-trigger" type="button" aria-expanded="false"><span class="ln">06–08</span><span class="summary">Choose one output</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+              <div class="explanation-content">Python runs exactly one branch: <code>pass</code> when the condition is true, otherwise <code>retry</code>.</div>
+            </div>
+          </div>`,
+        console: '<span class="muted">Press Run to execute the active file.</span>',
+        result: '<span class="ok">pass</span><br><span class="ok">retry</span><br><span class="ok">pass</span><br><span class="muted">✓ exit 0</span>'
+      },
+      run: {
+        file: "fizzbuzz.py",
+        status: "Python · UTF-8 · Ln 3, Col 13",
+        head: "Run output",
+        code: [
+          ["tok-key", "for", "tok-plain", " number ", "tok-key", "in", "tok-plain", " ", "tok-fn", "range", "tok-plain", "(", "tok-num", "1", "tok-plain", ", ", "tok-num", "16", "tok-plain", "):"],
+          ["tok-plain", "    ", "tok-key", "if", "tok-plain", " number % ", "tok-num", "15", "tok-plain", " == ", "tok-num", "0", "tok-plain", ":"],
+          ["tok-plain", "        ", "tok-fn", "print", "tok-plain", "(", "tok-str", "\"FizzBuzz\"", "tok-plain", ")"],
+          ["tok-plain", "    ", "tok-key", "elif", "tok-plain", " number % ", "tok-num", "3", "tok-plain", " == ", "tok-num", "0", "tok-plain", ":"],
+          ["tok-plain", "        ", "tok-fn", "print", "tok-plain", "(", "tok-str", "\"Fizz\"", "tok-plain", ")"],
+          ["tok-plain", "    ", "tok-key", "elif", "tok-plain", " number % ", "tok-num", "5", "tok-plain", " == ", "tok-num", "0", "tok-plain", ":"],
+          ["tok-plain", "        ", "tok-fn", "print", "tok-plain", "(", "tok-str", "\"Buzz\"", "tok-plain", ")"],
+          ["tok-plain", "    ", "tok-key", "else", "tok-plain", ":"],
+          ["tok-plain", "        ", "tok-fn", "print", "tok-plain", "(number)"]
+        ],
+        focus: [1, 2, 3],
+        coach: `
+          <div class="coach-kicker">Ready to execute</div>
+          <h3 class="coach-title">Output is a deliberate action.</h3>
+          <p class="coach-copy">Typing never floods the console. Run is the one consistent gesture for Python, JavaScript, TypeScript, C, and C++.</p>
+          <div class="fix-list">
+            <div class="fix-step"><span>⌘</span><div><strong style="color:var(--ink-soft)">Run the active file</strong><br>Use the button above or your keyboard shortcut.</div></div>
+            <div class="fix-step"><span>→</span><div><strong style="color:var(--ink-soft)">Read stdout here</strong><br>Exit status and duration stay attached to the result.</div></div>
+            <div class="fix-step"><span>?</span><div><strong style="color:var(--ink-soft)">Interrogate the code</strong><br>Select a block when you want a line-by-line explanation.</div></div>
+          </div>`,
+        console: '<span class="muted">Press Run to execute fizzbuzz.py.</span>',
+        result: '1<br>2<br><span class="ok">Fizz</span><br>4<br><span class="ok">Buzz</span><br><span class="muted">… 10 more lines</span><br><span class="muted">✓ exit 0</span>'
+      },
+      fix: {
+        file: "average.py",
+        status: "Python · 1 problem · Ln 5, Col 20",
+        head: "Fix-it coach",
+        code: [
+          ["tok-plain", "scores = [", "tok-num", "72", "tok-plain", ", ", "tok-num", "84", "tok-plain", ", ", "tok-num", "91", "tok-plain", "]"],
+          ["tok-plain", "total = ", "tok-num", "0"],
+          ["tok-plain", ""],
+          ["tok-key", "for", "tok-plain", " score ", "tok-key", "in", "tok-plain", " scores:"],
+          ["tok-plain", "    total = total + scor"],
+          ["tok-plain", ""],
+          ["tok-plain", "average = total / ", "tok-fn", "len", "tok-plain", "(scores)"],
+          ["tok-fn", "print", "tok-plain", "(average)"]
+        ],
+        focus: [5],
+        coach: `
+          <div class="coach-kicker" style="color:var(--danger)">NameError · line 5</div>
+          <h3 class="coach-title">Python cannot find <code>scor</code>.</h3>
+          <p class="coach-copy">The loop variable is named <code>score</code>. Line 5 is missing the final <code>e</code>.</p>
+          <div class="fix-list">
+            <div class="fix-step"><span>01</span><div>Change <code>scor</code> to <code>score</code> on line 5.</div></div>
+            <div class="fix-step"><span>02</span><div>Run the file again. The expected average is <code>82.333…</code>.</div></div>
+            <div class="fix-step"><span>03</span><div>Compare the variable spelling at its definition and use.</div></div>
+          </div>`,
+        console: '<span class="err">NameError: name \'scor\' is not defined</span><br><span class="muted">at average.py:5 · exit 1</span>',
+        result: '<span class="err">NameError: name \'scor\' is not defined</span><br><span class="muted">at average.py:5 · exit 1</span>'
+      }
+    };
+
+    const codeBlock = document.getElementById("code-block");
+    const fileName = document.getElementById("file-name");
+    const editorStatus = document.getElementById("editor-status");
+    const coachHead = document.getElementById("coach-head");
+    const coachBody = document.getElementById("coach-body");
+    const consoleOutput = document.getElementById("console-output");
+    const runTime = document.getElementById("run-time");
+    const runButton = document.getElementById("run-demo");
+    let activeScenario = "learn";
+
+    function renderCode(parts) {
+      return parts.map((line, index) => {
+        let html = "";
+        for (let i = 0; i < line.length; i += 2) {
+          const cls = line[i];
+          const text = line[i + 1] ?? "";
+          html += `<span class="${cls}">${text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")}</span>`;
+        }
+        const focused = scenarios[activeScenario].focus.includes(index + 1) ? " is-focus" : "";
+        return `<div class="code-line${focused}"><span class="line-no">${index + 1}</span><span>${html || "&nbsp;"}</span></div>`;
+      }).join("");
+    }
+
+    function bindExplanationTriggers() {
+      coachBody.querySelectorAll(".explanation-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          const wasOpen = trigger.getAttribute("aria-expanded") === "true";
+          coachBody.querySelectorAll(".explanation-trigger").forEach((item) => item.setAttribute("aria-expanded", "false"));
+          if (!wasOpen) trigger.setAttribute("aria-expanded", "true");
+        });
+      });
+    }
+
+    function setScenario(name) {
+      activeScenario = name;
+      const scenario = scenarios[name];
+      document.querySelectorAll(".scenario-tab").forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab.dataset.scenario === name));
+      });
+      fileName.textContent = scenario.file;
+      editorStatus.textContent = scenario.status;
+      coachHead.textContent = scenario.head;
+      codeBlock.innerHTML = renderCode(scenario.code);
+      coachBody.innerHTML = scenario.coach;
+      consoleOutput.innerHTML = scenario.console;
+      runTime.textContent = name === "fix" ? "Exit 1" : "Ready";
+      runButton.classList.remove("is-running");
+      runButton.disabled = false;
+      runButton.querySelector("span").textContent = "Run";
+      runButton.querySelector("svg").innerHTML = '<path d="m8 5 11 7-11 7V5Z"/>';
+      bindExplanationTriggers();
+    }
+
+    const scenarioTabs = [...document.querySelectorAll(".scenario-tab")];
+    scenarioTabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => setScenario(tab.dataset.scenario));
+      tab.addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        let nextIndex = index;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % scenarioTabs.length;
+        if (event.key === "ArrowLeft") nextIndex = (index - 1 + scenarioTabs.length) % scenarioTabs.length;
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = scenarioTabs.length - 1;
+        scenarioTabs[nextIndex].focus();
+        setScenario(scenarioTabs[nextIndex].dataset.scenario);
+      });
+    });
+
+    runButton.addEventListener("click", () => {
+      const scenario = scenarios[activeScenario];
+      runButton.disabled = true;
+      runButton.classList.add("is-running");
+      runButton.querySelector("span").textContent = "Running";
+      runButton.querySelector("svg").innerHTML = '<path d="M12 3a9 9 0 1 0 9 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+      consoleOutput.innerHTML = '<span class="muted">$ python ' + scenario.file + '</span><br><span class="muted">Starting process…</span>';
+      runTime.textContent = "Running";
+
+      window.setTimeout(() => {
+        consoleOutput.innerHTML = scenario.result;
+        runTime.textContent = activeScenario === "fix" ? "Exit 1 · 38ms" : "Exit 0 · 42ms";
+        runButton.disabled = false;
+        runButton.classList.remove("is-running");
+        runButton.querySelector("span").textContent = "Run";
+        runButton.querySelector("svg").innerHTML = '<path d="m8 5 11 7-11 7V5Z"/>';
+      }, 620);
+    });
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduceMotion && "IntersectionObserver" in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: .12 });
+      document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
+    } else {
+      document.querySelectorAll(".reveal").forEach((element) => element.classList.add("is-visible"));
+    }
+
+    setScenario("learn");
+  </script>
 </body>
 </html>

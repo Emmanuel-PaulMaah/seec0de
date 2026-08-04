@@ -45,6 +45,31 @@ const LANGUAGE_LABELS = {
   csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C',
 };
 
+function defineSeec0deThemes(monaco) {
+  monaco.editor.defineTheme('seec0de-green', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'keyword', foreground: 'C8B6FF' },
+      { token: 'string', foreground: 'EFB78F' },
+      { token: 'number', foreground: 'A8D8A0' },
+      { token: 'comment', foreground: '70756D' },
+      { token: 'type', foreground: '9CC9FF' },
+    ],
+    colors: {
+      'editor.background': '#0B0D0C',
+      'editor.foreground': '#F2F0E9',
+      'editorLineNumber.foreground': '#61645E',
+      'editorLineNumber.activeForeground': '#C7C5BD',
+      'editor.selectionBackground': '#35451F',
+      'editor.inactiveSelectionBackground': '#29351B',
+      'editorCursor.foreground': '#C8FF4D',
+      'editorIndentGuide.background1': '#232620',
+      'editorIndentGuide.activeBackground1': '#353A30',
+    },
+  });
+}
+
 // CodePanel — the middle column. Hosts the generator output (pseudocode +
 // language tabs), open-file tabs, the Run button, and the editor itself.
 //
@@ -58,6 +83,7 @@ const LANGUAGE_LABELS = {
 export default function CodePanel({
   generatedCode,
   selectedLanguages,
+  appTheme = 'seec0de-dark',
   onCodeChange,
   onSelectionExplain,
   aiLoading,
@@ -113,28 +139,6 @@ export default function CodePanel({
   }, []);
   const resetFontSize = useCallback(() => setFontSize(FONT_SIZE_DEFAULT), []);
 
-  // Ctrl/⌘ +  → bigger ; Ctrl/⌘ −  → smaller ; Ctrl/⌘ 0  → reset.
-  // Hooked to window so the shortcuts work even when the Monaco editor
-  // doesn't have focus (e.g. learner just clicked the tab strip).
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
-      // `=` keycap doubles as `+` without Shift on most keyboards.
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault();
-        bumpFontSize(FONT_SIZE_STEP);
-      } else if (e.key === '-' || e.key === '_') {
-        e.preventDefault();
-        bumpFontSize(-FONT_SIZE_STEP);
-      } else if (e.key === '0') {
-        e.preventDefault();
-        resetFontSize();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [bumpFontSize, resetFontSize]);
-
   // ---- which view are we showing? ---------------------------------------
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
   const showingFile = !!fileTab;
@@ -164,6 +168,9 @@ export default function CodePanel({
     value = (generatedCode.code && generatedCode.code[generatedDisplayTab]) || '';
     monacoLang = LANGUAGE_MONACO_MAP[generatedDisplayTab] || 'plaintext';
   }
+  const tooltipLanguage = showingFile
+    ? (fileInfo(fileTab.path).run || fileInfo(fileTab.path).monaco)
+    : generatedDisplayTab;
 
   const clearSelection = useCallback(() => {
     setSelection(null);
@@ -174,6 +181,10 @@ export default function CodePanel({
     editorRef.current = editor;
 
     editor.onDidChangeCursorSelection((e) => {
+      if (lessonMode) {
+        clearSelection();
+        return;
+      }
       const model = editor.getModel();
       if (!model) return;
       const selectedText = model.getValueInRange(e.selection);
@@ -187,7 +198,7 @@ export default function CodePanel({
     });
 
     editor.onMouseDown((e) => {
-      if (isPseudocode || showingFile) return;
+      if (isPseudocode) return;
       const pos = e.target.position;
       if (!pos) return;
       const model = editor.getModel();
@@ -195,7 +206,7 @@ export default function CodePanel({
       const word = model.getWordAtPosition(pos);
       if (!word) return;
 
-      const lang = LANGUAGES[generatedDisplayTab];
+      const lang = LANGUAGES[tooltipLanguage];
       if (!lang || !lang.glossary[word.word]) return;
 
       const coords = editor.getScrolledVisiblePosition(pos);
@@ -204,13 +215,13 @@ export default function CodePanel({
       const entry = lang.glossary[word.word];
       setTooltip({
         keyword: word.word,
-        language: LANGUAGE_LABELS[generatedDisplayTab] || generatedDisplayTab,
+        language: LANGUAGE_LABELS[tooltipLanguage] || tooltipLanguage,
         definition: entry.definition,
         example: entry.example,
         position: { top: coords.top + 24, left: coords.left + 20 },
       });
     });
-  }, [generatedDisplayTab, isPseudocode, showingFile, clearSelection]);
+  }, [isPseudocode, lessonMode, tooltipLanguage, clearSelection]);
 
   const handleChange = useCallback((val) => {
     const next = val ?? '';
@@ -237,7 +248,7 @@ export default function CodePanel({
     }
   }, [selection, isPseudocode, showingFile, explainLanguage, onSelectionExplain, clearSelection]);
 
-  const showExplainButtons = (showingFile || ((editable || lessonMode) && !isPseudocode)) && selection && btnPos;
+  const showExplainButtons = !lessonMode && (showingFile || (editable && !isPseudocode)) && selection && btnPos;
 
   // ---- run button: figure out language + source for the runner ----------
   let runLanguage = null;
@@ -256,6 +267,25 @@ export default function CodePanel({
     if (!canRun) return;
     onRunCode({ language: runLanguage, source: value, filename: runFilename });
   }, [canRun, onRunCode, runLanguage, value, runFilename]);
+
+  // Run from the editor with the familiar build-tool shortcut. Ignore other
+  // text inputs (for example the instruction panel) even though this listener
+  // is attached to window.
+  useEffect(() => {
+    const onKey = (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
+      const target = event.target;
+      const inMonaco = target instanceof Element && !!target.closest('.monaco-editor');
+      const inOtherInput = target instanceof HTMLElement && (
+        target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
+      );
+      if (inOtherInput && !inMonaco) return;
+      event.preventDefault();
+      handleRun();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [handleRun]);
 
   const handleActivateGenerated = (tab) => {
     onActivatePath?.(null);
@@ -280,6 +310,7 @@ export default function CodePanel({
             return (
               <button
                 key={`gen:${tab}`}
+                className="ui-tab"
                 style={{
                   ...styles.tab,
                   ...(isActive ? styles.activeTab : {}),
@@ -312,6 +343,7 @@ export default function CodePanel({
                 style={{ ...styles.fileTab, ...(isActive ? styles.activeTab : {}) }}
               >
                 <button
+                  className="ui-tab"
                   style={styles.fileTabName}
                   onClick={() => handleActivateFile(f.path)}
                   title={f.path}
@@ -319,6 +351,7 @@ export default function CodePanel({
                   {basename(f.path)}{f.dirty ? ' •' : ''}
                 </button>
                 <button
+                  className="ui-icon-button"
                   style={styles.fileTabClose}
                   onClick={(e) => { e.stopPropagation(); onCloseFile?.(f.path); }}
                   title="Close file"
@@ -337,35 +370,38 @@ export default function CodePanel({
           <div style={styles.fontGroup} role="group" aria-label="Editor font size">
             <button
               type="button"
+              className="ui-toolbar-button"
               style={{
                 ...styles.fontBtn,
                 ...(fontSize <= FONT_SIZE_MIN ? styles.fontBtnDisabled : {}),
               }}
               onClick={() => bumpFontSize(-FONT_SIZE_STEP)}
               disabled={fontSize <= FONT_SIZE_MIN}
-              title="Decrease editor font size (Ctrl + −)"
+              title="Decrease editor font size"
               aria-label="Decrease editor font size"
             >
               A−
             </button>
             <button
               type="button"
+              className="ui-toolbar-button"
               style={styles.fontSizeLabel}
               onClick={resetFontSize}
-              title={`Reset to default (${FONT_SIZE_DEFAULT}px) — Ctrl + 0`}
+              title={`Reset editor font size to ${FONT_SIZE_DEFAULT}px`}
               aria-label={`Editor font size ${fontSize}px — click to reset`}
             >
               {fontSize}
             </button>
             <button
               type="button"
+              className="ui-toolbar-button"
               style={{
                 ...styles.fontBtn,
                 ...(fontSize >= FONT_SIZE_MAX ? styles.fontBtnDisabled : {}),
               }}
               onClick={() => bumpFontSize(FONT_SIZE_STEP)}
               disabled={fontSize >= FONT_SIZE_MAX}
-              title="Increase editor font size (Ctrl + +)"
+              title="Increase editor font size"
               aria-label="Increase editor font size"
             >
               A+
@@ -373,6 +409,7 @@ export default function CodePanel({
           </div>
           {canRun && (
             <button
+              className="ui-toolbar-button ui-primary-button"
               style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}) }}
               onClick={handleRun}
               disabled={runLoading}
@@ -386,6 +423,7 @@ export default function CodePanel({
           )}
           {showingFile && (
             <button
+              className="ui-toolbar-button"
               style={{ ...styles.lockBtn, ...(fileTab.dirty ? styles.lockBtnActive : {}) }}
               onClick={() => onSaveActiveFile?.()}
               title="Save (Ctrl + S)"
@@ -397,6 +435,7 @@ export default function CodePanel({
           )}
           {!showingFile && !folderOpen && !lessonMode && (
             <button
+              className="ui-toolbar-button"
               style={{ ...styles.lockBtn, ...(editable ? styles.lockBtnActive : {}) }}
               onClick={() => { setEditable((e) => !e); clearSelection(); setTooltip(null); }}
               title={editable ? 'Switch to read-only' : 'Switch to editable (paste your own code)'}
@@ -437,7 +476,8 @@ export default function CodePanel({
             height="100%"
             language={monacoLang}
             value={value}
-            theme="hc-black"
+            theme={appTheme === 'seec0de-green' ? 'seec0de-green' : 'hc-black'}
+            beforeMount={defineSeec0deThemes}
             onMount={handleEditorMount}
             onChange={handleChange}
             options={{
@@ -453,6 +493,7 @@ export default function CodePanel({
         {showExplainButtons && (
           <div style={{ ...styles.btnGroup, top: btnPos.top, left: btnPos.left }}>
             <button
+              className="ui-toolbar-button"
               style={styles.explainBtn}
               onClick={handleExplain}
               disabled={aiLoading}
@@ -488,7 +529,8 @@ const styles = {
   },
   tabs: {
     display: 'flex',
-    alignItems: 'stretch',
+    alignItems: 'center',
+    minHeight: 'var(--panel-header-height)',
     background: 'var(--bg-secondary)',
     borderBottom: '1px solid var(--border)',
   },
@@ -507,8 +549,10 @@ const styles = {
     borderBottomStyle: 'solid',
     borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
-    fontSize: 12,
-    padding: '8px 14px',
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     whiteSpace: 'nowrap',
     transition: 'color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
@@ -540,7 +584,8 @@ const styles = {
     borderBottomStyle: 'solid',
     borderBottomColor: 'transparent',
     color: 'var(--text-secondary)',
-    fontSize: 12,
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
     whiteSpace: 'nowrap',
     paddingLeft: 8,
   },
@@ -548,21 +593,29 @@ const styles = {
     background: 'none',
     border: 'none',
     color: 'inherit',
-    fontSize: 12,
-    padding: '6px 4px 6px 4px',
+    minHeight: 'var(--panel-header-height)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-1)',
     whiteSpace: 'nowrap',
   },
   fileTabClose: {
     background: 'none',
     border: 'none',
     color: 'var(--text-muted)',
-    padding: '4px 8px 4px 4px',
+    width: 'var(--control-compact)',
+    height: 'var(--control-compact)',
+    padding: 0,
+    justifyContent: 'center',
+    borderRadius: 'var(--radius-control)',
     display: 'flex',
     alignItems: 'center',
   },
   tabActions: {
     display: 'flex',
     alignItems: 'center',
+    gap: 'var(--space-1)',
+    paddingRight: 'var(--space-2)',
   },
   lockBtn: {
     display: 'inline-flex',
@@ -574,11 +627,13 @@ const styles = {
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: 'var(--border)',
-    borderRadius: 6,
+    minHeight: 'var(--control-compact)',
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    padding: '4px 10px',
-    margin: '6px 8px',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
+    margin: 0,
     whiteSpace: 'nowrap',
   },
   lockBtnActive: {
@@ -591,10 +646,11 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    padding: '6px 14px',
+    minHeight: 'var(--control-standard)',
+    padding: '0 var(--space-3)',
     background: 'var(--algorithm-soft)',
     borderBottom: '1px solid var(--border)',
-    fontSize: 11.5,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-secondary)',
   },
   algoBannerStrong: {
@@ -624,20 +680,20 @@ const styles = {
     color: 'var(--text-secondary)',
   },
   emptyTitle: {
-    fontSize: 15,
+    fontSize: 'var(--text-lg)',
     fontWeight: 600,
     color: 'var(--text-primary)',
     margin: 0,
   },
   emptyText: {
-    fontSize: 12.5,
+    fontSize: 'var(--text-md)',
     color: 'var(--text-secondary)',
     lineHeight: 1.6,
     maxWidth: 420,
     margin: 0,
   },
   emptyHint: {
-    fontSize: 11.5,
+    fontSize: 'var(--text-sm)',
     color: 'var(--text-muted)',
     margin: '4px 0 0',
   },
@@ -650,10 +706,12 @@ const styles = {
   explainBtn: {
     background: 'var(--bg-elevated)',
     border: '1px solid var(--border-strong)',
-    borderRadius: 6,
+    minHeight: 'var(--control-compact)',
+    borderRadius: 'var(--radius-group)',
     color: 'var(--text-primary)',
-    fontSize: 12,
-    padding: '4px 10px',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
     boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
     display: 'inline-flex',
     alignItems: 'center',
@@ -661,14 +719,15 @@ const styles = {
   runBtn: {
     display: 'inline-flex',
     alignItems: 'center',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 6,
-    color: 'var(--text-primary)',
-    fontSize: 11,
+    minHeight: 'var(--control-compact)',
+    background: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: 'var(--radius-group)',
+    color: 'var(--text-on-accent)',
+    fontSize: 'var(--text-sm)',
     fontWeight: 600,
-    padding: '4px 10px',
-    margin: '6px 4px 6px 8px',
+    padding: '0 var(--space-3)',
+    margin: 0,
     whiteSpace: 'nowrap',
   },
   runBtnDisabled: {
@@ -680,8 +739,9 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     border: '1px solid var(--border)',
-    borderRadius: 6,
-    margin: '6px 4px 6px 8px',
+    minHeight: 'var(--control-compact)',
+    borderRadius: 'var(--radius-group)',
+    margin: 0,
     overflow: 'hidden',
     background: 'var(--bg-tertiary)',
   },
@@ -689,9 +749,10 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '4px 8px',
+    minHeight: 'calc(var(--control-compact) - 2px)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 500,
+    padding: '0 var(--space-2)',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
     minWidth: 26,
@@ -707,9 +768,10 @@ const styles = {
     borderLeft: '1px solid var(--border)',
     borderRight: '1px solid var(--border)',
     color: 'var(--text-primary)',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '4px 8px',
+    minHeight: 'calc(var(--control-compact) - 2px)',
+    fontSize: 'var(--text-xs)',
+    fontWeight: 500,
+    padding: '0 var(--space-2)',
     cursor: 'pointer',
     minWidth: 26,
     fontVariantNumeric: 'tabular-nums',

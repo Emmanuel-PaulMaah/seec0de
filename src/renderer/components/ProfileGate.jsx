@@ -253,7 +253,7 @@ const styles = {
   unlockBtn: {
     width: 200,
     background: 'var(--accent)', border: '1px solid var(--accent)',
-    borderRadius: 8, color: '#fff', fontSize: 14, fontWeight: 600,
+    borderRadius: 8, color: 'var(--text-on-accent)', fontSize: 14, fontWeight: 600,
     padding: '10px 14px', marginTop: 4,
   },
   btnDisabled: {

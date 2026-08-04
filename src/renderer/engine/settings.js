@@ -21,6 +21,7 @@
 //     pinHash,                              // optional local lock (see below)
 //     experienceLevel, practicalLanguage, comparisonLanguages,
 //     showFileExplorer, showTerminal, completedLessons,
+//     learnMode, learningSession,
 //     createdAt, updatedAt,
 //   }
 //
@@ -71,6 +72,9 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   // 'none' = "I haven't coded before" → chattier explanations.
   // 'some' = "I've written some code"  → terser, more idiomatic.
   experienceLevel:    null,
+  // Visual palette. Stored per profile so switching learners also restores
+  // their preferred workspace appearance.
+  theme:              'seec0de-dark',
   // The language the user is *building in* — drives Run, default new-file
   // extension, and the first language tab in the generator.
   practicalLanguage:   'python',
@@ -81,6 +85,23 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   showTerminal:        false,
   // List of lesson IDs the user has completed.
   completedLessons:    [],
+  // Project checkpoints require both verified output and a written reflection.
+  completedProjectCheckpoints: [],
+  projectReflections:  {},
+  // Small, learner-authored portfolio artifacts and gentle local review cues.
+  codePostcards:       [],
+  learningReminders:   [],
+  practiceRemindersEnabled: true,
+  practiceReminderTime: '18:00',
+  practiceNotificationsEnabled: false,
+  // Learn Mode is optional and profile-specific. The session stores only
+  // resumable lesson state; transient runner output is intentionally omitted.
+  learnMode:           false,
+  learningSession:     null,
+  // Scaffolding fades only with the learner's permission. Successful lesson
+  // completions without hints build toward an opt-in suggestion.
+  guidanceLevel:       'supported',
+  guidanceSuccessStreak: 0,
 });
 
 const STORE_DEFAULTS = Object.freeze({

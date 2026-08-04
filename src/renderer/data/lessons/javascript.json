@@ -2,7 +2,7 @@
   "tracks": [
     {
       "id": "js-foundations",
-      "name": "JavaScript — First Steps",
+      "name": "First Steps",
       "language": "javascript",
       "description": "Start from zero. Print, store, compare, branch.",
       "lessons": [
@@ -11,6 +11,34 @@
           "title": "1. Hello, console",
           "concept": "console.log",
           "summary": "How JavaScript prints things.",
+          "activities": [
+            {
+              "id": "js-01-see",
+              "type": "worked-example",
+              "title": "See JavaScript print a message",
+              "instruction": "console.log() sends the value inside its parentheses to the Console. Text needs matching quote marks.",
+              "example": "console.log('Hi there');\n// Console: Hi there"
+            },
+            {
+              "id": "js-01-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "What will console.log('Ready') print?",
+              "choices": [
+                "Ready",
+                "'Ready'",
+                "Nothing"
+              ],
+              "answer": "Ready",
+              "explanation": "The quotes mark the value as text; they are not printed."
+            },
+            {
+              "id": "js-01-edit",
+              "type": "edit",
+              "title": "Print your first message",
+              "instruction": "Use the editor to print exactly Hello, World!, then press Run."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -44,6 +72,34 @@
           "title": "2. Variables with let",
           "concept": "let",
           "summary": "Storing a value under a name you can reuse.",
+          "activities": [
+            {
+              "id": "js-02-see",
+              "type": "worked-example",
+              "title": "Give a value a reusable name",
+              "instruction": "let creates a variable. Later code can read the stored value by using that variable's name.",
+              "example": "let score = 10;\nconsole.log(score);\n// Console: 10"
+            },
+            {
+              "id": "js-02-predict",
+              "type": "prediction",
+              "title": "Follow the variable",
+              "question": "What prints after let points = 7; console.log(points);?",
+              "choices": [
+                "points",
+                "7",
+                "Nothing"
+              ],
+              "answer": "7",
+              "explanation": "Using the variable name reads the value stored inside it."
+            },
+            {
+              "id": "js-02-edit",
+              "type": "edit",
+              "title": "Store and print 42",
+              "instruction": "Create score with let, store 42, and print score."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -77,6 +133,34 @@
           "title": "3. const vs let",
           "concept": "const",
           "summary": "Names that aren't supposed to change.",
+          "activities": [
+            {
+              "id": "js-03-see",
+              "type": "worked-example",
+              "title": "Choose const or let",
+              "instruction": "Use const when a name should keep the same value. Use let only when your program needs to reassign it.",
+              "example": "const pi = 3.14;\nlet radius = 5;\nradius = 6;"
+            },
+            {
+              "id": "js-03-predict",
+              "type": "prediction",
+              "title": "Spot the value that can change",
+              "question": "Which declaration can be reassigned later?",
+              "choices": [
+                "const pi = 3.14",
+                "let radius = 5",
+                "Both"
+              ],
+              "answer": "let radius = 5",
+              "explanation": "let permits reassignment; const does not."
+            },
+            {
+              "id": "js-03-edit",
+              "type": "edit",
+              "title": "Calculate a circle's area",
+              "instruction": "Declare pi and radius, calculate pi * radius * radius, and print the result."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -225,7 +309,7 @@
     },
     {
       "id": "js-building",
-      "name": "JavaScript — Building Up",
+      "name": "Building Up",
       "language": "javascript",
       "description": "Loops, arrays, functions, objects.",
       "lessons": [
@@ -383,6 +467,34 @@
           "title": "13. Functions — declare, call, return",
           "concept": "function",
           "summary": "A reusable mini-program with a name.",
+          "activities": [
+            {
+              "id": "js-13-see",
+              "type": "worked-example",
+              "title": "Build a reusable operation",
+              "instruction": "A function receives values through parameters and sends an answer back with return.",
+              "example": "function double(n) {\n  return n * 2;\n}\nconsole.log(double(7));"
+            },
+            {
+              "id": "js-13-predict",
+              "type": "prediction",
+              "title": "Trace a function call",
+              "question": "What does double(4) return?",
+              "choices": [
+                "4",
+                "8",
+                "undefined"
+              ],
+              "answer": "8",
+              "explanation": "The call puts 4 into n, then returns 4 * 2."
+            },
+            {
+              "id": "js-13-edit",
+              "type": "edit",
+              "title": "Write square(n)",
+              "instruction": "Create a square function that returns n * n, then print square(7)."
+            }
+          ],
           "teaching": [
             {
               "type": "p",
@@ -444,7 +556,7 @@
     },
     {
       "id": "js-functions",
-      "name": "JavaScript — Functions Deep Dive",
+      "name": "Functions Deep Dive",
       "language": "javascript",
       "description": "Parameters, returns, scope, and reusable logic.",
       "lessons": [
@@ -748,6 +860,1788 @@
             "Use two `console.log()` calls."
           ],
           "solution": "function finalPrice(price) {\n  let shipping = 5;\n  return price + shipping;\n}\n\nconsole.log(finalPrice(20));\nconsole.log(finalPrice(100));\n"
+        }
+      ]
+    },
+    {
+      "id": "js-values-data",
+      "name": "Values and data structures",
+      "language": "javascript",
+      "description": "Handle missing values, conversions, arrays, objects, and nested data.",
+      "lessons": [
+        {
+          "id": "js-25-null-undefined-typeof",
+          "title": "25. Null, undefined, and typeof",
+          "concept": "null, undefined, typeof",
+          "summary": "Recognize missing values and inspect their types.",
+          "activities": [
+            {
+              "id": "js-25-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst value = null; let score;\nconsole.log(typeof value, typeof score);",
+              "choices": [
+                "object undefined",
+                "null undefined",
+                "undefined undefined"
+              ],
+              "answer": "object undefined",
+              "explanation": "`typeof null` is the historical result `\"object\"`; an unassigned variable contains `undefined`."
+            },
+            {
+              "id": "js-25-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Declare `missing` as `null` and declare `total` without assigning it. Print whether each equals its matching missing-value marker, then print `typeof total`.",
+              "successCriteria": "The program prints `true`, `true`, and `undefined`, each on its own line.",
+            "starterCode": "let missing;\nlet total = 0;\n\nconsole.log(missing === null);\nconsole.log(total === undefined);\nconsole.log(typeof total);",
+            "expectedOutput": "true\ntrue\nundefined",
+            "matchType": "exact",
+            "hints": [
+              "Use `null` as the explicit value assigned to `missing`.",
+              "A variable declared with `let` but no assignment has the value `undefined`.",
+              "Compare with strict equality, then pass `total` to `typeof`."
+            ],
+            "solution": "const missing = null;\nlet total;\n\nconsole.log(missing === null);\nconsole.log(total === undefined);\nconsole.log(typeof total);"
+            },
+            {
+              "id": "js-25-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `profile` as `{ nickname: null }` and declare `score` without assigning a value. Print whether the nickname is strictly `null`, whether the score is strictly `undefined`, and `typeof score`, in that order."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Recognize missing values and inspect their types."
+            },
+            {
+              "type": "code",
+              "text": "const profile = { nickname: null };\nlet score;\nconsole.log(profile.nickname === null);\nconsole.log(score === undefined);\nconsole.log(typeof score);"
+            },
+            {
+              "type": "note",
+              "text": "`typeof null` is `\"object\"` for historical reasons. Check explicitly with `value === null` when null matters."
+            }
+          ],
+          "task": "Create `profile` as `{ nickname: null }` and declare `score` without assigning a value. Print whether the nickname is strictly `null`, whether the score is strictly `undefined`, and `typeof score`, in that order.",
+          "starterCode": "// TODO: write this line\nlet score;\nconsole.log(profile.nickname === null);\n// TODO: write this line\nconsole.log(typeof score);\n",
+          "expectedOutput": "true\ntrue\nundefined",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `profile` as `{ nickname: null }` and declare `score` without assigning a value. Print whether the nickname is strictly `null`, whether the score is strictly `undefined`, and `typeof score`, in that order.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `true`, then `true`, then `undefined`."
+          ],
+          "solution": "const profile = { nickname: null };\nlet score;\nconsole.log(profile.nickname === null);\nconsole.log(score === undefined);\nconsole.log(typeof score);\n"
+        },
+        {
+          "id": "js-26-strict-equality-truthiness",
+          "title": "26. Strict equality and truthy/falsy",
+          "concept": "===, Boolean",
+          "summary": "Compare without coercion and test truthiness.",
+          "activities": [
+            {
+              "id": "js-26-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconsole.log(0 === '0');\nconsole.log(Boolean(''));\nconsole.log(Boolean('0'));",
+              "choices": [
+                "false false true",
+                "true false true",
+                "false true false"
+              ],
+              "answer": "false false true",
+              "explanation": "Strict equality does not convert the string. An empty string is falsy, but the non-empty string `\"0\"` is truthy."
+            },
+            {
+              "id": "js-26-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Print the results of `5 === \"5\"`, `Boolean(0)`, and `Boolean(\"hello\")`, one per line.",
+              "successCriteria": "The output is exactly `false`, `false`, then `true`.",
+            "starterCode": "console.log(5 == \"5\");\nconsole.log(Boolean(1));\nconsole.log(Boolean(\"\"));",
+            "expectedOutput": "false\nfalse\ntrue",
+            "matchType": "exact",
+            "hints": [
+              "Use strict equality (`===`) for the first comparison.",
+              "Zero is falsy when converted with `Boolean`.",
+              "A non-empty string is truthy."
+            ],
+            "solution": "console.log(5 === \"5\");\nconsole.log(Boolean(0));\nconsole.log(Boolean(\"hello\"));"
+            },
+            {
+              "id": "js-26-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Print the strict-equality result of `0 === false`, then print the Boolean values of `'hello'` and the empty string, in that order."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Compare without coercion and test truthiness."
+            },
+            {
+              "type": "code",
+              "text": "console.log(0 === false);\nconsole.log(Boolean('hello'));\nconsole.log(Boolean(''));"
+            },
+            {
+              "type": "note",
+              "text": "The strings `\"false\"` and `\"0\"` are truthy because they are non-empty; their text does not control truthiness."
+            }
+          ],
+          "task": "Print the strict-equality result of `0 === false`, then print the Boolean values of `'hello'` and the empty string, in that order.",
+          "starterCode": "// TODO: write this line\nconsole.log(Boolean('hello'));\nconsole.log(Boolean(''));\n",
+          "expectedOutput": "false\ntrue\nfalse",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Print the strict-equality result of `0 === false`, then print the Boolean values of `'hello'` and the empty string, in that order.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `false`, then `true`, then `false`."
+          ],
+          "solution": "console.log(0 === false);\nconsole.log(Boolean('hello'));\nconsole.log(Boolean(''));\n"
+        },
+        {
+          "id": "js-27-conversion-nan",
+          "title": "27. Conversion and NaN",
+          "concept": "Number, String, NaN",
+          "summary": "Convert values deliberately and detect failed numeric conversions.",
+          "activities": [
+            {
+              "id": "js-27-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst n = Number('12x');\nconsole.log(n);\nconsole.log(Number.isNaN(n));",
+              "choices": [
+                "NaN then true",
+                "12 then false",
+                "An exception is thrown"
+              ],
+              "answer": "NaN then true",
+              "explanation": "`Number` cannot convert all of `\"12x\"`, so it returns `NaN`; `Number.isNaN` detects that result."
+            },
+            {
+              "id": "js-27-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Convert `\"42\"` to a number and `7` to a string. Print each converted value and its `typeof` value.",
+              "successCriteria": "The two lines are exactly `42 number` and `7 string`.",
+            "starterCode": "const convertedNumber = \"42\";\nconst convertedString = 7;\n\nconsole.log(convertedNumber, typeof convertedNumber);\nconsole.log(convertedString, typeof convertedString);",
+            "expectedOutput": "42 number\n7 string",
+            "matchType": "exact",
+            "hints": [
+              "Pass the text `\"42\"` to `Number`.",
+              "Pass the number `7` to `String`.",
+              "Log each converted value beside `typeof` that same variable."
+            ],
+            "solution": "const convertedNumber = Number(\"42\");\nconst convertedString = String(7);\n\nconsole.log(convertedNumber, typeof convertedNumber);\nconsole.log(convertedString, typeof convertedString);"
+            },
+            {
+              "id": "js-27-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Convert `'42'` to a number, attempt to convert `'four'` to a number, and convert `25` to a string. Print `42 + 8`, whether the failed conversion is `NaN`, and the converted string."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Convert values deliberately and detect failed numeric conversions."
+            },
+            {
+              "type": "code",
+              "text": "const amount = Number('42');\nconst bad = Number('four');\nconsole.log(amount + 8);\nconsole.log(Number.isNaN(bad));\nconsole.log(String(25));"
+            },
+            {
+              "type": "note",
+              "text": "Do not test NaN with `value === NaN`; that is always false. Use `Number.isNaN(value)`."
+            }
+          ],
+          "task": "Convert `'42'` to a number, attempt to convert `'four'` to a number, and convert `25` to a string. Print `42 + 8`, whether the failed conversion is `NaN`, and the converted string.",
+          "starterCode": "// TODO: write this line\nconst bad = Number('four');\nconsole.log(amount + 8);\n// TODO: write this line\nconsole.log(String(25));\n",
+          "expectedOutput": "50\ntrue\n25",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Convert `'42'` to a number, attempt to convert `'four'` to a number, and convert `25` to a string. Print `42 + 8`, whether the failed conversion is `NaN`, and the converted string.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `50`, then `true`, then `25`."
+          ],
+          "solution": "const amount = Number('42');\nconst bad = Number('four');\nconsole.log(amount + 8);\nconsole.log(Number.isNaN(bad));\nconsole.log(String(25));\n"
+        },
+        {
+          "id": "js-28-array-indexing-length",
+          "title": "28. Array indexing and length",
+          "concept": "array[index], length",
+          "summary": "Read array positions and measure an array.",
+          "activities": [
+            {
+              "id": "js-28-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst colors = ['red', 'blue', 'green'];\nconsole.log(colors[1], colors[colors.length - 1]);",
+              "choices": [
+                "blue green",
+                "red blue",
+                "green undefined"
+              ],
+              "answer": "blue green",
+              "explanation": "Indexes start at 0, so index 1 is the second item; `length - 1` is the final valid index."
+            },
+            {
+              "id": "js-28-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Create `const pets = [\"cat\", \"dog\", \"owl\"]`. Print the first pet, the last pet using `length`, and the array length.",
+              "successCriteria": "The output is exactly `cat`, `owl`, and `3` on separate lines.",
+            "starterCode": "const pets = [];\n\nconsole.log(pets[0]);\nconsole.log(pets[0]);\nconsole.log(pets.length);",
+            "expectedOutput": "cat\nowl\n3",
+            "matchType": "exact",
+            "hints": [
+              "Fill the array with `cat`, `dog`, and `owl` in that order.",
+              "The first element is at index 0.",
+              "The last index can be written as `pets.length - 1`."
+            ],
+            "solution": "const pets = [\"cat\", \"dog\", \"owl\"];\n\nconsole.log(pets[0]);\nconsole.log(pets[pets.length - 1]);\nconsole.log(pets.length);"
+            },
+            {
+              "id": "js-28-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `colors` as `['red', 'green', 'blue']`. Print the first color, the last color using `colors.length - 1`, and the array length."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Read array positions and measure an array."
+            },
+            {
+              "type": "code",
+              "text": "const colors = ['red', 'green', 'blue'];\nconsole.log(colors[0]);\nconsole.log(colors[colors.length - 1]);\nconsole.log(colors.length);"
+            },
+            {
+              "type": "note",
+              "text": "An array of length 3 has valid indexes 0 through 2. Reading index 3 gives `undefined`."
+            }
+          ],
+          "task": "Create `colors` as `['red', 'green', 'blue']`. Print the first color, the last color using `colors.length - 1`, and the array length.",
+          "starterCode": "// TODO: write this line\nconsole.log(colors[0]);\nconsole.log(colors[colors.length - 1]);\n// TODO: write this line\n",
+          "expectedOutput": "red\nblue\n3",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `colors` as `['red', 'green', 'blue']`. Print the first color, the last color using `colors.length - 1`, and the array length.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `red`, then `blue`, then `3`."
+          ],
+          "solution": "const colors = ['red', 'green', 'blue'];\nconsole.log(colors[0]);\nconsole.log(colors[colors.length - 1]);\nconsole.log(colors.length);\n"
+        },
+        {
+          "id": "js-29-array-mutation",
+          "title": "29. Array mutation",
+          "concept": "push, pop, shift, unshift",
+          "summary": "Add and remove array items in place.",
+          "activities": [
+            {
+              "id": "js-29-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst q = ['b'];\nq.unshift('a');\nq.push('c');\nconsole.log(q.pop(), q.join('-'));",
+              "choices": [
+                "c a-b",
+                "a b-c",
+                "c a-b-c"
+              ],
+              "answer": "c a-b",
+              "explanation": "`unshift` and `push` add at opposite ends. `pop` removes and returns `c`, leaving `a-b`."
+            },
+            {
+              "id": "js-29-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Start with `[2, 3]`, add `1` to the front and `4` to the end, remove the last value, then print the removed value and the remaining array joined with commas.",
+              "successCriteria": "The output is exactly `4` followed by `1,2,3` on the next line.",
+            "starterCode": "const values = [2, 3];\n\n// Add values at both ends, then remove the last one.\nconst removed = undefined;\n\nconsole.log(removed);\nconsole.log(values.join(\",\"));",
+            "expectedOutput": "4\n1,2,3",
+            "matchType": "exact",
+            "hints": [
+              "Use `unshift` to add `1` at the front.",
+              "Use `push` to add `4` at the end.",
+              "Assign the value returned by `pop()` to `removed`."
+            ],
+            "solution": "const values = [2, 3];\n\nvalues.unshift(1);\nvalues.push(4);\nconst removed = values.pop();\n\nconsole.log(removed);\nconsole.log(values.join(\",\"));"
+            },
+            {
+              "id": "js-29-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Start `queue` as `['B']`, add `'A'` to the front and `'C'` to the end, and print the joined queue. Then remove and print the last item, followed by the remaining joined queue."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Add and remove array items in place."
+            },
+            {
+              "type": "code",
+              "text": "const queue = ['B'];\nqueue.unshift('A');\nqueue.push('C');\nconsole.log(queue.join(','));\nconsole.log(queue.pop());\nconsole.log(queue.join(','));"
+            },
+            {
+              "type": "note",
+              "text": "Choose methods by end: `push`/`pop` use the end, while `unshift`/`shift` use the front."
+            }
+          ],
+          "task": "Start `queue` as `['B']`, add `'A'` to the front and `'C'` to the end, and print the joined queue. Then remove and print the last item, followed by the remaining joined queue.",
+          "starterCode": "// TODO: write this line\nqueue.unshift('A');\nqueue.push('C');\n// TODO: write this line\nconsole.log(queue.pop());\nconsole.log(queue.join(','));\n",
+          "expectedOutput": "A,B,C\nC\nA,B",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Start `queue` as `['B']`, add `'A'` to the front and `'C'` to the end, and print the joined queue. Then remove and print the last item, followed by the remaining joined queue.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `A,B,C`, then `C`, then `A,B`."
+          ],
+          "solution": "const queue = ['B'];\nqueue.unshift('A');\nqueue.push('C');\nconsole.log(queue.join(','));\nconsole.log(queue.pop());\nconsole.log(queue.join(','));\n"
+        },
+        {
+          "id": "js-30-copying-arrays",
+          "title": "30. Copying arrays with slice and spread",
+          "concept": "slice, ...",
+          "summary": "Create shallow array copies without changing the source.",
+          "activities": [
+            {
+              "id": "js-30-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst a = [1, 2];\nconst b = [...a];\nb.push(3);\nconsole.log(a.length, b.length);",
+              "choices": [
+                "2 3",
+                "3 3",
+                "2 2"
+              ],
+              "answer": "2 3",
+              "explanation": "Spread creates a new outer array, so pushing into the copy does not change the source."
+            },
+            {
+              "id": "js-30-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Create `original = [\"a\", \"b\", \"c\"]`. Make one copy with `slice()` and one with spread, change index 0 in both copies, then print `original.join(\"\")`.",
+              "successCriteria": "The original still prints exactly `abc`.",
+            "starterCode": "const original = [\"a\", \"b\", \"c\"];\nconst slicedCopy = original;\nconst spreadCopy = original;\n\nslicedCopy[0] = \"x\";\nspreadCopy[0] = \"y\";\n\nconsole.log(original.join(\"\"));",
+            "expectedOutput": "abc",
+            "matchType": "exact",
+            "hints": [
+              "Calling `original.slice()` creates a shallow copy.",
+              "Spread the elements into a new array with `[...original]`.",
+              "Mutating index 0 of either separate array will not change `original`."
+            ],
+            "solution": "const original = [\"a\", \"b\", \"c\"];\nconst slicedCopy = original.slice();\nconst spreadCopy = [...original];\n\nslicedCopy[0] = \"x\";\nspreadCopy[0] = \"y\";\n\nconsole.log(original.join(\"\"));"
+            },
+            {
+              "id": "js-30-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `original` as `[1, 2, 3]`, copy it with `slice()`, and create `[...original, 4]`. Change index 0 of the slice copy to `9`, then print the original, slice copy, and spread copy joined by commas."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Create shallow array copies without changing the source."
+            },
+            {
+              "type": "code",
+              "text": "const original = [1, 2, 3];\nconst withSlice = original.slice();\nconst withSpread = [...original, 4];\nwithSlice[0] = 9;\nconsole.log(original.join(','));\nconsole.log(withSlice.join(','));\nconsole.log(withSpread.join(','));"
+            },
+            {
+              "type": "note",
+              "text": "Both techniques make shallow copies. Nested objects would still be shared between the arrays."
+            }
+          ],
+          "task": "Create `original` as `[1, 2, 3]`, copy it with `slice()`, and create `[...original, 4]`. Change index 0 of the slice copy to `9`, then print the original, slice copy, and spread copy joined by commas.",
+          "starterCode": "// TODO: write this line\nconst withSlice = original.slice();\nconst withSpread = [...original, 4];\n// TODO: write this line\nconsole.log(original.join(','));\nconsole.log(withSlice.join(','));\n// TODO: write this line\n",
+          "expectedOutput": "1,2,3\n9,2,3\n1,2,3,4",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `original` as `[1, 2, 3]`, copy it with `slice()`, and create `[...original, 4]`. Change index 0 of the slice copy to `9`, then print the original, slice copy, and spread copy joined by commas.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `1,2,3`, then `9,2,3`, then `1,2,3,4`."
+          ],
+          "solution": "const original = [1, 2, 3];\nconst withSlice = original.slice();\nconst withSpread = [...original, 4];\nwithSlice[0] = 9;\nconsole.log(original.join(','));\nconsole.log(withSlice.join(','));\nconsole.log(withSpread.join(','));\n"
+        },
+        {
+          "id": "js-31-object-properties",
+          "title": "31. Object property access and update",
+          "concept": "object.key, object[key]",
+          "summary": "Read, add, and update object properties.",
+          "activities": [
+            {
+              "id": "js-31-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst user = { name: 'Mia' };\nconst key = 'name';\nuser[key] = 'Lee';\nconsole.log(user.name);",
+              "choices": [
+                "Lee",
+                "Mia",
+                "undefined"
+              ],
+              "answer": "Lee",
+              "explanation": "Bracket access evaluates `key`, so it updates the same `name` property read with dot notation."
+            },
+            {
+              "id": "js-31-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Create `{ title: \"Book\", pages: 80 }`. Change pages to 96, add `inStock: true`, and print `Book 96 true` from its properties.",
+              "successCriteria": "One line prints exactly `Book 96 true`.",
+            "starterCode": "const item = { title: \"Book\", pages: 80 };\n\n// Update pages and add inStock.\n\nconsole.log(item.title, item.pages, item.inStock);",
+            "expectedOutput": "Book 96 true",
+            "matchType": "exact",
+            "hints": [
+              "Assign `96` to the object's `pages` property.",
+              "A new property can be added with `item.inStock = true`.",
+              "Log the three properties in title, pages, inStock order."
+            ],
+            "solution": "const item = { title: \"Book\", pages: 80 };\n\nitem.pages = 96;\nitem.inStock = true;\n\nconsole.log(item.title, item.pages, item.inStock);"
+            },
+            {
+              "id": "js-31-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `user` with name `'Ari'` and score `3`. Update its score to `5`, add `active: true` with bracket notation, then print the name, score, and active value."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Read, add, and update object properties."
+            },
+            {
+              "type": "code",
+              "text": "const user = { name: 'Ari', score: 3 };\nuser.score = 5;\nuser['active'] = true;\nconsole.log(user.name);\nconsole.log(user.score);\nconsole.log(user.active);"
+            },
+            {
+              "type": "note",
+              "text": "`object.key` literally reads `key`; use `object[key]` when the property name comes from a variable."
+            }
+          ],
+          "task": "Create `user` with name `'Ari'` and score `3`. Update its score to `5`, add `active: true` with bracket notation, then print the name, score, and active value.",
+          "starterCode": "// TODO: write this line\nuser.score = 5;\nuser['active'] = true;\n// TODO: write this line\nconsole.log(user.score);\nconsole.log(user.active);\n",
+          "expectedOutput": "Ari\n5\ntrue",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `user` with name `'Ari'` and score `3`. Update its score to `5`, add `active: true` with bracket notation, then print the name, score, and active value.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Ari`, then `5`, then `true`."
+          ],
+          "solution": "const user = { name: 'Ari', score: 3 };\nuser.score = 5;\nuser['active'] = true;\nconsole.log(user.name);\nconsole.log(user.score);\nconsole.log(user.active);\n"
+        },
+        {
+          "id": "js-32-nested-data",
+          "title": "32. Nested data",
+          "concept": "nested objects and arrays",
+          "summary": "Navigate data structures containing objects and arrays.",
+          "activities": [
+            {
+              "id": "js-32-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst team = { members: [{ name: 'Ana' }, { name: 'Bo' }] };\nconsole.log(team.members[1].name);",
+              "choices": [
+                "Bo",
+                "Ana",
+                "undefined"
+              ],
+              "answer": "Bo",
+              "explanation": "Read from the outside inward: `members`, index 1, then `name`."
+            },
+            {
+              "id": "js-32-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Create `{ classroom: { students: [\"Ivy\", \"Kai\"] } }` and print `Kai` by navigating the nested structure.",
+              "successCriteria": "The program prints exactly `Kai`.",
+            "starterCode": "const school = { classroom: { students: [] } };\n\nconsole.log(school.classroom.students[0]);",
+            "expectedOutput": "Kai",
+            "matchType": "exact",
+            "hints": [
+              "Put `Ivy` and `Kai` into the nested `students` array in that order.",
+              "Navigate from `school` to `classroom`, then to `students`.",
+              "`Kai` is at array index 1."
+            ],
+            "solution": "const school = { classroom: { students: [\"Ivy\", \"Kai\"] } };\n\nconsole.log(school.classroom.students[1]);"
+            },
+            {
+              "id": "js-32-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create the `Owls` team with members `Mina` and `Leo`, change the second member's name to `Leon`, then print the team name and both member names."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Navigate data structures containing objects and arrays."
+            },
+            {
+              "type": "code",
+              "text": "const team = { name: 'Owls', members: [{ name: 'Mina' }, { name: 'Leo' }] };\nteam.members[1].name = 'Leon';\nconsole.log(team.name);\nconsole.log(team.members[0].name);\nconsole.log(team.members[1].name);"
+            },
+            {
+              "type": "note",
+              "text": "A missing step in a nested path can cause a TypeError. Inspect each level when you are unsure of the data shape."
+            }
+          ],
+          "task": "Create the `Owls` team with members `Mina` and `Leo`, change the second member's name to `Leon`, then print the team name and both member names.",
+          "starterCode": "// TODO: write this line\nteam.members[1].name = 'Leon';\nconsole.log(team.name);\n// TODO: write this line\nconsole.log(team.members[1].name);\n",
+          "expectedOutput": "Owls\nMina\nLeon",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create the `Owls` team with members `Mina` and `Leo`, change the second member's name to `Leon`, then print the team name and both member names.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Owls`, then `Mina`, then `Leon`."
+          ],
+          "solution": "const team = { name: 'Owls', members: [{ name: 'Mina' }, { name: 'Leo' }] };\nteam.members[1].name = 'Leon';\nconsole.log(team.name);\nconsole.log(team.members[0].name);\nconsole.log(team.members[1].name);\n"
+        }
+      ]
+    },
+    {
+      "id": "js-iteration-callbacks",
+      "name": "Iteration and callbacks",
+      "language": "javascript",
+      "description": "Control iteration and pass behavior through callback functions.",
+      "lessons": [
+        {
+          "id": "js-33-break-continue",
+          "title": "33. Break and continue",
+          "concept": "break, continue",
+          "summary": "Skip an iteration or stop a loop early.",
+          "activities": [
+            {
+              "id": "js-33-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nfor (let i = 1; i <= 5; i++) {\n  if (i === 2) continue;\n  if (i === 4) break;\n  console.log(i);\n}",
+              "choices": [
+                "1 then 3",
+                "1 then 3 then 5",
+                "1 then 2 then 3"
+              ],
+              "answer": "1 then 3",
+              "explanation": "`continue` skips printing 2; `break` exits before 4 or 5 can print."
+            },
+            {
+              "id": "js-33-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Loop from 1 through 6. Skip 3, stop at 5, and print every other visited number.",
+              "successCriteria": "The output is exactly `1`, `2`, and `4` on separate lines.",
+            "starterCode": "for (let number = 1; number <= 6; number++) {\n  console.log(number);\n}",
+            "expectedOutput": "1\n2\n4",
+            "matchType": "exact",
+            "hints": [
+              "Inside the loop, use `continue` when `number === 3`.",
+              "Use `break` when `number === 5` so 5 and later values are not printed.",
+              "Place both checks before `console.log`."
+            ],
+            "solution": "for (let number = 1; number <= 6; number++) {\n  if (number === 3) continue;\n  if (number === 5) break;\n  console.log(number);\n}"
+            },
+            {
+              "id": "js-33-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Loop from 1 through 7. Skip 3, stop before printing 6, and print every other visited number."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Skip an iteration or stop a loop early."
+            },
+            {
+              "type": "code",
+              "text": "for (let n = 1; n <= 7; n++) {\n  if (n === 3) continue;\n  if (n === 6) break;\n  console.log(n);\n}"
+            },
+            {
+              "type": "note",
+              "text": "Order matters: a `break` ends the loop immediately, so code and later values after it are never reached."
+            }
+          ],
+          "task": "Loop from 1 through 7. Skip 3, stop before printing 6, and print every other visited number.",
+          "starterCode": "// TODO: write this line\n  if (n === 3) continue;\n  if (n === 6) break;\n// TODO: write this line\n}\n",
+          "expectedOutput": "1\n2\n4\n5",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Loop from 1 through 7. Skip 3, stop before printing 6, and print every other visited number.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `1`, then `2`, then `4`, then `5`."
+          ],
+          "solution": "for (let n = 1; n <= 7; n++) {\n  if (n === 3) continue;\n  if (n === 6) break;\n  console.log(n);\n}\n"
+        },
+        {
+          "id": "js-34-indexed-loops",
+          "title": "34. Indexed loops",
+          "concept": "for index",
+          "summary": "Use an index to visit array values and positions.",
+          "activities": [
+            {
+              "id": "js-34-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst letters = ['a', 'b', 'c'];\nfor (let i = 0; i < letters.length; i += 2) console.log(i, letters[i]);",
+              "choices": [
+                "0 a then 2 c",
+                "0 a then 1 b",
+                "1 b then 3 undefined"
+              ],
+              "answer": "0 a then 2 c",
+              "explanation": "The index starts at 0 and increases by 2, visiting indexes 0 and 2."
+            },
+            {
+              "id": "js-34-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Use an indexed loop over `[\"x\", \"y\", \"z\"]` and print each line as `index:value`.",
+              "successCriteria": "The output is exactly `0:x`, `1:y`, and `2:z`.",
+            "starterCode": "const letters = [\"x\", \"y\", \"z\"];\n\nfor (let index = 0; index < 0; index++) {\n  console.log(index);\n}",
+            "expectedOutput": "0:x\n1:y\n2:z",
+            "matchType": "exact",
+            "hints": [
+              "Continue the loop while `index < letters.length`.",
+              "Read the current value with `letters[index]`.",
+              "A template literal can combine them as `${index}:${letters[index]}`."
+            ],
+            "solution": "const letters = [\"x\", \"y\", \"z\"];\n\nfor (let index = 0; index < letters.length; index++) {\n  console.log(`${index}:${letters[index]}`);\n}"
+            },
+            {
+              "id": "js-34-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `pets` as `['cat', 'dog', 'fox']`. Use an indexed loop to print each line in the exact format `index: pet`."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Use an index to visit array values and positions."
+            },
+            {
+              "type": "code",
+              "text": "const pets = ['cat', 'dog', 'fox'];\nfor (let i = 0; i < pets.length; i++) {\n  console.log(`${i}: ${pets[i]}`);\n}"
+            },
+            {
+              "type": "note",
+              "text": "Use `< array.length`, not `<=`; the latter visits one index past the end and reads `undefined`."
+            }
+          ],
+          "task": "Create `pets` as `['cat', 'dog', 'fox']`. Use an indexed loop to print each line in the exact format `index: pet`.",
+          "starterCode": "// TODO: write this line\nfor (let i = 0; i < pets.length; i++) {\n  console.log(`${i}: ${pets[i]}`);\n// TODO: write this line\n",
+          "expectedOutput": "0: cat\n1: dog\n2: fox",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `pets` as `['cat', 'dog', 'fox']`. Use an indexed loop to print each line in the exact format `index: pet`.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `0: cat`, then `1: dog`, then `2: fox`."
+          ],
+          "solution": "const pets = ['cat', 'dog', 'fox'];\nfor (let i = 0; i < pets.length; i++) {\n  console.log(`${i}: ${pets[i]}`);\n}\n"
+        },
+        {
+          "id": "js-35-object-iteration",
+          "title": "35. Object.keys and Object.entries",
+          "concept": "Object.keys, Object.entries",
+          "summary": "Iterate over an object?s own enumerable properties.",
+          "activities": [
+            {
+              "id": "js-35-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst item = { a: 1, b: 2 };\nconsole.log(Object.keys(item).join(','));\nfor (const [k, v] of Object.entries(item)) console.log(k + v);",
+              "choices": [
+                "a,b then a1 then b2",
+                "1,2 then a1 then b2",
+                "a,b then 1 then 2"
+              ],
+              "answer": "a,b then a1 then b2",
+              "explanation": "`Object.keys` returns property names; each `Object.entries` item is a `[key, value]` pair."
+            },
+            {
+              "id": "js-35-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Create `{ red: 2, blue: 4 }`. Print its keys joined by commas, then use `Object.entries` to print `red=2` and `blue=4`.",
+              "successCriteria": "The output is exactly `red,blue`, `red=2`, and `blue=4`.",
+            "starterCode": "const counts = { red: 2, blue: 4 };\n\nconsole.log(\"\");\n\n// Loop over the object's entries and print each pair.",
+            "expectedOutput": "red,blue\nred=2\nblue=4",
+            "matchType": "exact",
+            "hints": [
+              "Get the property names with `Object.keys(counts)` and join them with commas.",
+              "`Object.entries(counts)` produces `[key, value]` pairs.",
+              "Destructure each pair and print it as `${key}=${value}`."
+            ],
+            "solution": "const counts = { red: 2, blue: 4 };\n\nconsole.log(Object.keys(counts).join(\",\"));\n\nfor (const [key, value] of Object.entries(counts)) {\n  console.log(`${key}=${value}`);\n}"
+            },
+            {
+              "id": "js-35-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `scores` as `{ Ada: 8, Lin: 10 }`. Print its keys joined by commas, then use `Object.entries` to print each entry in the exact format `name: score`."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Iterate over an object?s own enumerable properties."
+            },
+            {
+              "type": "code",
+              "text": "const scores = { Ada: 8, Lin: 10 };\nconsole.log(Object.keys(scores).join(','));\nfor (const [name, score] of Object.entries(scores)) {\n  console.log(`${name}: ${score}`);\n}"
+            },
+            {
+              "type": "note",
+              "text": "`Object.keys` and `Object.entries` include own enumerable properties; do not use `for...in` when you specifically want entry pairs."
+            }
+          ],
+          "task": "Create `scores` as `{ Ada: 8, Lin: 10 }`. Print its keys joined by commas, then use `Object.entries` to print each entry in the exact format `name: score`.",
+          "starterCode": "// TODO: write this line\nconsole.log(Object.keys(scores).join(','));\nfor (const [name, score] of Object.entries(scores)) {\n// TODO: write this line\n}\n",
+          "expectedOutput": "Ada,Lin\nAda: 8\nLin: 10",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `scores` as `{ Ada: 8, Lin: 10 }`. Print its keys joined by commas, then use `Object.entries` to print each entry in the exact format `name: score`.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Ada,Lin`, then `Ada: 8`, then `Lin: 10`."
+          ],
+          "solution": "const scores = { Ada: 8, Lin: 10 };\nconsole.log(Object.keys(scores).join(','));\nfor (const [name, score] of Object.entries(scores)) {\n  console.log(`${name}: ${score}`);\n}\n"
+        },
+        {
+          "id": "js-36-callback-fundamentals",
+          "title": "36. Callback fundamentals",
+          "concept": "callback",
+          "summary": "Pass a function to another function for later use.",
+          "activities": [
+            {
+              "id": "js-36-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nfunction run(value, callback) { return callback(value); }\nconsole.log(run(4, n => n * 3));",
+              "choices": [
+                "12",
+                "7",
+                "The callback itself"
+              ],
+              "answer": "12",
+              "explanation": "`run` calls the supplied function with 4, and that callback returns 4 multiplied by 3."
+            },
+            {
+              "id": "js-36-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Write `apply(value, callback)` that returns `callback(value)`. Call it with `5` and a callback that adds `2`, then print the result.",
+              "successCriteria": "The program prints exactly `7`.",
+            "starterCode": "function apply(value, callback) {\n  return value;\n}\n\nconst result = apply(5, (number) => number);\nconsole.log(result);",
+            "expectedOutput": "7",
+            "matchType": "exact",
+            "hints": [
+              "Inside `apply`, call the callback with `value` and return its result.",
+              "The callback passed to `apply` should return its number plus 2.",
+              "Print the value returned from `apply(5, callback)`."
+            ],
+            "solution": "function apply(value, callback) {\n  return callback(value);\n}\n\nconst result = apply(5, (number) => number + 2);\nconsole.log(result);"
+            },
+            {
+              "id": "js-36-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define `runTwice(value, callback)` so it invokes the callback with `value` two times. Call it with `'Go'` and a callback that prints each message."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Pass a function to another function for later use."
+            },
+            {
+              "type": "code",
+              "text": "function runTwice(value, callback) {\n  callback(value);\n  callback(value);\n}\nrunTwice('Go', message => console.log(message));"
+            },
+            {
+              "type": "note",
+              "text": "Pass a callback without parentheses when another function should decide when to call it; parentheses would call it immediately."
+            }
+          ],
+          "task": "Define `runTwice(value, callback)` so it invokes the callback with `value` two times. Call it with `'Go'` and a callback that prints each message.",
+          "starterCode": "// TODO: write this line\n  callback(value);\n  callback(value);\n// TODO: write this line\nrunTwice('Go', message => console.log(message));\n",
+          "expectedOutput": "Go\nGo",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define `runTwice(value, callback)` so it invokes the callback with `value` two times. Call it with `'Go'` and a callback that prints each message.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Go`, then `Go`."
+          ],
+          "solution": "function runTwice(value, callback) {\n  callback(value);\n  callback(value);\n}\nrunTwice('Go', message => console.log(message));\n"
+        }
+      ]
+    },
+    {
+      "id": "js-array-processing",
+      "name": "Array data processing",
+      "language": "javascript",
+      "description": "Transform, select, combine, and chain array operations.",
+      "lessons": [
+        {
+          "id": "js-37-map",
+          "title": "37. Transforming arrays with map",
+          "concept": "map",
+          "summary": "Build a new array by transforming every item.",
+          "activities": [
+            {
+              "id": "js-37-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst nums = [1, 2, 3];\nconst out = nums.map(n => n + 10);\nconsole.log(out.join(','), nums.join(','));",
+              "choices": [
+                "11,12,13 1,2,3",
+                "11,12,13 11,12,13",
+                "1,2,3 1,2,3"
+              ],
+              "answer": "11,12,13 1,2,3",
+              "explanation": "`map` creates a new array from callback return values and leaves the source unchanged."
+            },
+            {
+              "id": "js-37-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Map `[2, 4, 6]` to their squares and print the new array joined by commas.",
+              "successCriteria": "The output is exactly `4,16,36`.",
+            "starterCode": "const numbers = [2, 4, 6];\nconst squares = numbers.map((number) => number);\n\nconsole.log(squares.join(\",\"));",
+            "expectedOutput": "4,16,36",
+            "matchType": "exact",
+            "hints": [
+              "`map` should return one transformed value for each number.",
+              "Square a number by multiplying it by itself.",
+              "Keep the final `join(\",\")` to format the output."
+            ],
+            "solution": "const numbers = [2, 4, 6];\nconst squares = numbers.map((number) => number * number);\n\nconsole.log(squares.join(\",\"));"
+            },
+            {
+              "id": "js-37-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `prices` as `[2, 4, 6]`, map each price to twice its value, then print the doubled array and the unchanged original array joined by commas."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Build a new array by transforming every item."
+            },
+            {
+              "type": "code",
+              "text": "const prices = [2, 4, 6];\nconst doubled = prices.map(price => price * 2);\nconsole.log(doubled.join(','));\nconsole.log(prices.join(','));"
+            },
+            {
+              "type": "note",
+              "text": "A block-bodied arrow callback needs an explicit `return`; otherwise `map` fills the result with `undefined`."
+            }
+          ],
+          "task": "Create `prices` as `[2, 4, 6]`, map each price to twice its value, then print the doubled array and the unchanged original array joined by commas.",
+          "starterCode": "// TODO: write this line\nconst doubled = prices.map(price => price * 2);\nconsole.log(doubled.join(','));\n// TODO: write this line\n",
+          "expectedOutput": "4,8,12\n2,4,6",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `prices` as `[2, 4, 6]`, map each price to twice its value, then print the doubled array and the unchanged original array joined by commas.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `4,8,12`, then `2,4,6`."
+          ],
+          "solution": "const prices = [2, 4, 6];\nconst doubled = prices.map(price => price * 2);\nconsole.log(doubled.join(','));\nconsole.log(prices.join(','));\n"
+        },
+        {
+          "id": "js-38-filter-find",
+          "title": "38. Selecting with filter and find",
+          "concept": "filter, find",
+          "summary": "Select all matching items or the first match.",
+          "activities": [
+            {
+              "id": "js-38-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst nums = [3, 8, 10, 5];\nconsole.log(nums.filter(n => n > 6).join(','));\nconsole.log(nums.find(n => n > 6));",
+              "choices": [
+                "8,10 then 8",
+                "8 then 8,10",
+                "8,10 then 10"
+              ],
+              "answer": "8,10 then 8",
+              "explanation": "`filter` keeps every match, while `find` stops at and returns the first match."
+            },
+            {
+              "id": "js-38-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "From `[1, 4, 7, 10]`, filter all values at least 7 and find the first even value. Print the filtered list, then the found number.",
+              "successCriteria": "The output is exactly `7,10` and then `4`.",
+            "starterCode": "const numbers = [1, 4, 7, 10];\nconst filtered = numbers.filter(() => true);\nconst found = numbers.find(() => false);\n\nconsole.log(filtered.join(\",\"));\nconsole.log(found);",
+            "expectedOutput": "7,10\n4",
+            "matchType": "exact",
+            "hints": [
+              "The filter predicate should test whether each value is greater than or equal to 7.",
+              "An even value has a remainder of 0 when divided by 2.",
+              "`find` stops at the first value that passes its predicate."
+            ],
+            "solution": "const numbers = [1, 4, 7, 10];\nconst filtered = numbers.filter((number) => number >= 7);\nconst found = numbers.find((number) => number % 2 === 0);\n\nconsole.log(filtered.join(\",\"));\nconsole.log(found);"
+            },
+            {
+              "id": "js-38-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `numbers` as `[3, 8, 10, 5]`. Filter all numbers at least 8 and find the first even number, then print the filtered list joined by commas and the found number."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Select all matching items or the first match."
+            },
+            {
+              "type": "code",
+              "text": "const numbers = [3, 8, 10, 5];\nconst large = numbers.filter(n => n >= 8);\nconst firstEven = numbers.find(n => n % 2 === 0);\nconsole.log(large.join(','));\nconsole.log(firstEven);"
+            },
+            {
+              "type": "note",
+              "text": "`find` returns `undefined` when nothing matches; `filter` returns an empty array. Choose based on whether you need one item or all items."
+            }
+          ],
+          "task": "Create `numbers` as `[3, 8, 10, 5]`. Filter all numbers at least 8 and find the first even number, then print the filtered list joined by commas and the found number.",
+          "starterCode": "// TODO: write this line\nconst large = numbers.filter(n => n >= 8);\nconst firstEven = numbers.find(n => n % 2 === 0);\n// TODO: write this line\nconsole.log(firstEven);\n",
+          "expectedOutput": "8,10\n8",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `numbers` as `[3, 8, 10, 5]`. Filter all numbers at least 8 and find the first even number, then print the filtered list joined by commas and the found number.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `8,10`, then `8`."
+          ],
+          "solution": "const numbers = [3, 8, 10, 5];\nconst large = numbers.filter(n => n >= 8);\nconst firstEven = numbers.find(n => n % 2 === 0);\nconsole.log(large.join(','));\nconsole.log(firstEven);\n"
+        },
+        {
+          "id": "js-39-reduce",
+          "title": "39. Combining with reduce",
+          "concept": "reduce",
+          "summary": "Combine an array into one accumulated value.",
+          "activities": [
+            {
+              "id": "js-39-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst total = [2, 3, 4].reduce((sum, n) => sum + n, 10);\nconsole.log(total);",
+              "choices": [
+                "19",
+                "9",
+                "10"
+              ],
+              "answer": "19",
+              "explanation": "The accumulator begins at 10, then receives 2, 3, and 4, producing 19."
+            },
+            {
+              "id": "js-39-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Use `reduce` with an initial value of 0 to total `[5, 10, 15]`, then print the total.",
+              "successCriteria": "The program prints exactly `30`.",
+            "starterCode": "const numbers = [5, 10, 15];\nconst total = numbers.reduce((sum, number) => sum, 0);\n\nconsole.log(total);",
+            "expectedOutput": "30",
+            "matchType": "exact",
+            "hints": [
+              "The reducer receives the running `sum` and current `number`.",
+              "Return `sum + number` from the reducer.",
+              "Keep `0` as the second argument to `reduce`."
+            ],
+            "solution": "const numbers = [5, 10, 15];\nconst total = numbers.reduce((sum, number) => sum + number, 0);\n\nconsole.log(total);"
+            },
+            {
+              "id": "js-39-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `costs` as `[5, 10, 15]`, reduce the values to a sum starting at 0, and print the total."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Combine an array into one accumulated value."
+            },
+            {
+              "type": "code",
+              "text": "const costs = [5, 10, 15];\nconst total = costs.reduce((sum, cost) => sum + cost, 0);\nconsole.log(total);"
+            },
+            {
+              "type": "note",
+              "text": "Provide an initial accumulator. It makes the result for an empty array predictable and clarifies the accumulator type."
+            }
+          ],
+          "task": "Create `costs` as `[5, 10, 15]`, reduce the values to a sum starting at 0, and print the total.",
+          "starterCode": "// TODO: write this line\nconst total = costs.reduce((sum, cost) => sum + cost, 0);\nconsole.log(total);\n",
+          "expectedOutput": "30",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `costs` as `[5, 10, 15]`, reduce the values to a sum starting at 0, and print the total.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `30`."
+          ],
+          "solution": "const costs = [5, 10, 15];\nconst total = costs.reduce((sum, cost) => sum + cost, 0);\nconsole.log(total);\n"
+        },
+        {
+          "id": "js-40-chained-transformations",
+          "title": "40. Chained transformations",
+          "concept": "filter().map()",
+          "summary": "Compose array operations into a readable pipeline.",
+          "activities": [
+            {
+              "id": "js-40-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst out = [1, 2, 3, 4].filter(n => n % 2 === 0).map(n => n * 10);\nconsole.log(out.join(','));",
+              "choices": [
+                "20,40",
+                "10,20,30,40",
+                "2,4"
+              ],
+              "answer": "20,40",
+              "explanation": "`filter` first keeps 2 and 4; `map` then changes those values to 20 and 40."
+            },
+            {
+              "id": "js-40-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "From `[1, 2, 3, 4, 5]`, keep odd values, double them, and print the resulting list.",
+              "successCriteria": "The output is exactly `2,6,10`.",
+            "starterCode": "const numbers = [1, 2, 3, 4, 5];\nconst result = numbers\n  .filter(() => true)\n  .map((number) => number);\n\nconsole.log(result.join(\",\"));",
+            "expectedOutput": "2,6,10",
+            "matchType": "exact",
+            "hints": [
+              "Odd numbers have a nonzero remainder when divided by 2.",
+              "After filtering, map each remaining number to `number * 2`.",
+              "Join the transformed array with commas before printing."
+            ],
+            "solution": "const numbers = [1, 2, 3, 4, 5];\nconst result = numbers\n  .filter((number) => number % 2 !== 0)\n  .map((number) => number * 2);\n\nconsole.log(result.join(\",\"));"
+            },
+            {
+              "id": "js-40-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `values` as `[1, 2, 3, 4, 5]`. Chain `filter` to keep odd values and `map` to multiply them by 10, then print the result joined by commas."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Compose array operations into a readable pipeline."
+            },
+            {
+              "type": "code",
+              "text": "const values = [1, 2, 3, 4, 5];\nconst result = values.filter(n => n % 2 === 1).map(n => n * 10);\nconsole.log(result.join(','));"
+            },
+            {
+              "type": "note",
+              "text": "Filter before map when the condition applies to original values; reversing the methods can change which values pass."
+            }
+          ],
+          "task": "Create `values` as `[1, 2, 3, 4, 5]`. Chain `filter` to keep odd values and `map` to multiply them by 10, then print the result joined by commas.",
+          "starterCode": "// TODO: write this line\nconst result = values.filter(n => n % 2 === 1).map(n => n * 10);\nconsole.log(result.join(','));\n",
+          "expectedOutput": "10,30,50",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `values` as `[1, 2, 3, 4, 5]`. Chain `filter` to keep odd values and `map` to multiply them by 10, then print the result joined by commas.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `10,30,50`."
+          ],
+          "solution": "const values = [1, 2, 3, 4, 5];\nconst result = values.filter(n => n % 2 === 1).map(n => n * 10);\nconsole.log(result.join(','));\n"
+        }
+      ]
+    },
+    {
+      "id": "js-scope-modern-syntax",
+      "name": "Scope and modern syntax",
+      "language": "javascript",
+      "description": "Use lexical scope, closures, destructuring, rest, and spread.",
+      "lessons": [
+        {
+          "id": "js-41-block-scope-shadowing",
+          "title": "41. Block scope and shadowing",
+          "concept": "let, const, blocks",
+          "summary": "Understand block visibility and same-name inner bindings.",
+          "activities": [
+            {
+              "id": "js-41-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nlet label = 'outer';\nif (true) { let label = 'inner'; console.log(label); }\nconsole.log(label);",
+              "choices": [
+                "inner then outer",
+                "inner then inner",
+                "A redeclaration error"
+              ],
+              "answer": "inner then outer",
+              "explanation": "The inner `let` shadows only inside its block; the outer binding is unchanged."
+            },
+            {
+              "id": "js-41-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Declare `count = 1`. Inside a block, declare a new `count = 2` and print it; outside, print the original.",
+              "successCriteria": "The output is exactly `2` then `1`.",
+            "starterCode": "const count = 1;\n\n{\n  console.log(count);\n}\n\nconsole.log(count);",
+            "expectedOutput": "2\n1",
+            "matchType": "exact",
+            "hints": [
+              "Declare another variable named `count` inside the braces.",
+              "Use `const count = 2` so that declaration is scoped to the block.",
+              "Print inside the block before printing the outer variable."
+            ],
+            "solution": "const count = 1;\n\n{\n  const count = 2;\n  console.log(count);\n}\n\nconsole.log(count);"
+            },
+            {
+              "id": "js-41-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Declare outer `label` as `'outer'`. Inside the existing block, shadow it with `'inner'`, declare `count` as `2`, and print both; after the block, print the outer label."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Understand block visibility and same-name inner bindings."
+            },
+            {
+              "type": "code",
+              "text": "const label = 'outer';\nif (true) {\n  const label = 'inner';\n  let count = 2;\n  console.log(label, count);\n}\nconsole.log(label);"
+            },
+            {
+              "type": "note",
+              "text": "Shadowing is legal but can be confusing. Use it deliberately, and remember assignment without `let`/`const` would modify the outer variable instead."
+            }
+          ],
+          "task": "Declare outer `label` as `'outer'`. Inside the existing block, shadow it with `'inner'`, declare `count` as `2`, and print both; after the block, print the outer label.",
+          "starterCode": "// TODO: write this line\nif (true) {\n  const label = 'inner';\n// TODO: write this line\n  console.log(label, count);\n}\n// TODO: write this line\n",
+          "expectedOutput": "inner 2\nouter",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Declare outer `label` as `'outer'`. Inside the existing block, shadow it with `'inner'`, declare `count` as `2`, and print both; after the block, print the outer label.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `inner 2`, then `outer`."
+          ],
+          "solution": "const label = 'outer';\nif (true) {\n  const label = 'inner';\n  let count = 2;\n  console.log(label, count);\n}\nconsole.log(label);\n"
+        },
+        {
+          "id": "js-42-closures",
+          "title": "42. Closures",
+          "concept": "closure",
+          "summary": "Keep access to variables from a function?s creation scope.",
+          "activities": [
+            {
+              "id": "js-42-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nfunction makeCounter() { let n = 0; return () => ++n; }\nconst next = makeCounter();\nconsole.log(next(), next());",
+              "choices": [
+                "1 2",
+                "1 1",
+                "0 0"
+              ],
+              "answer": "1 2",
+              "explanation": "The returned function closes over one `n`, so the updated value remains available between calls."
+            },
+            {
+              "id": "js-42-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Write `makeAdder(amount)` returning a function that adds `amount`. Create an add-3 function and print its result for 4.",
+              "successCriteria": "The program prints exactly `7`.",
+            "starterCode": "function makeAdder(amount) {\n  return function (value) {\n    return value;\n  };\n}\n\nconst addThree = makeAdder(0);\nconsole.log(addThree(4));",
+            "expectedOutput": "7",
+            "matchType": "exact",
+            "hints": [
+              "The inner function can still access the outer `amount` parameter.",
+              "Return `value + amount` from the inner function.",
+              "Create `addThree` by calling `makeAdder(3)`."
+            ],
+            "solution": "function makeAdder(amount) {\n  return function (value) {\n    return value + amount;\n  };\n}\n\nconst addThree = makeAdder(3);\nconsole.log(addThree(4));"
+            },
+            {
+              "id": "js-42-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define `makeCounter()` with a captured count starting at 0 and return a function that pre-increments it. Create one counter and print its first two results on separate lines."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Keep access to variables from a function?s creation scope."
+            },
+            {
+              "type": "code",
+              "text": "function makeCounter() {\n  let count = 0;\n  return () => ++count;\n}\nconst next = makeCounter();\nconsole.log(next());\nconsole.log(next());"
+            },
+            {
+              "type": "note",
+              "text": "Create the closure once and call that same returned function repeatedly. Calling the factory each time would create fresh state."
+            }
+          ],
+          "task": "Define `makeCounter()` with a captured count starting at 0 and return a function that pre-increments it. Create one counter and print its first two results on separate lines.",
+          "starterCode": "// TODO: write this line\n  let count = 0;\n  return () => ++count;\n// TODO: write this line\nconst next = makeCounter();\nconsole.log(next());\n// TODO: write this line\n",
+          "expectedOutput": "1\n2",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define `makeCounter()` with a captured count starting at 0 and return a function that pre-increments it. Create one counter and print its first two results on separate lines.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `1`, then `2`."
+          ],
+          "solution": "function makeCounter() {\n  let count = 0;\n  return () => ++count;\n}\nconst next = makeCounter();\nconsole.log(next());\nconsole.log(next());\n"
+        },
+        {
+          "id": "js-43-destructuring",
+          "title": "43. Destructuring",
+          "concept": "const {x}, const [a]",
+          "summary": "Unpack array positions and object properties into variables.",
+          "activities": [
+            {
+              "id": "js-43-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst { name, age = 0 } = { name: 'Ari' };\nconst [first, second] = [4, 9];\nconsole.log(name, age, second);",
+              "choices": [
+                "Ari 0 9",
+                "Ari undefined 4",
+                "name 0 9"
+              ],
+              "answer": "Ari 0 9",
+              "explanation": "The object default supplies 0 for missing `age`, and array destructuring follows positions."
+            },
+            {
+              "id": "js-43-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Destructure `title` and `year` from `{ title: \"Node\", year: 2009 }`, and the first value from `[7, 8]`. Print all three.",
+              "successCriteria": "One line prints exactly `Node 2009 7`.",
+            "starterCode": "const runtime = { title: \"Node\", year: 2009 };\nconst values = [7, 8];\n\nconst title = runtime;\nconst first = values;\n\nconsole.log(title, undefined, first);",
+            "expectedOutput": "Node 2009 7",
+            "matchType": "exact",
+            "hints": [
+              "Use object destructuring: `const { ... } = runtime`.",
+              "List both `title` and `year` inside the object pattern.",
+              "Use `[first]` as the array pattern to capture only the first value."
+            ],
+            "solution": "const runtime = { title: \"Node\", year: 2009 };\nconst values = [7, 8];\n\nconst { title, year } = runtime;\nconst [first] = values;\n\nconsole.log(title, year, first);"
+            },
+            {
+              "id": "js-43-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Create `point` as `{ x: 4, y: 7 }`, destructure `x` and `y`, and destructure `'north'` and `'south'` into `first` and `second`. Print `x + y`, then both direction values."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Unpack array positions and object properties into variables."
+            },
+            {
+              "type": "code",
+              "text": "const point = { x: 4, y: 7 };\nconst { x, y } = point;\nconst [first, second] = ['north', 'south'];\nconsole.log(x + y);\nconsole.log(first, second);"
+            },
+            {
+              "type": "note",
+              "text": "A default in destructuring is used only for `undefined`, not for `null` or other falsy values."
+            }
+          ],
+          "task": "Create `point` as `{ x: 4, y: 7 }`, destructure `x` and `y`, and destructure `'north'` and `'south'` into `first` and `second`. Print `x + y`, then both direction values.",
+          "starterCode": "// TODO: write this line\nconst { x, y } = point;\nconst [first, second] = ['north', 'south'];\n// TODO: write this line\nconsole.log(first, second);\n",
+          "expectedOutput": "11\nnorth south",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Create `point` as `{ x: 4, y: 7 }`, destructure `x` and `y`, and destructure `'north'` and `'south'` into `first` and `second`. Print `x + y`, then both direction values.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `11`, then `north south`."
+          ],
+          "solution": "const point = { x: 4, y: 7 };\nconst { x, y } = point;\nconst [first, second] = ['north', 'south'];\nconsole.log(x + y);\nconsole.log(first, second);\n"
+        },
+        {
+          "id": "js-44-rest-spread",
+          "title": "44. Rest and spread",
+          "concept": "...rest, ...spread",
+          "summary": "Collect remaining values and expand iterable or object values.",
+          "activities": [
+            {
+              "id": "js-44-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nfunction sum(first, ...rest) { return first + rest.length; }\nconsole.log(sum(10, 20, 30));",
+              "choices": [
+                "12",
+                "60",
+                "3"
+              ],
+              "answer": "12",
+              "explanation": "`first` is 10 and `rest` collects two remaining arguments, so the result is 10 + 2."
+            },
+            {
+              "id": "js-44-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Write `list(first, ...others)` that prints the first value and the remaining values joined by commas. Call it with `a`, `b`, `c`.",
+              "successCriteria": "The output is exactly `a` then `b,c`.",
+            "starterCode": "function list(first) {\n  console.log(first);\n}\n\nlist(\"a\", \"b\", \"c\");",
+            "expectedOutput": "a\nb,c",
+            "matchType": "exact",
+            "hints": [
+              "Add a rest parameter named `others` after `first`.",
+              "A rest parameter collects the remaining arguments into an array.",
+              "Print `others.join(\",\")` after printing `first`."
+            ],
+            "solution": "function list(first, ...others) {\n  console.log(first);\n  console.log(others.join(\",\"));\n}\n\nlist(\"a\", \"b\", \"c\");"
+            },
+            {
+              "id": "js-44-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define `total(...numbers)` to sum its arguments. Create `base` as `[2, 3]`, print `total(1, ...base, 4)`, then print `[...base, 5]` joined by commas."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Collect remaining values and expand iterable or object values."
+            },
+            {
+              "type": "code",
+              "text": "function total(...numbers) {\n  return numbers.reduce((sum, n) => sum + n, 0);\n}\nconst base = [2, 3];\nconsole.log(total(1, ...base, 4));\nconsole.log([...base, 5].join(','));"
+            },
+            {
+              "type": "note",
+              "text": "Rest must be the final parameter. Spread can appear in array literals and calls wherever values need expanding."
+            }
+          ],
+          "task": "Define `total(...numbers)` to sum its arguments. Create `base` as `[2, 3]`, print `total(1, ...base, 4)`, then print `[...base, 5]` joined by commas.",
+          "starterCode": "// TODO: write this line\n  return numbers.reduce((sum, n) => sum + n, 0);\n}\n// TODO: write this line\nconsole.log(total(1, ...base, 4));\nconsole.log([...base, 5].join(','));\n",
+          "expectedOutput": "10\n2,3,5",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define `total(...numbers)` to sum its arguments. Create `base` as `[2, 3]`, print `total(1, ...base, 4)`, then print `[...base, 5]` joined by commas.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `10`, then `2,3,5`."
+          ],
+          "solution": "function total(...numbers) {\n  return numbers.reduce((sum, n) => sum + n, 0);\n}\nconst base = [2, 3];\nconsole.log(total(1, ...base, 4));\nconsole.log([...base, 5].join(','));\n"
+        }
+      ]
+    },
+    {
+      "id": "js-reliability-async-capstone",
+      "name": "Reliable and asynchronous programs",
+      "language": "javascript",
+      "description": "Validate data, handle failures, work with JSON and promises, then integrate the skills.",
+      "lessons": [
+        {
+          "id": "js-45-try-catch-throw",
+          "title": "45. Try, catch, and throw",
+          "concept": "try, catch, throw",
+          "summary": "Signal errors and recover from them deliberately.",
+          "activities": [
+            {
+              "id": "js-45-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\ntry { throw new Error('bad value'); } catch (error) { console.log(error.message); }\nconsole.log('done');",
+              "choices": [
+                "bad value then done",
+                "The program stops at the error",
+                "Error then done"
+              ],
+              "answer": "bad value then done",
+              "explanation": "The thrown Error moves control to `catch`; after the handler finishes, execution continues."
+            },
+            {
+              "id": "js-45-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Throw `new Error(\"too small\")` inside `try`, catch it, print its message, then print `recovered` after the block.",
+              "successCriteria": "The output is exactly `too small` then `recovered`.",
+            "starterCode": "try {\n  // Throw the requested error here.\n} catch (error) {\n  console.log(error);\n}\n\nconsole.log(\"recovered\");",
+            "expectedOutput": "too small\nrecovered",
+            "matchType": "exact",
+            "hints": [
+              "Inside `try`, use `throw new Error(...)` with the requested message.",
+              "The caught Error object stores its text in the `message` property.",
+              "Keep the `recovered` log after the entire try/catch block."
+            ],
+            "solution": "try {\n  throw new Error(\"too small\");\n} catch (error) {\n  console.log(error.message);\n}\n\nconsole.log(\"recovered\");"
+            },
+            {
+              "id": "js-45-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define `requirePositive(n)` to throw `Error('positive number required')` when `n <= 0` and otherwise return `n`. Catch and print the error from `-2`, then print the returned value for `3`."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Signal errors and recover from them deliberately."
+            },
+            {
+              "type": "code",
+              "text": "function requirePositive(n) {\n  if (n <= 0) throw new Error('positive number required');\n  return n;\n}\ntry {\n  requirePositive(-2);\n} catch (error) {\n  console.log(error.message);\n}\nconsole.log(requirePositive(3));"
+            },
+            {
+              "type": "note",
+              "text": "Throw `Error` objects rather than plain strings so callers consistently get a message and stack trace."
+            }
+          ],
+          "task": "Define `requirePositive(n)` to throw `Error('positive number required')` when `n <= 0` and otherwise return `n`. Catch and print the error from `-2`, then print the returned value for `3`.",
+          "starterCode": "// TODO: write this line\n  if (n <= 0) throw new Error('positive number required');\n  return n;\n// TODO: write this line\ntry {\n  requirePositive(-2);\n// TODO: write this line\n  console.log(error.message);\n}\n// TODO: write this line\n",
+          "expectedOutput": "positive number required\n3",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define `requirePositive(n)` to throw `Error('positive number required')` when `n <= 0` and otherwise return `n`. Catch and print the error from `-2`, then print the returned value for `3`.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `positive number required`, then `3`."
+          ],
+          "solution": "function requirePositive(n) {\n  if (n <= 0) throw new Error('positive number required');\n  return n;\n}\ntry {\n  requirePositive(-2);\n} catch (error) {\n  console.log(error.message);\n}\nconsole.log(requirePositive(3));\n"
+        },
+        {
+          "id": "js-46-input-validation",
+          "title": "46. Input validation",
+          "concept": "validation",
+          "summary": "Reject invalid values before doing work.",
+          "activities": [
+            {
+              "id": "js-46-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nfunction label(name) {\n if (typeof name !== 'string' || name.trim() === '') return 'invalid';\n return name.trim();\n}\nconsole.log(label('  '));",
+              "choices": [
+                "invalid",
+                "an empty line",
+                "undefined"
+              ],
+              "answer": "invalid",
+              "explanation": "The value is a string, but trimming leaves no characters, so validation rejects it."
+            },
+            {
+              "id": "js-46-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Write `isValidAge(age)` that returns true only for a number from 0 through 120. Print results for `20`, `-1`, and `\"20\"`.",
+              "successCriteria": "The output is exactly `true`, `false`, and `false`.",
+            "starterCode": "function isValidAge(age) {\n  return true;\n}\n\nconsole.log(isValidAge(20));\nconsole.log(isValidAge(-1));\nconsole.log(isValidAge(\"20\"));",
+            "expectedOutput": "true\nfalse\nfalse",
+            "matchType": "exact",
+            "hints": [
+              "First require `typeof age === \"number\"`.",
+              "The lower bound check is `age >= 0`.",
+              "Combine the type check and both inclusive bounds with `&&`."
+            ],
+            "solution": "function isValidAge(age) {\n  return typeof age === \"number\" && age >= 0 && age <= 120;\n}\n\nconsole.log(isValidAge(20));\nconsole.log(isValidAge(-1));\nconsole.log(isValidAge(\"20\"));"
+            },
+            {
+              "id": "js-46-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define `normalizeName(value)` to return `'Invalid name'` for a non-string or blank string; otherwise trim and uppercase it. Print results for `'  Ada '` and `'   '`."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Reject invalid values before doing work."
+            },
+            {
+              "type": "code",
+              "text": "function normalizeName(value) {\n  if (typeof value !== 'string' || value.trim() === '') return 'Invalid name';\n  return value.trim().toUpperCase();\n}\nconsole.log(normalizeName('  Ada '));\nconsole.log(normalizeName('   '));"
+            },
+            {
+              "type": "note",
+              "text": "Check type before using type-specific methods. Reversing those checks can throw before invalid input is handled."
+            }
+          ],
+          "task": "Define `normalizeName(value)` to return `'Invalid name'` for a non-string or blank string; otherwise trim and uppercase it. Print results for `'  Ada '` and `'   '`.",
+          "starterCode": "// TODO: write this line\n  if (typeof value !== 'string' || value.trim() === '') return 'Invalid name';\n  return value.trim().toUpperCase();\n// TODO: write this line\nconsole.log(normalizeName('  Ada '));\nconsole.log(normalizeName('   '));\n",
+          "expectedOutput": "ADA\nInvalid name",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define `normalizeName(value)` to return `'Invalid name'` for a non-string or blank string; otherwise trim and uppercase it. Print results for `'  Ada '` and `'   '`.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `ADA`, then `Invalid name`."
+          ],
+          "solution": "function normalizeName(value) {\n  if (typeof value !== 'string' || value.trim() === '') return 'Invalid name';\n  return value.trim().toUpperCase();\n}\nconsole.log(normalizeName('  Ada '));\nconsole.log(normalizeName('   '));\n"
+        },
+        {
+          "id": "js-47-json",
+          "title": "47. JSON parse and stringify",
+          "concept": "JSON.parse, JSON.stringify",
+          "summary": "Convert between JSON text and JavaScript data.",
+          "activities": [
+            {
+              "id": "js-47-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst text = '{\"count\":2}';\nconst data = JSON.parse(text);\ndata.count += 1;\nconsole.log(JSON.stringify(data));",
+              "choices": [
+                "{\"count\":3}",
+                "{count:3}",
+                "{\"count\":2}"
+              ],
+              "answer": "{\"count\":3}",
+              "explanation": "`parse` creates an object, the property is updated, and `stringify` produces valid JSON text with quoted keys."
+            },
+            {
+              "id": "js-47-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Parse `{\"ready\":true}`, print the Boolean property, then stringify `{ score: 8 }` and print the JSON text.",
+              "successCriteria": "The output is exactly `true` then `{\"score\":8}`.",
+            "starterCode": "const parsed = { ready: false };\nconst jsonText = \"\";\n\nconsole.log(parsed.ready);\nconsole.log(jsonText);",
+            "expectedOutput": "true\n{\"score\":8}",
+            "matchType": "exact",
+            "hints": [
+              "Pass the JSON text to `JSON.parse` to create `parsed`.",
+              "Read the resulting object's `ready` property.",
+              "Pass `{ score: 8 }` to `JSON.stringify`."
+            ],
+            "solution": "const parsed = JSON.parse('{\"ready\":true}');\nconst jsonText = JSON.stringify({ score: 8 });\n\nconsole.log(parsed.ready);\nconsole.log(jsonText);"
+            },
+            {
+              "id": "js-47-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Parse the JSON text `{\"name\":\"Mia\",\"level\":2}`, increment the player's level, print the name, then print the compact stringified player object."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Convert between JSON text and JavaScript data."
+            },
+            {
+              "type": "code",
+              "text": "const text = '{\"name\":\"Mia\",\"level\":2}';\nconst player = JSON.parse(text);\nplayer.level++;\nconsole.log(player.name);\nconsole.log(JSON.stringify(player));"
+            },
+            {
+              "type": "note",
+              "text": "`JSON.parse` can throw for malformed text. JSON also cannot preserve functions or `undefined` object properties."
+            }
+          ],
+          "task": "Parse the JSON text `{\"name\":\"Mia\",\"level\":2}`, increment the player's level, print the name, then print the compact stringified player object.",
+          "starterCode": "// TODO: write this line\nconst player = JSON.parse(text);\nplayer.level++;\n// TODO: write this line\nconsole.log(JSON.stringify(player));\n",
+          "expectedOutput": "Mia\n{\"name\":\"Mia\",\"level\":3}",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Parse the JSON text `{\"name\":\"Mia\",\"level\":2}`, increment the player's level, print the name, then print the compact stringified player object.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Mia`, then `{\"name\":\"Mia\",\"level\":3}`."
+          ],
+          "solution": "const text = '{\"name\":\"Mia\",\"level\":2}';\nconst player = JSON.parse(text);\nplayer.level++;\nconsole.log(player.name);\nconsole.log(JSON.stringify(player));\n"
+        },
+        {
+          "id": "js-48-promise-fundamentals",
+          "title": "48. Promise fundamentals",
+          "concept": "Promise, then",
+          "summary": "Represent a future result and handle its fulfillment.",
+          "activities": [
+            {
+              "id": "js-48-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconsole.log('A');\nPromise.resolve('B').then(value => console.log(value));\nconsole.log('C');",
+              "choices": [
+                "A C B",
+                "A B C",
+                "B A C"
+              ],
+              "answer": "A C B",
+              "explanation": "The synchronous logs finish first; the `.then` callback runs in a later microtask."
+            },
+            {
+              "id": "js-48-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Create `Promise.resolve(5)`, use `.then` to double the value, and print the result.",
+              "successCriteria": "The program prints exactly `10`.",
+            "starterCode": "const valuePromise = Promise.resolve(5);\n\nvaluePromise.then((value) => {\n  console.log(value);\n});",
+            "expectedOutput": "10",
+            "matchType": "exact",
+            "hints": [
+              "The `.then` callback receives the resolved value, which is 5.",
+              "Double that callback parameter before printing it.",
+              "Logging `value * 2` produces the requested result."
+            ],
+            "solution": "const valuePromise = Promise.resolve(5);\n\nvaluePromise.then((value) => {\n  console.log(value * 2);\n});"
+            },
+            {
+              "id": "js-48-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define `getScore()` to return `Promise.resolve(12)`. Call it and use `.then` to print the fulfilled value in the exact format `Score: 12`."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Represent a future result and handle its fulfillment."
+            },
+            {
+              "type": "code",
+              "text": "function getScore() {\n  return Promise.resolve(12);\n}\ngetScore().then(score => {\n  console.log(`Score: ${score}`);\n});"
+            },
+            {
+              "type": "note",
+              "text": "Returning from a `.then` callback passes that value to the next `.then`; forgetting `return` passes `undefined`."
+            }
+          ],
+          "task": "Define `getScore()` to return `Promise.resolve(12)`. Call it and use `.then` to print the fulfilled value in the exact format `Score: 12`.",
+          "starterCode": "// TODO: write this line\n  return Promise.resolve(12);\n}\n// TODO: write this line\n  console.log(`Score: ${score}`);\n});\n",
+          "expectedOutput": "Score: 12",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define `getScore()` to return `Promise.resolve(12)`. Call it and use `.then` to print the fulfilled value in the exact format `Score: 12`.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Score: 12`."
+          ],
+          "solution": "function getScore() {\n  return Promise.resolve(12);\n}\ngetScore().then(score => {\n  console.log(`Score: ${score}`);\n});\n"
+        },
+        {
+          "id": "js-49-async-await-errors",
+          "title": "49. Async/await and async errors",
+          "concept": "async, await",
+          "summary": "Await promises and catch asynchronous failures.",
+          "activities": [
+            {
+              "id": "js-49-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nasync function read() { return 4; }\n(async () => { console.log(await read()); })();",
+              "choices": [
+                "4",
+                "Promise { 4 }",
+                "undefined"
+              ],
+              "answer": "4",
+              "explanation": "An async function returns a promise, and `await` unwraps its fulfilled value inside the async wrapper."
+            },
+            {
+              "id": "js-49-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "Write async `getValue()` returning `9`. In another async function, await it and print the value.",
+              "successCriteria": "The program prints exactly `9`.",
+            "starterCode": "async function getValue() {\n  return 0;\n}\n\nasync function showValue() {\n  console.log(getValue());\n}\n\nshowValue();",
+            "expectedOutput": "9",
+            "matchType": "exact",
+            "hints": [
+              "Return `9` from the async `getValue` function.",
+              "Inside `showValue`, use `await getValue()` to obtain the resolved number.",
+              "Store the awaited number or pass it directly to `console.log`."
+            ],
+            "solution": "async function getValue() {\n  return 9;\n}\n\nasync function showValue() {\n  const value = await getValue();\n  console.log(value);\n}\n\nshowValue();"
+            },
+            {
+              "id": "js-49-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Define async `loadStatus(ok)` to throw `Error('offline')` when false and return `'ready'` when true. In the async wrapper, print the awaited true result, await the false call, and catch and print its error message."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Await promises and catch asynchronous failures."
+            },
+            {
+              "type": "code",
+              "text": "async function loadStatus(ok) {\n  if (!ok) throw new Error('offline');\n  return 'ready';\n}\n(async () => {\n  try {\n    console.log(await loadStatus(true));\n    await loadStatus(false);\n  } catch (error) {\n    console.log(error.message);\n  }\n})();"
+            },
+            {
+              "type": "note",
+              "text": "A surrounding synchronous `try` does not catch a later promise rejection. Catch around the `await` or attach `.catch`."
+            }
+          ],
+          "task": "Define async `loadStatus(ok)` to throw `Error('offline')` when false and return `'ready'` when true. In the async wrapper, print the awaited true result, await the false call, and catch and print its error message.",
+          "starterCode": "// TODO: write this line\n  if (!ok) throw new Error('offline');\n  return 'ready';\n// TODO: write this line\n(async () => {\n  try {\n// TODO: write this line\n    await loadStatus(false);\n  } catch (error) {\n// TODO: write this line\n  }\n})();\n",
+          "expectedOutput": "ready\noffline",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Define async `loadStatus(ok)` to throw `Error('offline')` when false and return `'ready'` when true. In the async wrapper, print the awaited true result, await the false call, and catch and print its error message.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `ready`, then `offline`."
+          ],
+          "solution": "async function loadStatus(ok) {\n  if (!ok) throw new Error('offline');\n  return 'ready';\n}\n(async () => {\n  try {\n    console.log(await loadStatus(true));\n    await loadStatus(false);\n  } catch (error) {\n    console.log(error.message);\n  }\n})();\n"
+        },
+        {
+          "id": "js-50-data-capstone",
+          "title": "50. Final data-processing capstone",
+          "concept": "validate, transform, summarize",
+          "summary": "Combine validation, array methods, objects, and JSON in a data pipeline.",
+          "activities": [
+            {
+              "id": "js-50-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does this code print?\n\nconst rows = [{active:true, score:2},{active:false, score:9},{active:true, score:4}];\nconst total = rows.filter(r => r.active).reduce((s,r) => s + r.score, 0);\nconsole.log(total);",
+              "choices": [
+                "6",
+                "15",
+                "2,4"
+              ],
+              "answer": "6",
+              "explanation": "Filtering removes the inactive row; reducing the remaining scores gives 2 + 4 = 6."
+            },
+            {
+              "id": "js-50-drill",
+              "type": "drill",
+              "title": "Write it from memory",
+              "instruction": "From `[{ok:true,n:2},{ok:false,n:8},{ok:true,n:3}]`, keep valid rows, map to `n`, total them, and print `5`.",
+              "successCriteria": "The program prints exactly `5` after using filter, map, and reduce.",
+            "starterCode": "const rows = [\n  { ok: true, n: 2 },\n  { ok: false, n: 8 },\n  { ok: true, n: 3 }\n];\n\nconst total = rows\n  .filter(() => true)\n  .map((row) => row)\n  .reduce((sum) => sum, 0);\n\nconsole.log(total);",
+            "expectedOutput": "5",
+            "matchType": "exact",
+            "hints": [
+              "Filter rows by returning each row's `ok` property.",
+              "Map each remaining row to its `n` property.",
+              "Reduce the numbers with `sum + number`, starting from 0."
+            ],
+            "solution": "const rows = [\n  { ok: true, n: 2 },\n  { ok: false, n: 8 },\n  { ok: true, n: 3 }\n];\n\nconst total = rows\n  .filter((row) => row.ok)\n  .map((row) => row.n)\n  .reduce((sum, number) => sum + number, 0);\n\nconsole.log(total);"
+            },
+            {
+              "id": "js-50-edit",
+              "type": "edit",
+              "title": "Complete the program",
+              "instruction": "Parse the provided JSON score records in `report(json)`, require the result to be an array, keep records with numeric scores at least 7, and return their names and total score. Print the passing names joined by commas, then the total."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Combine validation, array methods, objects, and JSON in a data pipeline."
+            },
+            {
+              "type": "code",
+              "text": "const text = '[{\"name\":\"Ada\",\"score\":8},{\"name\":\"Bo\",\"score\":4},{\"name\":\"Cy\",\"score\":10}]';\nfunction report(json) {\n  const records = JSON.parse(json);\n  if (!Array.isArray(records)) throw new Error('Expected an array');\n  const passed = records.filter(item => typeof item.score === 'number' && item.score >= 7);\n  return { names: passed.map(item => item.name), total: passed.reduce((sum, item) => sum + item.score, 0) };\n}\nconst result = report(text);\nconsole.log(result.names.join(','));\nconsole.log(result.total);"
+            },
+            {
+              "type": "note",
+              "text": "Validate before chaining array methods, and use an initial value of 0 so an empty valid set still has a total."
+            }
+          ],
+          "task": "Parse the provided JSON score records in `report(json)`, require the result to be an array, keep records with numeric scores at least 7, and return their names and total score. Print the passing names joined by commas, then the total.",
+          "starterCode": "// TODO: write this line\nfunction report(json) {\n  const records = JSON.parse(json);\n// TODO: write this line\n  const passed = records.filter(item => typeof item.score === 'number' && item.score >= 7);\n  return { names: passed.map(item => item.name), total: passed.reduce((sum, item) => sum + item.score, 0) };\n// TODO: write this line\nconst result = report(text);\nconsole.log(result.names.join(','));\n// TODO: write this line\n",
+          "expectedOutput": "Ada,Cy\n18",
+          "matchType": "exact",
+          "hints": [
+            "Keep every non-TODO starter line: those lines already fix the required names, values, operations, and output order.",
+            "Replace the TODO lines so the starter performs this exact task: Parse the provided JSON score records in `report(json)`, require the result to be an array, keep records with numeric scores at least 7, and return their names and total score. Print the passing names joined by commas, then the total.",
+            "Check exact spelling, punctuation, spacing, and line order; the output must be `Ada,Cy`, then `18`."
+          ],
+          "solution": "const text = '[{\"name\":\"Ada\",\"score\":8},{\"name\":\"Bo\",\"score\":4},{\"name\":\"Cy\",\"score\":10}]';\nfunction report(json) {\n  const records = JSON.parse(json);\n  if (!Array.isArray(records)) throw new Error('Expected an array');\n  const passed = records.filter(item => typeof item.score === 'number' && item.score >= 7);\n  return { names: passed.map(item => item.name), total: passed.reduce((sum, item) => sum + item.score, 0) };\n}\nconst result = report(text);\nconsole.log(result.names.join(','));\nconsole.log(result.total);\n"
         }
       ]
     }

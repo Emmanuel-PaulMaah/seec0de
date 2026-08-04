@@ -16,6 +16,32 @@ Section conventions:
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-08-04
+
+### Added
+- **Dedicated Learn Mode and launch hub.** seec0de now opens into a focused home screen with separate Workspace and Learn Mode destinations. Learn Mode includes a full-screen language catalog, resumable courses, standalone exercises, project checkpoints, and a replayable workspace tour.
+- **Writing-first curricula for JavaScript, Python, and TypeScript.** The learning library now includes complete language foundations, guided activities, retrieval drills, code-alongs, predictions, independent exercises, and checkpoint projects with persistent progress and reflections.
+- **Adaptive guidance.** Learners can choose Supported, Guided, or Independent instruction, and seec0de can suggest reducing assistance after successful no-hint lessons without changing the preference automatically.
+- **Learning Pulse and review tools.** Completed learning work can schedule profile-specific practice reminders, display in-app and optional desktop notifications at a chosen local time, and feed a local review library.
+- **Learning milestones and postcards.** Learners can preserve local records of completed work and revisit milestone-based creations without sending their code off-device.
+- **Workspace productivity and accessibility.** Added nested file creation/deletion, selected-folder creation targets, safer delete confirmation, `Ctrl+Enter` Run, panel cycling and keyboard resizing, a keyboard-shortcut reference, and broader focus/ARIA handling.
+- **Profile-specific appearance.** Added a second seec0de-green palette and profile-scoped theme selection, including a matching Monaco editor theme.
+
+### Changed
+- **Lessons now teach before asking for code.** Teaching content occupies the full learning surface first, then transitions into a resizable lesson guide beside the editor and result panel for the coding exercise.
+- **Learn Mode and Workspace are isolated.** Learn Mode keeps its own draft, activity, output, and lesson state; Workspace files, folders, active tabs, and runner output do not leak into learning sessions or back into Workspace.
+- **Workspace visual system was redesigned.** The title bar, mode navigation, panels, controls, spacing, typography, and responsive behavior now use a unified, more breathable interface.
+- **Application and editor zoom are distinct.** `Ctrl++`, `Ctrl+-`, and `Ctrl+0` control the Electron window, while the code toolbar's A-/A+ controls change only editor text.
+- **Terminal follows the opened project initially.** Opening or restoring an Explorer folder sets the terminal working directory, while subsequent `cd` commands remain authoritative until the project root changes.
+
+### Fixed
+- **Lesson state restoration and mode switching** no longer return coding sessions to teaching unexpectedly, retain Workspace output in Learn Mode, or expose Workspace file tabs inside lessons.
+- **Keyword tooltips and explanations** now resolve against the active file language and remain disabled where lesson interactions would conflict.
+- **Learning keyboard and focus flows** now behave consistently across catalogs, activities, dialogs, dividers, Monaco, and the Run shortcut.
+
+### Removed
+- **The previous lessons-inside-Workspace experience.** Learning is now a first-class mode rather than a secondary tab competing with code generation and project files.
+
 ## [3.6.0] - 2026-07-11
 
 ### Added

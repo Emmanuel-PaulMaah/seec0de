@@ -10,8 +10,6 @@
  *     on top so components don't reach for raw hex.
  * ------------------------------------------------------------------------- */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 * {
   margin: 0;
   padding: 0;
@@ -19,6 +17,32 @@
 }
 
 :root {
+  /* Compact workspace foundation. Keep typography local and deterministic:
+     the app remains visually stable when Electron is offline. */
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --control-compact: 28px;
+  --control-standard: 32px;
+  --control-primary: 36px;
+  --panel-header-height: 36px;
+
+  --radius-control: 4px;
+  --radius-group: 6px;
+  --radius-card: 8px;
+
   /* Surfaces — pure black throughout, matching VS Code "Dark High Contrast"
      (hc-black). No elevation tint; depth is conveyed by borders instead. */
   --bg-primary:     #000000;
@@ -42,6 +66,7 @@
   --accent:         #2f6fed;   /* primary blue (matches AI-Native palette) */
   --accent-hover:   #3b7eff;
   --accent-soft:    rgba(47, 111, 237, 0.16);
+  --text-on-accent: #ffffff;
 
   /* Semantic accents — used by Pseudocode badge, Run button, errors. */
   --algorithm:      #b48dff;   /* pseudocode = "the algorithm" */
@@ -71,15 +96,59 @@
 
   /* Modal / drawer chrome. */
   --scrim:          rgba(0, 0, 0, 0.55);
+  --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.28);
   --shadow-lg:      0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+/* The landing-page-inspired palette from index.html: layered charcoal
+   surfaces, warm text, and a high-energy lime accent. */
+:root[data-theme="seec0de-green"] {
+  --bg-primary:     #080909;
+  --bg-secondary:   #0f1110;
+  --bg-tertiary:    #131514;
+  --bg-elevated:    #181a18;
+  --bg-input:       #0b0d0c;
+
+  --border:         #232620;
+  --border-strong:  #353a30;
+  --border-focus:   #c8ff4d;
+
+  --text-primary:   #f2f0e9;
+  --text-secondary: #c7c5bd;
+  --text-muted:     #92938d;
+
+  --accent:         #c8ff4d;
+  --accent-hover:   #d5ff73;
+  --accent-soft:    rgba(200, 255, 77, 0.10);
+  --text-on-accent: #101507;
+
+  --algorithm:      #c8b6ff;
+  --algorithm-soft: rgba(200, 182, 255, 0.12);
+  --success:        #95e59a;
+  --success-soft:   rgba(149, 229, 154, 0.12);
+  --danger:         #f08c8c;
+  --danger-soft:    rgba(240, 140, 140, 0.12);
+
+  --keyword-highlight:  #c8b6ff;
+  --string-highlight:   #efb78f;
+  --function-highlight: #9cc9ff;
+  --comment-highlight:  #70756d;
+  --number-highlight:   #a8d8a0;
+  --type-highlight:     #9cc9ff;
+
+  --scrollbar-thumb: #353a30;
+  --scrollbar-track: #080909;
+  --scrim:           rgba(8, 9, 9, 0.68);
+  --shadow-lg:       0 28px 90px rgba(0, 0, 0, 0.50);
 }
 
 html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-feature-settings: 'cv11', 'ss01', 'ss03';   /* cleaner Inter variants */
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: 1.5;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -101,8 +170,60 @@ button {
               transform  var(--motion-fast) var(--ease-out);
 }
 
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
 button:disabled {
   cursor: not-allowed;
+}
+
+/* Shared workspace interaction states. Component styles still own layout;
+   these classes make equivalent controls feel equivalent. */
+.ui-icon-button:hover:not(:disabled),
+.ui-toolbar-button:hover:not(:disabled) {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-strong) !important;
+}
+
+.ui-tab:hover:not(:disabled),
+.ui-segmented-button:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+.ui-menu-item:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+.ui-primary-button:hover:not(:disabled) {
+  color: var(--text-on-accent) !important;
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+.ui-panel-rail:hover:not(:disabled),
+.ui-tree-row:hover:not(:disabled),
+.ui-accordion-row:hover:not(:disabled) {
+  color: var(--text-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+[data-workspace-panel]:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+}
+
+.workspace-resize-handle:hover,
+.workspace-resize-handle:focus-visible {
+  background: var(--border-focus) !important;
+  border-color: var(--border-focus) !important;
+  outline: none;
 }
 
 input, textarea {
@@ -121,6 +242,94 @@ a:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
+}
+
+.workspace-editor-shell {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.home-launch-card:hover {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  transform: translateY(-2px);
+}
+
+.learn-home-card:hover {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 720px) {
+  .home-content {
+    width: calc(100% - 32px) !important;
+    padding-bottom: 90px !important;
+  }
+
+  .learn-home-content {
+    width: calc(100% - 32px) !important;
+    padding-top: 36px !important;
+  }
+
+  .home-launch-grid,
+  .learn-home-card-grid,
+  .learn-home-course-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-wordmark {
+    font-size: 34vw !important;
+  }
+}
+
+/* Learn Mode keeps the instructional order intact when the app is narrow:
+ * goal/activity, editor, then result. The workspace becomes scrollable rather
+ * than squeezing three panes into unusable columns. */
+@media (max-width: 900px) {
+  .learn-mode-workspace {
+    flex-direction: column;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .learn-mode-guide-shell {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    min-height: 260px;
+    flex: 0 0 min(42%, 360px) !important;
+  }
+
+  .learn-mode-editor-shell {
+    width: 100%;
+    min-height: 380px;
+    flex: 0 0 380px;
+  }
+
+  .learn-mode-result-shell {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    min-height: 260px;
+    flex: 0 0 260px !important;
+  }
+}
+
+/* Preserve every workspace panel on narrower windows. Horizontal scrolling is
+ * preferable to compressing the editor and sidebars into unusable slivers. */
+@media (max-width: 1100px) {
+  .app-workspace:not(.learn-mode-workspace) {
+    overflow-x: auto !important;
+  }
+
+  .app-workspace:not(.learn-mode-workspace) .workspace-editor-shell {
+    flex: 0 0 420px;
+    min-width: 420px;
+  }
 }
 
 /* ---------------------------------------------------------------------------
