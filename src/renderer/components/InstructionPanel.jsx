@@ -113,7 +113,7 @@ export default function InstructionPanel({
         <div style={styles.scrollContent}>
           <div style={styles.buildStack}>
               <p style={styles.headerHint}>
-                Describe what you want the program to do, in plain English.
+                Describe what you want in plain English.
               </p>
 
               {/* Read-out: which languages will be generated */}

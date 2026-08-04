@@ -37,6 +37,8 @@ export default function LearnModePanel({
   onReflectionChange,
   onCompleteCheckpoint,
   onNextLesson,
+  onStartExercise,
+  focused = false,
 }) {
   const headingRef = React.useRef(null);
   const mountedRef = React.useRef(false);
@@ -52,7 +54,8 @@ export default function LearnModePanel({
       : allActivities.filter((activity) => WRITING_ACTIVITY_TYPES.has(activity.type));
   const activityIndex = Math.max(0, activities.findIndex((activity) => activity.id === activeActivityId));
   const activeActivity = activities[activityIndex] || null;
-  const showLessonCard = phase !== 'learn' || !activeActivity || WRITING_ACTIVITY_TYPES.has(activeActivity.type);
+  const nextActivity = activities[activityIndex + 1] || null;
+  const showLessonCard = phase !== 'learn' || !activeActivity;
   const nextGuidanceLevel = guidanceLevel === 'supported'
     ? 'guided'
     : guidanceLevel === 'guided'
@@ -70,7 +73,7 @@ export default function LearnModePanel({
   }, [activeLesson?.language]);
 
   return (
-    <aside style={styles.panel} aria-label="Learn Mode guide">
+    <aside style={{ ...styles.panel, ...(focused ? styles.panelFocused : {}) }} aria-label="Learn Mode guide">
       <div style={styles.header}>
         <div style={styles.eyebrow}><GraduationCap size={13} /> Learn Mode</div>
         <div style={styles.headingRow}>
@@ -96,7 +99,7 @@ export default function LearnModePanel({
         </div>
       </div>
 
-      {activeLesson && (
+      {activeLesson && !focused && (
         <div style={styles.phaseBar} aria-label="Lesson progress">
           {PHASES.map(({ id, label, icon: Icon }, index) => {
             const selected = id === activePhase;
@@ -117,20 +120,28 @@ export default function LearnModePanel({
         </div>
       )}
 
-      <div style={styles.content}>
+      <div style={{ ...styles.content, ...(focused ? styles.contentFocused : {}) }}>
         {activeLesson ? (
-          <div style={styles.lessonStack}>
-            {phase === 'learn' && activeActivity && (
+          <div style={{ ...styles.lessonStack, ...(focused ? styles.lessonStackFocused : {}) }}>
+            {activeActivity && (phase === 'learn' || WRITING_ACTIVITY_TYPES.has(activeActivity.type)) && (
               <ActivityGuide
                 activity={activeActivity}
                 index={activityIndex}
                 total={activities.length}
-                onBack={activityIndex > 0
+                focused={focused}
+                onBack={phase === 'learn' && activityIndex > 0
                   ? () => onActivityChange?.(activities[activityIndex - 1].id)
                   : null}
-                onContinue={activityIndex < activities.length - 1
-                  ? () => onActivityChange?.(activities[activityIndex + 1].id)
-                  : null}
+                onContinue={phase !== 'learn'
+                  ? null
+                  : nextActivity && !WRITING_ACTIVITY_TYPES.has(nextActivity.type)
+                    ? () => onActivityChange?.(nextActivity.id)
+                    : () => {
+                      if (nextActivity) onActivityChange?.(nextActivity.id);
+                      onStartExercise?.();
+                    }}
+                continueLabel={nextActivity && !WRITING_ACTIVITY_TYPES.has(nextActivity.type) ? 'Continue' : 'Start coding'}
+                allowContinue={phase === 'learn' && WRITING_ACTIVITY_TYPES.has(activeActivity.type)}
               />
             )}
             {showLessonCard && (
@@ -153,6 +164,8 @@ export default function LearnModePanel({
                 checkpointComplete={checkpointComplete}
                 onReflectionChange={onReflectionChange}
                 onCompleteCheckpoint={onCompleteCheckpoint}
+                teachingOnly={phase === 'learn'}
+                onStartExercise={onStartExercise}
               />
             )}
             {suggestLessGuidance && (
@@ -197,7 +210,16 @@ export default function LearnModePanel({
   );
 }
 
-function ActivityGuide({ activity, index, total, onBack, onContinue }) {
+function ActivityGuide({
+  activity,
+  index,
+  total,
+  onBack,
+  onContinue,
+  continueLabel = 'Continue',
+  allowContinue = false,
+  focused = false,
+}) {
   const [answer, setAnswer] = React.useState(null);
   const [checkedSteps, setCheckedSteps] = React.useState([]);
   const headingRef = React.useRef(null);
@@ -214,11 +236,11 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
   const answered = answer !== null;
   const answerCorrect = answered && answer === activity.answer;
   const steps = activity.steps || [];
-  const canContinue = isPrediction
+  const canContinue = allowContinue || (isPrediction
     ? answered
     : isCodeAlong && steps.length > 0
       ? checkedSteps.length === steps.length
-      : true;
+      : true);
 
   const toggleStep = (stepIndex) => {
     setCheckedSteps((current) => current.includes(stepIndex)
@@ -227,7 +249,10 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
   };
 
   return (
-    <section style={styles.activityCard} aria-labelledby={`activity-${activity.id}`}>
+    <section
+      style={{ ...styles.activityCard, ...(focused ? styles.activityCardFocused : {}) }}
+      aria-labelledby={`activity-${activity.id}`}
+    >
       <div style={styles.activityMeta}>Activity {index + 1} of {total} · {activity.type.replace('-', ' ')}</div>
       <h3 ref={headingRef} tabIndex={-1} id={`activity-${activity.id}`} style={styles.activityTitle}>{activity.title}</h3>
       {activity.instruction && <p style={styles.activityText}>{renderActivityInline(activity.instruction)}</p>}
@@ -293,7 +318,7 @@ function ActivityGuide({ activity, index, total, onBack, onContinue }) {
           )}
           {onContinue && canContinue && (
             <button type="button" style={styles.continueBtn} onClick={onContinue}>
-              Continue <ArrowRight size={12} />
+              {continueLabel} <ArrowRight size={12} />
             </button>
           )}
         </div>
@@ -326,6 +351,7 @@ const styles = {
     background: 'var(--bg-secondary)',
     borderRight: '1px solid var(--border)',
   },
+  panelFocused: { borderRight: 'none' },
   header: {
     padding: '15px 16px 12px',
     borderBottom: '1px solid var(--border)',
@@ -403,11 +429,13 @@ const styles = {
     overflowY: 'auto',
     padding: 12,
   },
+  contentFocused: { padding: 'clamp(18px, 4vw, 48px)' },
   lessonStack: {
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
   },
+  lessonStackFocused: { width: '100%' },
   fadeSuggestion: {
     padding: 11,
     border: '1px solid var(--accent)',
@@ -453,6 +481,12 @@ const styles = {
     border: '1px solid var(--border-strong)',
     borderRadius: 8,
     background: 'var(--bg-elevated)',
+  },
+  activityCardFocused: {
+    padding: 0,
+    border: 'none',
+    borderRadius: 0,
+    background: 'transparent',
   },
   activityMeta: {
     color: 'var(--accent)',

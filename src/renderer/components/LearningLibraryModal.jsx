@@ -46,7 +46,7 @@ export default function LearningLibraryModal({
           <div>
             <div style={styles.kicker}>Private · stored on this device</div>
             <h2 ref={titleRef} tabIndex={-1} id="learning-library-title" style={styles.title}>
-              Code postcards
+              Postcards
             </h2>
           </div>
           <button type="button" style={styles.iconButton} onClick={onClose} aria-label="Close"><X size={16} /></button>

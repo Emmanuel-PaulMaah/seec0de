@@ -50,21 +50,21 @@ export default function HomeScreen({
             <ArrowRight size={17} style={styles.arrow} />
           </button>
 
-          <button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenPostcards}>
+           {/*<button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenPostcards}>
             <span style={{ ...styles.cardIcon, ...styles.postcardIcon }}><Image size={18} /></span>
             <span style={styles.cardCopy}>
               <span style={styles.cardEyebrow}>Your creations</span>
-              <strong style={styles.cardTitle}>Code Postcards</strong>
+              <strong style={styles.cardTitle}>Postcards</strong>
               <span style={styles.cardText}>{postcardCount > 0 ? `${postcardCount} saved · capture or export a snippet.` : 'Save code, output, and what you learned.'}</span>
             </span>
             <ArrowRight size={17} style={styles.arrow} />
-          </button>
+          </button>*/}
 
         </div>
 
         <div style={styles.futureLine}>
           <span style={styles.futureDot} />
-          Everything here stays private and local unless you deliberately export it.
+          Community features coming soon
         </div>
       </section>
 

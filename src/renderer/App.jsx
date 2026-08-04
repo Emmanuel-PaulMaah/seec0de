@@ -35,6 +35,7 @@ const STORAGE_KEY_TERMINAL_OPEN      = 'seec0de.terminalVisible';
 const STORAGE_KEY_EXPLORER_OPEN      = 'seec0de.explorerVisible';
 const STORAGE_KEY_EXPLORER_WIDTH     = 'seec0de.explorerWidth';
 const STORAGE_KEY_INSTRUCTION_WIDTH  = 'seec0de.instructionWidth';
+const STORAGE_KEY_LEARN_GUIDE_WIDTH  = 'seec0de.learnGuideWidth';
 const STORAGE_KEY_PREVIEW_OPEN       = 'seec0de.previewVisible';
 const STORAGE_KEY_PREVIEW_WIDTH      = 'seec0de.previewWidth';
 const STORAGE_KEY_INSTRUCTION_COLLAPSED = 'seec0de.instructionCollapsed';
@@ -109,7 +110,7 @@ function restoredLearningState(settings = loadSettings()) {
   const status = lesson && ['idle', 'pass', 'fail'].includes(session?.status) ? session.status : 'idle';
   const savedPhase = lesson && LEARN_PHASES.has(session?.phase) ? session.phase : 'learn';
   const phase = savedPhase === 'run'
-    ? (status === 'fail' ? 'fix' : 'learn')
+    ? (status === 'fail' ? 'fix' : 'run')
     : status === 'pass'
       ? 'complete'
       : status === 'fail'
@@ -302,7 +303,7 @@ export default function App() {
     setLessonStatus('idle');
     setLessonVerification(null);
     setLessonErrorCoaching([]);
-    setLearnPhase('learn');
+    setLearnPhase('run');
     setRunnerOutput(null);
     setLearnAnnouncement('Starter code restored.');
   }, [activeLesson]);
@@ -414,6 +415,12 @@ export default function App() {
     return 320;
   });
 
+  const [learnGuideWidth, setLearnGuideWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(STORAGE_KEY_LEARN_GUIDE_WIDTH));
+    if (Number.isFinite(saved)) return Math.max(300, Math.min(640, saved));
+    return 400;
+  });
+
   const [explanationCollapsed, setExplanationCollapsed] = useState(
     () => localStorage.getItem(STORAGE_KEY_EXPLANATION_COLLAPSED) === '1'
   );
@@ -470,6 +477,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_INSTRUCTION_WIDTH, String(instructionWidth));
   }, [instructionWidth]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_LEARN_GUIDE_WIDTH, String(learnGuideWidth));
+  }, [learnGuideWidth]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_EXPLANATION_COLLAPSED, explanationCollapsed ? '1' : '0');
@@ -908,7 +919,7 @@ export default function App() {
   // activePath + activeGeneratedTab) so updates flow naturally as the user
   // types — no extra plumbing through CodePanel.
   const livePreview = useMemo(() => {
-    if (activePath) {
+    if (!inLessonMode && activePath) {
       const file = openFiles.find((f) => f.path === activePath);
       if (!file) return { code: '', language: 'plaintext', filename: null };
       const info = fileInfo(file.path);
@@ -1244,6 +1255,30 @@ const beginInstructionResize = useCallback((event) => {
   window.addEventListener('mouseup', handleMouseUp);
 }, [instructionWidth]);
 
+const beginLearnGuideResize = useCallback((event) => {
+  event.preventDefault();
+
+  const startX = event.clientX;
+  const startWidth = learnGuideWidth;
+
+  function handleMouseMove(moveEvent) {
+    const delta = moveEvent.clientX - startX;
+    setLearnGuideWidth(Math.max(300, Math.min(640, startWidth + delta)));
+  }
+
+  function handleMouseUp() {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  window.addEventListener('mousemove', handleMouseMove);
+  window.addEventListener('mouseup', handleMouseUp);
+}, [learnGuideWidth]);
+
 const beginPreviewResize = useCallback((event) => {
   event.preventDefault();
 
@@ -1310,6 +1345,12 @@ const beginExplanationResize = useCallback((event) => {
   const guidanceLevel = ['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
     ? settings.guidanceLevel
     : 'supported';
+  const lessonTeachingVisible = learnMode && !!activeLesson && learnPhase === 'learn';
+
+  const handleStartLessonExercise = useCallback(() => {
+    setLearnPhase('run');
+    setLearnAnnouncement('Teaching complete. Write the exercise in the editor, then run your code.');
+  }, []);
 
   function handleModeChange(mode) {
     if (mode === 'home') {
@@ -1325,11 +1366,13 @@ const beginExplanationResize = useCallback((event) => {
 
     runOwnerRef.current += 1;
     setRunLoading(false);
+    setRunnerOutput(null);
     if (enteringLearnMode) {
       workspaceGeneratedCodeRef.current = generatedCode;
       workspaceCodePanelViewRef.current = { activeGeneratedTab, activePath };
       setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
       setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
+      setActivePath(null);
       if (!activeLesson) {
         setLearnCatalogLanguage(null);
         setLearnCatalogSection(null);
@@ -1548,8 +1591,8 @@ const beginExplanationResize = useCallback((event) => {
             aria-label={learnMode ? 'Learn guide panel' : 'Instruction panel'}
             style={{
               ...styles.instructionShell,
-              width: learnMode ? 360 : (instructionCollapsed ? 32 : instructionWidth),
-              maxWidth: learnMode ? 420 : 520,
+              width: lessonTeachingVisible ? '100%' : learnMode ? learnGuideWidth : (instructionCollapsed ? 32 : instructionWidth),
+              maxWidth: lessonTeachingVisible ? 'none' : learnMode ? 640 : 520,
             }}
           >
             {learnMode ? (
@@ -1579,6 +1622,8 @@ const beginExplanationResize = useCallback((event) => {
                 onReflectionChange={setActiveReflection}
                 onCompleteCheckpoint={handleCompleteCheckpoint}
                 onNextLesson={handleNextLesson}
+                onStartExercise={handleStartLessonExercise}
+                focused={lessonTeachingVisible}
               />
             ) : (
               <InstructionPanel
@@ -1614,7 +1659,24 @@ const beginExplanationResize = useCallback((event) => {
             />
           )}
 
-          <div
+          {learnMode && !lessonTeachingVisible && (
+            <div
+              className="workspace-resize-handle"
+              style={styles.verticalResizeHandle}
+              onMouseDown={beginLearnGuideResize}
+              onKeyDown={(event) => resizePanelWithKeyboard(event, setLearnGuideWidth, 1, 300, 640)}
+              title="Resize lesson panel (Arrow keys)"
+              role="separator"
+              tabIndex={0}
+              aria-orientation="vertical"
+              aria-label="Resize lesson panel"
+              aria-valuemin={300}
+              aria-valuemax={640}
+              aria-valuenow={Math.round(learnGuideWidth)}
+            />
+          )}
+
+          {!lessonTeachingVisible && <div
             className={learnMode ? 'workspace-editor-shell learn-mode-editor-shell' : 'workspace-editor-shell'}
             data-workspace-panel="editor"
             tabIndex={-1}
@@ -1627,8 +1689,8 @@ const beginExplanationResize = useCallback((event) => {
               onCodeChange={handleCodeChange}
               onSelectionExplain={learnMode ? undefined : handleSelectionExplain}
               aiLoading={aiLoading}
-              openFiles={openFiles}
-              activePath={activePath}
+              openFiles={learnMode ? [] : openFiles}
+              activePath={learnMode ? null : activePath}
               onActivatePath={setActivePath}
               onCloseFile={handleCloseFile}
               onFileContentChange={handleFileContentChange}
@@ -1641,7 +1703,7 @@ const beginExplanationResize = useCallback((event) => {
               lessonMode={inLessonMode}
               lessonLanguage={activeLesson?.language}
             />
-          </div>
+          </div>}
 
           {resultVisible && !learnMode && (
             <div
@@ -1727,6 +1789,7 @@ const beginExplanationResize = useCallback((event) => {
           <TerminalPanel
             visible={terminalVisible}
             onToggle={() => setTerminalVisible((v) => !v)}
+            projectRoot={rootPath}
             apiRef={terminalApi}
           />
         )}

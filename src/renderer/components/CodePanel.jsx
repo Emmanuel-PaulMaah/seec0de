@@ -139,28 +139,6 @@ export default function CodePanel({
   }, []);
   const resetFontSize = useCallback(() => setFontSize(FONT_SIZE_DEFAULT), []);
 
-  // Ctrl/⌘ +  → bigger ; Ctrl/⌘ −  → smaller ; Ctrl/⌘ 0  → reset.
-  // Hooked to window so the shortcuts work even when the Monaco editor
-  // doesn't have focus (e.g. learner just clicked the tab strip).
-  useEffect(() => {
-    const onKey = (e) => {
-      if (!(e.ctrlKey || e.metaKey)) return;
-      // `=` keycap doubles as `+` without Shift on most keyboards.
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault();
-        bumpFontSize(FONT_SIZE_STEP);
-      } else if (e.key === '-' || e.key === '_') {
-        e.preventDefault();
-        bumpFontSize(-FONT_SIZE_STEP);
-      } else if (e.key === '0') {
-        e.preventDefault();
-        resetFontSize();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [bumpFontSize, resetFontSize]);
-
   // ---- which view are we showing? ---------------------------------------
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
   const showingFile = !!fileTab;
@@ -305,8 +283,8 @@ export default function CodePanel({
       event.preventDefault();
       handleRun();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, [handleRun]);
 
   const handleActivateGenerated = (tab) => {
@@ -399,7 +377,7 @@ export default function CodePanel({
               }}
               onClick={() => bumpFontSize(-FONT_SIZE_STEP)}
               disabled={fontSize <= FONT_SIZE_MIN}
-              title="Decrease editor font size (Ctrl + −)"
+              title="Decrease editor font size"
               aria-label="Decrease editor font size"
             >
               A−
@@ -409,7 +387,7 @@ export default function CodePanel({
               className="ui-toolbar-button"
               style={styles.fontSizeLabel}
               onClick={resetFontSize}
-              title={`Reset to default (${FONT_SIZE_DEFAULT}px) — Ctrl + 0`}
+              title={`Reset editor font size to ${FONT_SIZE_DEFAULT}px`}
               aria-label={`Editor font size ${fontSize}px — click to reset`}
             >
               {fontSize}
@@ -423,7 +401,7 @@ export default function CodePanel({
               }}
               onClick={() => bumpFontSize(FONT_SIZE_STEP)}
               disabled={fontSize >= FONT_SIZE_MAX}
-              title="Increase editor font size (Ctrl + +)"
+              title="Increase editor font size"
               aria-label="Increase editor font size"
             >
               A+

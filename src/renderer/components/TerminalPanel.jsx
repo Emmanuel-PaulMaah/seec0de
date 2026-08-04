@@ -9,6 +9,7 @@ import { explain } from '../engine/commandExplainer';
 // Props:
 //   visible        bool
 //   onToggle       () => void
+//   projectRoot    string|null. A newly opened explorer folder becomes cwd.
 //   apiRef         React ref. We assign { runCommand, pushEntry } so other
 //                  components (e.g. the "Run" button in CodePanel) can push
 //                  synthetic entries into the history.
@@ -16,7 +17,7 @@ import { explain } from '../engine/commandExplainer';
 const PROMPT_HISTORY_KEY = 'seec0de.terminalHistory';
 const PROMPT_HISTORY_MAX = 50;
 
-export default function TerminalPanel({ visible, onToggle, apiRef }) {
+export default function TerminalPanel({ visible, onToggle, projectRoot = null, apiRef }) {
   const [cwd, setCwd] = useState('');
   const [entries, setEntries] = useState([]);     // [{ id, command, explanation, status, stdout, stderr, exitCode, durationMs }]
   const [input, setInput] = useState('');
@@ -31,14 +32,21 @@ export default function TerminalPanel({ visible, onToggle, apiRef }) {
   const scrollRef = useRef(null);
   const idCounter = useRef(0);
 
-  // Initial cwd = home dir.
+  // Start in the explorer folder when one is open, otherwise use home. This
+  // only reruns when the project root changes, so a typed `cd` remains in
+  // control until the user opens a different folder in File Explorer.
   useEffect(() => {
+    if (projectRoot) {
+      setCwd(projectRoot);
+      return undefined;
+    }
+
     let cancelled = false;
     window.seecode.terminal.home().then((home) => {
       if (!cancelled) setCwd(home);
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [projectRoot]);
 
   // Auto-scroll on new output.
   useEffect(() => {

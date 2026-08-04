@@ -36,6 +36,8 @@ export default function ActiveLessonCard({
   checkpointComplete = false,
   onReflectionChange,
   onCompleteCheckpoint,
+  teachingOnly = false,
+  onStartExercise,
 }) {
   const language = lesson?.language || 'javascript';
   const [solutionShown, setSolutionShown] = useState(false);
@@ -73,7 +75,7 @@ export default function ActiveLessonCard({
   };
 
   return (
-    <div style={styles.card}>
+    <div style={{ ...styles.card, ...(teachingOnly ? styles.cardTeaching : {}) }}>
       {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={onClear} title={lesson.kind === 'exercise' ? 'Back to exercises' : lesson.kind === 'project-checkpoint' ? 'Back to project' : 'Back to all lessons'}>
@@ -98,13 +100,20 @@ export default function ActiveLessonCard({
       )}
 
       {/* Task callout */}
-      <div style={styles.taskBox}>
+      {!teachingOnly && <div style={styles.taskBox}>
         <div style={styles.taskLabel}>Your turn</div>
         <div style={styles.taskText}>{renderInline(lesson.task)}</div>
         <div style={styles.taskHint}>
           Edit the code in the editor → click <strong>Run</strong> in the toolbar.
         </div>
-      </div>
+      </div>}
+
+      {teachingOnly && (
+        <button type="button" style={styles.startExerciseBtn} onClick={onStartExercise}>
+          <span>Start coding exercise</span>
+          <ArrowRight size={13} />
+        </button>
+      )}
 
       {/* Status footer */}
       {status === 'pass' && (
@@ -157,7 +166,7 @@ export default function ActiveLessonCard({
         </div>
       )}
 
-      {isProjectCheckpoint && (
+      {!teachingOnly && isProjectCheckpoint && (
         <div style={styles.reflectionBox}>
           <label htmlFor={`reflection-${lesson.id}`} style={styles.reflectionLabel}>Explain one decision</label>
           <div style={styles.reflectionPrompt}>{lesson.reflectionPrompt}</div>
@@ -216,7 +225,7 @@ export default function ActiveLessonCard({
       )}
 
       {/* Actions */}
-      <div style={styles.actions}>
+      {!teachingOnly && <div style={styles.actions}>
         {hintsRemaining && hintsAvailable && (
           <button
             style={styles.actionBtn}
@@ -245,7 +254,7 @@ export default function ActiveLessonCard({
           <RotateCcw size={11} />
           <span>Reset code</span>
         </button>
-      </div>
+      </div>}
 
       {status === 'pass' && hasNext && (
         <button
@@ -411,6 +420,13 @@ const styles = {
     border: '1px solid var(--border-strong)',
     borderRadius: 8,
     padding: 12,
+  },
+  cardTeaching: {
+    width: '100%',
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 0,
+    padding: 0,
   },
   header: {
     display: 'flex',
@@ -840,6 +856,21 @@ const styles = {
     borderRadius: 6,
     cursor: 'pointer',
     marginTop: 4,
+  },
+  startExerciseBtn: {
+    alignSelf: 'flex-end',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 8,
+    padding: '9px 14px',
+    border: 'none',
+    borderRadius: 6,
+    background: 'var(--accent)',
+    color: 'var(--text-on-accent)',
+    fontSize: 12,
+    fontWeight: 700,
   },
   nextBtnDisabled: { opacity: 0.42, cursor: 'not-allowed' },
 };
