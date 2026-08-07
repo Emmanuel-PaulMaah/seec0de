@@ -1,9 +1,9 @@
 {
   "name": "seec0de",
-  "version": "3.6.0",
+  "version": "4.0.0",
   "description": "Write natural instructions, see pseudocode & code. Paste code, see explanations.",
   "main": "src/main/main.js",
-  "author": "Emmanuel Paulmaah",
+  "author": "Emmanuel PaulMaah",
   "scripts": {
     "start": "electron .",
     "dev": "concurrently \"webpack serve --config webpack.renderer.js\" \"wait-on http://localhost:9000 && electron .\"",
