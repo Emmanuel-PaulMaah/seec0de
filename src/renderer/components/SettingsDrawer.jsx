@@ -588,7 +588,7 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
         )}
       </Field>
 
-      {/* ---- Manage ---- */}
+      {/* ---- Manage ----
       <Field label="Profiles" hint="Every profile lives on this device. Switching or adding never touches the others' progress.">
         <div style={styles.profileBtnRow}>
           <button style={styles.ghostBtn} onClick={() => onSwitchProfile?.()}>
@@ -598,7 +598,7 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
             <UserPlus size={12} style={{ marginRight: 6 }} /> Add profile
           </button>
         </div>
-      </Field>
+      </Field> */}
 
       {/* ---- Delete ---- */}
       {confirmDelete ? (
