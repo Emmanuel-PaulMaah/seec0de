@@ -2,10 +2,11 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
-  AlertCircle, X,
+  AlertCircle, X, FolderOpen,
 } from 'lucide-react';
 import { hasApiKey, subscribeHasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
+import FileExplorer from './FileExplorer';
 
 // ... (LANGUAGE_LABELS and labelFor unchanged)
 
@@ -21,6 +22,13 @@ export default function InstructionPanel({
   onOpenSettings,
   collapsed = false,
   onToggleCollapsed,
+  rootPath,
+  onPickFolder,
+  onCloseFolder,
+  onOpenFile,
+  onDeleteFile,
+  activeFilePath,
+  refreshKey,
 }) {
   // Track key-presence reactively. The cached `hasApiKey()` hydrates
   // asynchronously on module load AND flips whenever the SettingsDrawer
@@ -87,6 +95,22 @@ export default function InstructionPanel({
     );
   }
 
+  // ---- folder open: file explorer replaces the build content ------------
+  if (rootPath) {
+    return (
+      <FileExplorer
+        rootPath={rootPath}
+        onPickFolder={onPickFolder}
+        onCloseFolder={onCloseFolder}
+        onOpenFile={onOpenFile}
+        onDeleteFile={onDeleteFile}
+        activeFilePath={activeFilePath}
+        refreshKey={refreshKey}
+      />
+    );
+  }
+
+
   // ---- expanded panel --------------------------------------------------
   return (
     <div style={styles.panel}>
@@ -112,6 +136,18 @@ export default function InstructionPanel({
       <div style={styles.inner}>
         <div style={styles.scrollContent}>
           <div style={styles.buildStack}>
+
+            <button
+                type="button"
+                className="ui-toolbar-button"
+                style={styles.openFolderBtn}
+                onClick={onPickFolder}
+                title="Open a folder as your project"
+              >
+                <FolderOpen size={13} />
+                <span style={{ marginLeft: 6 }}>Open folder</span>
+              </button>
+
               <p style={styles.headerHint}>
                 Describe what you want in plain English.
               </p>
@@ -302,6 +338,26 @@ const styles = {
     color: 'var(--text-muted)',
     lineHeight: 1.5,
     marginBottom: 4,
+  },
+  headerHint: {
+    fontSize: 12,
+    color: 'var(--text-muted)',
+    lineHeight: 1.5,
+    marginBottom: 4,
+  },
+  openFolderBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    background: 'var(--bg-tertiary)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius-group)',
+    color: 'var(--text-secondary)',
+    fontSize: 'var(--text-sm)',
+    fontWeight: 500,
+    padding: '0 var(--space-3)',
+    minHeight: 'var(--control-standard)',
+    cursor: 'pointer',
   },
   collapseBtn: {
     background: 'transparent',

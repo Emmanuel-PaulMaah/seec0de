@@ -1551,42 +1551,6 @@ const beginExplanationResize = useCallback((event) => {
       ) : (
       <div style={styles.body}>
         <div style={styles.workspace} className={learnMode ? 'app-workspace learn-mode-workspace' : 'app-workspace'}>
-          {!learnMode && explorerVisible && (
-  <>
-    <div
-      data-workspace-panel="explorer"
-      tabIndex={-1}
-      aria-label="File explorer panel"
-      style={{ ...styles.explorerShell, width: explorerWidth }}
-    >
-      <FileExplorer
-        rootPath={rootPath}
-        onPickFolder={handlePickFolder}
-        onCloseFolder={handleCloseFolder}
-        onOpenFile={handleOpenFile}
-        onDeleteFile={handleCloseFile}
-        activeFilePath={activePath}
-        refreshKey={0}
-      />
-    </div>
-
-    <div
-      className="workspace-resize-handle"
-      style={styles.verticalResizeHandle}
-      onMouseDown={beginExplorerResize}
-      onKeyDown={(event) => resizePanelWithKeyboard(event, setExplorerWidth, 1, 180, 420)}
-      title="Resize file explorer (Arrow keys)"
-      role="separator"
-      tabIndex={0}
-      aria-orientation="vertical"
-      aria-label="Resize file explorer"
-      aria-valuemin={180}
-      aria-valuemax={420}
-      aria-valuenow={Math.round(explorerWidth)}
-    />
-  </>
-)}
-
           <div
             className={learnMode ? 'learn-mode-guide-shell' : undefined}
             data-workspace-panel="guide"
@@ -1641,6 +1605,13 @@ const beginExplanationResize = useCallback((event) => {
                 onOpenSettings={() => setShowSettings(true)}
                 collapsed={instructionCollapsed}
                 onToggleCollapsed={() => setInstructionCollapsed((v) => !v)}
+                rootPath={rootPath}
+                onPickFolder={handlePickFolder}
+                onCloseFolder={handleCloseFolder}
+                onOpenFile={handleOpenFile}
+                onDeleteFile={handleCloseFile}
+                activeFilePath={activePath}
+                refreshKey={0}
               />
             )}
           </div>

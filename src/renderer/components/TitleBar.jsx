@@ -15,8 +15,6 @@ import { Avatar } from './ProfileForm';
 // rail beside the editor) — there's no duplicate eye button up here.
 
 export default function TitleBar({
-  explorerVisible = false,
-  onToggleExplorer,
   terminalVisible = false,
   onToggleTerminal,
   onStartTour,
@@ -39,16 +37,6 @@ export default function TitleBar({
       <div style={styles.side}>
         <span style={styles.logo}>⟨/⟩</span>
         <span style={styles.title}>seec0de beta</span>
-        {onToggleExplorer && (
-          <ToolBtn
-            onClick={onToggleExplorer}
-            active={explorerVisible}
-            title={explorerVisible ? 'Hide file explorer' : 'Show file explorer'}
-            ariaLabel="Toggle file explorer"
-          >
-            {explorerVisible ? <PanelLeftClose size={14} /> : <PanelLeft size={14} />}
-          </ToolBtn>
-        )}
         {onToggleTerminal && (
           <ToolBtn
             onClick={onToggleTerminal}
