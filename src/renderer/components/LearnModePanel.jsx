@@ -9,7 +9,9 @@ const PHASES = [
   { id: 'run', label: 'Run', icon: Play },
   { id: 'fix', label: 'Fix', icon: Wrench },
 ];
-const WRITING_ACTIVITY_TYPES = new Set(['code-along', 'drill', 'edit']);
+export const WRITING_ACTIVITY_TYPES = new Set(['code-along', 'drill', 'edit']);
+
+export const TEACHING_STEP_ID = '__teaching__';
 
 export default function LearnModePanel({
   activeLesson,
@@ -52,9 +54,12 @@ export default function LearnModePanel({
     : guidanceLevel === 'guided'
       ? allActivities.filter((activity) => activity.type !== 'worked-example')
       : allActivities.filter((activity) => WRITING_ACTIVITY_TYPES.has(activity.type));
-  const activityIndex = Math.max(0, activities.findIndex((activity) => activity.id === activeActivityId));
-  const activeActivity = activities[activityIndex] || null;
-  const nextActivity = activities[activityIndex + 1] || null;
+  const showingTeaching = activeActivityId === TEACHING_STEP_ID;
+  const activityIndex = showingTeaching
+    ? -1
+    : Math.max(0, activities.findIndex((activity) => activity.id === activeActivityId));
+  const activeActivity = showingTeaching ? null : (activities[activityIndex] || null);
+  const nextActivity = showingTeaching ? (activities[0] || null) : (activities[activityIndex + 1] || null);
   const showLessonCard = phase !== 'learn' || !activeActivity;
   const nextGuidanceLevel = guidanceLevel === 'supported'
     ? 'guided'
@@ -165,7 +170,8 @@ export default function LearnModePanel({
                 onReflectionChange={onReflectionChange}
                 onCompleteCheckpoint={onCompleteCheckpoint}
                 teachingOnly={phase === 'learn'}
-                onStartExercise={onStartExercise}
+                onStartExercise={showingTeaching
+                  ? () => onActivityChange?.(activities[0]?.id || null) : onStartExercise}
               />
             )}
             {suggestLessGuidance && (

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import TitleBar from './components/TitleBar';
 import InstructionPanel from './components/InstructionPanel';
-import LearnModePanel from './components/LearnModePanel';
+import LearnModePanel, { TEACHING_STEP_ID, WRITING_ACTIVITY_TYPES } from './components/LearnModePanel';
 import CodePanel from './components/CodePanel';
 import ExplanationSidebar from './components/ExplanationSidebar';
 import FileExplorer from './components/FileExplorer';
@@ -278,7 +278,10 @@ export default function App() {
     const initialActivities = lesson?.kind === 'exercise'
       ? lesson.activities || []
       : (lesson?.activities || []).filter(isCourseActivity);
-    setActiveActivityId(initialActivities[0]?.id || null);
+    setActiveActivityId(
+      lesson && lesson.kind !== 'exercise' && (lesson.teaching || []).length > 0
+        ? TEACHING_STEP_ID
+        : initialActivities[0]?.id || null);
     setLearnAnnouncement(lesson
       ? `${lesson.title} opened. ${lesson.kind === 'exercise' ? 'Complete the standalone exercise.' : 'Start with the first activity.'}`
       : 'Learning catalog opened.');
@@ -1065,7 +1068,7 @@ export default function App() {
       ? availableActivities
       : guidanceLevel === 'guided'
         ? availableActivities.filter((activity) => activity.type !== 'worked-example')
-        : availableActivities.filter((activity) => activity.type === 'edit');
+        : availableActivities.filter((activity) => WRITING_ACTIVITY_TYPES.has(activity.type));
     setActiveActivityId(visible[0]?.id || null);
   }, [activeLesson]);
 
