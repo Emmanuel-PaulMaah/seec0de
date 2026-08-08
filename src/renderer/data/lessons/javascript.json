@@ -84,7 +84,7 @@
               "id": "js-02-predict",
               "type": "prediction",
               "title": "Follow the variable",
-              "question": "What prints after let points = 7; console.log(points);?",
+              "question": "What prints after\n`let points = 7; console.log(points);`?",
               "choices": [
                 "points",
                 "7",
