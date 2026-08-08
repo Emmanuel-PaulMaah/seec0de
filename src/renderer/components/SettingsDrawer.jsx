@@ -53,7 +53,14 @@ export default function SettingsDrawer({
   const [showKey, setShowKey]   = useState(false);
   const [keySaved, setKeySaved] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState(() => getNotificationPermission());
+  const [expandedSection, setExpandedSection] = useState('appearance');
   const update = useUpdateStatus();
+
+  // Accordion: clicking the open section's header collapses it; clicking a
+  // closed section's header opens it and closes whichever was open before.
+  const toggleSection = (id) => {
+    setExpandedSection((current) => (current === id ? null : id));
+  };
 
   // Placeholder shown when a key exists. Never saved — see handleSaveKey.
   const KEY_MASK = '••••••••••••••••';
@@ -64,6 +71,7 @@ export default function SettingsDrawer({
       setSettings(loadSettings());
       setKeySaved(false);
       setNotificationPermission(getNotificationPermission());
+      setExpandedSection('appearance');
       window.seecode.ai.hasKey().then((exists) => {
         setHasKey(exists);
         setApiKey(exists ? KEY_MASK : '');
@@ -173,7 +181,7 @@ export default function SettingsDrawer({
 
         <div style={styles.scroll}>
           {/* ---- 1. Appearance ---------------------------------------- */}
-          <Section icon={<Eye size={13} />} title="Appearance">
+          <Section id="appearance" icon={<Eye size={13} />} title="Appearance" open={expandedSection === 'appearance'} onToggle={toggleSection}>
             <Field label="App theme" hint="Choose the palette used across your workspace. Saved to this profile.">
               <div style={styles.themeGrid}>
                 <ThemeChoice
@@ -195,7 +203,7 @@ export default function SettingsDrawer({
           </Section>
 
           {/* ---- 2. Learn Mode ---------------------------------------- */}
-          <Section icon={<GraduationCap size={13} />} title="Learn Mode">
+          <Section id="learnMode" icon={<GraduationCap size={13} />} title="Learn Mode" open={expandedSection === 'learnMode'} onToggle={toggleSection}>
             <Field label="Guidance level" hint="Choose how much teaching Learn Mode shows. You can change this at any time.">
               <GuidanceTabs
                 value={['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
@@ -206,7 +214,7 @@ export default function SettingsDrawer({
             </Field>
           </Section>
 
-          <Section icon={<Bell size={13} />} title="Practice reminders">
+          <Section id="practiceReminders" icon={<Bell size={13} />} title="Practice reminders" open={expandedSection === 'practiceReminders'} onToggle={toggleSection}>
             <ToggleRow
               icon={<Bell size={13} />}
               label="Learning Pulse reminders"
@@ -244,7 +252,7 @@ export default function SettingsDrawer({
           </Section>
 
           {/* ---- 3. Languages ----------------------------------------- */}
-          <Section icon={<Layers size={13} />} title="Languages">
+          <Section id="languages" icon={<Layers size={13} />} title="Languages" open={expandedSection === 'languages'} onToggle={toggleSection}>
             <Field label="Practical language" hint="The language you build in. Powers Run, default file extension, and the first language tab.">
               <div style={styles.langGrid}>
                 {RUNNABLE_LANGUAGES.map((lang) => (
@@ -280,7 +288,7 @@ export default function SettingsDrawer({
           </Section>
 
           {/* ---- 3. AI ------------------------------------------------- */}
-          <Section icon={<Sparkles size={13} />} title="AI">
+          <Section id="ai" icon={<Sparkles size={13} />} title="AI" open={expandedSection === 'ai'} onToggle={toggleSection}>
             <Field
               label="Gemini API key"
               hint="Free key from Google AI Studio. Required for AI Generate & AI Explain. Stored locally; never sent anywhere except Google."
@@ -323,7 +331,7 @@ export default function SettingsDrawer({
           </Section>
 
           {/* ---- 4. Workspace ----------------------------------------- */}
-          <Section icon={<FolderTree size={13} />} title="Workspace">
+          <Section id="workspace" icon={<FolderTree size={13} />} title="Workspace" open={expandedSection === 'workspace'} onToggle={toggleSection}>
             <ToggleRow
               icon={<FolderTree size={13} />}
               label="Show file explorer by default"
@@ -341,22 +349,22 @@ export default function SettingsDrawer({
           </Section>
 
           {/* ---- 5. Keyboard shortcuts --------------------------------- */}
-          <Section icon={<Keyboard size={13} />} title="Keyboard shortcuts">
+          <Section id="keyboardShortcuts" icon={<Keyboard size={13} />} title="Keyboard shortcuts" open={expandedSection === 'keyboardShortcuts'} onToggle={toggleSection}>
             <ShortcutList />
           </Section>
 
           {/* ---- 6. Toolchains ----------------------------------------- */}
-          <Section icon={<Cpu size={13} />} title="Toolchains">
+          <Section id="toolchains" icon={<Cpu size={13} />} title="Toolchains" open={expandedSection === 'toolchains'} onToggle={toggleSection}>
             <ToolchainPanel onRunInTerminal={onRunInTerminal} />
           </Section>
 
           {/* ---- 7. About & Updates ----------------------------------- */}
-          <Section icon={<Info size={13} />} title="About & Updates">
+          <Section id="about" icon={<Info size={13} />} title="About & Updates" open={expandedSection === 'about'} onToggle={toggleSection}>
             <UpdatePanel update={update} />
           </Section>
 
           {/* ---- 8. Onboarding ---------------------------------------- */}
-          <Section title="Onboarding">
+          <Section id="onboarding" title="Onboarding" open={expandedSection === 'onboarding'} onToggle={toggleSection}>
             <button style={styles.ghostBtn} onClick={handleRerun}>
               Rerun onboarding
             </button>
@@ -613,14 +621,26 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
 // ---------------------------------------------------------------------------
 // reusable bits
 
-function Section({ icon, title, children }) {
+function Section({ id, icon, title, open, onToggle, children }) {
+  const bodyId = `settings-section-${id}`;
   return (
     <section style={styles.section}>
-      <div style={styles.sectionHeader}>
+      <button
+        type="button"
+        style={styles.sectionHeader}
+        onClick={() => onToggle?.(id)}
+        aria-expanded={open}
+        aria-controls={bodyId}
+      >
         {icon && <span style={styles.sectionIcon}>{icon}</span>}
         <span style={styles.sectionTitle}>{title}</span>
-      </div>
-      <div style={styles.sectionBody}>{children}</div>
+        <span style={styles.sectionChevron}>
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </span>
+      </button>
+      {open && (
+        <div id={bodyId} style={styles.sectionBody}>{children}</div>
+      )}
     </section>
   );
 }
@@ -1162,20 +1182,27 @@ const styles = {
   },
 
   section: {
-    paddingTop: 18,
-    paddingBottom: 4,
     borderBottom: '1px solid var(--border)',
   },
   sectionHeader: {
     display: 'flex', alignItems: 'center', gap: 8,
-    marginBottom: 12,
+    width: '100%',
+    padding: '14px 2px',
+    margin: 0,
+    background: 'transparent',
+    border: 'none',
     color: 'var(--text-muted)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    borderRadius: 6,
+    transition: 'background var(--motion-base) var(--ease-out)',
   },
   sectionIcon: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     width: 22, height: 22, borderRadius: 6,
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
+    flexShrink: 0,
   },
   sectionTitle: {
     fontSize: 11,
@@ -1183,10 +1210,17 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     color: 'var(--text-secondary)',
+    flex: 1,
+  },
+  sectionChevron: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    color: 'var(--text-muted)',
+    flexShrink: 0,
   },
   sectionBody: {
     display: 'flex', flexDirection: 'column', gap: 16,
     paddingBottom: 18,
+    paddingTop: 2,
   },
 
   shortcutList: {
