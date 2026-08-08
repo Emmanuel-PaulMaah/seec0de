@@ -90,7 +90,7 @@ export default function InstructionPanel({
       >
         <ChevronRight size={12} />
         <MessageSquareCode size={14} style={{ marginTop: 6 }} />
-        <span style={styles.railText}>INSTRUCTION</span>
+        <span style={styles.railText}>BUILD</span>
       </button>
     );
   }
@@ -117,7 +117,7 @@ export default function InstructionPanel({
       {/* Header — gentle context label, with collapse control */}
       <div style={styles.header}>
         <div style={styles.headerText}>
-          <div style={styles.headerLabel}>Instruction</div>
+          <div style={styles.headerLabel}>Build</div>
         </div>
         {onToggleCollapsed && (
           <button
