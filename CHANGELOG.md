@@ -16,6 +16,22 @@ Section conventions:
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-08-08
+
+### Added
+- **Multi-select, drag-to-move, and a selection toolbar in the file explorer.** Files and folders can now be selected in bulk and dragged to a new location; a selection toolbar appears with actions for the current selection.
+
+### Changed
+- **File explorer now lives inside the Build panel.** The explorer is no longer a separate panel toggled with Ctrl+B or a title-bar icon between the "seec0de beta" label and the terminal icon — it now opens inline within the instruction panel, which also opens directly to folders.
+- **Instruction panel renamed to "Build."** Labels referring to "instruction" throughout the UI now read "Build" to match its expanded role hosting both the prompt and the file explorer.
+- **Settings drawer sections are now an accordion.** Languages, AI, Workspace, About & Updates, and Onboarding collapse/expand individually instead of all being open at once.
+
+### Removed
+- **"Switch profile" and "Add profile" controls removed from the profile section.** Redundant — both actions are already available from the card that opens off the profile pill in the title bar.
+
+### Fixed
+- **Teaching content now renders as its own step before activities**, instead of appearing alongside them.
+
 ## [4.0.0] - 2026-08-04
 
 ### Added
