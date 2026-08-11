@@ -88,6 +88,15 @@ export default function TitleBar({
 
       {/* Right side: update pill + settings + profile */}
       <div style={{ ...styles.side, justifyContent: 'flex-end' }}>
+        {onStartTour && (
+          <ToolBtn
+            onClick={onStartTour}
+            title="Workspace tour"
+            ariaLabel="Start workspace tour"
+          >
+            <CircleHelp size={14} />
+          </ToolBtn>
+        )}
         <UpdatePill />
         <ReminderMenu
           reminders={reminders}
@@ -111,15 +120,6 @@ export default function TitleBar({
             ariaLabel="Open settings"
           >
             <SettingsIcon size={14} />
-          </ToolBtn>
-        )}
-        {onStartTour && (
-          <ToolBtn
-            onClick={onStartTour}
-            title="Workspace tour"
-            ariaLabel="Start workspace tour"
-          >
-            <CircleHelp size={14} />
           </ToolBtn>
         )}
       </div>
