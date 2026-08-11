@@ -1,0 +1,2112 @@
+{
+  "tracks": [
+    {
+      "id": "react-foundations",
+      "name": "React Foundations",
+      "language": "react",
+      "description": "Build user interfaces with React: components, JSX, props, state, hooks, forms, and the patterns that hold a real app together. This course renders every example with the same tools React apps are tested with: `render()` mounts a component, `screen` finds elements in the result, and `fireEvent` simulates user interactions like clicks and typing. React, render, screen, and fireEvent are already available in every exercise \u2014 no imports needed.",
+      "lessons": [
+        {
+          "id": "react-01-first-component",
+          "title": "1. Write your first component",
+          "concept": "function components",
+          "summary": "Build UI out of small JavaScript functions that return JSX.",
+          "activities": [
+            {
+              "id": "react-01-first-component-see",
+              "type": "worked-example",
+              "title": "Read a component definition",
+              "instruction": "A function component returns JSX. Calling render() mounts it, and screen lets you read back what was rendered.",
+              "example": "function Welcome() {\n  return <h1>Hello, React</h1>;\n}\n\nrender(<Welcome />);\nconsole.log(screen.getByRole('heading').textContent);"
+            },
+            {
+              "id": "react-01-first-component-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "What must a function return to count as a React component?",
+              "choices": [
+                "JSX describing the UI",
+                "A CSS stylesheet",
+                "A database connection"
+              ],
+              "answer": "JSX describing the UI",
+              "explanation": "A component's job is to describe UI as JSX; React turns that description into real DOM elements."
+            },
+            {
+              "id": "react-01-first-component-edit",
+              "type": "edit",
+              "title": "Greet the class",
+              "instruction": "Create a component named Greeting that renders an <h1> saying 'Hello, React', then render and log its text."
+            },
+            {
+              "id": "react-01-first-component-drill",
+              "type": "drill",
+              "title": "Recall function component syntax",
+              "instruction": "Write a component that renders an <h1> and print its exact text.",
+              "successCriteria": "Print exactly: Welcome to React",
+              "starterCode": "// Define a component that renders <h1>Welcome to React</h1>\n",
+              "expectedOutput": "Welcome to React",
+              "matchType": "exact",
+              "hints": [
+                "Capitalize the component's name so React treats it as a component, not an HTML tag."
+              ],
+              "solution": "function Banner() {\n  return <h1>Welcome to React</h1>;\n}\n\nrender(<Banner />);\nconsole.log(screen.getByRole('heading').textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A React component is just a function whose name starts with a capital letter and that returns JSX \u2014 a description of what should appear on the screen. This course renders components with `render()` and reads the result back with `screen`, the same helpers real React tests use."
+            },
+            {
+              "type": "code",
+              "text": "function Welcome() {\n  return <h1>Hello, React</h1>;\n}\n\nrender(<Welcome />);\nconsole.log(screen.getByRole('heading').textContent);"
+            },
+            {
+              "type": "note",
+              "text": "JSX looks like HTML but compiles to plain JavaScript function calls, so it can only appear where an expression is allowed."
+            }
+          ],
+          "task": "Write a component that renders an <h1> and print its exact text.",
+          "starterCode": "// Define a component that renders <h1>Welcome to React</h1>\n",
+          "matchType": "exact",
+          "hints": [
+            "Capitalize the component's name so React treats it as a component, not an HTML tag."
+          ],
+          "solution": "function Banner() {\n  return <h1>Welcome to React</h1>;\n}\n\nrender(<Banner />);\nconsole.log(screen.getByRole('heading').textContent);",
+          "expectedOutput": "Welcome to React"
+        },
+        {
+          "id": "react-02-jsx-expressions",
+          "title": "2. Embed expressions in JSX",
+          "concept": "JSX expressions",
+          "summary": "Drop any JavaScript expression into JSX with curly braces.",
+          "activities": [
+            {
+              "id": "react-02-jsx-expressions-see",
+              "type": "worked-example",
+              "title": "Read an embedded expression",
+              "instruction": "The value inside the curly braces is evaluated and inserted into the rendered text.",
+              "example": "const student = \"Ada\";\n\nfunction Banner() {\n  return <p>Welcome, {student}!</p>;\n}\n\nrender(<Banner />);\nconsole.log(screen.getByText(/Welcome/).textContent);"
+            },
+            {
+              "id": "react-02-jsx-expressions-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "What can you put inside { } in JSX?",
+              "choices": [
+                "Any JavaScript expression",
+                "Only string literals",
+                "Only HTML tags"
+              ],
+              "answer": "Any JavaScript expression",
+              "explanation": "Curly braces accept any expression, including variables, function calls, and arithmetic."
+            },
+            {
+              "id": "react-02-jsx-expressions-edit",
+              "type": "edit",
+              "title": "Show a computed score",
+              "instruction": "Store 2 and 3 in variables, add them inside JSX, and print the total."
+            },
+            {
+              "id": "react-02-jsx-expressions-drill",
+              "type": "drill",
+              "title": "Recall JSX expressions",
+              "instruction": "Embed a computed value in JSX and print it exactly.",
+              "successCriteria": "Print exactly: Score: 87",
+              "starterCode": "// Render <p>Score: {value}</p> where value is computed from 80 + 7\n",
+              "expectedOutput": "Score: 87",
+              "matchType": "exact",
+              "hints": [
+                "Wrap the arithmetic in curly braces inside the JSX."
+              ],
+              "solution": "function ScoreLabel() {\n  const value = 80 + 7;\n  return <p>Score: {value}</p>;\n}\n\nrender(<ScoreLabel />);\nconsole.log(screen.getByText(/Score/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Curly braces switch JSX back into JavaScript mode. Anything that evaluates to a value \u2014 a variable, a function call, arithmetic \u2014 can go inside them."
+            },
+            {
+              "type": "code",
+              "text": "const student = \"Ada\";\n\nfunction Banner() {\n  return <p>Welcome, {student}!</p>;\n}\n\nrender(<Banner />);\nconsole.log(screen.getByText(/Welcome/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "You can't embed statements like if or for directly in JSX; use expressions such as the ternary operator instead."
+            }
+          ],
+          "task": "Embed a computed value in JSX and print it exactly.",
+          "starterCode": "// Render <p>Score: {value}</p> where value is computed from 80 + 7\n",
+          "matchType": "exact",
+          "hints": [
+            "Wrap the arithmetic in curly braces inside the JSX."
+          ],
+          "solution": "function ScoreLabel() {\n  const value = 80 + 7;\n  return <p>Score: {value}</p>;\n}\n\nrender(<ScoreLabel />);\nconsole.log(screen.getByText(/Score/).textContent);",
+          "expectedOutput": "Score: 87"
+        },
+        {
+          "id": "react-03-composition",
+          "title": "3. Compose components with children",
+          "concept": "component composition",
+          "summary": "Nest components inside each other and pass content through children.",
+          "activities": [
+            {
+              "id": "react-03-composition-see",
+              "type": "worked-example",
+              "title": "Read a children prop",
+              "instruction": "Card doesn't know what's inside it \u2014 it just renders whatever children it receives.",
+              "example": "function Card({ children }) {\n  return <div className=\"card\">{children}</div>;\n}\n\nfunction App() {\n  return (\n    <Card>\n      <p>Nested content</p>\n    </Card>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText('Nested content').textContent);"
+            },
+            {
+              "id": "react-03-composition-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "How does a component access the content placed between its tags?",
+              "choices": [
+                "Through the children prop",
+                "Through a global variable",
+                "It cannot access it"
+              ],
+              "answer": "Through the children prop",
+              "explanation": "React automatically passes nested JSX to a component as props.children."
+            },
+            {
+              "id": "react-03-composition-edit",
+              "type": "edit",
+              "title": "Nest a Panel",
+              "instruction": "Create a Panel component that renders its children, then nest a heading named 'Settings' inside it."
+            },
+            {
+              "id": "react-03-composition-drill",
+              "type": "drill",
+              "title": "Recall composition with children",
+              "instruction": "Build a wrapper component and render nested text through it.",
+              "successCriteria": "Print exactly: Panel: Settings",
+              "starterCode": "// Render <p>Panel: Settings</p> through a wrapping component's children\n",
+              "expectedOutput": "Panel: Settings",
+              "matchType": "exact",
+              "hints": [
+                "Render {children} inside the wrapper component's JSX."
+              ],
+              "solution": "function Panel({ children }) {\n  return <div>{children}</div>;\n}\n\nfunction App() {\n  return (\n    <Panel>\n      <p>Panel: Settings</p>\n    </Panel>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText(/Panel/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Whatever you put between a component's opening and closing tags is passed to it as the special `children` prop, letting components wrap other components."
+            },
+            {
+              "type": "code",
+              "text": "function Card({ children }) {\n  return <div className=\"card\">{children}</div>;\n}\n\nfunction App() {\n  return (\n    <Card>\n      <p>Nested content</p>\n    </Card>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText('Nested content').textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Composition with children is how React builds layout pieces like cards, panels, and modals."
+            }
+          ],
+          "task": "Build a wrapper component and render nested text through it.",
+          "starterCode": "// Render <p>Panel: Settings</p> through a wrapping component's children\n",
+          "matchType": "exact",
+          "hints": [
+            "Render {children} inside the wrapper component's JSX."
+          ],
+          "solution": "function Panel({ children }) {\n  return <div>{children}</div>;\n}\n\nfunction App() {\n  return (\n    <Panel>\n      <p>Panel: Settings</p>\n    </Panel>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText(/Panel/).textContent);",
+          "expectedOutput": "Panel: Settings"
+        },
+        {
+          "id": "react-04-conditional-rendering",
+          "title": "4. Conditionally render UI",
+          "concept": "conditional rendering",
+          "summary": "Choose what to render with ternaries and logical operators.",
+          "activities": [
+            {
+              "id": "react-04-conditional-rendering-see",
+              "type": "worked-example",
+              "title": "Read a conditional render",
+              "instruction": "The ternary picks one of two strings to render based on the isOnline prop.",
+              "example": "function Status({ isOnline }) {\n  return <p>{isOnline ? \"Online\" : \"Offline\"}</p>;\n}\n\nrender(<Status isOnline={true} />);\nconsole.log(screen.getByText(/Online|Offline/).textContent);"
+            },
+            {
+              "id": "react-04-conditional-rendering-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "Which operator lets you pick between two JSX outputs based on a condition?",
+              "choices": [
+                "The ternary operator ? :",
+                "The typeof operator",
+                "The spread operator ..."
+              ],
+              "answer": "The ternary operator ? :",
+              "explanation": "The ternary operator evaluates to one of two expressions, which is exactly what JSX needs."
+            },
+            {
+              "id": "react-04-conditional-rendering-edit",
+              "type": "edit",
+              "title": "Flip the status",
+              "instruction": "Render Status with isOnline set to false and print the resulting text."
+            },
+            {
+              "id": "react-04-conditional-rendering-drill",
+              "type": "drill",
+              "title": "Recall conditional rendering",
+              "instruction": "Render a component whose text depends on a boolean prop.",
+              "successCriteria": "Print exactly: Offline",
+              "starterCode": "// Render <p>{isOnline ? 'Online' : 'Offline'}</p> with isOnline=false\n",
+              "expectedOutput": "Offline",
+              "matchType": "exact",
+              "hints": [
+                "Pass isOnline={false} to the component."
+              ],
+              "solution": "function Status({ isOnline }) {\n  return <p>{isOnline ? \"Online\" : \"Offline\"}</p>;\n}\n\nrender(<Status isOnline={false} />);\nconsole.log(screen.getByText(/Online|Offline/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Since JSX is just an expression, ordinary JavaScript operators like the ternary (`? :`) and `&&` are enough to decide what gets rendered."
+            },
+            {
+              "type": "code",
+              "text": "function Status({ isOnline }) {\n  return <p>{isOnline ? \"Online\" : \"Offline\"}</p>;\n}\n\nrender(<Status isOnline={true} />);\nconsole.log(screen.getByText(/Online|Offline/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Use `value && <Component />` to render something only when value is truthy, and nothing otherwise."
+            }
+          ],
+          "task": "Render a component whose text depends on a boolean prop.",
+          "starterCode": "// Render <p>{isOnline ? 'Online' : 'Offline'}</p> with isOnline=false\n",
+          "matchType": "exact",
+          "hints": [
+            "Pass isOnline={false} to the component."
+          ],
+          "solution": "function Status({ isOnline }) {\n  return <p>{isOnline ? \"Online\" : \"Offline\"}</p>;\n}\n\nrender(<Status isOnline={false} />);\nconsole.log(screen.getByText(/Online|Offline/).textContent);",
+          "expectedOutput": "Offline"
+        },
+        {
+          "id": "react-05-lists-keys",
+          "title": "5. Render lists with keys",
+          "concept": "list rendering with keys",
+          "summary": "Turn arrays into elements with map, and give each one a stable key.",
+          "activities": [
+            {
+              "id": "react-05-lists-keys-see",
+              "type": "worked-example",
+              "title": "Read a rendered list",
+              "instruction": "map produces one <li> per array item, and key helps React match items between renders.",
+              "example": "function List({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item}>{item}</li>\n      ))}\n    </ul>\n  );\n}\n\nrender(<List items={[\"HTML\", \"CSS\", \"JS\"]} />);\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);"
+            },
+            {
+              "id": "react-05-lists-keys-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "Why does each item in a rendered list need a unique key?",
+              "choices": [
+                "So React can track which item is which across renders",
+                "So the browser can sort the list alphabetically",
+                "Keys are only needed for styling"
+              ],
+              "answer": "So React can track which item is which across renders",
+              "explanation": "React uses the key to match list items between renders instead of re-creating every element."
+            },
+            {
+              "id": "react-05-lists-keys-edit",
+              "type": "edit",
+              "title": "Render numbers",
+              "instruction": "Render a list of the numbers 1, 2, and 3 and print them joined by commas."
+            },
+            {
+              "id": "react-05-lists-keys-drill",
+              "type": "drill",
+              "title": "Recall list rendering",
+              "instruction": "Map an array to list items and print their joined text.",
+              "successCriteria": "Print exactly: 1, 2, 3",
+              "starterCode": "// Render <li> elements for [1, 2, 3] and log their joined text\n",
+              "expectedOutput": "1, 2, 3",
+              "matchType": "exact",
+              "hints": [
+                "Give each <li> a key based on the item's value."
+              ],
+              "solution": "function Numbers({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item}>{item}</li>\n      ))}\n    </ul>\n  );\n}\n\nrender(<Numbers items={[1, 2, 3]} />);\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Array.prototype.map turns data into JSX elements. Each element in a list needs a `key` prop so React can track which item is which across re-renders."
+            },
+            {
+              "type": "code",
+              "text": "function List({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item}>{item}</li>\n      ))}\n    </ul>\n  );\n}\n\nrender(<List items={[\"HTML\", \"CSS\", \"JS\"]} />);\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);"
+            },
+            {
+              "type": "note",
+              "text": "Prefer a stable, unique id for `key` over the array index, especially if the list can be reordered."
+            }
+          ],
+          "task": "Map an array to list items and print their joined text.",
+          "starterCode": "// Render <li> elements for [1, 2, 3] and log their joined text\n",
+          "matchType": "exact",
+          "hints": [
+            "Give each <li> a key based on the item's value."
+          ],
+          "solution": "function Numbers({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item}>{item}</li>\n      ))}\n    </ul>\n  );\n}\n\nrender(<Numbers items={[1, 2, 3]} />);\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);",
+          "expectedOutput": "1, 2, 3"
+        },
+        {
+          "id": "react-06-pass-props",
+          "title": "1. Pass data with props",
+          "concept": "props",
+          "summary": "Send data into a component through named props, just like function arguments.",
+          "activities": [
+            {
+              "id": "react-06-pass-props-see",
+              "type": "worked-example",
+              "title": "Read a prop",
+              "instruction": "The name attribute on <Greeting /> becomes the name prop inside the function.",
+              "example": "function Greeting({ name }) {\n  return <p>Hello, {name}</p>;\n}\n\nrender(<Greeting name=\"Maya\" />);\nconsole.log(screen.getByText(/Hello/).textContent);"
+            },
+            {
+              "id": "react-06-pass-props-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "How does a parent send data to a child component?",
+              "choices": [
+                "By passing props as JSX attributes",
+                "By editing the child's source file",
+                "Through global variables only"
+              ],
+              "answer": "By passing props as JSX attributes",
+              "explanation": "JSX attributes become the props object the child component receives as its argument."
+            },
+            {
+              "id": "react-06-pass-props-edit",
+              "type": "edit",
+              "title": "Greet someone else",
+              "instruction": "Render Greeting with name set to 'Noah' and print the greeting."
+            },
+            {
+              "id": "react-06-pass-props-drill",
+              "type": "drill",
+              "title": "Recall passing props",
+              "instruction": "Pass a prop into a component and print the rendered text.",
+              "successCriteria": "Print exactly: Hello, Noah",
+              "starterCode": "// Render <Greeting name='Noah' /> and log its text\n",
+              "expectedOutput": "Hello, Noah",
+              "matchType": "exact",
+              "hints": [
+                "Read the prop with destructuring: function Greeting({ name })."
+              ],
+              "solution": "function Greeting({ name }) {\n  return <p>Hello, {name}</p>;\n}\n\nrender(<Greeting name=\"Noah\" />);\nconsole.log(screen.getByText(/Hello/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Props are the arguments you pass to a component when you use it: `<Greeting name=\"Maya\" />` gives Greeting a `name` prop of \"Maya\"."
+            },
+            {
+              "type": "code",
+              "text": "function Greeting({ name }) {\n  return <p>Hello, {name}</p>;\n}\n\nrender(<Greeting name=\"Maya\" />);\nconsole.log(screen.getByText(/Hello/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Props flow in one direction, from parent to child, and a component should never modify the props it receives."
+            }
+          ],
+          "task": "Pass a prop into a component and print the rendered text.",
+          "starterCode": "// Render <Greeting name='Noah' /> and log its text\n",
+          "matchType": "exact",
+          "hints": [
+            "Read the prop with destructuring: function Greeting({ name })."
+          ],
+          "solution": "function Greeting({ name }) {\n  return <p>Hello, {name}</p>;\n}\n\nrender(<Greeting name=\"Noah\" />);\nconsole.log(screen.getByText(/Hello/).textContent);",
+          "expectedOutput": "Hello, Noah"
+        },
+        {
+          "id": "react-07-default-props",
+          "title": "2. Set default prop values",
+          "concept": "default prop values",
+          "summary": "Give a prop a fallback value for when the caller doesn't provide one.",
+          "activities": [
+            {
+              "id": "react-07-default-props-see",
+              "type": "worked-example",
+              "title": "Read a default prop",
+              "instruction": "No name prop is passed here, so the default value is used instead.",
+              "example": "function Greeting({ name = \"friend\" }) {\n  return <p>Hello, {name}</p>;\n}\n\nrender(<Greeting />);\nconsole.log(screen.getByText(/Hello/).textContent);"
+            },
+            {
+              "id": "react-07-default-props-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "When does a destructured default value get used?",
+              "choices": [
+                "When the prop is undefined",
+                "Every time, regardless of the prop",
+                "Only when the prop is an empty string"
+              ],
+              "answer": "When the prop is undefined",
+              "explanation": "Default values in destructuring only kick in for undefined, not for other falsy values."
+            },
+            {
+              "id": "react-07-default-props-edit",
+              "type": "edit",
+              "title": "Override the default",
+              "instruction": "Render Greeting again, this time passing name='Priya', and print the result."
+            },
+            {
+              "id": "react-07-default-props-drill",
+              "type": "drill",
+              "title": "Recall default prop values",
+              "instruction": "Give a prop a default and render the component without passing that prop.",
+              "successCriteria": "Print exactly: Role: guest",
+              "starterCode": "// Render <Badge /> with a role prop that defaults to 'guest'\n",
+              "expectedOutput": "Role: guest",
+              "matchType": "exact",
+              "hints": [
+                "Write the default inside the destructuring pattern: { role = 'guest' }."
+              ],
+              "solution": "function Badge({ role = \"guest\" }) {\n  return <p>Role: {role}</p>;\n}\n\nrender(<Badge />);\nconsole.log(screen.getByText(/Role/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Destructuring supports default values directly: `{ name = \"friend\" }` falls back to \"friend\" whenever the caller omits the name prop."
+            },
+            {
+              "type": "code",
+              "text": "function Greeting({ name = \"friend\" }) {\n  return <p>Hello, {name}</p>;\n}\n\nrender(<Greeting />);\nconsole.log(screen.getByText(/Hello/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Defaults only apply when a prop is undefined, not when it's an empty string or 0."
+            }
+          ],
+          "task": "Give a prop a default and render the component without passing that prop.",
+          "starterCode": "// Render <Badge /> with a role prop that defaults to 'guest'\n",
+          "matchType": "exact",
+          "hints": [
+            "Write the default inside the destructuring pattern: { role = 'guest' }."
+          ],
+          "solution": "function Badge({ role = \"guest\" }) {\n  return <p>Role: {role}</p>;\n}\n\nrender(<Badge />);\nconsole.log(screen.getByText(/Role/).textContent);",
+          "expectedOutput": "Role: guest"
+        },
+        {
+          "id": "react-08-callback-props",
+          "title": "3. Pass functions as props",
+          "concept": "callback props",
+          "summary": "Let a child notify its parent of events by calling a function passed in as a prop.",
+          "activities": [
+            {
+              "id": "react-08-callback-props-see",
+              "type": "worked-example",
+              "title": "Read a callback prop",
+              "instruction": "Clicking the button calls the onPress prop, which runs the parent's handlePress function.",
+              "example": "function Button({ onPress, label }) {\n  return <button onClick={onPress}>{label}</button>;\n}\n\nfunction App() {\n  const handlePress = () => console.log(\"Pressed!\");\n  return <Button onPress={handlePress} label=\"Go\" />;\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Go'));"
+            },
+            {
+              "id": "react-08-callback-props-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "How does a child component inform its parent that something happened?",
+              "choices": [
+                "By calling a callback function passed in as a prop",
+                "By directly modifying the parent's state",
+                "It can't; only parents can talk to children"
+              ],
+              "answer": "By calling a callback function passed in as a prop",
+              "explanation": "Passing a function as a prop lets the child invoke parent logic without knowing what that logic does."
+            },
+            {
+              "id": "react-08-callback-props-edit",
+              "type": "edit",
+              "title": "Log a different message",
+              "instruction": "Change handlePress to log 'Saved!' instead, then click the button and print the log."
+            },
+            {
+              "id": "react-08-callback-props-drill",
+              "type": "drill",
+              "title": "Recall callback props",
+              "instruction": "Pass a callback into a button component and trigger it with a click.",
+              "successCriteria": "Print exactly: Deleted!",
+              "starterCode": "// Pass an onPress callback to a Button that logs 'Deleted!' when clicked\n",
+              "expectedOutput": "Deleted!",
+              "matchType": "exact",
+              "hints": [
+                "Attach the callback prop to the button's onClick handler."
+              ],
+              "solution": "function Button({ onPress, label }) {\n  return <button onClick={onPress}>{label}</button>;\n}\n\nfunction App() {\n  const handlePress = () => console.log(\"Deleted!\");\n  return <Button onPress={handlePress} label=\"Remove\" />;\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Remove'));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Functions are ordinary values in JavaScript, so a parent can pass a callback down as a prop. The child calls it in response to an event, letting the parent react without the child knowing any details."
+            },
+            {
+              "type": "code",
+              "text": "function Button({ onPress, label }) {\n  return <button onClick={onPress}>{label}</button>;\n}\n\nfunction App() {\n  const handlePress = () => console.log(\"Pressed!\");\n  return <Button onPress={handlePress} label=\"Go\" />;\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Go'));"
+            },
+            {
+              "type": "note",
+              "text": "Callback props are how React \"talks back up\" the component tree \u2014 data flows down, events flow up through callbacks."
+            }
+          ],
+          "task": "Pass a callback into a button component and trigger it with a click.",
+          "starterCode": "// Pass an onPress callback to a Button that logs 'Deleted!' when clicked\n",
+          "matchType": "exact",
+          "hints": [
+            "Attach the callback prop to the button's onClick handler."
+          ],
+          "solution": "function Button({ onPress, label }) {\n  return <button onClick={onPress}>{label}</button>;\n}\n\nfunction App() {\n  const handlePress = () => console.log(\"Deleted!\");\n  return <Button onPress={handlePress} label=\"Remove\" />;\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Remove'));",
+          "expectedOutput": "Deleted!"
+        },
+        {
+          "id": "react-09-destructure-spread",
+          "title": "4. Destructure and spread props",
+          "concept": "destructuring and spreading props",
+          "summary": "Pull specific props out with destructuring, or forward a whole props object with spread.",
+          "activities": [
+            {
+              "id": "react-09-destructure-spread-see",
+              "type": "worked-example",
+              "title": "Read spread props",
+              "instruction": "ProfilePic forwards every prop it receives straight through to Avatar using {...props}.",
+              "example": "function Avatar({ src, alt }) {\n  return <img src={src} alt={alt} />;\n}\n\nfunction ProfilePic(props) {\n  return <Avatar {...props} />;\n}\n\nrender(<ProfilePic src=\"ada.png\" alt=\"Ada\" />);\nconsole.log(screen.getByAltText('Ada').getAttribute('src'));"
+            },
+            {
+              "id": "react-09-destructure-spread-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "What does {...props} do when passed to a JSX element?",
+              "choices": [
+                "It spreads every key of props onto that element as individual props",
+                "It renders the props object as visible text",
+                "It deletes all props from the element"
+              ],
+              "answer": "It spreads every key of props onto that element as individual props",
+              "explanation": "Spread syntax expands an object's own properties into individual props on the element."
+            },
+            {
+              "id": "react-09-destructure-spread-edit",
+              "type": "edit",
+              "title": "Forward a title prop",
+              "instruction": "Add a title prop to Avatar, forward it through ProfilePic, and read it back with getByTitle."
+            },
+            {
+              "id": "react-09-destructure-spread-drill",
+              "type": "drill",
+              "title": "Recall spreading props",
+              "instruction": "Forward props through a wrapper component and read an attribute from the result.",
+              "successCriteria": "Print exactly: cover.png",
+              "starterCode": "// Forward src and alt props through a wrapper to an <img>\n",
+              "expectedOutput": "cover.png",
+              "matchType": "exact",
+              "hints": [
+                "Use {...props} on the inner element inside the wrapper component."
+              ],
+              "solution": "function Thumbnail({ src, alt }) {\n  return <img src={src} alt={alt} />;\n}\n\nfunction Wrapper(props) {\n  return <Thumbnail {...props} />;\n}\n\nrender(<Wrapper src=\"cover.png\" alt=\"Cover\" />);\nconsole.log(screen.getByAltText('Cover').getAttribute('src'));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Destructuring props keeps a component's signature self-documenting. The spread operator does the reverse \u2014 it forwards every prop on an object to another component in one step."
+            },
+            {
+              "type": "code",
+              "text": "function Avatar({ src, alt }) {\n  return <img src={src} alt={alt} />;\n}\n\nfunction ProfilePic(props) {\n  return <Avatar {...props} />;\n}\n\nrender(<ProfilePic src=\"ada.png\" alt=\"Ada\" />);\nconsole.log(screen.getByAltText('Ada').getAttribute('src'));"
+            },
+            {
+              "type": "note",
+              "text": "Spreading props is convenient for thin wrapper components, but can hide exactly which props a component actually uses."
+            }
+          ],
+          "task": "Forward props through a wrapper component and read an attribute from the result.",
+          "starterCode": "// Forward src and alt props through a wrapper to an <img>\n",
+          "matchType": "exact",
+          "hints": [
+            "Use {...props} on the inner element inside the wrapper component."
+          ],
+          "solution": "function Thumbnail({ src, alt }) {\n  return <img src={src} alt={alt} />;\n}\n\nfunction Wrapper(props) {\n  return <Thumbnail {...props} />;\n}\n\nrender(<Wrapper src=\"cover.png\" alt=\"Cover\" />);\nconsole.log(screen.getByAltText('Cover').getAttribute('src'));",
+          "expectedOutput": "cover.png"
+        },
+        {
+          "id": "react-10-variant-props",
+          "title": "5. Render UI variants from a status prop",
+          "concept": "modeling UI variants with props",
+          "summary": "Use a single prop to switch between the loading, error, and ready states of a UI.",
+          "activities": [
+            {
+              "id": "react-10-variant-props-see",
+              "type": "worked-example",
+              "title": "Read a status-driven render",
+              "instruction": "Status checks the state prop and returns different JSX for each case.",
+              "example": "function Status({ state }) {\n  if (state === \"loading\") return <p>Loading...</p>;\n  if (state === \"error\") return <p>Something went wrong</p>;\n  return <p>Ready</p>;\n}\n\nrender(<Status state=\"loading\" />);\nconsole.log(screen.getByText(/Loading|error|Ready/).textContent);"
+            },
+            {
+              "id": "react-10-variant-props-predict",
+              "type": "prediction",
+              "title": "Predict the output",
+              "question": "What does Status render when state is 'loading'?",
+              "choices": [
+                "\"Loading...\"",
+                "\"Ready\"",
+                "Nothing at all"
+              ],
+              "answer": "\"Loading...\"",
+              "explanation": "The first matching branch, state === 'loading', returns the loading text."
+            },
+            {
+              "id": "react-10-variant-props-edit",
+              "type": "edit",
+              "title": "Render the error state",
+              "instruction": "Render Status with state set to 'error' and print the resulting text."
+            },
+            {
+              "id": "react-10-variant-props-drill",
+              "type": "drill",
+              "title": "Recall variant rendering",
+              "instruction": "Render a component whose output depends on a status prop, using the default branch.",
+              "successCriteria": "Print exactly: Ready",
+              "starterCode": "// Render <Status state='ready' /> and fall through to the default branch\n",
+              "expectedOutput": "Ready",
+              "matchType": "exact",
+              "hints": [
+                "Pass a state value that matches neither 'loading' nor 'error'."
+              ],
+              "solution": "function Status({ state }) {\n  if (state === \"loading\") return <p>Loading...</p>;\n  if (state === \"error\") return <p>Something went wrong</p>;\n  return <p>Ready</p>;\n}\n\nrender(<Status state=\"ready\" />);\nconsole.log(screen.getByText(/Loading|error|Ready/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Real screens usually have more than one shape: loading, error, and success are the classic trio. A single \"state\" prop with early returns keeps each case easy to read."
+            },
+            {
+              "type": "code",
+              "text": "function Status({ state }) {\n  if (state === \"loading\") return <p>Loading...</p>;\n  if (state === \"error\") return <p>Something went wrong</p>;\n  return <p>Ready</p>;\n}\n\nrender(<Status state=\"loading\" />);\nconsole.log(screen.getByText(/Loading|error|Ready/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "This pattern scales naturally into useState later in the course, where the state prop becomes state you manage yourself."
+            }
+          ],
+          "task": "Render a component whose output depends on a status prop, using the default branch.",
+          "starterCode": "// Render <Status state='ready' /> and fall through to the default branch\n",
+          "matchType": "exact",
+          "hints": [
+            "Pass a state value that matches neither 'loading' nor 'error'."
+          ],
+          "solution": "function Status({ state }) {\n  if (state === \"loading\") return <p>Loading...</p>;\n  if (state === \"error\") return <p>Something went wrong</p>;\n  return <p>Ready</p>;\n}\n\nrender(<Status state=\"ready\" />);\nconsole.log(screen.getByText(/Loading|error|Ready/).textContent);",
+          "expectedOutput": "Ready"
+        },
+        {
+          "id": "react-11-usestate",
+          "title": "1. Add state with useState",
+          "concept": "useState",
+          "summary": "Give a component its own memory that survives between renders.",
+          "activities": [
+            {
+              "id": "react-11-usestate-see",
+              "type": "worked-example",
+              "title": "See useState in context",
+              "instruction": "Read the code and follow how the example uses useState.",
+              "example": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return <p>Count: {count}</p>;\n}\n\nrender(<Counter />);\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "id": "react-11-usestate-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed useState example print?",
+              "choices": [
+                "Count: 0",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Count: 0",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-11-usestate-edit",
+              "type": "edit",
+              "title": "Complete the useState example",
+              "instruction": "Add the missing useState code and produce the shown output."
+            },
+            {
+              "id": "react-11-usestate-drill",
+              "type": "drill",
+              "title": "Practice useState",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Count: 0",
+              "starterCode": "// Use useState to produce the required output.\n",
+              "expectedOutput": "Count: 0",
+              "matchType": "exact",
+              "hints": [
+                "Start from the useState example shown above."
+              ],
+              "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return <p>Count: {count}</p>;\n}\n\nrender(<Counter />);\nconsole.log(screen.getByText(/Count/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "useState returns a pair: the current value and a function to update it. Calling the setter schedules a re-render with the new value."
+            },
+            {
+              "type": "code",
+              "text": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return <p>Count: {count}</p>;\n}\n\nrender(<Counter />);\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Each call to useState manages one independent piece of state \u2014 state doesn't automatically merge like it did in old class components."
+            }
+          ],
+          "task": "Use useState to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with useState.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the useState example shown above."
+          ],
+          "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return <p>Count: {count}</p>;\n}\n\nrender(<Counter />);\nconsole.log(screen.getByText(/Count/).textContent);",
+          "expectedOutput": "Count: 0"
+        },
+        {
+          "id": "react-12-events",
+          "title": "2. Update state from events",
+          "concept": "state updates from events",
+          "summary": "Call a state setter inside an event handler to update the UI in response to user input.",
+          "activities": [
+            {
+              "id": "react-12-events-see",
+              "type": "worked-example",
+              "title": "See state updates from events in context",
+              "instruction": "Read the code and follow how the example uses state updates from events.",
+              "example": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('Increment'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "id": "react-12-events-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed state updates from events example print?",
+              "choices": [
+                "Count: 1",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Count: 1",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-12-events-edit",
+              "type": "edit",
+              "title": "Complete the state updates from events example",
+              "instruction": "Add the missing state updates from events code and produce the shown output."
+            },
+            {
+              "id": "react-12-events-drill",
+              "type": "drill",
+              "title": "Practice state updates from events",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Count: 1",
+              "starterCode": "// Use state updates from events to produce the required output.\n",
+              "expectedOutput": "Count: 1",
+              "matchType": "exact",
+              "hints": [
+                "Start from the state updates from events example shown above."
+              ],
+              "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('Increment'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "onClick, onChange, and the other event props take a function. Calling the state setter inside that function tells React to re-render with the new value."
+            },
+            {
+              "type": "code",
+              "text": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('Increment'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "React batches state updates that happen inside the same event handler for efficiency."
+            }
+          ],
+          "task": "Use state updates from events to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with state updates from events.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the state updates from events example shown above."
+          ],
+          "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('Increment'));\nconsole.log(screen.getByText(/Count/).textContent);",
+          "expectedOutput": "Count: 1"
+        },
+        {
+          "id": "react-13-functional-updates",
+          "title": "3. Update state based on previous state",
+          "concept": "functional state updates",
+          "summary": "Pass a function to the state setter when the new value depends on the old one.",
+          "activities": [
+            {
+              "id": "react-13-functional-updates-see",
+              "type": "worked-example",
+              "title": "See functional state updates in context",
+              "instruction": "Read the code and follow how the example uses functional state updates.",
+              "example": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  const incrementTwice = () => {\n    setCount((c) => c + 1);\n    setCount((c) => c + 1);\n  };\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={incrementTwice}>+2</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+2'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "id": "react-13-functional-updates-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed functional state updates example print?",
+              "choices": [
+                "Count: 2",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Count: 2",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-13-functional-updates-edit",
+              "type": "edit",
+              "title": "Complete the functional state updates example",
+              "instruction": "Add the missing functional state updates code and produce the shown output."
+            },
+            {
+              "id": "react-13-functional-updates-drill",
+              "type": "code-along",
+              "title": "Practice functional state updates",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Count: 2",
+              "starterCode": "// Use functional state updates to produce the required output.\n",
+              "expectedOutput": "Count: 2",
+              "matchType": "exact",
+              "hints": [
+                "Start from the functional state updates example shown above."
+              ],
+              "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  const incrementTwice = () => {\n    setCount((c) => c + 1);\n    setCount((c) => c + 1);\n  };\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={incrementTwice}>+2</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+2'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Passing a function to a setter guarantees you're updating from the latest state, even if the setter is called more than once before the next render."
+            },
+            {
+              "type": "code",
+              "text": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  const incrementTwice = () => {\n    setCount((c) => c + 1);\n    setCount((c) => c + 1);\n  };\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={incrementTwice}>+2</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+2'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "setCount(count + 1) twice in a row only applies one increment, because both calls close over the same stale count."
+            }
+          ],
+          "task": "Use functional state updates to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with functional state updates.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the functional state updates example shown above."
+          ],
+          "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  const incrementTwice = () => {\n    setCount((c) => c + 1);\n    setCount((c) => c + 1);\n  };\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={incrementTwice}>+2</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+2'));\nconsole.log(screen.getByText(/Count/).textContent);",
+          "expectedOutput": "Count: 2"
+        },
+        {
+          "id": "react-14-multiple-state",
+          "title": "4. Manage multiple state values",
+          "concept": "multiple useState calls",
+          "summary": "Use one useState call per independent value instead of one big state object.",
+          "activities": [
+            {
+              "id": "react-14-multiple-state-see",
+              "type": "worked-example",
+              "title": "See multiple useState calls in context",
+              "instruction": "Read the code and follow how the example uses multiple useState calls.",
+              "example": "function Profile() {\n  const [name, setName] = React.useState(\"Ada\");\n  const [age, setAge] = React.useState(28);\n  return (\n    <p>\n      {name} is {age}\n    </p>\n  );\n}\n\nrender(<Profile />);\nconsole.log(screen.getByText(/is/).textContent);"
+            },
+            {
+              "id": "react-14-multiple-state-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed multiple useState calls example print?",
+              "choices": [
+                "Ada is 28",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Ada is 28",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-14-multiple-state-edit",
+              "type": "edit",
+              "title": "Complete the multiple useState calls example",
+              "instruction": "Add the missing multiple useState calls code and produce the shown output."
+            },
+            {
+              "id": "react-14-multiple-state-drill",
+              "type": "drill",
+              "title": "Practice multiple useState calls",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Ada is 28",
+              "starterCode": "// Use multiple useState calls to produce the required output.\n",
+              "expectedOutput": "Ada is 28",
+              "matchType": "exact",
+              "hints": [
+                "Start from the multiple useState calls example shown above."
+              ],
+              "solution": "function Profile() {\n  const [name, setName] = React.useState(\"Ada\");\n  const [age, setAge] = React.useState(28);\n  return (\n    <p>\n      {name} is {age}\n    </p>\n  );\n}\n\nrender(<Profile />);\nconsole.log(screen.getByText(/is/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "It's usually simpler to keep unrelated pieces of state in separate useState calls rather than bundling them into one object you have to spread on every update."
+            },
+            {
+              "type": "code",
+              "text": "function Profile() {\n  const [name, setName] = React.useState(\"Ada\");\n  const [age, setAge] = React.useState(28);\n  return (\n    <p>\n      {name} is {age}\n    </p>\n  );\n}\n\nrender(<Profile />);\nconsole.log(screen.getByText(/is/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Group values into one useState only when they always change together."
+            }
+          ],
+          "task": "Use multiple useState calls to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with multiple useState calls.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the multiple useState calls example shown above."
+          ],
+          "solution": "function Profile() {\n  const [name, setName] = React.useState(\"Ada\");\n  const [age, setAge] = React.useState(28);\n  return (\n    <p>\n      {name} is {age}\n    </p>\n  );\n}\n\nrender(<Profile />);\nconsole.log(screen.getByText(/is/).textContent);",
+          "expectedOutput": "Ada is 28"
+        },
+        {
+          "id": "react-15-lift-state",
+          "title": "5. Lift state up",
+          "concept": "lifting state up",
+          "summary": "Move shared state to the closest common parent so sibling components can stay in sync.",
+          "activities": [
+            {
+              "id": "react-15-lift-state-see",
+              "type": "worked-example",
+              "title": "See lifting state up in context",
+              "instruction": "Read the code and follow how the example uses lifting state up.",
+              "example": "function Display({ count }) {\n  return <p>Count: {count}</p>;\n}\n\nfunction IncrementButton({ onIncrement }) {\n  return <button onClick={onIncrement}>+1</button>;\n}\n\nfunction App() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <Display count={count} />\n      <IncrementButton onIncrement={() => setCount(count + 1)} />\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "id": "react-15-lift-state-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed lifting state up example print?",
+              "choices": [
+                "Count: 1",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Count: 1",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-15-lift-state-edit",
+              "type": "edit",
+              "title": "Complete the lifting state up example",
+              "instruction": "Add the missing lifting state up code and produce the shown output."
+            },
+            {
+              "id": "react-15-lift-state-drill",
+              "type": "code-along",
+              "title": "Practice lifting state up",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Count: 1",
+              "starterCode": "// Use lifting state up to produce the required output.\n",
+              "expectedOutput": "Count: 1",
+              "matchType": "exact",
+              "hints": [
+                "Start from the lifting state up example shown above."
+              ],
+              "solution": "function Display({ count }) {\n  return <p>Count: {count}</p>;\n}\n\nfunction IncrementButton({ onIncrement }) {\n  return <button onClick={onIncrement}>+1</button>;\n}\n\nfunction App() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <Display count={count} />\n      <IncrementButton onIncrement={() => setCount(count + 1)} />\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "When two components need to reflect the same value, move the state up to their nearest shared parent and pass it down as props, along with a callback to change it."
+            },
+            {
+              "type": "code",
+              "text": "function Display({ count }) {\n  return <p>Count: {count}</p>;\n}\n\nfunction IncrementButton({ onIncrement }) {\n  return <button onClick={onIncrement}>+1</button>;\n}\n\nfunction App() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <Display count={count} />\n      <IncrementButton onIncrement={() => setCount(count + 1)} />\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Lifting state up keeps a single source of truth instead of letting siblings drift out of sync."
+            }
+          ],
+          "task": "Use lifting state up to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with lifting state up.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the lifting state up example shown above."
+          ],
+          "solution": "function Display({ count }) {\n  return <p>Count: {count}</p>;\n}\n\nfunction IncrementButton({ onIncrement }) {\n  return <button onClick={onIncrement}>+1</button>;\n}\n\nfunction App() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <Display count={count} />\n      <IncrementButton onIncrement={() => setCount(count + 1)} />\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);",
+          "expectedOutput": "Count: 1"
+        },
+        {
+          "id": "react-16-useeffect",
+          "title": "1. Run side effects with useEffect",
+          "concept": "useEffect",
+          "summary": "Run code after a component renders, for anything outside of pure rendering.",
+          "activities": [
+            {
+              "id": "react-16-useeffect-see",
+              "type": "worked-example",
+              "title": "See useEffect in context",
+              "instruction": "Read the code and follow how the example uses useEffect.",
+              "example": "function Logger() {\n  React.useEffect(() => {\n    console.log(\"mounted\");\n  }, []);\n  return <p>Ready</p>;\n}\n\nrender(<Logger />);"
+            },
+            {
+              "id": "react-16-useeffect-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed useEffect example print?",
+              "choices": [
+                "mounted",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "mounted",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-16-useeffect-edit",
+              "type": "edit",
+              "title": "Complete the useEffect example",
+              "instruction": "Add the missing useEffect code and produce the shown output."
+            },
+            {
+              "id": "react-16-useeffect-drill",
+              "type": "drill",
+              "title": "Practice useEffect",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: mounted",
+              "starterCode": "// Use useEffect to produce the required output.\n",
+              "expectedOutput": "mounted",
+              "matchType": "exact",
+              "hints": [
+                "Start from the useEffect example shown above."
+              ],
+              "solution": "function Logger() {\n  React.useEffect(() => {\n    console.log(\"mounted\");\n  }, []);\n  return <p>Ready</p>;\n}\n\nrender(<Logger />);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "useEffect runs after the component has rendered. An empty dependency array, [], means the effect runs only once, right after the first render."
+            },
+            {
+              "type": "code",
+              "text": "function Logger() {\n  React.useEffect(() => {\n    console.log(\"mounted\");\n  }, []);\n  return <p>Ready</p>;\n}\n\nrender(<Logger />);"
+            },
+            {
+              "type": "note",
+              "text": "Effects are for side effects \u2014 subscriptions, logging, fetching \u2014 not for calculating what to render."
+            }
+          ],
+          "task": "Use useEffect to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with useEffect.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the useEffect example shown above."
+          ],
+          "solution": "function Logger() {\n  React.useEffect(() => {\n    console.log(\"mounted\");\n  }, []);\n  return <p>Ready</p>;\n}\n\nrender(<Logger />);",
+          "expectedOutput": "mounted"
+        },
+        {
+          "id": "react-17-effect-cleanup",
+          "title": "2. Clean up effects",
+          "concept": "effect cleanup",
+          "summary": "Return a function from useEffect to undo the effect when the component unmounts.",
+          "activities": [
+            {
+              "id": "react-17-effect-cleanup-see",
+              "type": "worked-example",
+              "title": "See effect cleanup in context",
+              "instruction": "Read the code and follow how the example uses effect cleanup.",
+              "example": "function Timer() {\n  React.useEffect(() => {\n    return () => console.log(\"cleanup\");\n  }, []);\n  return <p>Running</p>;\n}\n\nconst { unmount } = render(<Timer />);\nunmount();"
+            },
+            {
+              "id": "react-17-effect-cleanup-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed effect cleanup example print?",
+              "choices": [
+                "cleanup",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "cleanup",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-17-effect-cleanup-edit",
+              "type": "edit",
+              "title": "Complete the effect cleanup example",
+              "instruction": "Add the missing effect cleanup code and produce the shown output."
+            },
+            {
+              "id": "react-17-effect-cleanup-drill",
+              "type": "code-along",
+              "title": "Practice effect cleanup",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: cleanup",
+              "starterCode": "// Use effect cleanup to produce the required output.\n",
+              "expectedOutput": "cleanup",
+              "matchType": "exact",
+              "hints": [
+                "Start from the effect cleanup example shown above."
+              ],
+              "solution": "function Timer() {\n  React.useEffect(() => {\n    return () => console.log(\"cleanup\");\n  }, []);\n  return <p>Running</p>;\n}\n\nconst { unmount } = render(<Timer />);\nunmount();"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "If an effect sets something up \u2014 a timer, a subscription, an event listener \u2014 it should return a cleanup function that tears it back down."
+            },
+            {
+              "type": "code",
+              "text": "function Timer() {\n  React.useEffect(() => {\n    return () => console.log(\"cleanup\");\n  }, []);\n  return <p>Running</p>;\n}\n\nconst { unmount } = render(<Timer />);\nunmount();"
+            },
+            {
+              "type": "note",
+              "text": "React calls the cleanup function before the component unmounts, and again before re-running the effect on a later render."
+            }
+          ],
+          "task": "Use effect cleanup to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with effect cleanup.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the effect cleanup example shown above."
+          ],
+          "solution": "function Timer() {\n  React.useEffect(() => {\n    return () => console.log(\"cleanup\");\n  }, []);\n  return <p>Running</p>;\n}\n\nconst { unmount } = render(<Timer />);\nunmount();",
+          "expectedOutput": "cleanup"
+        },
+        {
+          "id": "react-18-useref",
+          "title": "3. Access DOM nodes with useRef",
+          "concept": "useRef",
+          "summary": "Get a stable handle on a DOM node, or hold a mutable value that doesn't trigger a re-render.",
+          "activities": [
+            {
+              "id": "react-18-useref-see",
+              "type": "worked-example",
+              "title": "See useRef in context",
+              "instruction": "Read the code and follow how the example uses useRef.",
+              "example": "function NameInput() {\n  const inputRef = React.useRef(null);\n  const handleClick = () => {\n    console.log(inputRef.current.value);\n  };\n  return (\n    <div>\n      <input ref={inputRef} defaultValue=\"Ada\" />\n      <button onClick={handleClick}>Show</button>\n    </div>\n  );\n}\n\nrender(<NameInput />);\nfireEvent.click(screen.getByText('Show'));"
+            },
+            {
+              "id": "react-18-useref-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed useRef example print?",
+              "choices": [
+                "Ada",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Ada",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-18-useref-edit",
+              "type": "edit",
+              "title": "Complete the useRef example",
+              "instruction": "Add the missing useRef code and produce the shown output."
+            },
+            {
+              "id": "react-18-useref-drill",
+              "type": "drill",
+              "title": "Practice useRef",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Ada",
+              "starterCode": "// Use useRef to produce the required output.\n",
+              "expectedOutput": "Ada",
+              "matchType": "exact",
+              "hints": [
+                "Start from the useRef example shown above."
+              ],
+              "solution": "function NameInput() {\n  const inputRef = React.useRef(null);\n  const handleClick = () => {\n    console.log(inputRef.current.value);\n  };\n  return (\n    <div>\n      <input ref={inputRef} defaultValue=\"Ada\" />\n      <button onClick={handleClick}>Show</button>\n    </div>\n  );\n}\n\nrender(<NameInput />);\nfireEvent.click(screen.getByText('Show'));"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Passing a ref to an element's ref attribute lets React attach the underlying DOM node to ref.current, which you can read at any time without causing a re-render."
+            },
+            {
+              "type": "code",
+              "text": "function NameInput() {\n  const inputRef = React.useRef(null);\n  const handleClick = () => {\n    console.log(inputRef.current.value);\n  };\n  return (\n    <div>\n      <input ref={inputRef} defaultValue=\"Ada\" />\n      <button onClick={handleClick}>Show</button>\n    </div>\n  );\n}\n\nrender(<NameInput />);\nfireEvent.click(screen.getByText('Show'));"
+            },
+            {
+              "type": "note",
+              "text": "Unlike state, changing a ref's .current value never triggers a re-render on its own."
+            }
+          ],
+          "task": "Use useRef to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with useRef.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the useRef example shown above."
+          ],
+          "solution": "function NameInput() {\n  const inputRef = React.useRef(null);\n  const handleClick = () => {\n    console.log(inputRef.current.value);\n  };\n  return (\n    <div>\n      <input ref={inputRef} defaultValue=\"Ada\" />\n      <button onClick={handleClick}>Show</button>\n    </div>\n  );\n}\n\nrender(<NameInput />);\nfireEvent.click(screen.getByText('Show'));",
+          "expectedOutput": "Ada"
+        },
+        {
+          "id": "react-19-context",
+          "title": "4. Share state with Context",
+          "concept": "Context API and useContext",
+          "summary": "Pass a value down through the tree without threading it through every prop.",
+          "activities": [
+            {
+              "id": "react-19-context-see",
+              "type": "worked-example",
+              "title": "See Context API and useContext in context",
+              "instruction": "Read the code and follow how the example uses Context API and useContext.",
+              "example": "const ThemeContext = React.createContext(\"light\");\n\nfunction ThemedLabel() {\n  const theme = React.useContext(ThemeContext);\n  return <p>Theme: {theme}</p>;\n}\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value=\"dark\">\n      <ThemedLabel />\n    </ThemeContext.Provider>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText(/Theme/).textContent);"
+            },
+            {
+              "id": "react-19-context-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed Context API and useContext example print?",
+              "choices": [
+                "Theme: dark",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Theme: dark",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-19-context-edit",
+              "type": "edit",
+              "title": "Complete the Context API and useContext example",
+              "instruction": "Add the missing Context API and useContext code and produce the shown output."
+            },
+            {
+              "id": "react-19-context-drill",
+              "type": "code-along",
+              "title": "Practice Context API and useContext",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Theme: dark",
+              "starterCode": "// Use Context API and useContext to produce the required output.\n",
+              "expectedOutput": "Theme: dark",
+              "matchType": "exact",
+              "hints": [
+                "Start from the Context API and useContext example shown above."
+              ],
+              "solution": "const ThemeContext = React.createContext(\"light\");\n\nfunction ThemedLabel() {\n  const theme = React.useContext(ThemeContext);\n  return <p>Theme: {theme}</p>;\n}\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value=\"dark\">\n      <ThemedLabel />\n    </ThemeContext.Provider>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText(/Theme/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "createContext makes a channel that any descendant can read with useContext, no matter how deeply it's nested, without every component in between needing to pass it along as a prop."
+            },
+            {
+              "type": "code",
+              "text": "const ThemeContext = React.createContext(\"light\");\n\nfunction ThemedLabel() {\n  const theme = React.useContext(ThemeContext);\n  return <p>Theme: {theme}</p>;\n}\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value=\"dark\">\n      <ThemedLabel />\n    </ThemeContext.Provider>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText(/Theme/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Reach for context for values used widely, like theme or the current user \u2014 not as a replacement for ordinary props."
+            }
+          ],
+          "task": "Use Context API and useContext to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with Context API and useContext.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the Context API and useContext example shown above."
+          ],
+          "solution": "const ThemeContext = React.createContext(\"light\");\n\nfunction ThemedLabel() {\n  const theme = React.useContext(ThemeContext);\n  return <p>Theme: {theme}</p>;\n}\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value=\"dark\">\n      <ThemedLabel />\n    </ThemeContext.Provider>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText(/Theme/).textContent);",
+          "expectedOutput": "Theme: dark"
+        },
+        {
+          "id": "react-20-usememo",
+          "title": "5. Memoize values with useMemo",
+          "concept": "useMemo",
+          "summary": "Cache the result of an expensive calculation between renders.",
+          "activities": [
+            {
+              "id": "react-20-usememo-see",
+              "type": "worked-example",
+              "title": "See useMemo in context",
+              "instruction": "Read the code and follow how the example uses useMemo.",
+              "example": "function Total({ prices }) {\n  const total = React.useMemo(\n    () => prices.reduce((sum, p) => sum + p, 0),\n    [prices]\n  );\n  return <p>Total: {total}</p>;\n}\n\nrender(<Total prices={[10, 20, 30]} />);\nconsole.log(screen.getByText(/Total/).textContent);"
+            },
+            {
+              "id": "react-20-usememo-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed useMemo example print?",
+              "choices": [
+                "Total: 60",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Total: 60",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-20-usememo-edit",
+              "type": "edit",
+              "title": "Complete the useMemo example",
+              "instruction": "Add the missing useMemo code and produce the shown output."
+            },
+            {
+              "id": "react-20-usememo-drill",
+              "type": "drill",
+              "title": "Practice useMemo",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Total: 60",
+              "starterCode": "// Use useMemo to produce the required output.\n",
+              "expectedOutput": "Total: 60",
+              "matchType": "exact",
+              "hints": [
+                "Start from the useMemo example shown above."
+              ],
+              "solution": "function Total({ prices }) {\n  const total = React.useMemo(\n    () => prices.reduce((sum, p) => sum + p, 0),\n    [prices]\n  );\n  return <p>Total: {total}</p>;\n}\n\nrender(<Total prices={[10, 20, 30]} />);\nconsole.log(screen.getByText(/Total/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "useMemo re-runs a calculation only when one of its dependencies changes, returning the cached result otherwise \u2014 useful for expensive derived values."
+            },
+            {
+              "type": "code",
+              "text": "function Total({ prices }) {\n  const total = React.useMemo(\n    () => prices.reduce((sum, p) => sum + p, 0),\n    [prices]\n  );\n  return <p>Total: {total}</p>;\n}\n\nrender(<Total prices={[10, 20, 30]} />);\nconsole.log(screen.getByText(/Total/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Reach for useMemo when profiling shows a real cost; it isn't free, and most calculations don't need it."
+            }
+          ],
+          "task": "Use useMemo to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with useMemo.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the useMemo example shown above."
+          ],
+          "solution": "function Total({ prices }) {\n  const total = React.useMemo(\n    () => prices.reduce((sum, p) => sum + p, 0),\n    [prices]\n  );\n  return <p>Total: {total}</p>;\n}\n\nrender(<Total prices={[10, 20, 30]} />);\nconsole.log(screen.getByText(/Total/).textContent);",
+          "expectedOutput": "Total: 60"
+        },
+        {
+          "id": "react-21-controlled-inputs",
+          "title": "1. Build controlled form inputs",
+          "concept": "controlled inputs",
+          "summary": "Keep an input's value in state so React is always the single source of truth.",
+          "activities": [
+            {
+              "id": "react-21-controlled-inputs-see",
+              "type": "worked-example",
+              "title": "See controlled inputs in context",
+              "instruction": "Read the code and follow how the example uses controlled inputs.",
+              "example": "function NameForm() {\n  const [name, setName] = React.useState(\"\");\n  return (\n    <input\n      placeholder=\"Your name\"\n      value={name}\n      onChange={(e) => setName(e.target.value)}\n    />\n  );\n}\n\nrender(<NameForm />);\nconst input = screen.getByPlaceholderText('Your name');\nfireEvent.change(input, { target: { value: \"Ada\" } });\nconsole.log(input.value);"
+            },
+            {
+              "id": "react-21-controlled-inputs-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed controlled inputs example print?",
+              "choices": [
+                "Ada",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Ada",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-21-controlled-inputs-edit",
+              "type": "edit",
+              "title": "Complete the controlled inputs example",
+              "instruction": "Add the missing controlled inputs code and produce the shown output."
+            },
+            {
+              "id": "react-21-controlled-inputs-drill",
+              "type": "drill",
+              "title": "Practice controlled inputs",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Ada",
+              "starterCode": "// Use controlled inputs to produce the required output.\n",
+              "expectedOutput": "Ada",
+              "matchType": "exact",
+              "hints": [
+                "Start from the controlled inputs example shown above."
+              ],
+              "solution": "function NameForm() {\n  const [name, setName] = React.useState(\"\");\n  return (\n    <input\n      placeholder=\"Your name\"\n      value={name}\n      onChange={(e) => setName(e.target.value)}\n    />\n  );\n}\n\nrender(<NameForm />);\nconst input = screen.getByPlaceholderText('Your name');\nfireEvent.change(input, { target: { value: \"Ada\" } });\nconsole.log(input.value);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A controlled input's value comes from state and its onChange handler writes back to that state, so the DOM value and the React value never disagree."
+            },
+            {
+              "type": "code",
+              "text": "function NameForm() {\n  const [name, setName] = React.useState(\"\");\n  return (\n    <input\n      placeholder=\"Your name\"\n      value={name}\n      onChange={(e) => setName(e.target.value)}\n    />\n  );\n}\n\nrender(<NameForm />);\nconst input = screen.getByPlaceholderText('Your name');\nfireEvent.change(input, { target: { value: \"Ada\" } });\nconsole.log(input.value);"
+            },
+            {
+              "type": "note",
+              "text": "Without both value and onChange, an input either can't be typed into or falls back to being uncontrolled."
+            }
+          ],
+          "task": "Use controlled inputs to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with controlled inputs.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the controlled inputs example shown above."
+          ],
+          "solution": "function NameForm() {\n  const [name, setName] = React.useState(\"\");\n  return (\n    <input\n      placeholder=\"Your name\"\n      value={name}\n      onChange={(e) => setName(e.target.value)}\n    />\n  );\n}\n\nrender(<NameForm />);\nconst input = screen.getByPlaceholderText('Your name');\nfireEvent.change(input, { target: { value: \"Ada\" } });\nconsole.log(input.value);",
+          "expectedOutput": "Ada"
+        },
+        {
+          "id": "react-22-form-submit",
+          "title": "2. Handle form submission",
+          "concept": "form submission",
+          "summary": "Prevent the default page reload and read the form's state in an onSubmit handler.",
+          "activities": [
+            {
+              "id": "react-22-form-submit-see",
+              "type": "worked-example",
+              "title": "See form submission in context",
+              "instruction": "Read the code and follow how the example uses form submission.",
+              "example": "function SignupForm() {\n  const [email, setEmail] = React.useState(\"\");\n  const [submitted, setSubmitted] = React.useState(\"\");\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    setSubmitted(email);\n  };\n  return (\n    <form onSubmit={handleSubmit}>\n      <input\n        placeholder=\"Email\"\n        value={email}\n        onChange={(e) => setEmail(e.target.value)}\n      />\n      <button type=\"submit\">Sign up</button>\n      <p>Submitted: {submitted}</p>\n    </form>\n  );\n}\n\nrender(<SignupForm />);\nfireEvent.change(screen.getByPlaceholderText('Email'), {\n  target: { value: \"ada@example.com\" },\n});\nfireEvent.click(screen.getByText('Sign up'));\nconsole.log(screen.getByText(/Submitted/).textContent);"
+            },
+            {
+              "id": "react-22-form-submit-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed form submission example print?",
+              "choices": [
+                "Submitted: ada@example.com",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Submitted: ada@example.com",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-22-form-submit-edit",
+              "type": "edit",
+              "title": "Complete the form submission example",
+              "instruction": "Add the missing form submission code and produce the shown output."
+            },
+            {
+              "id": "react-22-form-submit-drill",
+              "type": "code-along",
+              "title": "Practice form submission",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Submitted: ada@example.com",
+              "starterCode": "// Use form submission to produce the required output.\n",
+              "expectedOutput": "Submitted: ada@example.com",
+              "matchType": "exact",
+              "hints": [
+                "Start from the form submission example shown above."
+              ],
+              "solution": "function SignupForm() {\n  const [email, setEmail] = React.useState(\"\");\n  const [submitted, setSubmitted] = React.useState(\"\");\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    setSubmitted(email);\n  };\n  return (\n    <form onSubmit={handleSubmit}>\n      <input\n        placeholder=\"Email\"\n        value={email}\n        onChange={(e) => setEmail(e.target.value)}\n      />\n      <button type=\"submit\">Sign up</button>\n      <p>Submitted: {submitted}</p>\n    </form>\n  );\n}\n\nrender(<SignupForm />);\nfireEvent.change(screen.getByPlaceholderText('Email'), {\n  target: { value: \"ada@example.com\" },\n});\nfireEvent.click(screen.getByText('Sign up'));\nconsole.log(screen.getByText(/Submitted/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Browsers reload the page on form submission by default. Calling e.preventDefault() stops that so your handler can process the form's data itself."
+            },
+            {
+              "type": "code",
+              "text": "function SignupForm() {\n  const [email, setEmail] = React.useState(\"\");\n  const [submitted, setSubmitted] = React.useState(\"\");\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    setSubmitted(email);\n  };\n  return (\n    <form onSubmit={handleSubmit}>\n      <input\n        placeholder=\"Email\"\n        value={email}\n        onChange={(e) => setEmail(e.target.value)}\n      />\n      <button type=\"submit\">Sign up</button>\n      <p>Submitted: {submitted}</p>\n    </form>\n  );\n}\n\nrender(<SignupForm />);\nfireEvent.change(screen.getByPlaceholderText('Email'), {\n  target: { value: \"ada@example.com\" },\n});\nfireEvent.click(screen.getByText('Sign up'));\nconsole.log(screen.getByText(/Submitted/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Read the submitted values from state rather than the DOM, since state is already tracking them."
+            }
+          ],
+          "task": "Use form submission to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with form submission.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the form submission example shown above."
+          ],
+          "solution": "function SignupForm() {\n  const [email, setEmail] = React.useState(\"\");\n  const [submitted, setSubmitted] = React.useState(\"\");\n  const handleSubmit = (e) => {\n    e.preventDefault();\n    setSubmitted(email);\n  };\n  return (\n    <form onSubmit={handleSubmit}>\n      <input\n        placeholder=\"Email\"\n        value={email}\n        onChange={(e) => setEmail(e.target.value)}\n      />\n      <button type=\"submit\">Sign up</button>\n      <p>Submitted: {submitted}</p>\n    </form>\n  );\n}\n\nrender(<SignupForm />);\nfireEvent.change(screen.getByPlaceholderText('Email'), {\n  target: { value: \"ada@example.com\" },\n});\nfireEvent.click(screen.getByText('Sign up'));\nconsole.log(screen.getByText(/Submitted/).textContent);",
+          "expectedOutput": "Submitted: ada@example.com"
+        },
+        {
+          "id": "react-23-immutable-lists",
+          "title": "3. Update lists immutably",
+          "concept": "immutable list updates",
+          "summary": "Add, remove, or change items by creating a new array instead of mutating the old one.",
+          "activities": [
+            {
+              "id": "react-23-immutable-lists-see",
+              "type": "worked-example",
+              "title": "See immutable list updates in context",
+              "instruction": "Read the code and follow how the example uses immutable list updates.",
+              "example": "function TodoList() {\n  const [items, setItems] = React.useState([\"Write tests\"]);\n  const addItem = () => setItems([...items, \"Ship feature\"]);\n  return (\n    <div>\n      <button onClick={addItem}>Add</button>\n      <ul>\n        {items.map((item) => (\n          <li key={item}>{item}</li>\n        ))}\n      </ul>\n    </div>\n  );\n}\n\nrender(<TodoList />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);"
+            },
+            {
+              "id": "react-23-immutable-lists-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed immutable list updates example print?",
+              "choices": [
+                "Write tests, Ship feature",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Write tests, Ship feature",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-23-immutable-lists-edit",
+              "type": "edit",
+              "title": "Complete the immutable list updates example",
+              "instruction": "Add the missing immutable list updates code and produce the shown output."
+            },
+            {
+              "id": "react-23-immutable-lists-drill",
+              "type": "drill",
+              "title": "Practice immutable list updates",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Write tests, Ship feature",
+              "starterCode": "// Use immutable list updates to produce the required output.\n",
+              "expectedOutput": "Write tests, Ship feature",
+              "matchType": "exact",
+              "hints": [
+                "Start from the immutable list updates example shown above."
+              ],
+              "solution": "function TodoList() {\n  const [items, setItems] = React.useState([\"Write tests\"]);\n  const addItem = () => setItems([...items, \"Ship feature\"]);\n  return (\n    <div>\n      <button onClick={addItem}>Add</button>\n      <ul>\n        {items.map((item) => (\n          <li key={item}>{item}</li>\n        ))}\n      </ul>\n    </div>\n  );\n}\n\nrender(<TodoList />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "React compares state by reference, so mutating an array in place (push, splice) won't trigger a re-render. Spread the old array into a new one instead."
+            },
+            {
+              "type": "code",
+              "text": "function TodoList() {\n  const [items, setItems] = React.useState([\"Write tests\"]);\n  const addItem = () => setItems([...items, \"Ship feature\"]);\n  return (\n    <div>\n      <button onClick={addItem}>Add</button>\n      <ul>\n        {items.map((item) => (\n          <li key={item}>{item}</li>\n        ))}\n      </ul>\n    </div>\n  );\n}\n\nrender(<TodoList />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);"
+            },
+            {
+              "type": "note",
+              "text": "The same rule applies to objects in state: copy with {...obj} rather than mutating a field directly."
+            }
+          ],
+          "task": "Use immutable list updates to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with immutable list updates.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the immutable list updates example shown above."
+          ],
+          "solution": "function TodoList() {\n  const [items, setItems] = React.useState([\"Write tests\"]);\n  const addItem = () => setItems([...items, \"Ship feature\"]);\n  return (\n    <div>\n      <button onClick={addItem}>Add</button>\n      <ul>\n        {items.map((item) => (\n          <li key={item}>{item}</li>\n        ))}\n      </ul>\n    </div>\n  );\n}\n\nrender(<TodoList />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);",
+          "expectedOutput": "Write tests, Ship feature"
+        },
+        {
+          "id": "react-24-react-memo",
+          "title": "4. Memoize components with React.memo",
+          "concept": "React.memo",
+          "summary": "Skip re-rendering a component when its props haven't changed.",
+          "activities": [
+            {
+              "id": "react-24-react-memo-see",
+              "type": "worked-example",
+              "title": "See React.memo in context",
+              "instruction": "Read the code and follow how the example uses React.memo.",
+              "example": "let renderCount = 0;\nconst Price = React.memo(function Price({ amount }) {\n  renderCount += 1;\n  return <p>${amount}</p>;\n});\n\nfunction App() {\n  const [tick, setTick] = React.useState(0);\n  return (\n    <div>\n      <Price amount={20} />\n      <button onClick={() => setTick(tick + 1)}>Tick</button>\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Tick'));\nfireEvent.click(screen.getByText('Tick'));\nconsole.log(renderCount);"
+            },
+            {
+              "id": "react-24-react-memo-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed React.memo example print?",
+              "choices": [
+                "1",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "1",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-24-react-memo-edit",
+              "type": "edit",
+              "title": "Complete the React.memo example",
+              "instruction": "Add the missing React.memo code and produce the shown output."
+            },
+            {
+              "id": "react-24-react-memo-drill",
+              "type": "code-along",
+              "title": "Practice React.memo",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: 1",
+              "starterCode": "// Use React.memo to produce the required output.\n",
+              "expectedOutput": "1",
+              "matchType": "exact",
+              "hints": [
+                "Start from the React.memo example shown above."
+              ],
+              "solution": "let renderCount = 0;\nconst Price = React.memo(function Price({ amount }) {\n  renderCount += 1;\n  return <p>${amount}</p>;\n});\n\nfunction App() {\n  const [tick, setTick] = React.useState(0);\n  return (\n    <div>\n      <Price amount={20} />\n      <button onClick={() => setTick(tick + 1)}>Tick</button>\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Tick'));\nfireEvent.click(screen.getByText('Tick'));\nconsole.log(renderCount);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "React.memo wraps a component so React skips re-rendering it when its props are shallowly equal to last time, even if its parent re-renders."
+            },
+            {
+              "type": "code",
+              "text": "let renderCount = 0;\nconst Price = React.memo(function Price({ amount }) {\n  renderCount += 1;\n  return <p>${amount}</p>;\n});\n\nfunction App() {\n  const [tick, setTick] = React.useState(0);\n  return (\n    <div>\n      <Price amount={20} />\n      <button onClick={() => setTick(tick + 1)}>Tick</button>\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Tick'));\nfireEvent.click(screen.getByText('Tick'));\nconsole.log(renderCount);"
+            },
+            {
+              "type": "note",
+              "text": "Price never re-renders here because its amount prop stays 20, even though App re-renders on every click."
+            }
+          ],
+          "task": "Use React.memo to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with React.memo.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the React.memo example shown above."
+          ],
+          "solution": "let renderCount = 0;\nconst Price = React.memo(function Price({ amount }) {\n  renderCount += 1;\n  return <p>${amount}</p>;\n});\n\nfunction App() {\n  const [tick, setTick] = React.useState(0);\n  return (\n    <div>\n      <Price amount={20} />\n      <button onClick={() => setTick(tick + 1)}>Tick</button>\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Tick'));\nfireEvent.click(screen.getByText('Tick'));\nconsole.log(renderCount);",
+          "expectedOutput": "1"
+        },
+        {
+          "id": "react-25-usecallback",
+          "title": "5. Optimize callbacks with useCallback",
+          "concept": "useCallback",
+          "summary": "Keep a function's identity stable across renders so it doesn't defeat memoization.",
+          "activities": [
+            {
+              "id": "react-25-usecallback-see",
+              "type": "worked-example",
+              "title": "See useCallback in context",
+              "instruction": "Read the code and follow how the example uses useCallback.",
+              "example": "function StableButton() {\n  const [count, setCount] = React.useState(0);\n  const handleClick = React.useCallback(() => setCount((c) => c + 1), []);\n  const firstRender = React.useRef(handleClick);\n  const isStable = firstRender.current === handleClick;\n  return (\n    <div>\n      <button onClick={handleClick}>Click</button>\n      <p>Stable: {String(isStable)}</p>\n    </div>\n  );\n}\n\nrender(<StableButton />);\nfireEvent.click(screen.getByText('Click'));\nconsole.log(screen.getByText(/Stable/).textContent);"
+            },
+            {
+              "id": "react-25-usecallback-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed useCallback example print?",
+              "choices": [
+                "Stable: true",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Stable: true",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-25-usecallback-edit",
+              "type": "edit",
+              "title": "Complete the useCallback example",
+              "instruction": "Add the missing useCallback code and produce the shown output."
+            },
+            {
+              "id": "react-25-usecallback-drill",
+              "type": "drill",
+              "title": "Practice useCallback",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Stable: true",
+              "starterCode": "// Use useCallback to produce the required output.\n",
+              "expectedOutput": "Stable: true",
+              "matchType": "exact",
+              "hints": [
+                "Start from the useCallback example shown above."
+              ],
+              "solution": "function StableButton() {\n  const [count, setCount] = React.useState(0);\n  const handleClick = React.useCallback(() => setCount((c) => c + 1), []);\n  const firstRender = React.useRef(handleClick);\n  const isStable = firstRender.current === handleClick;\n  return (\n    <div>\n      <button onClick={handleClick}>Click</button>\n      <p>Stable: {String(isStable)}</p>\n    </div>\n  );\n}\n\nrender(<StableButton />);\nfireEvent.click(screen.getByText('Click'));\nconsole.log(screen.getByText(/Stable/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Without useCallback, a component creates a brand-new function on every render, which breaks React.memo on any child it's passed to. useCallback returns the same function reference as long as its dependencies don't change."
+            },
+            {
+              "type": "code",
+              "text": "function StableButton() {\n  const [count, setCount] = React.useState(0);\n  const handleClick = React.useCallback(() => setCount((c) => c + 1), []);\n  const firstRender = React.useRef(handleClick);\n  const isStable = firstRender.current === handleClick;\n  return (\n    <div>\n      <button onClick={handleClick}>Click</button>\n      <p>Stable: {String(isStable)}</p>\n    </div>\n  );\n}\n\nrender(<StableButton />);\nfireEvent.click(screen.getByText('Click'));\nconsole.log(screen.getByText(/Stable/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "useCallback is most valuable when the callback is passed to a memoized child or another hook's dependency array."
+            }
+          ],
+          "task": "Use useCallback to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with useCallback.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the useCallback example shown above."
+          ],
+          "solution": "function StableButton() {\n  const [count, setCount] = React.useState(0);\n  const handleClick = React.useCallback(() => setCount((c) => c + 1), []);\n  const firstRender = React.useRef(handleClick);\n  const isStable = firstRender.current === handleClick;\n  return (\n    <div>\n      <button onClick={handleClick}>Click</button>\n      <p>Stable: {String(isStable)}</p>\n    </div>\n  );\n}\n\nrender(<StableButton />);\nfireEvent.click(screen.getByText('Click'));\nconsole.log(screen.getByText(/Stable/).textContent);",
+          "expectedOutput": "Stable: true"
+        },
+        {
+          "id": "react-26-custom-hooks",
+          "title": "1. Extract logic into custom hooks",
+          "concept": "custom hooks",
+          "summary": "Pull reusable stateful logic out of a component into a function starting with 'use'.",
+          "activities": [
+            {
+              "id": "react-26-custom-hooks-see",
+              "type": "worked-example",
+              "title": "See custom hooks in context",
+              "instruction": "Read the code and follow how the example uses custom hooks.",
+              "example": "function useCounter(initial = 0) {\n  const [count, setCount] = React.useState(initial);\n  const increment = () => setCount((c) => c + 1);\n  return { count, increment };\n}\n\nfunction Counter() {\n  const { count, increment } = useCounter(5);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={increment}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "id": "react-26-custom-hooks-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed custom hooks example print?",
+              "choices": [
+                "Count: 7",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Count: 7",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-26-custom-hooks-edit",
+              "type": "edit",
+              "title": "Complete the custom hooks example",
+              "instruction": "Add the missing custom hooks code and produce the shown output."
+            },
+            {
+              "id": "react-26-custom-hooks-drill",
+              "type": "code-along",
+              "title": "Practice custom hooks",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Count: 7",
+              "starterCode": "// Use custom hooks to produce the required output.\n",
+              "expectedOutput": "Count: 7",
+              "matchType": "exact",
+              "hints": [
+                "Start from the custom hooks example shown above."
+              ],
+              "solution": "function useCounter(initial = 0) {\n  const [count, setCount] = React.useState(initial);\n  const increment = () => setCount((c) => c + 1);\n  return { count, increment };\n}\n\nfunction Counter() {\n  const { count, increment } = useCounter(5);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={increment}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A custom hook is just a function that calls other hooks. Naming it useSomething lets React enforce the rules of hooks and lets you reuse the same stateful logic across components."
+            },
+            {
+              "type": "code",
+              "text": "function useCounter(initial = 0) {\n  const [count, setCount] = React.useState(initial);\n  const increment = () => setCount((c) => c + 1);\n  return { count, increment };\n}\n\nfunction Counter() {\n  const { count, increment } = useCounter(5);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={increment}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Custom hooks share logic, not state \u2014 each component that calls useCounter gets its own independent count."
+            }
+          ],
+          "task": "Use custom hooks to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with custom hooks.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the custom hooks example shown above."
+          ],
+          "solution": "function useCounter(initial = 0) {\n  const [count, setCount] = React.useState(initial);\n  const increment = () => setCount((c) => c + 1);\n  return { count, increment };\n}\n\nfunction Counter() {\n  const { count, increment } = useCounter(5);\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={increment}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);",
+          "expectedOutput": "Count: 7"
+        },
+        {
+          "id": "react-27-usereducer",
+          "title": "2. Manage complex state with useReducer",
+          "concept": "useReducer",
+          "summary": "Centralize state transitions in a reducer function when updates get more involved than a single setState.",
+          "activities": [
+            {
+              "id": "react-27-usereducer-see",
+              "type": "worked-example",
+              "title": "See useReducer in context",
+              "instruction": "Read the code and follow how the example uses useReducer.",
+              "example": "function reducer(state, action) {\n  switch (action.type) {\n    case \"increment\":\n      return { count: state.count + 1 };\n    case \"reset\":\n      return { count: 0 };\n    default:\n      return state;\n  }\n}\n\nfunction Counter() {\n  const [state, dispatch] = React.useReducer(reducer, { count: 0 });\n  return (\n    <div>\n      <p>Count: {state.count}</p>\n      <button onClick={() => dispatch({ type: \"increment\" })}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "id": "react-27-usereducer-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed useReducer example print?",
+              "choices": [
+                "Count: 3",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Count: 3",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-27-usereducer-edit",
+              "type": "edit",
+              "title": "Complete the useReducer example",
+              "instruction": "Add the missing useReducer code and produce the shown output."
+            },
+            {
+              "id": "react-27-usereducer-drill",
+              "type": "drill",
+              "title": "Practice useReducer",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Count: 3",
+              "starterCode": "// Use useReducer to produce the required output.\n",
+              "expectedOutput": "Count: 3",
+              "matchType": "exact",
+              "hints": [
+                "Start from the useReducer example shown above."
+              ],
+              "solution": "function reducer(state, action) {\n  switch (action.type) {\n    case \"increment\":\n      return { count: state.count + 1 };\n    case \"reset\":\n      return { count: 0 };\n    default:\n      return state;\n  }\n}\n\nfunction Counter() {\n  const [state, dispatch] = React.useReducer(reducer, { count: 0 });\n  return (\n    <div>\n      <p>Count: {state.count}</p>\n      <button onClick={() => dispatch({ type: \"increment\" })}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "useReducer takes a reducer function and an initial state, and gives back the current state plus a dispatch function. Every update goes through the reducer as a named action, which keeps complex transitions predictable."
+            },
+            {
+              "type": "code",
+              "text": "function reducer(state, action) {\n  switch (action.type) {\n    case \"increment\":\n      return { count: state.count + 1 };\n    case \"reset\":\n      return { count: 0 };\n    default:\n      return state;\n  }\n}\n\nfunction Counter() {\n  const [state, dispatch] = React.useReducer(reducer, { count: 0 });\n  return (\n    <div>\n      <p>Count: {state.count}</p>\n      <button onClick={() => dispatch({ type: \"increment\" })}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "Reach for useReducer once state updates depend on several related fields or several different action types."
+            }
+          ],
+          "task": "Use useReducer to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with useReducer.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the useReducer example shown above."
+          ],
+          "solution": "function reducer(state, action) {\n  switch (action.type) {\n    case \"increment\":\n      return { count: state.count + 1 };\n    case \"reset\":\n      return { count: 0 };\n    default:\n      return state;\n  }\n}\n\nfunction Counter() {\n  const [state, dispatch] = React.useReducer(reducer, { count: 0 });\n  return (\n    <div>\n      <p>Count: {state.count}</p>\n      <button onClick={() => dispatch({ type: \"increment\" })}>+1</button>\n    </div>\n  );\n}\n\nrender(<Counter />);\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);",
+          "expectedOutput": "Count: 3"
+        },
+        {
+          "id": "react-28-reducer-context",
+          "title": "3. Combine reducer and context",
+          "concept": "reducer + context pattern",
+          "summary": "Share a dispatchable store across the tree by putting useReducer's result into context.",
+          "activities": [
+            {
+              "id": "react-28-reducer-context-see",
+              "type": "worked-example",
+              "title": "See reducer + context pattern in context",
+              "instruction": "Read the code and follow how the example uses reducer + context pattern.",
+              "example": "const CartContext = React.createContext(null);\n\nfunction cartReducer(state, action) {\n  if (action.type === \"add\") return { items: [...state.items, action.item] };\n  return state;\n}\n\nfunction CartProvider({ children }) {\n  const [state, dispatch] = React.useReducer(cartReducer, { items: [] });\n  return (\n    <CartContext.Provider value={{ state, dispatch }}>\n      {children}\n    </CartContext.Provider>\n  );\n}\n\nfunction AddButton() {\n  const { dispatch } = React.useContext(CartContext);\n  return (\n    <button onClick={() => dispatch({ type: \"add\", item: \"Book\" })}>\n      Add\n    </button>\n  );\n}\n\nfunction CartSummary() {\n  const { state } = React.useContext(CartContext);\n  return <p>Items: {state.items.join(\", \")}</p>;\n}\n\nfunction App() {\n  return (\n    <CartProvider>\n      <AddButton />\n      <CartSummary />\n    </CartProvider>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(screen.getByText(/Items/).textContent);"
+            },
+            {
+              "id": "react-28-reducer-context-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed reducer + context pattern example print?",
+              "choices": [
+                "Items: Book",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Items: Book",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-28-reducer-context-edit",
+              "type": "edit",
+              "title": "Complete the reducer + context pattern example",
+              "instruction": "Add the missing reducer + context pattern code and produce the shown output."
+            },
+            {
+              "id": "react-28-reducer-context-drill",
+              "type": "code-along",
+              "title": "Practice reducer + context pattern",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Items: Book",
+              "starterCode": "// Use reducer + context pattern to produce the required output.\n",
+              "expectedOutput": "Items: Book",
+              "matchType": "exact",
+              "hints": [
+                "Start from the reducer + context pattern example shown above."
+              ],
+              "solution": "const CartContext = React.createContext(null);\n\nfunction cartReducer(state, action) {\n  if (action.type === \"add\") return { items: [...state.items, action.item] };\n  return state;\n}\n\nfunction CartProvider({ children }) {\n  const [state, dispatch] = React.useReducer(cartReducer, { items: [] });\n  return (\n    <CartContext.Provider value={{ state, dispatch }}>\n      {children}\n    </CartContext.Provider>\n  );\n}\n\nfunction AddButton() {\n  const { dispatch } = React.useContext(CartContext);\n  return (\n    <button onClick={() => dispatch({ type: \"add\", item: \"Book\" })}>\n      Add\n    </button>\n  );\n}\n\nfunction CartSummary() {\n  const { state } = React.useContext(CartContext);\n  return <p>Items: {state.items.join(\", \")}</p>;\n}\n\nfunction App() {\n  return (\n    <CartProvider>\n      <AddButton />\n      <CartSummary />\n    </CartProvider>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(screen.getByText(/Items/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Pairing useReducer with context gives any descendant component read access to shared state and the ability to dispatch changes to it, without prop drilling through every layer."
+            },
+            {
+              "type": "code",
+              "text": "const CartContext = React.createContext(null);\n\nfunction cartReducer(state, action) {\n  if (action.type === \"add\") return { items: [...state.items, action.item] };\n  return state;\n}\n\nfunction CartProvider({ children }) {\n  const [state, dispatch] = React.useReducer(cartReducer, { items: [] });\n  return (\n    <CartContext.Provider value={{ state, dispatch }}>\n      {children}\n    </CartContext.Provider>\n  );\n}\n\nfunction AddButton() {\n  const { dispatch } = React.useContext(CartContext);\n  return (\n    <button onClick={() => dispatch({ type: \"add\", item: \"Book\" })}>\n      Add\n    </button>\n  );\n}\n\nfunction CartSummary() {\n  const { state } = React.useContext(CartContext);\n  return <p>Items: {state.items.join(\", \")}</p>;\n}\n\nfunction App() {\n  return (\n    <CartProvider>\n      <AddButton />\n      <CartSummary />\n    </CartProvider>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(screen.getByText(/Items/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "This pattern is a lightweight alternative to a state-management library for state that many distant components need."
+            }
+          ],
+          "task": "Use reducer + context pattern to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with reducer + context pattern.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the reducer + context pattern example shown above."
+          ],
+          "solution": "const CartContext = React.createContext(null);\n\nfunction cartReducer(state, action) {\n  if (action.type === \"add\") return { items: [...state.items, action.item] };\n  return state;\n}\n\nfunction CartProvider({ children }) {\n  const [state, dispatch] = React.useReducer(cartReducer, { items: [] });\n  return (\n    <CartContext.Provider value={{ state, dispatch }}>\n      {children}\n    </CartContext.Provider>\n  );\n}\n\nfunction AddButton() {\n  const { dispatch } = React.useContext(CartContext);\n  return (\n    <button onClick={() => dispatch({ type: \"add\", item: \"Book\" })}>\n      Add\n    </button>\n  );\n}\n\nfunction CartSummary() {\n  const { state } = React.useContext(CartContext);\n  return <p>Items: {state.items.join(\", \")}</p>;\n}\n\nfunction App() {\n  return (\n    <CartProvider>\n      <AddButton />\n      <CartSummary />\n    </CartProvider>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('Add'));\nconsole.log(screen.getByText(/Items/).textContent);",
+          "expectedOutput": "Items: Book"
+        },
+        {
+          "id": "react-29-async-fetch",
+          "title": "4. Handle async data fetching",
+          "concept": "data fetching with useEffect",
+          "summary": "Kick off an async request in useEffect and store the result in state once it resolves.",
+          "activities": [
+            {
+              "id": "react-29-async-fetch-see",
+              "type": "worked-example",
+              "title": "See data fetching with useEffect in context",
+              "instruction": "Read the code and follow how the example uses data fetching with useEffect.",
+              "example": "function fakeFetchUser() {\n  return Promise.resolve({ name: \"Ada\" });\n}\n\nfunction Profile() {\n  const [name, setName] = React.useState(\"Loading...\");\n  React.useEffect(() => {\n    fakeFetchUser().then((user) => setName(user.name));\n  }, []);\n  return <p>User: {name}</p>;\n}\n\nasync function main() {\n  render(<Profile />);\n  await screen.findByText(/User: Ada/);\n  console.log(screen.getByText(/User/).textContent);\n}\n\nvoid main();"
+            },
+            {
+              "id": "react-29-async-fetch-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed data fetching with useEffect example print?",
+              "choices": [
+                "User: Ada",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "User: Ada",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-29-async-fetch-edit",
+              "type": "edit",
+              "title": "Complete the data fetching with useEffect example",
+              "instruction": "Add the missing data fetching with useEffect code and produce the shown output."
+            },
+            {
+              "id": "react-29-async-fetch-drill",
+              "type": "code-along",
+              "title": "Practice data fetching with useEffect",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: User: Ada",
+              "starterCode": "// Use data fetching with useEffect to produce the required output.\n",
+              "expectedOutput": "User: Ada",
+              "matchType": "exact",
+              "hints": [
+                "Start from the data fetching with useEffect example shown above."
+              ],
+              "solution": "function fakeFetchUser() {\n  return Promise.resolve({ name: \"Ada\" });\n}\n\nfunction Profile() {\n  const [name, setName] = React.useState(\"Loading...\");\n  React.useEffect(() => {\n    fakeFetchUser().then((user) => setName(user.name));\n  }, []);\n  return <p>User: {name}</p>;\n}\n\nasync function main() {\n  render(<Profile />);\n  await screen.findByText(/User: Ada/);\n  console.log(screen.getByText(/User/).textContent);\n}\n\nvoid main();"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Effects can't be async functions themselves, so start the promise inside a plain effect and call the state setter in .then(). screen.findByText waits for that update before you read the result."
+            },
+            {
+              "type": "code",
+              "text": "function fakeFetchUser() {\n  return Promise.resolve({ name: \"Ada\" });\n}\n\nfunction Profile() {\n  const [name, setName] = React.useState(\"Loading...\");\n  React.useEffect(() => {\n    fakeFetchUser().then((user) => setName(user.name));\n  }, []);\n  return <p>User: {name}</p>;\n}\n\nasync function main() {\n  render(<Profile />);\n  await screen.findByText(/User: Ada/);\n  console.log(screen.getByText(/User/).textContent);\n}\n\nvoid main();"
+            },
+            {
+              "type": "note",
+              "text": "Guard against setting state after unmount in real apps by cancelling or ignoring stale requests."
+            }
+          ],
+          "task": "Use data fetching with useEffect to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with data fetching with useEffect.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the data fetching with useEffect example shown above."
+          ],
+          "solution": "function fakeFetchUser() {\n  return Promise.resolve({ name: \"Ada\" });\n}\n\nfunction Profile() {\n  const [name, setName] = React.useState(\"Loading...\");\n  React.useEffect(() => {\n    fakeFetchUser().then((user) => setName(user.name));\n  }, []);\n  return <p>User: {name}</p>;\n}\n\nasync function main() {\n  render(<Profile />);\n  await screen.findByText(/User: Ada/);\n  console.log(screen.getByText(/User/).textContent);\n}\n\nvoid main();",
+          "expectedOutput": "User: Ada"
+        },
+        {
+          "id": "react-30-capstone",
+          "title": "5. Capstone: an interactive todo app",
+          "concept": "capstone: combining state, reducers, and lists",
+          "summary": "Combine useReducer, event handling, and derived list state into one small app.",
+          "activities": [
+            {
+              "id": "react-30-capstone-see",
+              "type": "worked-example",
+              "title": "See capstone: combining state, reducers, and lists in context",
+              "instruction": "Read the code and follow how the example uses capstone: combining state, reducers, and lists.",
+              "example": "function reducer(state, action) {\n  switch (action.type) {\n    case \"add\":\n      return [...state, { text: action.text, done: false }];\n    case \"toggle\":\n      return state.map((todo, i) =>\n        i === action.index ? { ...todo, done: !todo.done } : todo\n      );\n    default:\n      return state;\n  }\n}\n\nfunction TodoApp() {\n  const [todos, dispatch] = React.useReducer(reducer, [\n    { text: \"Learn React\", done: false },\n  ]);\n  const remaining = todos.filter((t) => !t.done).length;\n  return (\n    <div>\n      <button onClick={() => dispatch({ type: \"add\", text: \"Ship app\" })}>\n        Add\n      </button>\n      <button onClick={() => dispatch({ type: \"toggle\", index: 0 })}>\n        Toggle first\n      </button>\n      <p>Remaining: {remaining}</p>\n    </div>\n  );\n}\n\nrender(<TodoApp />);\nfireEvent.click(screen.getByText('Add'));\nfireEvent.click(screen.getByText('Toggle first'));\nconsole.log(screen.getByText(/Remaining/).textContent);"
+            },
+            {
+              "id": "react-30-capstone-predict",
+              "type": "prediction",
+              "title": "Predict the result",
+              "question": "What does the completed capstone: combining state, reducers, and lists example print?",
+              "choices": [
+                "Remaining: 1",
+                "undefined",
+                "A React error"
+              ],
+              "answer": "Remaining: 1",
+              "explanation": "The component and hooks shown produce exactly this printed result."
+            },
+            {
+              "id": "react-30-capstone-edit",
+              "type": "edit",
+              "title": "Complete the capstone: combining state, reducers, and lists example",
+              "instruction": "Add the missing capstone: combining state, reducers, and lists code and produce the shown output."
+            },
+            {
+              "id": "react-30-capstone-drill",
+              "type": "code-along",
+              "title": "Practice capstone: combining state, reducers, and lists",
+              "instruction": "Build the example and print exactly the expected output.",
+              "successCriteria": "Print exactly: Remaining: 1",
+              "starterCode": "// Use capstone: combining state, reducers, and lists to produce the required output.\n",
+              "expectedOutput": "Remaining: 1",
+              "matchType": "exact",
+              "hints": [
+                "Start from the capstone: combining state, reducers, and lists example shown above."
+              ],
+              "solution": "function reducer(state, action) {\n  switch (action.type) {\n    case \"add\":\n      return [...state, { text: action.text, done: false }];\n    case \"toggle\":\n      return state.map((todo, i) =>\n        i === action.index ? { ...todo, done: !todo.done } : todo\n      );\n    default:\n      return state;\n  }\n}\n\nfunction TodoApp() {\n  const [todos, dispatch] = React.useReducer(reducer, [\n    { text: \"Learn React\", done: false },\n  ]);\n  const remaining = todos.filter((t) => !t.done).length;\n  return (\n    <div>\n      <button onClick={() => dispatch({ type: \"add\", text: \"Ship app\" })}>\n        Add\n      </button>\n      <button onClick={() => dispatch({ type: \"toggle\", index: 0 })}>\n        Toggle first\n      </button>\n      <p>Remaining: {remaining}</p>\n    </div>\n  );\n}\n\nrender(<TodoApp />);\nfireEvent.click(screen.getByText('Add'));\nfireEvent.click(screen.getByText('Toggle first'));\nconsole.log(screen.getByText(/Remaining/).textContent);"
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Combine everything from this course into one small, real app: a reducer drives state transitions, event handlers dispatch actions, and derived values like the remaining count are computed straight from state on every render."
+            },
+            {
+              "type": "code",
+              "text": "function reducer(state, action) {\n  switch (action.type) {\n    case \"add\":\n      return [...state, { text: action.text, done: false }];\n    case \"toggle\":\n      return state.map((todo, i) =>\n        i === action.index ? { ...todo, done: !todo.done } : todo\n      );\n    default:\n      return state;\n  }\n}\n\nfunction TodoApp() {\n  const [todos, dispatch] = React.useReducer(reducer, [\n    { text: \"Learn React\", done: false },\n  ]);\n  const remaining = todos.filter((t) => !t.done).length;\n  return (\n    <div>\n      <button onClick={() => dispatch({ type: \"add\", text: \"Ship app\" })}>\n        Add\n      </button>\n      <button onClick={() => dispatch({ type: \"toggle\", index: 0 })}>\n        Toggle first\n      </button>\n      <p>Remaining: {remaining}</p>\n    </div>\n  );\n}\n\nrender(<TodoApp />);\nfireEvent.click(screen.getByText('Add'));\nfireEvent.click(screen.getByText('Toggle first'));\nconsole.log(screen.getByText(/Remaining/).textContent);"
+            },
+            {
+              "type": "note",
+              "text": "This is the same shape as most real React features: state describes the truth, and the UI is just a function of it."
+            }
+          ],
+          "task": "Use capstone: combining state, reducers, and lists to build the example above and print the required result.",
+          "starterCode": "// Implement this exercise with capstone: combining state, reducers, and lists.\n",
+          "matchType": "exact",
+          "hints": [
+            "Start from the capstone: combining state, reducers, and lists example shown above."
+          ],
+          "solution": "function reducer(state, action) {\n  switch (action.type) {\n    case \"add\":\n      return [...state, { text: action.text, done: false }];\n    case \"toggle\":\n      return state.map((todo, i) =>\n        i === action.index ? { ...todo, done: !todo.done } : todo\n      );\n    default:\n      return state;\n  }\n}\n\nfunction TodoApp() {\n  const [todos, dispatch] = React.useReducer(reducer, [\n    { text: \"Learn React\", done: false },\n  ]);\n  const remaining = todos.filter((t) => !t.done).length;\n  return (\n    <div>\n      <button onClick={() => dispatch({ type: \"add\", text: \"Ship app\" })}>\n        Add\n      </button>\n      <button onClick={() => dispatch({ type: \"toggle\", index: 0 })}>\n        Toggle first\n      </button>\n      <p>Remaining: {remaining}</p>\n    </div>\n  );\n}\n\nrender(<TodoApp />);\nfireEvent.click(screen.getByText('Add'));\nfireEvent.click(screen.getByText('Toggle first'));\nconsole.log(screen.getByText(/Remaining/).textContent);",
+          "expectedOutput": "Remaining: 1"
+        }
+      ]
+    }
+  ]
+}
