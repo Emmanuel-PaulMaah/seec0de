@@ -16,14 +16,14 @@
               "id": "js-01-see",
               "type": "worked-example",
               "title": "See JavaScript print a message",
-              "instruction": "console.log() sends the value inside its parentheses to the Console. Text needs matching quote marks.",
-              "example": "console.log('Hi there');\n// Console: Hi there"
+              "instruction": "`console.log()` sends the value inside its parentheses to the Console. Text needs matching quote marks.",
+              "example": "`console.log('Hi there');`\n// Console: Hi there"
             },
             {
               "id": "js-01-predict",
               "type": "prediction",
               "title": "Predict the output",
-              "question": "What will console.log('Ready') print?",
+              "question": "What will `console.log('Ready')` print?",
               "choices": [
                 "Ready",
                 "'Ready'",
@@ -138,7 +138,7 @@
               "id": "js-03-see",
               "type": "worked-example",
               "title": "Choose const or let",
-              "instruction": "Use const when a name should keep the same value. Use let only when your program needs to reassign it.",
+              "instruction": "Use `const` when a name should keep the same value. Use `let` only when your program needs to reassign it.",
               "example": "const pi = 3.14;\nlet radius = 5;\nradius = 6;"
             },
             {
@@ -151,8 +151,8 @@
                 "let radius = 5",
                 "Both"
               ],
-              "answer": "let radius = 5",
-              "explanation": "let permits reassignment; const does not."
+              "answer": "`let radius = 5`",
+              "explanation": "`let` permits reassignment; `const` does not."
             },
             {
               "id": "js-03-edit",
@@ -226,7 +226,7 @@
             },
             {
               "type": "p",
-              "text": "Backtick strings — *template literals* — let you drop variables straight in with `${…}`:"
+              "text": "Backtick strings — *template literals* — let you drop variables straight in with `` `${…}` ``:"
             },
             {
               "type": "code",
@@ -479,7 +479,7 @@
               "id": "js-13-predict",
               "type": "prediction",
               "title": "Trace a function call",
-              "question": "What does double(4) return?",
+              "question": "What does `double(4)` return?",
               "choices": [
                 "4",
                 "8",
@@ -491,7 +491,7 @@
             {
               "id": "js-13-edit",
               "type": "edit",
-              "title": "Write square(n)",
+              "title": "Write `square(n)`",
               "instruction": "Create a square function that returns n * n, then print square(7)."
             }
           ],
@@ -879,7 +879,7 @@
               "id": "js-25-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst value = null; let score;\nconsole.log(typeof value, typeof score);",
+              "question": "What does this code print?\n\n`const value = null; let score;`\n`console.log(typeof value, typeof score);`",
               "choices": [
                 "object undefined",
                 "null undefined",
@@ -946,7 +946,7 @@
               "id": "js-26-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconsole.log(0 === '0');\nconsole.log(Boolean(''));\nconsole.log(Boolean('0'));",
+              "question": "What does this code print?\n\n`console.log(0 === '0');`\n`console.log(Boolean(''));`\n`console.log(Boolean('0'));`",
               "choices": [
                 "false false true",
                 "true false true",
@@ -1013,7 +1013,7 @@
               "id": "js-27-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst n = Number('12x');\nconsole.log(n);\nconsole.log(Number.isNaN(n));",
+              "question": "What does this code print?\n\n`const n = Number('12x');`\n`console.log(n);`\n`console.log(Number.isNaN(n));`",
               "choices": [
                 "NaN then true",
                 "12 then false",
@@ -1080,7 +1080,7 @@
               "id": "js-28-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst colors = ['red', 'blue', 'green'];\nconsole.log(colors[1], colors[colors.length - 1]);",
+              "question": "What does this code print?\n\n`const colors = ['red', 'blue', 'green'];`\n`console.log(colors[1], colors[colors.length - 1]);`",
               "choices": [
                 "blue green",
                 "red blue",
@@ -1147,7 +1147,7 @@
               "id": "js-29-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst q = ['b'];\nq.unshift('a');\nq.push('c');\nconsole.log(q.pop(), q.join('-'));",
+              "question": "What does this code print?\n\n`const q = ['b'];`\n`q.unshift('a');\nq.push('c');`\n`console.log(q.pop(), q.join('-'));`",
               "choices": [
                 "c a-b",
                 "a b-c",
@@ -1214,7 +1214,7 @@
               "id": "js-30-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst a = [1, 2];\nconst b = [...a];\nb.push(3);\nconsole.log(a.length, b.length);",
+              "question": "What does this code print?\n\n`const a = [1, 2];`\n`const b = [...a];`\n`b.push(3);`\n`console.log(a.length, b.length);`",
               "choices": [
                 "2 3",
                 "3 3",
@@ -1281,7 +1281,7 @@
               "id": "js-31-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst user = { name: 'Mia' };\nconst key = 'name';\nuser[key] = 'Lee';\nconsole.log(user.name);",
+              "question": "What does this code print?\n\n`const user = { name: 'Mia' };`\n`const key = 'name';`\n`user[key] = 'Lee';`\n`console.log(user.name);`",
               "choices": [
                 "Lee",
                 "Mia",
@@ -1423,7 +1423,7 @@
               "id": "js-33-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nfor (let i = 1; i <= 5; i++) {\n  if (i === 2) continue;\n  if (i === 4) break;\n  console.log(i);\n}",
+              "question": "What does this code print?\n\n`for (let i = 1; i <= 5; i++) {`\n` if (i === 2) continue;`\n`  if (i === 4) break;`\n`  console.log(i);`\n`}`",
               "choices": [
                 "1 then 3",
                 "1 then 3 then 5",
@@ -1490,7 +1490,7 @@
               "id": "js-34-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst letters = ['a', 'b', 'c'];\nfor (let i = 0; i < letters.length; i += 2) console.log(i, letters[i]);",
+              "question": "What does this code print?\n\n`const letters = ['a', 'b', 'c'];`\n`for (let i = 0; i < letters.length; i += 2) console.log(i, letters[i]);`",
               "choices": [
                 "0 a then 2 c",
                 "0 a then 1 b",
@@ -1557,7 +1557,7 @@
               "id": "js-35-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst item = { a: 1, b: 2 };\nconsole.log(Object.keys(item).join(','));\nfor (const [k, v] of Object.entries(item)) console.log(k + v);",
+              "question": "What does this code print?\n\n`const item = { a: 1, b: 2 };`\n`console.log(Object.keys(item).join(','));`\n`for (const [k, v] of Object.entries(item)) console.log(k + v);`",
               "choices": [
                 "a,b then a1 then b2",
                 "1,2 then a1 then b2",
@@ -1624,7 +1624,7 @@
               "id": "js-36-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nfunction run(value, callback) { return callback(value); }\nconsole.log(run(4, n => n * 3));",
+              "question": "What does this code print?\n\n`function run(value, callback) { return callback(value); }`\n`console.log(run(4, n => n * 3));`",
               "choices": [
                 "12",
                 "7",
@@ -1699,7 +1699,7 @@
               "id": "js-37-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst nums = [1, 2, 3];\nconst out = nums.map(n => n + 10);\nconsole.log(out.join(','), nums.join(','));",
+              "question": "What does this code print?\n\n`const nums = [1, 2, 3];`\n`const out = nums.map(n => n + 10);`\n`console.log(out.join(','), nums.join(','));`",
               "choices": [
                 "11,12,13 1,2,3",
                 "11,12,13 11,12,13",
@@ -1766,7 +1766,7 @@
               "id": "js-38-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst nums = [3, 8, 10, 5];\nconsole.log(nums.filter(n => n > 6).join(','));\nconsole.log(nums.find(n => n > 6));",
+              "question": "What does this code print?\n\n`const nums = [3, 8, 10, 5];`\n`console.log(nums.filter(n => n > 6).join(','));`\n`console.log(nums.find(n => n > 6));`",
               "choices": [
                 "8,10 then 8",
                 "8 then 8,10",
@@ -1833,7 +1833,7 @@
               "id": "js-39-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst total = [2, 3, 4].reduce((sum, n) => sum + n, 10);\nconsole.log(total);",
+              "question": "What does this code print?\n\n`const total = [2, 3, 4].reduce((sum, n) => sum + n, 10);`\n`console.log(total);`",
               "choices": [
                 "19",
                 "9",
@@ -1900,7 +1900,7 @@
               "id": "js-40-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst out = [1, 2, 3, 4].filter(n => n % 2 === 0).map(n => n * 10);\nconsole.log(out.join(','));",
+              "question": "What does this code print?\n\n`const out = [1, 2, 3, 4].filter(n => n % 2 === 0).map(n => n * 10);`\n`console.log(out.join(','));`",
               "choices": [
                 "20,40",
                 "10,20,30,40",
@@ -1975,7 +1975,7 @@
               "id": "js-41-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nlet label = 'outer';\nif (true) { let label = 'inner'; console.log(label); }\nconsole.log(label);",
+              "question": "What does this code print?\n\n`let label = 'outer';`\n`if (true) { let label = 'inner'; console.log(label); }`\n`console.log(label);`",
               "choices": [
                 "inner then outer",
                 "inner then inner",
@@ -2042,7 +2042,7 @@
               "id": "js-42-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nfunction makeCounter() { let n = 0; return () => ++n; }\nconst next = makeCounter();\nconsole.log(next(), next());",
+              "question": "What does this code print?\n\n`function makeCounter() { let n = 0; return () => ++n; }`\n`const next = makeCounter();`\n`console.log(next(), next());`",
               "choices": [
                 "1 2",
                 "1 1",
@@ -2109,7 +2109,7 @@
               "id": "js-43-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst { name, age = 0 } = { name: 'Ari' };\nconst [first, second] = [4, 9];\nconsole.log(name, age, second);",
+              "question": "What does this code print?\n\n`const { name, age = 0 } = { name: 'Ari' };`\n`const [first, second] = [4, 9];`\n`console.log(name, age, second);`",
               "choices": [
                 "Ari 0 9",
                 "Ari undefined 4",
@@ -2176,7 +2176,7 @@
               "id": "js-44-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nfunction sum(first, ...rest) { return first + rest.length; }\nconsole.log(sum(10, 20, 30));",
+              "question": "What does this code print?\n\n`function sum(first, ...rest) { return first + rest.length; }`\n`console.log(sum(10, 20, 30));`",
               "choices": [
                 "12",
                 "60",
@@ -2251,7 +2251,7 @@
               "id": "js-45-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\ntry { throw new Error('bad value'); } catch (error) { console.log(error.message); }\nconsole.log('done');",
+              "question": "What does this code print?\n\n`try { throw new Error('bad value'); } catch (error) { console.log(error.message); }`\n`console.log('done');`",
               "choices": [
                 "bad value then done",
                 "The program stops at the error",
@@ -2318,7 +2318,7 @@
               "id": "js-46-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nfunction label(name) {\n if (typeof name !== 'string' || name.trim() === '') return 'invalid';\n return name.trim();\n}\nconsole.log(label('  '));",
+              "question": "What does this code print?\n\n`function label(name) {`\n` if (typeof name !== 'string' || name.trim() === '') return 'invalid';`\n` return name.trim();`\n`}`\n`console.log(label('  '));`",
               "choices": [
                 "invalid",
                 "an empty line",
@@ -2385,7 +2385,7 @@
               "id": "js-47-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst text = '{\"count\":2}';\nconst data = JSON.parse(text);\ndata.count += 1;\nconsole.log(JSON.stringify(data));",
+              "question": "What does this code print?\n\n`const text = '{\"count\":2}';`\n`const data = JSON.parse(text);`\n`data.count += 1;`\n`console.log(JSON.stringify(data));`",
               "choices": [
                 "{\"count\":3}",
                 "{count:3}",
@@ -2452,7 +2452,7 @@
               "id": "js-48-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconsole.log('A');\nPromise.resolve('B').then(value => console.log(value));\nconsole.log('C');",
+              "question": "What does this code print?\n\n`console.log('A');`\n`Promise.resolve('B').then(value => console.log(value));`\n`console.log('C');`",
               "choices": [
                 "A C B",
                 "A B C",
@@ -2519,7 +2519,7 @@
               "id": "js-49-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nasync function read() { return 4; }\n(async () => { console.log(await read()); })();",
+              "question": "What does this code print?\n\n`async function read() { return 4; }`\n`(async () => { console.log(await read()); })();`",
               "choices": [
                 "4",
                 "Promise { 4 }",
@@ -2586,7 +2586,7 @@
               "id": "js-50-predict",
               "type": "prediction",
               "title": "Predict the result",
-              "question": "What does this code print?\n\nconst rows = [{active:true, score:2},{active:false, score:9},{active:true, score:4}];\nconst total = rows.filter(r => r.active).reduce((s,r) => s + r.score, 0);\nconsole.log(total);",
+              "question": "What does this code print?\n\n`const rows = [{active:true, score:2},{active:false, score:9},{active:true, score:4}];`\n`const total = rows.filter(r => r.active).reduce((s,r) => s + r.score, 0);`\n`console.log(total);`",
               "choices": [
                 "6",
                 "15",
