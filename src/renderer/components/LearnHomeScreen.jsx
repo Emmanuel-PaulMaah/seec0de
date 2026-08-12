@@ -127,7 +127,7 @@ export default function LearnHomeScreen({
           </button>
         )}
 
-        <div style={styles.kicker}><GraduationCap size={12} /> Learn Mode</div>
+        <div style={styles.kicker}><GraduationCap size={12} /> Learn </div>
         <h1 ref={headingRef} tabIndex={-1} id="learn-home-heading" style={styles.heading}>{heading}</h1>
 
         {!selectedLanguage && (

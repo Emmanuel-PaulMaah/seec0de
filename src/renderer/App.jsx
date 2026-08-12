@@ -326,7 +326,7 @@ export default function App() {
     if (next) handleSelectLesson(next);
   }, [activeLesson, handleSelectLesson]);
 
-  // While Learn Mode has an active lesson, the editor / preview behaves as
+  // While Learn has an active lesson, the editor / preview behaves as
   // if the lesson language is the only language — hides comparison
   // tabs in CodePanel and routes livePreview to the JS tab. The user's
   // real `selectedLanguages` setting stays untouched and returns the
@@ -1380,7 +1380,7 @@ const beginExplanationResize = useCallback((event) => {
         setLearnCatalogLanguage(null);
         setLearnCatalogSection(null);
       }
-      setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn Mode opened. Choose a course.');
+      setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn opened. Choose a course.');
     } else {
       if (activeLesson) learnDraftRef.current = generatedCode;
       setGeneratedCode(workspaceGeneratedCodeRef.current);

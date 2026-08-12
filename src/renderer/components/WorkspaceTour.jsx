@@ -5,7 +5,7 @@ const STEPS = [
   {
     selector: '[data-tour="mode-switch"]',
     title: 'Move around seec0de',
-    body: 'Use Home for your dashboard, Workspace to build freely, and Learn Mode for guided lessons.',
+    body: 'Use Home for your dashboard, Workspace to build freely, and Learn for guided lessons.',
   },
   {
     selector: '[data-workspace-panel="guide"]',

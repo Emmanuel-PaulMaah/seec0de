@@ -94,7 +94,7 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   practiceRemindersEnabled: true,
   practiceReminderTime: '18:00',
   practiceNotificationsEnabled: false,
-  // Learn Mode is optional and profile-specific. The session stores only
+  // Learn is optional and profile-specific. The session stores only
   // resumable lesson state; transient runner output is intentionally omitted.
   learnMode:           false,
   learningSession:     null,

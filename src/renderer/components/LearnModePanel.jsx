@@ -78,9 +78,9 @@ export default function LearnModePanel({
   }, [activeLesson?.language]);
 
   return (
-    <aside style={{ ...styles.panel, ...(focused ? styles.panelFocused : {}) }} aria-label="Learn Mode guide">
+    <aside style={{ ...styles.panel, ...(focused ? styles.panelFocused : {}) }} aria-label="Learn guide">
       <div style={styles.header}>
-        <div style={styles.eyebrow}><GraduationCap size={13} /> Learn Mode</div>
+        <div style={styles.eyebrow}><GraduationCap size={13} /> Learn</div>
         <div style={styles.headingRow}>
           <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>
             {activeLesson

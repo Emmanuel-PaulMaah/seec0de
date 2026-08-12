@@ -202,9 +202,9 @@ export default function SettingsDrawer({
             </Field>
           </Section>
 
-          {/* ---- 2. Learn Mode ---------------------------------------- */}
-          <Section id="learnMode" icon={<GraduationCap size={13} />} title="Learn Mode" open={expandedSection === 'learnMode'} onToggle={toggleSection}>
-            <Field label="Guidance level" hint="Choose how much teaching Learn Mode shows. You can change this at any time.">
+          {/* ---- 2. Learn ---------------------------------------- */}
+          <Section id="learnMode" icon={<GraduationCap size={13} />} title="Learn" open={expandedSection === 'learnMode'} onToggle={toggleSection}>
+            <Field label="Guidance level" hint="Choose how much teaching Learn shows. You can change this at any time.">
               <GuidanceTabs
                 value={['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
                   ? settings.guidanceLevel

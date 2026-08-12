@@ -66,7 +66,7 @@ export default function LearningLibraryModal({
                     </button>
                   </>
                 ) : (
-                  <p style={styles.emptyText}>Write or open some code in Workspace or Learn Mode, then return here to turn it into a postcard.</p>
+                  <p style={styles.emptyText}>Write or open some code in Workspace or Learn, then return here to turn it into a postcard.</p>
                 )}
               </section>
 

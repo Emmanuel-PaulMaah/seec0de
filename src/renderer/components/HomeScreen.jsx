@@ -34,7 +34,7 @@ export default function HomeScreen({
             <span style={styles.cardIcon}><GraduationCap size={18} /></span>
             <span style={styles.cardCopy}>
               <span style={styles.cardEyebrow}>Guided path</span>
-              <strong style={styles.cardTitle}>{hasActiveLesson ? 'Continue learning' : 'Start Learn Mode'}</strong>
+              <strong style={styles.cardTitle}>{hasActiveLesson ? 'Continue learning' : 'Start learning'}</strong>
               <span style={styles.cardText}>Lessons, activities, feedback, and saved progress.</span>
             </span>
             <ArrowRight size={17} style={styles.arrow} />
