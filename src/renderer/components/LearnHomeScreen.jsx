@@ -19,6 +19,7 @@ const LANGUAGE_LABELS = {
   python: 'Python',
   javascript: 'JavaScript',
   typescript: 'TypeScript',
+  react: 'React',
 };
 
 function languageLabel(language) {
