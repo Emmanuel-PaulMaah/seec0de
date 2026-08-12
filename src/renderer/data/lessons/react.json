@@ -1,10 +1,10 @@
 {
   "tracks": [
     {
-      "id": "react-foundations",
-      "name": "React Foundations",
+      "id": "react-components-jsx",
+      "name": "Components & JSX",
       "language": "react",
-      "description": "Build user interfaces with React: components, JSX, props, state, hooks, forms, and the patterns that hold a real app together. This course renders every example with the same tools React apps are tested with: `render()` mounts a component, `screen` finds elements in the result, and `fireEvent` simulates user interactions like clicks and typing. React, render, screen, and fireEvent are already available in every exercise \u2014 no imports needed.",
+      "description": "Build UI out of small functions: write your first component, embed expressions in JSX, compose nested components, and render conditionally and in lists.",
       "lessons": [
         {
           "id": "react-01-first-component",
@@ -56,7 +56,7 @@
           "teaching": [
             {
               "type": "p",
-              "text": "A React component is just a function whose name starts with a capital letter and that returns JSX \u2014 a description of what should appear on the screen. This course renders components with `render()` and reads the result back with `screen`, the same helpers real React tests use."
+              "text": "A React component is just a function whose name starts with a capital letter and that returns JSX — a description of what should appear on the screen. This course renders components with `render()` and reads the result back with `screen`, the same helpers real React tests use."
             },
             {
               "type": "code",
@@ -126,7 +126,7 @@
           "teaching": [
             {
               "type": "p",
-              "text": "Curly braces switch JSX back into JavaScript mode. Anything that evaluates to a value \u2014 a variable, a function call, arithmetic \u2014 can go inside them."
+              "text": "Curly braces switch JSX back into JavaScript mode. Anything that evaluates to a value — a variable, a function call, arithmetic — can go inside them."
             },
             {
               "type": "code",
@@ -156,7 +156,7 @@
               "id": "react-03-composition-see",
               "type": "worked-example",
               "title": "Read a children prop",
-              "instruction": "Card doesn't know what's inside it \u2014 it just renders whatever children it receives.",
+              "instruction": "Card doesn't know what's inside it — it just renders whatever children it receives.",
               "example": "function Card({ children }) {\n  return <div className=\"card\">{children}</div>;\n}\n\nfunction App() {\n  return (\n    <Card>\n      <p>Nested content</p>\n    </Card>\n  );\n}\n\nrender(<App />);\nconsole.log(screen.getByText('Nested content').textContent);"
             },
             {
@@ -355,7 +355,15 @@
           ],
           "solution": "function Numbers({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <li key={item}>{item}</li>\n      ))}\n    </ul>\n  );\n}\n\nrender(<Numbers items={[1, 2, 3]} />);\nconsole.log(\n  screen.getAllByRole('listitem').map((li) => li.textContent).join(\", \")\n);",
           "expectedOutput": "1, 2, 3"
-        },
+        }
+      ]
+    },
+    {
+      "id": "react-props",
+      "name": "Props & Data Flow",
+      "language": "react",
+      "description": "Pass data into components with props, set default values, forward callbacks, spread props through wrappers, and model UI variants from a single status prop.",
+      "lessons": [
         {
           "id": "react-06-pass-props",
           "title": "1. Pass data with props",
@@ -554,7 +562,7 @@
             },
             {
               "type": "note",
-              "text": "Callback props are how React \"talks back up\" the component tree \u2014 data flows down, events flow up through callbacks."
+              "text": "Callback props are how React \"talks back up\" the component tree — data flows down, events flow up through callbacks."
             }
           ],
           "task": "Pass a callback into a button component and trigger it with a click.",
@@ -616,7 +624,7 @@
           "teaching": [
             {
               "type": "p",
-              "text": "Destructuring props keeps a component's signature self-documenting. The spread operator does the reverse \u2014 it forwards every prop on an object to another component in one step."
+              "text": "Destructuring props keeps a component's signature self-documenting. The spread operator does the reverse — it forwards every prop on an object to another component in one step."
             },
             {
               "type": "code",
@@ -705,7 +713,15 @@
           ],
           "solution": "function Status({ state }) {\n  if (state === \"loading\") return <p>Loading...</p>;\n  if (state === \"error\") return <p>Something went wrong</p>;\n  return <p>Ready</p>;\n}\n\nrender(<Status state=\"ready\" />);\nconsole.log(screen.getByText(/Loading|error|Ready/).textContent);",
           "expectedOutput": "Ready"
-        },
+        }
+      ]
+    },
+    {
+      "id": "react-state",
+      "name": "State & Events",
+      "language": "react",
+      "description": "Give components memory with useState, update state from events, derive the next value from the previous one, manage multiple values, and lift state up.",
+      "lessons": [
         {
           "id": "react-11-usestate",
           "title": "1. Add state with useState",
@@ -764,7 +780,7 @@
             },
             {
               "type": "note",
-              "text": "Each call to useState manages one independent piece of state \u2014 state doesn't automatically merge like it did in old class components."
+              "text": "Each call to useState manages one independent piece of state — state doesn't automatically merge like it did in old class components."
             }
           ],
           "task": "Use useState to build the example above and print the required result.",
@@ -1055,7 +1071,15 @@
           ],
           "solution": "function Display({ count }) {\n  return <p>Count: {count}</p>;\n}\n\nfunction IncrementButton({ onIncrement }) {\n  return <button onClick={onIncrement}>+1</button>;\n}\n\nfunction App() {\n  const [count, setCount] = React.useState(0);\n  return (\n    <div>\n      <Display count={count} />\n      <IncrementButton onIncrement={() => setCount(count + 1)} />\n    </div>\n  );\n}\n\nrender(<App />);\nfireEvent.click(screen.getByText('+1'));\nconsole.log(screen.getByText(/Count/).textContent);",
           "expectedOutput": "Count: 1"
-        },
+        }
+      ]
+    },
+    {
+      "id": "react-effects",
+      "name": "Effects, Refs & Context",
+      "language": "react",
+      "description": "Run side effects with useEffect, clean them up, reach into the DOM with useRef, and share data with Context and memoized values.",
+      "lessons": [
         {
           "id": "react-16-useeffect",
           "title": "1. Run side effects with useEffect",
@@ -1114,7 +1138,7 @@
             },
             {
               "type": "note",
-              "text": "Effects are for side effects \u2014 subscriptions, logging, fetching \u2014 not for calculating what to render."
+              "text": "Effects are for side effects — subscriptions, logging, fetching — not for calculating what to render."
             }
           ],
           "task": "Use useEffect to build the example above and print the required result.",
@@ -1176,7 +1200,7 @@
           "teaching": [
             {
               "type": "p",
-              "text": "If an effect sets something up \u2014 a timer, a subscription, an event listener \u2014 it should return a cleanup function that tears it back down."
+              "text": "If an effect sets something up — a timer, a subscription, an event listener — it should return a cleanup function that tears it back down."
             },
             {
               "type": "code",
@@ -1324,7 +1348,7 @@
             },
             {
               "type": "note",
-              "text": "Reach for context for values used widely, like theme or the current user \u2014 not as a replacement for ordinary props."
+              "text": "Reach for context for values used widely, like theme or the current user — not as a replacement for ordinary props."
             }
           ],
           "task": "Use Context API and useContext to build the example above and print the required result.",
@@ -1386,7 +1410,7 @@
           "teaching": [
             {
               "type": "p",
-              "text": "useMemo re-runs a calculation only when one of its dependencies changes, returning the cached result otherwise \u2014 useful for expensive derived values."
+              "text": "useMemo re-runs a calculation only when one of its dependencies changes, returning the cached result otherwise — useful for expensive derived values."
             },
             {
               "type": "code",
@@ -1405,7 +1429,15 @@
           ],
           "solution": "function Total({ prices }) {\n  const total = React.useMemo(\n    () => prices.reduce((sum, p) => sum + p, 0),\n    [prices]\n  );\n  return <p>Total: {total}</p>;\n}\n\nrender(<Total prices={[10, 20, 30]} />);\nconsole.log(screen.getByText(/Total/).textContent);",
           "expectedOutput": "Total: 60"
-        },
+        }
+      ]
+    },
+    {
+      "id": "react-forms-performance",
+      "name": "Forms & Performance",
+      "language": "react",
+      "description": "Build controlled inputs, handle form submission, update lists immutably, and optimize renders with React.memo and useCallback.",
+      "lessons": [
         {
           "id": "react-21-controlled-inputs",
           "title": "1. Build controlled form inputs",
@@ -1755,7 +1787,15 @@
           ],
           "solution": "function StableButton() {\n  const [count, setCount] = React.useState(0);\n  const handleClick = React.useCallback(() => setCount((c) => c + 1), []);\n  const firstRender = React.useRef(handleClick);\n  const isStable = firstRender.current === handleClick;\n  return (\n    <div>\n      <button onClick={handleClick}>Click</button>\n      <p>Stable: {String(isStable)}</p>\n    </div>\n  );\n}\n\nrender(<StableButton />);\nfireEvent.click(screen.getByText('Click'));\nconsole.log(screen.getByText(/Stable/).textContent);",
           "expectedOutput": "Stable: true"
-        },
+        }
+      ]
+    },
+    {
+      "id": "react-advanced",
+      "name": "Advanced Patterns",
+      "language": "react",
+      "description": "Extract reusable logic into custom hooks, manage complex state with useReducer and context, handle async data fetching, and build the capstone todo app.",
+      "lessons": [
         {
           "id": "react-26-custom-hooks",
           "title": "1. Extract logic into custom hooks",
@@ -1814,7 +1854,7 @@
             },
             {
               "type": "note",
-              "text": "Custom hooks share logic, not state \u2014 each component that calls useCounter gets its own independent count."
+              "text": "Custom hooks share logic, not state — each component that calls useCounter gets its own independent count."
             }
           ],
           "task": "Use custom hooks to build the example above and print the required result.",
