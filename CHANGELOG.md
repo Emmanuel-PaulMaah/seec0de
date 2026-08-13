@@ -16,6 +16,21 @@ Section conventions:
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-08-13
+
+### Added
+- **React is now runnable.** A new `react` language joins the in-app runner: JSX is compiled with Sucrase (`transform` with `jsx` transforms), then executed headlessly inside a jsdom window with `@testing-library/react` wired up — `render`, `screen`, `fireEvent`, `within`, and `waitFor` are exposed as globals and `IS_REACT_ACT_ENVIRONMENT` is set, so React learning code actually runs and can assert on rendered output. Backed by new deps `react@18.3.1`, `react-dom@18.3.1`, `jsdom`, `sucrase`, and `@testing-library/react` in [`runnerService.js`](src/main/runnerService.js).
+- **Complete React course in Learn Mode.** [`lessons/react.json`](src/renderer/data/lessons/react.json) ships 6 tracks × 5 lessons (30 total): **Components & JSX**, **Props & Data Flow**, **State & Events**, **Effects, Refs & Context**, **Forms & Performance**, and **Advanced Patterns**. The file was split from a single flat list into named tracks, and **React was added to the Learn Mode language catalog and labels.**
+- **Interactive stdin for the code runner.** Runs now stream output live over a new event protocol (`runner:start` → streamed `runner:output` / `runner:input-wanted` → `runner:exit`, plus a `runner:stdin` channel in [`preload.js`](src/main/preload.js)), and the Console shows an input row only when the program actually blocks reading stdin. Python uses a runpy wrapper that patches `input()` to emit a stripped stdin-wanted marker the moment it blocks; JS/TS hook `process.stdin` readers and `readline.Interface.prototype.question` so multi-prompt scripts re-show the row; C/C++ get no input row (no safe instrumentation point). Blank Enter is accepted like a real terminal, and markers are stripped before the learner sees them so lesson verification stays clean.
+
+### Changed
+- **"Learn mode" renamed to "Learn"** across the UI — title bar, Home screen, Learn Home, Learn mode panel, learning library modal, Settings drawer, and workspace tour copy. The mounted route key was also renamed (`learn-mode` → `learn`).
+- **"Start workspace tour" icon is now the first control on the right of the title bar**, ahead of the other title-bar actions.
+- **Explanation sidebar gained a Clear button** in [`ExplanationSidebar.jsx`](src/renderer/components/ExplanationSidebar.jsx) to dismiss the current explanation.
+
+### Fixed
+- **Backticks added around every inline code snippet in `predict` lesson sections** in [`javascript.json`](src/renderer/data/lessons/javascript.json) so code renders as monospace/inline-code in the lesson UI.
+
 ## [4.1.0] - 2026-08-08
 
 ### Added
