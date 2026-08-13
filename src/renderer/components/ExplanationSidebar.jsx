@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ChevronDown,
   Loader,
+  Trash2,
 } from 'lucide-react';
 
 // ExplanationSidebar — the right-most column. Shows the result of the
@@ -23,6 +24,7 @@ export default function ExplanationSidebar({
   loading = false,
   collapsed = false,
   onToggleCollapsed,
+  onClear,
 }) {  // Index of the currently-open accordion item (-1 = all collapsed).
   const [openIndex, setOpenIndex] = useState(-1);
 
@@ -56,6 +58,19 @@ export default function ExplanationSidebar({
     <div style={styles.sidebar}>
       <div style={styles.headerRow}>
         <div style={styles.headerLabel}>Explanation</div>
+
+        {explanation && (
+          <button
+            type="button"
+            className="ui-icon-button"
+            style={styles.collapseBtn}
+            onClick={onClear}
+            title="Clear explanation"
+            aria-label="Clear explanation"
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
 
         {onToggleCollapsed && (
           <button

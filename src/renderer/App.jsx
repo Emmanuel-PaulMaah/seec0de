@@ -1754,6 +1754,7 @@ const beginExplanationResize = useCallback((event) => {
                 loading={aiLoading}
                 collapsed={explanationCollapsed}
                 onToggleCollapsed={() => setExplanationCollapsed((v) => !v)}
+                onClear={() => setExplanation(null)}
               />
             </div>
           )}
