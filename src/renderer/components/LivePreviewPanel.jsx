@@ -31,7 +31,7 @@ import { explainErrorWithAI, hasApiKey } from '../engine/aiService';
 // the explicit Run button so output is a deliberate action, not a side-
 // effect of typing.
 const PREVIEWABLE = new Set(['html']);
-const RUNNABLE    = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
+const RUNNABLE    = new Set(['javascript', 'typescript', 'python', 'c', 'cpp', 'react']);
 const DEBOUNCE_MS = 250;
 const MAX_LOG_ENTRIES = 200;
 
@@ -45,8 +45,7 @@ function buildSrcDoc(language, code) {
 
 function languageLabel(l) {
   return ({
-    python: 'Python', javascript: 'JavaScript', typescript: 'TypeScript',
-    c: 'C', cpp: 'C++', html: 'HTML', css: 'CSS', plaintext: 'Pseudocode',
+    python: 'Python', javascript: 'JavaScript', typescript: 'TypeScript', react: 'React', c: 'C', cpp: 'C++', html: 'HTML', css: 'CSS', plaintext: 'Pseudocode',
   })[l] || l || 'this code';
 }
 

@@ -6,7 +6,7 @@ import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
 
 // Languages currently supported by runnerService.js. Keep in sync.
-const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
+const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp', 'react']);
 
 // Editor font-size scaling. Persisted per-install so the learner's
 // preferred reading size sticks across launches. Bounded so the editor
@@ -37,12 +37,12 @@ const DEFAULT_FILENAME_FOR_LANG = {
 
 const LANGUAGE_MONACO_MAP = {
   python: 'python', javascript: 'javascript', java: 'java', cpp: 'cpp',
-  csharp: 'csharp', go: 'go', rust: 'rust', typescript: 'typescript', c: 'c',
+  csharp: 'csharp', go: 'go', rust: 'rust', typescript: 'typescript', c: 'c', react: 'javascript',
 };
 
 const LANGUAGE_LABELS = {
   python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
-  csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C',
+  csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C', react: 'React',
 };
 
 function defineSeec0deThemes(monaco) {

@@ -27,6 +27,7 @@ const path = require('path');
 const os   = require('os');
 const crypto = require('crypto');
 const { getSafeEnv } = require('./envUtils');
+const { transform } = require('sucrase');
 
 const COMPILE_TIMEOUT_MS = 15_000;
 const RUN_TIMEOUT_MS     = 15_000;
@@ -165,6 +166,59 @@ async function runTypeScript(dir, source, filename) {
   return { ...result, command: `${tool} ${path.basename(file)}`, tool };
 }
 
+function resolveDep(name) {
+  // Absolute path, JSON-stringified so it can be dropped straight into
+  // generated source as a string literal. Required because the runner
+  // writes user code into a throwaway temp dir with no node_modules of
+  // its own — bare `require('jsdom')` would fail there even though the
+  // package is installed at the project root.
+  return JSON.stringify(require.resolve(name));
+}
+
+async function runReact(dir, source, filename) {
+  const outFile = path.join(dir, (filename || 'main.jsx').replace(/\.jsx?$/, '.js'));
+
+  let compiled;
+  try {
+    compiled = transform(source, { transforms: ['jsx'] }).code;
+  } catch (err) {
+    return mkResult({
+      exitCode: -1,
+      error: 'JSX compile error',
+      stderr: `JSX compile error: ${err.message}\n`,
+    });
+  }
+
+  const preamble = `
+const { JSDOM } = require(${resolveDep('jsdom')});
+const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost' });
+global.window = dom.window;
+global.document = dom.window.document;
+global.navigator = dom.window.navigator;
+global.HTMLElement = dom.window.HTMLElement;
+global.getComputedStyle = dom.window.getComputedStyle;
+global.IS_REACT_ACT_ENVIRONMENT = true;
+
+const React = require(${resolveDep('react')});
+global.React = React;
+const { render, screen, fireEvent, within, waitFor } = require(${resolveDep('@testing-library/react')});
+global.render = render;
+global.screen = screen;
+global.fireEvent = fireEvent;
+global.within = within;
+global.waitFor = waitFor;
+`;
+
+  await fs.writeFile(outFile, preamble + '\n' + compiled, 'utf8');
+
+  const node = await firstAvailable(['node']);
+  if (!node) {
+    return notInstalled('Node.js', 'Install from https://nodejs.org and reopen seec0de.');
+  }
+  const result = await execProcess({ cmd: node, args: [outFile], cwd: dir, timeout: RUN_TIMEOUT_MS });
+  return { ...result, command: `node ${path.basename(outFile)}`, tool: 'node (react)' };
+}
+
 async function runPython(dir, source, filename) {
   const file = path.join(dir, filename || 'main.py');
   await fs.writeFile(file, source, 'utf8');
@@ -249,6 +303,7 @@ async function run({ language, source, filename }) {
     switch ((language || '').toLowerCase()) {
       case 'javascript': return await runJavaScript(dir, source, filename);
       case 'typescript': return await runTypeScript(dir, source, filename);
+      case 'react':      return await runReact(dir, source, filename);
       case 'python':     return await runPython(dir, source, filename);
       case 'c':          return await runCFamily(dir, source, filename, false);
       case 'cpp':        return await runCFamily(dir, source, filename, true);
@@ -317,7 +372,7 @@ function registerRunnerServiceHandlers() {
   ipcMain.handle('runner:run', async (_e, payload) => {
     try {
       const { language, source, filePath } = payload || {};
-      if (!['javascript', 'typescript', 'python', 'c', 'cpp'].includes(language)) {
+      if (!['javascript', 'typescript', 'python', 'c', 'cpp', 'react'].includes(language)) {
         throw new Error(`Unsupported runner language: ${language}`);
       }
       return await run(payload || {});

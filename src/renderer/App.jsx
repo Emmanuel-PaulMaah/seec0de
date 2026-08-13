@@ -43,7 +43,7 @@ const STORAGE_KEY_EXPLANATION_COLLAPSED = 'seec0de.explanationCollapsed';
 const STORAGE_KEY_EXPLANATION_WIDTH  = 'seec0de.explanationWidth';
 
 // Languages the runner service can actually execute. Mirrors runnerService.js.
-const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp']);
+const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp', 'react']);
 
 const DEFAULT_FILENAME_FOR_LANG = {
   javascript: 'main.js',

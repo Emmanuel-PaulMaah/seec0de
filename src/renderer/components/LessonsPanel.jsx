@@ -49,7 +49,7 @@ export default function LessonsPanel({
 
   const uniqueLanguages = useMemo(() => {
     const available = Array.from(new Set(tracks.map(t => t.language).filter(Boolean)));
-    const preferredOrder = ['python', 'javascript', 'typescript'];
+    const preferredOrder = ['python', 'javascript', 'typescript', 'react'];
     return available.sort((left, right) => {
       const leftIndex = preferredOrder.indexOf(left);
       const rightIndex = preferredOrder.indexOf(right);

@@ -13,13 +13,16 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@testing-library/react": "^16.3.2",
     "electron-log": "^5.4.3",
     "electron-updater": "^6.8.3",
     "html-to-image": "^1.11.13",
+    "jsdom": "^29.1.1",
     "lucide-react": "^1.9.0",
     "monaco-editor": "^0.45.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sucrase": "^3.35.1"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",
