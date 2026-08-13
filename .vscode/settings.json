@@ -1,0 +1,8 @@
+{
+  "files.watcherExclude": {
+    "**/release/**": true
+  },
+  "search.exclude": {
+    "**/release": true
+  }
+}
