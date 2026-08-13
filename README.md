@@ -6,7 +6,7 @@
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ```bash
 # Clone the repository and install dependencies
@@ -20,7 +20,7 @@ The application will launch in its own Electron window with Webpack Hot Module R
 
 ---
 
-## 🎯 What You Can Do
+## What You Can Do
 
 `seec0de` features a flexible, multi-column workspace layout (**File Explorer · Instruction / Learn Panel · Code Panel · Live Preview / Console · Explanation Sidebar**) with an **Explained Terminal** docked at the bottom. Each side panel can be resized or collapsed into a compact 32px rail.
 
@@ -67,7 +67,7 @@ The application will launch in its own Electron window with Webpack Hot Module R
 - **Profile Manager:** Manage multiple user profiles with independent settings, active learning tracks, and progress tracking.
 - **Monaco Multi-Tab Editor:** Edit project files with auto-save (600ms debounce), dirty file state indicators, and customized dark theme (`hc-black`).
 =======
-### 🌐 Live Preview — html renders as you type
+### Live Preview — html renders as you type
 
 the right-side **Live Preview** panel renders **HTML** live into a sandboxed iframe with a ~250ms debounce. every other previewable language (JS, Python, C, C++) shows a "press Run, see output in Console" placeholder so output is always a deliberate gesture. CSS pairs with HTML — open an `.html` file that links to your stylesheet & watch it apply.
 
@@ -111,7 +111,7 @@ bottom-of-window collapsible terminal (`Ctrl + ``) that turns every command into
 
 ---
 
-## 🛠 Supported Languages
+## Supported Languages
 
 | Language | Describe → Code | In-App Runner | Live Preview | Glossary Support |
 |---|:---:|:---:|:---:|:---:|
@@ -137,7 +137,7 @@ bottom-of-window collapsible terminal (`Ctrl + ``) that turns every command into
 
 ---
 
-## 📦 Building & Packaging
+## Building & Packaging
 
 ```bash
 # Build the renderer bundle for production
@@ -151,7 +151,7 @@ Build outputs land in the `release/` directory. Auto-updates are managed via `el
 
 ---
 
-## 📄 License & Release Notes
+## License & Release Notes
 
 - **Repository:** [GitHub - Emmanuel-PaulMaah/seec0de](https://github.com/Emmanuel-PaulMaah/seec0de)
 - **Releases:** Download installers from [GitHub Releases](https://github.com/Emmanuel-PaulMaah/seec0de/releases)
