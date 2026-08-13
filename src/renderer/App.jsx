@@ -441,6 +441,13 @@ export default function App() {
   // Each run produces a fresh object (never mutated); LivePreviewPanel
   // pushes it into its Console tab via reference identity check.
   const [runnerOutput, setRunnerOutput] = useState(null);
+  // Live stdout/stderr chunks streamed from the interactive runner, e.g.
+  // [{ level: 'stdout'|'stderr', text }]. Cleared at the start of every run.
+  const [runnerStream, setRunnerStream] = useState([]);
+  const activeRunIdRef = useRef(null);
+  // The Console input row is shown only while the program blocks reading
+  // stdin — driven by the runner's `input-wanted` signal (never guessed).
+  const [runnerInputReady, setRunnerInputReady] = useState(false);
 
   // ---- persistence -----------------------------------------------------
   useEffect(() => {
@@ -947,8 +954,16 @@ export default function App() {
   }, [activePath, openFiles, activeGeneratedTab, effectiveLanguages, generatedCode, activeLesson, inLessonMode]);
 
   // ---- run code --------------------------------------------------------
-  // Runner output flows into the LivePreviewPanel's Console tab — the
-  // bottom terminal stays reserved for typed shell commands.
+  // Runs are interactive: the process starts, stdout/stderr streams live
+  // into the Console tab, and the learner can type input into the Console
+  // while the program runs (the input is fed to the process's stdin).
+  const handleRunnerInput = useCallback((chunk) => {
+    if (!activeRunIdRef.current) return;
+    window.seecode.runner.sendStdin(activeRunIdRef.current, chunk);
+    // Input submitted — hide the row until the program asks again.
+    setRunnerInputReady(false);
+  }, []);
+
   const handleRunCode = useCallback(async (payloadOverride) => {
     const payload = payloadOverride || (
       RUNNABLE.has(livePreview.language)
@@ -960,6 +975,8 @@ export default function App() {
     const runOwner = runOwnerRef.current;
     const runProfileId = settings.activeProfileId;
     setRunLoading(true);
+    setRunnerStream([]);
+    setRunnerInputReady(false);
     if (!previewVisible) setPreviewVisible(true);
     if (inLessonMode) {
       setLearnPhase('run');
@@ -967,9 +984,11 @@ export default function App() {
       setLearnAnnouncement(`Running ${payload.language} ${activeLesson.kind === 'exercise' ? 'exercise' : 'lesson'}…`);
     }
 
-    try {
-      const result = await window.seecode.runner.run(payload);
+    // Applies the final result (from the runner:exit event or a start
+    // failure) and runs lesson verification against it.
+    const applyResult = (result) => {
       if (runOwner !== runOwnerRef.current || loadSettings().activeProfileId !== runProfileId) return;
+      setRunLoading(false);
       const normalisedOutput = {
         command: result.command || `run ${payload.language}`,
         stdout: result.stdout || '',
@@ -1017,18 +1036,54 @@ export default function App() {
           setSettings(nextSettings);
         }
       }
+    };
+
+    let runId = null;
+    const unsubOutput = window.seecode.runner.onOutput(({ id, stream, chunk }) => {
+      if (id !== runId) return;
+      setRunnerStream((prev) => [...prev, { level: stream === 'stderr' ? 'stderr' : 'stdout', text: chunk || '' }]);
+      // Note: we deliberately do NOT hide the input row here. The prompt
+      // and the input-wanted signal arrive on separate streams (stdout vs
+      // stderr) and can be delivered in either order; hiding on output
+      // would race the signal and swallow the requested input row. The row
+      // hides on submit, on program exit, and on run-failure only.
+    });
+    const unsubInputWanted = window.seecode.runner.onInputWanted(({ id }) => {
+      if (id !== runId) return;
+      setRunnerInputReady(true);
+    });
+    const unsubExit = window.seecode.runner.onExit((result) => {
+      if (result.id !== runId) return;
+      unsubOutput();
+      unsubInputWanted();
+      unsubExit();
+      setRunnerInputReady(false);
+      activeRunIdRef.current = null;
+      applyResult(result);
+    });
+    const unsubscribe = () => { unsubOutput(); unsubInputWanted(); unsubExit(); };
+
+    try {
+      const resp = await window.seecode.runner.start(payload);
+      runId = resp?.id ?? null;
+      activeRunIdRef.current = runId;
+      // If start failed, main already emitted runner:exit with id null
+      // (runId is still null here), so the listener above applies it.
     } catch (err) {
-      if (runOwner !== runOwnerRef.current || loadSettings().activeProfileId !== runProfileId) return;
+      unsubscribe();
+      setRunnerInputReady(false);
+      activeRunIdRef.current = null;
+      if (runOwner === runOwnerRef.current || loadSettings().activeProfileId === runProfileId) setRunLoading(false);
+      const stderr = `[seec0de] ${err.message}\n`;
       setRunnerOutput({
         command: `run ${payload.language}`,
         stdout: '',
-        stderr: `[seec0de] ${err.message}\n`,
+        stderr,
         exitCode: -1,
         durationMs: 0,
         language: payload.language,
       });
       if (inLessonMode) {
-        const stderr = `[seec0de] ${err.message}\n`;
         setLessonStatus('fail');
         setLearnPhase('fix');
         setLessonVerification({
@@ -1040,8 +1095,6 @@ export default function App() {
         setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language, activeLesson));
         setLearnAnnouncement(describeLessonRunFailure(stderr, payload.language));
       }
-    } finally {
-      if (runOwner === runOwnerRef.current) setRunLoading(false);
     }
   }, [
     livePreview,
@@ -1715,6 +1768,9 @@ const beginExplanationResize = useCallback((event) => {
                 language={livePreview.language}
                 filename={livePreview.filename}
                 runnerOutput={runnerOutput}
+                runnerStream={runnerStream}
+                runnerInputEnabled={runnerInputReady}
+                onRunnerInput={handleRunnerInput}
                 runLoading={runLoading}
                 showErrorExplanations={!learnMode}
               />

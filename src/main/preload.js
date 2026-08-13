@@ -26,6 +26,29 @@ contextBridge.exposeInMainWorld('seecode', {
   },
   runner: {
     run: (payload) => ipcRenderer.invoke('runner:run', payload),
+    // Interactive runner. start() spawns the process and returns { id };
+    // output streams in via onOutput(), the final result arrives via
+    // onExit(), and typing goes back through sendStdin(id, chunk).
+    start: (payload) => ipcRenderer.invoke('runner:start', payload),
+    sendStdin: (id, chunk) => ipcRenderer.send('runner:stdin', { id, chunk }),
+    stop: (id) => ipcRenderer.send('runner:stop', { id }),
+    onOutput: (callback) => {
+      const listener = (_event, data) => callback(data);
+      ipcRenderer.on('runner:output', listener);
+      return () => ipcRenderer.removeListener('runner:output', listener);
+    },
+    // Fired ({ id }) the instant the running program blocks reading stdin,
+    // so the UI can show its input row exactly when needed.
+    onInputWanted: (callback) => {
+      const listener = (_event, data) => callback(data);
+      ipcRenderer.on('runner:input-wanted', listener);
+      return () => ipcRenderer.removeListener('runner:input-wanted', listener);
+    },
+    onExit: (callback) => {
+      const listener = (_event, data) => callback(data);
+      ipcRenderer.on('runner:exit', listener);
+      return () => ipcRenderer.removeListener('runner:exit', listener);
+    },
     // Returns { python, javascript, typescript, c, cpp }, each
     // { installed: bool, tool: string|null, version: string|null }.
     checkToolchains: () => ipcRenderer.invoke('runner:check-toolchains'),

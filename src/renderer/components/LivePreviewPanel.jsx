@@ -56,6 +56,9 @@ export default function LivePreviewPanel({
   language = 'plaintext',
   filename = null,
   runnerOutput = null,
+  runnerStream = [],
+  runnerInputEnabled = false,
+  onRunnerInput = null,
   runLoading = false,
   collapsible = true,
   showErrorExplanations = true,
@@ -127,10 +130,34 @@ export default function LivePreviewPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
+  // Live runner output: streamed chunks land here line by line as they're
+  // emitted by the running process. `runnerStream` is reset to [] by App at
+  // the start of each run, which we detect via the length drop.
+  const streamLenRef = useRef(0);
+  useEffect(() => {
+    if (runnerStream.length < streamLenRef.current) streamLenRef.current = 0;
+    if (runnerStream.length === streamLenRef.current) return;
+    const fresh = runnerStream.slice(streamLenRef.current);
+    streamLenRef.current = runnerStream.length;
+    setConsoleEntries((prev) => {
+      const out = [...prev];
+      for (const line of fresh) {
+        if (!line.text) continue;
+        out.push({ id: ++idRef.current, ts: Date.now(), level: line.level, args: [line.text] });
+      }
+      return out.length > MAX_LOG_ENTRIES ? out.slice(-MAX_LOG_ENTRIES) : out;
+    });
+  }, [runnerStream]);
+
   // Push runner result into the console view as a structured set of entries.
   useEffect(() => {
     if (!runnerOutput || runnerOutput === lastRunnerRef.current) return;
     lastRunnerRef.current = runnerOutput;
+    // stdout/stderr were already streamed into the console live; only add
+    // the command + exit lines here (fall back to the buffered output for
+    // runs that failed before they could stream anything, e.g. a missing
+    // interpreter).
+    const streamed = runnerStream.length > 0;
     setConsoleEntries((prev) => {
       const out = [...prev];
       const push = (level, text) => {
@@ -138,8 +165,8 @@ export default function LivePreviewPanel({
         out.push({ id: ++idRef.current, ts: Date.now(), level, args: [text] });
       };
       if (runnerOutput.command) push('meta', `$ ${runnerOutput.command}`);
-      if (runnerOutput.stdout) push('stdout', runnerOutput.stdout.replace(/\n$/, ''));
-      if (runnerOutput.stderr) push('stderr', runnerOutput.stderr.replace(/\n$/, ''));
+      if (!streamed && runnerOutput.stdout) push('stdout', runnerOutput.stdout.replace(/\n$/, ''));
+      if (!streamed && runnerOutput.stderr) push('stderr', runnerOutput.stderr.replace(/\n$/, ''));
       const ms = runnerOutput.durationMs ?? 0;
       const ok = runnerOutput.exitCode === 0;
       push(ok ? 'meta' : 'stderr', `${ok ? '✓' : '✗'} exit ${runnerOutput.exitCode ?? '?'} · ${ms}ms`);
@@ -193,7 +220,7 @@ export default function LivePreviewPanel({
     }
     setDismissedTitles(new Set());
     setView('console');
-  }, [runnerOutput, language, code, showErrorExplanations]);
+  }, [runnerOutput, runnerStream, language, code, showErrorExplanations]);
 
   const srcDoc = useMemo(
     () => (previewable ? buildSrcDoc(language, debouncedCode) : null),
@@ -351,7 +378,11 @@ export default function LivePreviewPanel({
                 )}
               </div>
             )}
-            <ConsoleView entries={consoleEntries} />
+            <ConsoleView
+                entries={consoleEntries}
+                inputEnabled={runnerInputEnabled}
+                onInput={onRunnerInput}
+              />
           </div>
         )}
       </div>
@@ -485,32 +516,66 @@ function renderInline(text) {
   });
 }
 
-function ConsoleView({ entries }) {
+function ConsoleView({ entries, inputEnabled, onInput }) {
   const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+  const [text, setText] = useState('');
+
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [entries]);
+  }, [entries, inputEnabled]);
 
-  if (entries.length === 0) {
-    return (
-      <div style={styles.consoleEmpty}>
-        <TermIcon size={20} color="var(--text-muted)" />
-        <span style={styles.consoleEmptyTitle}>Console is quiet.</span>
-        <span style={styles.consoleEmptyHint}>
-          Click <b>Run</b> in the editor toolbar to execute your code and see output here.
-        </span>
-      </div>
-    );
-  }
+  // Focus the input line the moment the program starts waiting for input.
+  useEffect(() => {
+    if (inputEnabled && inputRef.current) inputRef.current.focus();
+  }, [inputEnabled]);
+
+  const submit = (e) => {
+    e.preventDefault();
+    // Send whatever is typed — including an empty line (''), which many
+    // programs read as a signal (e.g. `while input() != "":` loops). Real
+    // terminals deliver blank Enter lines to the process.
+    onInput?.(text + '\n');
+    setText('');
+  };
 
   return (
-    <div style={styles.consoleScroll} ref={scrollRef}>
-      {entries.map((e) => (
-        <div key={e.id} style={{ ...styles.consoleLine, ...(levelStyles[e.level] || {}) }}>
-          <span style={styles.consoleLevel}>{levelLabel(e.level)}</span>
-          <pre style={styles.consoleArgs}>{e.args.join(' ')}</pre>
+    <div style={styles.consoleColumn}>
+      {entries.length === 0 ? (
+        <div style={styles.consoleEmpty}>
+          <TermIcon size={20} color="var(--text-muted)" />
+          <span style={styles.consoleEmptyTitle}>Console is quiet.</span>
+          <span style={styles.consoleEmptyHint}>
+            Click <b>Run</b> in the editor toolbar to execute your code and see output here.
+          </span>
         </div>
-      ))}
+      ) : (
+        <div style={styles.consoleScroll} ref={scrollRef}>
+          {entries.map((e) => (
+            <div key={e.id} style={{ ...styles.consoleLine, ...(levelStyles[e.level] || {}) }}>
+              <span style={styles.consoleLevel}>{levelLabel(e.level)}</span>
+              <pre style={styles.consoleArgs}>{e.args.join(' ')}</pre>
+            </div>
+          ))}
+        </div>
+      )}
+      {inputEnabled && onInput && (
+        <form style={styles.consoleInputRow} onSubmit={submit}>
+          <span style={styles.consoleInputPrompt}>›</span>
+          <input
+            ref={inputRef}
+            style={styles.consoleInput}
+            value={text}
+            onChange={(ev) => setText(ev.target.value)}
+            placeholder="Type input for your running program and press Enter"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button type="submit" className="ui-primary-button" style={styles.consoleInputBtn}>
+            Send
+          </button>
+        </form>
+      )}
     </div>
   );
 }
@@ -835,6 +900,52 @@ const styles = {
     background: 'var(--bg-input)',
     fontFamily: '"JetBrains Mono", "Cascadia Code", Consolas, monospace',
     padding: '4px 0',
+  },
+  consoleColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
+  },
+  consoleInputRow: {
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 38,
+    padding: '4px 10px',
+    borderTop: '1px solid var(--border)',
+    background: 'var(--bg-secondary)',
+    fontFamily: '"JetBrains Mono", "Cascadia Code", Consolas, monospace',
+  },
+  consoleInputPrompt: {
+    color: 'var(--accent)',
+    fontWeight: 700,
+    fontSize: 14,
+    paddingLeft: 4,
+  },
+  consoleInput: {
+    flex: 1,
+    background: 'transparent',
+    border: 'none',
+    outline: 'none',
+    color: 'var(--text-primary)',
+    fontSize: 'var(--text-md)',
+    fontFamily: 'inherit',
+  },
+  consoleInputBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: 'var(--control-compact)',
+    background: 'var(--accent)',
+    border: '1px solid var(--accent)',
+    borderRadius: 'var(--radius-group)',
+    color: 'var(--text-on-accent)',
+    fontSize: 'var(--text-sm)',
+    fontFamily: 'var(--font-ui)',
+    fontWeight: 600,
+    padding: '0 var(--space-3)',
+    whiteSpace: 'nowrap',
   },
   consoleLine: {
     display: 'flex',
