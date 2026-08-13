@@ -80,7 +80,7 @@ export default function TitleBar({
               onClick={() => onModeChange('learn')}
             >
               <GraduationCap size={11} />
-              Learn Mode
+              Learn
             </button>
           </div>
         )}

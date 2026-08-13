@@ -286,7 +286,7 @@ a:focus-visible,
   }
 }
 
-/* Learn Mode keeps the instructional order intact when the app is narrow:
+/* Learn keeps the instructional order intact when the app is narrow:
  * goal/activity, editor, then result. The workspace becomes scrollable rather
  * than squeezing three panes into unusable columns. */
 @media (max-width: 900px) {
