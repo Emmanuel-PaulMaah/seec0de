@@ -22,6 +22,7 @@ import { loadSettings, updateSettings, listProfiles, switchProfile, deleteProfil
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 import { verifyLessonOutput, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
 import { translateError } from './engine/errorTranslator';
+import { playLessonSound } from './engine/sounds';
 import lessonsData from './data/lessons/index.js';
 import { findExercise, isCourseActivity } from './data/exerciseCatalog';
 import { findProjectCheckpoint, nextProjectCheckpoint } from './data/projects';
@@ -1008,6 +1009,7 @@ export default function App() {
       // match instead of just "wrong, try again".
       if (inLessonMode) {
         const verdict = verifyLessonOutput(normalisedOutput, activeLesson);
+        playLessonSound(verdict.pass);
         setLessonVerification(verdict);
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
         setLessonErrorCoaching(verdict.pass ? [] : buildLessonErrorCoaching(
@@ -1084,6 +1086,7 @@ export default function App() {
         language: payload.language,
       });
       if (inLessonMode) {
+        playLessonSound(false);
         setLessonStatus('fail');
         setLearnPhase('fix');
         setLessonVerification({

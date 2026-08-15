@@ -98,6 +98,8 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   // resumable lesson state; transient runner output is intentionally omitted.
   learnMode:           false,
   learningSession:     null,
+  // Lesson feedback sounds (pass chime / fail tone). Off mutes them app-wide.
+  soundsEnabled:       true,
   // Scaffolding fades only with the learner's permission. Successful lesson
   // completions without hints build toward an opt-in suggestion.
   guidanceLevel:       'supported',

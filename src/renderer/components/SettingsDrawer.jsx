@@ -4,6 +4,7 @@ import {
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
   Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
+  Volume2, VolumeX,
 } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
@@ -27,12 +28,16 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 //
 // Sections (top → bottom):
 //   1. Appearance             — app theme
-//   2. Learn Mode             — learner-controlled guidance level
-//   3. Languages              — practical + comparison
-//   4. AI                     — Gemini key
-//   5. Workspace              — defaults for explorer / terminal panels
-//   6. About & Updates        — version, last-checked, "Check now"
-//   7. Onboarding             — "Rerun onboarding"
+//   2. Sounds                 — lesson pass/fail sounds
+//   3. Learn Mode             — learner-controlled guidance level
+//   4. Practice reminders     — pulse bar, time, desktop notifications
+//   5. Languages              — practical + comparison
+//   6. AI                     — Gemini key
+//   7. Workspace              — defaults for explorer / terminal panels
+//   8. Keyboard shortcuts     — keycap reference
+//   9. Toolchains             — compiler / interpreter setup
+//   10. About & Updates       — version, last-checked, "Check now"
+//   11. Onboarding            — "Rerun onboarding"
 //
 // Visual direction: AI-Native UI. Slides in from the right, dimmed scrim
 // behind, generous whitespace, single-column, semantic icons (no emoji).
@@ -202,7 +207,20 @@ export default function SettingsDrawer({
             </Field>
           </Section>
 
-          {/* ---- 2. Learn ---------------------------------------- */}
+          {/* ---- 2. Sounds ---------------------------------------- */}
+          <Section id="sounds" icon={<Volume2 size={13} />} title="Sounds" open={expandedSection === 'sounds'} onToggle={toggleSection}>
+            <ToggleRow
+              icon={settings.soundsEnabled !== false
+                ? <Volume2 size={13} />
+                : <VolumeX size={13} />}
+              label="Lesson sounds"
+              hint="Play a chime when you pass a lesson and a tone when a run fails."
+              checked={settings.soundsEnabled !== false}
+              onChange={(checked) => patch({ soundsEnabled: checked })}
+            />
+          </Section>
+
+          {/* ---- 3. Learn ---------------------------------------- */}
           <Section id="learnMode" icon={<GraduationCap size={13} />} title="Learn" open={expandedSection === 'learnMode'} onToggle={toggleSection}>
             <Field label="Guidance level" hint="Choose how much teaching Learn shows. You can change this at any time.">
               <GuidanceTabs
