@@ -25,9 +25,17 @@ const os = require('os');
 // Current project root, updated when the user picks a folder.
 let currentProjectRoot = null;
 
+// Auto-created folders for Lesson projects (Learn Mode). Each project gets
+// its own folder under here so project files are real, persistent, and
+// browsable — without requiring the user to open a workspace folder.
+function learnProjectsRoot() {
+  return path.join(app.getPath('userData'), 'learn-projects');
+}
+
 /**
- * Ensures a path is safe to access: either inside the current project root
- * or inside the OS temp directory (for the runner service).
+ * Ensures a path is safe to access: either inside the current project root,
+ * inside the OS temp directory (for the runner service), or inside the
+ * Learn-projects folder (auto-created lesson project files).
  *
  * When no project root has been established yet (boot before the renderer
  * has had a chance to call setProjectRoot, or no folder open at all), we
@@ -40,7 +48,8 @@ function validatePath(target) {
   const resolved = path.resolve(target);
   const isTemp = resolved.startsWith(path.resolve(os.tmpdir()));
   const isProject = resolved.startsWith(path.resolve(currentProjectRoot));
-  if (!isTemp && !isProject) {
+  const isLearnProjects = resolved.startsWith(path.resolve(learnProjectsRoot()));
+  if (!isTemp && !isProject && !isLearnProjects) {
     throw new Error(`Access denied: ${resolved} is outside the open project.`);
   }
 }
@@ -143,6 +152,9 @@ function registerFileServiceHandlers() {
     currentProjectRoot = rootPath || null;
     return { ok: true };
   });
+
+  // Root folder for auto-created Lesson project files (see learnProjectsRoot).
+  ipcMain.handle('fs:learn-projects-dir', () => learnProjectsRoot());
 }
 
 module.exports = { registerFileServiceHandlers };

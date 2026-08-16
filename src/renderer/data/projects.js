@@ -10,6 +10,15 @@ const projects = [
       {
         id: 'js-project-quiz-engine-plan', title: 'Create the answer model', phase: 'plan',
         task: 'Complete the question data and print the quiz title and question count.',
+        file: 'quiz.js',
+        examples: [
+          { label: 'Add the second question', code: '  { prompt: "Which structure stores an ordered list?", answer: "array" },' },
+          { label: 'Use the data', code: 'console.log("Questions: " + questions.length);' },
+        ],
+        checks: [
+          { id: 'two-questions', type: 'fileCount', file: 'quiz.js', pattern: '\\{ prompt:', atLeast: 2 },
+          { id: 'uses-data', type: 'fileContains', file: 'quiz.js', pattern: 'questions\\.length' },
+        ],
         starterCode: `const quizTitle = "JavaScript Basics";
 const questions = [
   { prompt: "Which keyword declares a constant?", answer: "const" },
@@ -34,6 +43,17 @@ console.log("Questions: " + questions.length);`,
       {
         id: 'js-project-quiz-engine-build', title: 'Score submitted answers', phase: 'build',
         task: 'Complete the named scoreQuiz function so it counts correct answers, then print the result.',
+        file: 'quiz.js',
+        examples: [
+          { label: 'The scoring loop', code: `  for (let index = 0; index < items.length; index += 1) {
+    if (answers[index] === items[index].answer) score += 1;
+  }` },
+          { label: 'Run it', code: 'console.log("Score: " + scoreQuiz(questions, submitted) + "/2");' },
+        ],
+        checks: [
+          { id: 'has-score-fn', type: 'hasFunction', file: 'quiz.js', name: 'scoreQuiz' },
+          { id: 'compares-answer', type: 'fileContains', file: 'quiz.js', pattern: 'items[index].answer', mode: 'string' },
+        ],
         starterCode: `const questions = [
   { prompt: "Constant keyword?", answer: "const" },
   { prompt: "Ordered list?", answer: "array" },
@@ -69,6 +89,15 @@ console.log("Score: " + scoreQuiz(questions, submitted) + "/2");`,
       {
         id: 'js-project-quiz-engine-debug', title: 'Fix case-insensitive scoring', phase: 'debug',
         task: 'Diagnose why a differently capitalized correct answer is rejected and fix the scoring logic.',
+        file: 'quiz.js',
+        examples: [
+          { label: 'Normalize both sides', code: 'if (answers[index].toLowerCase() === items[index].answer.toLowerCase()) score += 1;' },
+          { label: 'Run it', code: 'console.log("Case-friendly score: " + scoreQuiz(questions, submitted) + "/2");' },
+        ],
+        checks: [
+          { id: 'no-one-sided-compare', type: 'fileMissing', file: 'quiz.js', pattern: 'answers\\[index\\] === items\\[index\\]\\.answer\\.toLowerCase' },
+          { id: 'normalizes-both', type: 'fileCount', file: 'quiz.js', pattern: 'toLowerCase', atLeast: 2 },
+        ],
         starterCode: `const questions = [
   { prompt: "Constant keyword?", answer: "const" },
   { prompt: "Ordered list?", answer: "array" },
@@ -106,6 +135,15 @@ console.log("Case-friendly score: " + scoreQuiz(questions, submitted) + "/2");`,
       {
         id: 'js-project-quiz-engine-modify', title: 'Add partial credit', phase: 'modify',
         task: 'Change scoring so an answer matching a question hint earns 0.5 points while an exact answer earns 1.',
+        file: 'quiz.js',
+        examples: [
+          { label: 'Half a point for a hint', code: 'else if (answers[index] === items[index].hint) score += 0.5;' },
+          { label: 'Run it', code: 'console.log("Final score: " + score + "/3");\nconsole.log("Review needed: " + (score < 2));' },
+        ],
+        checks: [
+          { id: 'half-point', type: 'fileContains', file: 'quiz.js', pattern: '0\\.5' },
+          { id: 'hint-compare', type: 'fileContains', file: 'quiz.js', pattern: 'items[index].hint', mode: 'string' },
+        ],
         starterCode: `const questions = [
   { prompt: "Constant keyword?", answer: "const", hint: "keyword" },
   { prompt: "Ordered list?", answer: "array", hint: "list" },
@@ -159,6 +197,15 @@ console.log("Review needed: " + (score < 2));`,
     checkpoints: [
       {
         id: 'js-project-inventory-report-plan', title: 'Model the stock', phase: 'plan', task: 'Add the missing product and print both item records with readable quantities.',
+        file: 'inventory.js',
+        examples: [
+          { label: 'Add the product', code: '  { name: "Pencil", price: 2, quantity: 5 },' },
+          { label: 'Print the second record', code: 'console.log(inventory[1].name + ": " + inventory[1].quantity);' },
+        ],
+        checks: [
+          { id: 'two-products', type: 'fileCount', file: 'inventory.js', pattern: 'name:', atLeast: 2 },
+          { id: 'prints-second', type: 'fileContains', file: 'inventory.js', pattern: 'inventory\\[1\\]' },
+        ],
         starterCode: `const inventory = [
   { name: "Notebook", price: 4, quantity: 3 },
   // TODO: add Pencil, price 2, quantity 5
@@ -180,6 +227,17 @@ console.log(inventory[1].name + ": " + inventory[1].quantity);`,
       },
       {
         id: 'js-project-inventory-report-build', title: 'Calculate inventory value', phase: 'build', task: 'Implement totalValue to sum price times quantity for every product.',
+        file: 'inventory.js',
+        examples: [
+          { label: 'The summing loop', code: `  for (const product of products) {
+    total += product.price * product.quantity;
+  }` },
+          { label: 'Run it', code: 'console.log("Inventory value: $" + totalValue(inventory));' },
+        ],
+        checks: [
+          { id: 'has-total-fn', type: 'hasFunction', file: 'inventory.js', name: 'totalValue' },
+          { id: 'multiplies', type: 'fileContains', file: 'inventory.js', pattern: 'product.price * product.quantity', mode: 'string' },
+        ],
         starterCode: `const inventory = [
   { name: "Notebook", price: 4, quantity: 3 },
   { name: "Pencil", price: 2, quantity: 5 },
@@ -211,6 +269,14 @@ console.log("Inventory value: $" + totalValue(inventory));`,
       },
       {
         id: 'js-project-inventory-report-debug', title: 'Repair the low-stock rule', phase: 'debug', task: 'Fix the boundary bug so products at the reorder level are included in the low-stock report.',
+        file: 'inventory.js',
+        examples: [
+          { label: 'The boundary fix', code: 'if (product.quantity <= reorderLevel) names.push(product.name);' },
+        ],
+        checks: [
+          { id: 'no-strict-less', type: 'fileMissing', file: 'inventory.js', pattern: 'product.quantity < reorderLevel', mode: 'string' },
+          { id: 'boundary-inclusive', type: 'fileContains', file: 'inventory.js', pattern: 'product.quantity <= reorderLevel', mode: 'string' },
+        ],
         starterCode: `const inventory = [
   { name: "Notebook", price: 4, quantity: 3 },
   { name: "Pencil", price: 2, quantity: 5 },
@@ -247,6 +313,16 @@ console.log("Reorder: " + lowStockNames(inventory, 3).join(", "));`,
       },
       {
         id: 'js-project-inventory-report-modify', title: 'Account for reservations', phase: 'modify', task: 'Report sellable units after reservations and flag items with at most two sellable units.',
+        file: 'inventory.js',
+        examples: [
+          { label: 'Units actually sellable', code: 'return product.quantity - product.reserved;' },
+          { label: 'Flag low stock', code: 'const warning = available <= 2 ? " LOW" : "";' },
+        ],
+        checks: [
+          { id: 'has-available-fn', type: 'hasFunction', file: 'inventory.js', name: 'availableUnits' },
+          { id: 'subtracts-reserved', type: 'fileContains', file: 'inventory.js', pattern: 'product.quantity - product.reserved', mode: 'string' },
+          { id: 'flags-low', type: 'fileContains', file: 'inventory.js', pattern: 'available <= 2', mode: 'string' },
+        ],
         starterCode: `const inventory = [
   { name: "Notebook", quantity: 5, reserved: 2 },
   { name: "Pencil", quantity: 6, reserved: 1 },
@@ -294,6 +370,15 @@ for (const product of inventory) {
     checkpoints: [
       {
         id: 'py-project-study-log-plan', title: 'Record study sessions', phase: 'plan', task: 'Complete the second session and print the log name and session count.',
+        file: 'study_log.py',
+        examples: [
+          { label: 'Add the session', code: '    {"subject": "Math", "minutes": 20},' },
+          { label: 'Use the list', code: 'print("Sessions:", len(sessions))' },
+        ],
+        checks: [
+          { id: 'two-sessions', type: 'fileCount', file: 'study_log.py', pattern: '"subject":', atLeast: 2 },
+          { id: 'uses-len', type: 'fileContains', file: 'study_log.py', pattern: 'len(sessions)', mode: 'string' },
+        ],
         starterCode: `log_name = "Week 1"
 sessions = [
     {"subject": "Python", "minutes": 30},
@@ -315,6 +400,19 @@ print("Sessions:", len(sessions))`, reflectionPrompt: 'What advantage does a dic
       },
       {
         id: 'py-project-study-log-build', title: 'Total the study time', phase: 'build', task: 'Implement total_minutes and use it to print the combined study time.',
+        file: 'study_log.py',
+        examples: [
+          { label: 'The summing loop', code: `def total_minutes(entries):
+    total = 0
+    for entry in entries:
+        total += entry["minutes"]
+    return total` },
+          { label: 'Run it', code: 'print("Total minutes:", total_minutes(sessions))' },
+        ],
+        checks: [
+          { id: 'has-total-fn', type: 'hasFunction', file: 'study_log.py', name: 'total_minutes' },
+          { id: 'adds-minutes', type: 'fileContains', file: 'study_log.py', pattern: 'entry["minutes"]', mode: 'string' },
+        ],
         starterCode: `sessions = [
     {"subject": "Python", "minutes": 30},
     {"subject": "Math", "minutes": 20},
@@ -343,6 +441,14 @@ print("Total minutes:", total_minutes(sessions))`, reflectionPrompt: 'Why is tot
       },
       {
         id: 'py-project-study-log-debug', title: 'Fix subject totals', phase: 'debug', task: 'Diagnose and fix the condition that incorrectly totals sessions from other subjects.',
+        file: 'study_log.py',
+        examples: [
+          { label: 'The condition fix', code: 'if entry["subject"] == subject:' },
+        ],
+        checks: [
+          { id: 'no-inverted-condition', type: 'fileMissing', file: 'study_log.py', pattern: '!= subject', mode: 'string' },
+          { id: 'compares-equal', type: 'fileContains', file: 'study_log.py', pattern: '== subject', mode: 'string' },
+        ],
         starterCode: `sessions = [
     {"subject": "Python", "minutes": 30},
     {"subject": "Math", "minutes": 20},
@@ -375,6 +481,16 @@ print("Python minutes:", minutes_for_subject(sessions, "Python"))`, reflectionPr
       },
       {
         id: 'py-project-study-log-modify', title: 'Report hours and goal progress', phase: 'modify', task: 'Convert total minutes to hours rounded to one decimal and report whether the 2-hour goal was reached.',
+        file: 'study_log.py',
+        examples: [
+          { label: 'Convert to hours', code: 'def hours_studied(entries):\n    return round(total_minutes(entries) / 60, 1)' },
+          { label: 'Check the goal', code: 'print("Goal reached:", hours >= 2)' },
+        ],
+        checks: [
+          { id: 'has-hours-fn', type: 'hasFunction', file: 'study_log.py', name: 'hours_studied' },
+          { id: 'rounds', type: 'fileContains', file: 'study_log.py', pattern: 'round\\(' },
+          { id: 'compares-goal', type: 'fileContains', file: 'study_log.py', pattern: '>= 2', mode: 'string' },
+        ],
         starterCode: `sessions = [
     {"subject": "Python", "minutes": 50},
     {"subject": "Math", "minutes": 35},
@@ -425,6 +541,15 @@ print("Goal reached:", hours >= 2)`, reflectionPrompt: 'What information is lost
     checkpoints: [
       {
         id: 'py-project-text-analyzer-plan', title: 'Prepare words', phase: 'plan', task: 'Split the sentence into words and print the original text and its word count.',
+        file: 'text_analyzer.py',
+        examples: [
+          { label: 'Split the text', code: 'words = text.split()' },
+          { label: 'Print the count', code: 'print("Word count:", len(words))' },
+        ],
+        checks: [
+          { id: 'splits-text', type: 'fileContains', file: 'text_analyzer.py', pattern: 'text.split()', mode: 'string' },
+          { id: 'counts-words', type: 'fileContains', file: 'text_analyzer.py', pattern: 'len(words)', mode: 'string' },
+        ],
         starterCode: `text = "Code grows with practice"
 # TODO: create words by splitting text
 words = []
@@ -441,6 +566,20 @@ print("Word count:", len(words))`, reflectionPrompt: 'Why is a list of words eas
       },
       {
         id: 'py-project-text-analyzer-build', title: 'Count long words', phase: 'build', task: 'Implement count_long_words to count words whose length is at least the supplied minimum.',
+        file: 'text_analyzer.py',
+        examples: [
+          { label: 'The counting loop', code: `def count_long_words(items, minimum):
+    count = 0
+    for word in items:
+        if len(word) >= minimum:
+            count += 1
+    return count` },
+          { label: 'Run it', code: 'print("Words with 5+ letters:", count_long_words(words, 5))' },
+        ],
+        checks: [
+          { id: 'has-count-fn', type: 'hasFunction', file: 'text_analyzer.py', name: 'count_long_words' },
+          { id: 'length-rule', type: 'fileContains', file: 'text_analyzer.py', pattern: 'len(word) >= minimum', mode: 'string' },
+        ],
         starterCode: `text = "Code grows with steady practice"
 words = text.split()
 
@@ -464,6 +603,14 @@ print("Words with 5+ letters:", count_long_words(words, 5))`, reflectionPrompt: 
       },
       {
         id: 'py-project-text-analyzer-debug', title: 'Fix repeated-word detection', phase: 'debug', task: 'Diagnose why Code and code are treated as different words and fix the normalization.',
+        file: 'text_analyzer.py',
+        examples: [
+          { label: 'Normalize each word', code: 'if word.lower() == target.lower():' },
+        ],
+        checks: [
+          { id: 'no-one-sided-normalize', type: 'fileMissing', file: 'text_analyzer.py', pattern: 'word == target.lower()', mode: 'string' },
+          { id: 'normalizes-both', type: 'fileCount', file: 'text_analyzer.py', pattern: '\\.lower\\(\\)', atLeast: 2 },
+        ],
         starterCode: `text = "Code grows when code gets tested"
 
 def count_word(source, target):
@@ -488,6 +635,15 @@ print("Uses of code:", count_word(text, "code"))`, reflectionPrompt: 'Which valu
       },
       {
         id: 'py-project-text-analyzer-modify', title: 'Add a frequency report', phase: 'modify', task: 'Ignore case, count every unique word, and print an alphabetical frequency report.',
+        file: 'text_analyzer.py',
+        examples: [
+          { label: 'Increment a count', code: 'counts[word] = counts.get(word, 0) + 1' },
+          { label: 'Print the report', code: 'for word in sorted(frequencies):\n    print(word + ": " + str(frequencies[word]))' },
+        ],
+        checks: [
+          { id: 'uses-get', type: 'fileContains', file: 'text_analyzer.py', pattern: 'counts.get(word, 0)', mode: 'string' },
+          { id: 'reports-size', type: 'fileContains', file: 'text_analyzer.py', pattern: 'len(frequencies)', mode: 'string' },
+        ],
         starterCode: `text = "Practice makes code and practice builds code"
 
 def word_frequencies(source):
@@ -532,6 +688,15 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-progress-tracker-plan', title: 'Model a course record', phase: 'plan',
         task: 'Define the Course interface, type the record, and print its title and lesson count.',
+        file: 'progress.ts',
+        examples: [
+          { label: 'The interface', code: 'interface Course {\n  title: string;\n  lessons: number;\n}' },
+          { label: 'Type the record', code: 'const course: Course = { title: "TypeScript Foundations", lessons: 10 };' },
+        ],
+        checks: [
+          { id: 'has-interface', type: 'fileContains', file: 'progress.ts', pattern: 'interface Course', mode: 'string' },
+          { id: 'types-record', type: 'fileContains', file: 'progress.ts', pattern: ': Course', mode: 'string' },
+        ],
         starterCode: `// Define Course with title: string and lessons: number.\nconst course = { title: "TypeScript Foundations", lessons: 10 };\nconsole.log(course.title);\nconsole.log("Lessons: " + course.lessons);`,
         expectedOutput: `TypeScript Foundations\nLessons: 10`, matchType: 'exact',
         hints: ['Declare the interface before the object.', 'Annotate course with the interface name.'],
@@ -541,6 +706,16 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-progress-tracker-build', title: 'Calculate completion', phase: 'build',
         task: 'Type and implement percentComplete, then print the rounded completion percentage.',
+        file: 'progress.ts',
+        examples: [
+          { label: 'The typed function', code: 'function percentComplete(progress: Progress): number {\n  return Math.round((progress.completed / progress.total) * 100);\n}' },
+          { label: 'Run it', code: 'console.log("Complete: " + percentComplete({ completed: 7, total: 10 }) + "%");' },
+        ],
+        checks: [
+          { id: 'has-percent-fn', type: 'hasFunction', file: 'progress.ts', name: 'percentComplete' },
+          { id: 'types-param', type: 'fileContains', file: 'progress.ts', pattern: ': Progress', mode: 'string' },
+          { id: 'rounds', type: 'fileContains', file: 'progress.ts', pattern: 'Math.round', mode: 'string' },
+        ],
         starterCode: `interface Progress { completed: number; total: number }\n\nfunction percentComplete(progress) {\n  // Return the rounded percentage.\n}\n\nconsole.log("Complete: " + percentComplete({ completed: 7, total: 10 }) + "%");`,
         expectedOutput: 'Complete: 70%', matchType: 'exact',
         hints: ['The parameter uses Progress and the function returns number.', 'Divide completed by total, multiply by 100, then use Math.round.'],
@@ -550,6 +725,14 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-progress-tracker-debug', title: 'Repair the optional mentor', phase: 'debug',
         task: 'Fix the contract and formatter so a course without a mentor prints a safe fallback.',
+        file: 'progress.ts',
+        examples: [
+          { label: 'The safe formatter', code: 'console.log(course.title + " — " + (course.mentor?.toUpperCase() ?? "self-guided"));' },
+        ],
+        checks: [
+          { id: 'optional-mentor', type: 'fileContains', file: 'progress.ts', pattern: 'mentor?: string', mode: 'string' },
+          { id: 'safe-fallback', type: 'fileContains', file: 'progress.ts', pattern: '?? "self-guided"', mode: 'string' },
+        ],
         starterCode: `interface Course { title: string; mentor: string }\nconst course: Course = { title: "Safe Programs" };\nconsole.log(course.title + " — " + course.mentor.toUpperCase());`,
         expectedOutput: 'Safe Programs — self-guided', matchType: 'exact',
         hints: ['The mentor property is not always present.', 'Optional chaining and nullish coalescing can safely format it.'],
@@ -559,6 +742,15 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-progress-tracker-modify', title: 'Summarize the dashboard', phase: 'modify',
         task: 'Complete dashboardSummary so it reports course count and total completed lessons.',
+        file: 'progress.ts',
+        examples: [
+          { label: 'The reducer', code: 'const completed = items.reduce((total, course) => total + course.completed, 0);' },
+          { label: 'Run it', code: 'return `${items.length} courses, ${completed} lessons complete`;' },
+        ],
+        checks: [
+          { id: 'has-summary-fn', type: 'hasFunction', file: 'progress.ts', name: 'dashboardSummary' },
+          { id: 'reduces', type: 'fileContains', file: 'progress.ts', pattern: 'items.reduce', mode: 'string' },
+        ],
         starterCode: `interface CourseProgress { title: string; completed: number; total: number }\nconst courses: CourseProgress[] = [\n  { title: "Foundations", completed: 10, total: 10 },\n  { title: "Safe Programs", completed: 3, total: 5 },\n];\n\nfunction dashboardSummary(items: CourseProgress[]): string {\n  // Calculate the completed lesson total.\n  return "";\n}\nconsole.log(dashboardSummary(courses));`,
         expectedOutput: '2 courses, 13 lessons complete', matchType: 'exact',
         hints: ['Use reduce to add each completed value.', 'items.length is the course count.'],
@@ -576,6 +768,15 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-command-result-plan', title: 'Define command states', phase: 'plan',
         task: 'Define CommandResult as a success or failure state and print both status tags.',
+        file: 'command_result.ts',
+        examples: [
+          { label: 'The union type', code: 'type CommandResult =\n  | { status: "success"; output: string }\n  | { status: "failure"; message: string };' },
+          { label: 'Type the data', code: 'const results: CommandResult[] = [\n  { status: "success", output: "built" },\n  { status: "failure", message: "offline" },\n];' },
+        ],
+        checks: [
+          { id: 'has-type', type: 'fileContains', file: 'command_result.ts', pattern: 'type CommandResult', mode: 'string' },
+          { id: 'typed-output', type: 'fileContains', file: 'command_result.ts', pattern: 'output: string', mode: 'string' },
+        ],
         starterCode: `// A success has output; a failure has message.\n// Define CommandResult with a shared status tag.\nconst results = [\n  { status: "success", output: "built" },\n  { status: "failure", message: "offline" },\n];\nfor (const result of results) console.log(result.status);`,
         expectedOutput: `success\nfailure`, matchType: 'exact',
         hints: ['Use literal status values in two object types joined by |.', 'Annotate results as CommandResult[].'],
@@ -585,6 +786,16 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-command-result-build', title: 'Format every state', phase: 'build',
         task: 'Implement the typed formatResult function by narrowing on status.',
+        file: 'command_result.ts',
+        examples: [
+          { label: 'Narrow on status', code: 'if (result.status === "success") return `OK: ${result.output}`;' },
+          { label: 'The failure branch', code: 'return `ERROR: ${result.message}`;' },
+        ],
+        checks: [
+          { id: 'has-format-fn', type: 'hasFunction', file: 'command_result.ts', name: 'formatResult' },
+          { id: 'narrows', type: 'fileContains', file: 'command_result.ts', pattern: 'result.status === "success"', mode: 'string' },
+          { id: 'uses-output', type: 'fileContains', file: 'command_result.ts', pattern: 'result.output', mode: 'string' },
+        ],
         starterCode: `type CommandResult =\n  | { status: "success"; output: string }\n  | { status: "failure"; message: string };\n\nfunction formatResult(result: CommandResult): string {\n  // Return OK: output or ERROR: message.\n  return "";\n}\nconsole.log(formatResult({ status: "success", output: "built" }));\nconsole.log(formatResult({ status: "failure", message: "offline" }));`,
         expectedOutput: `OK: built\nERROR: offline`, matchType: 'exact',
         hints: ['Compare result.status with "success".', 'Each branch gains access to its state-specific property.'],
@@ -594,6 +805,15 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-command-result-debug', title: 'Fix unsafe result access', phase: 'debug',
         task: 'Repair the formatter that reads output even when the result is a failure.',
+        file: 'command_result.ts',
+        examples: [
+          { label: 'Narrow before reading', code: 'if (result.status === "success") return result.output.toUpperCase();' },
+          { label: 'The failure fallback', code: 'return `FAILED: ${result.message}`;' },
+        ],
+        checks: [
+          { id: 'narrows-first', type: 'fileContains', file: 'command_result.ts', pattern: 'if (result.status === "success")', mode: 'string' },
+          { id: 'has-failed-fallback', type: 'fileContains', file: 'command_result.ts', pattern: 'FAILED: ', mode: 'string' },
+        ],
         starterCode: `type CommandResult =\n  | { status: "success"; output: string }\n  | { status: "failure"; message: string };\nfunction summary(result: CommandResult): string {\n  return result.output.toUpperCase();\n}\nconsole.log(summary({ status: "failure", message: "timeout" }));`,
         expectedOutput: 'FAILED: timeout', matchType: 'exact',
         hints: ['Narrow before reading a state-specific property.', 'Return output only in the success branch.'],
@@ -603,6 +823,15 @@ for word in sorted(frequencies):
       {
         id: 'ts-project-command-result-modify', title: 'Summarize command history', phase: 'modify',
         task: 'Count successful and failed results and print one history summary.',
+        file: 'command_result.ts',
+        examples: [
+          { label: 'Count each state', code: 'const succeeded = history.filter(result => result.status === "success").length;\nconst failed = history.filter(result => result.status === "failure").length;' },
+          { label: 'Run it', code: 'console.log(`Success: ${succeeded}, Failed: ${failed}`);' },
+        ],
+        checks: [
+          { id: 'filters-success', type: 'fileContains', file: 'command_result.ts', pattern: 'history.filter', mode: 'string' },
+          { id: 'filters-failure', type: 'fileContains', file: 'command_result.ts', pattern: 'result.status === "failure"', mode: 'string' },
+        ],
         starterCode: `type CommandResult =\n  | { status: "success"; output: string }\n  | { status: "failure"; message: string };\nconst history: CommandResult[] = [\n  { status: "success", output: "built" },\n  { status: "failure", message: "offline" },\n  { status: "success", output: "tested" },\n];\n// Count each state and print the summary.`,
         expectedOutput: 'Success: 2, Failed: 1', matchType: 'exact',
         hints: ['Filter by each status tag.', 'The resulting arrays provide their counts through length.'],

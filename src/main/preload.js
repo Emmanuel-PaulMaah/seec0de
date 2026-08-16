@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('seecode', {
     delete:     (p)            => ipcRenderer.invoke('fs:delete', p),
     pathExists: (p)            => ipcRenderer.invoke('fs:path-exists', p),
     setProjectRoot: (p)        => ipcRenderer.invoke('fs:set-project-root', p),
+    // Root folder where Learn-mode projects auto-create their files.
+    learnProjectsDir: ()       => ipcRenderer.invoke('fs:learn-projects-dir'),
   },
   terminal: {
     home:      ()              => ipcRenderer.invoke('term:home'),
