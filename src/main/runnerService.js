@@ -17,8 +17,15 @@
 //   - Temp dir is removed after the run completes (or after a fail).
 //
 // IPC channels:
-//   runner:run({ language, source, filename?, input? }) →
+//   runner:run({ language, source, filename?, input?, projectDir? }) →
 //     { stdout, stderr, exitCode, durationMs, command, tool, error? }
+//
+// `projectDir` (absolute path inside the open project) runs the file IN PLACE
+// instead of a throwaway temp dir, so multi-file build projects can require()
+// their sibling modules. When set, the source is written over the on-disk file
+// (the renderer autosaves the same content anyway) and nothing is cleaned up.
+// C/C++ ignores projectDir — compilers drop .obj/.exe artifacts, so those
+// always run in the temp sandbox.
 
 const { ipcMain } = require('electron');
 const { spawn } = require('child_process');
@@ -306,14 +313,17 @@ async function runCFamily(dir, source, filename, isCpp, input) {
 // ---------------------------------------------------------------------------
 // dispatcher
 
-async function run({ language, source, filename, input }) {
+async function run({ language, source, filename, input, projectDir }) {
   if (typeof source !== 'string' || !source.trim()) {
     return mkResult({ error: 'No source code to run.', stderr: 'No source code to run.\n' });
   }
-  const dir = uniqueDir();
-  await fs.mkdir(dir, { recursive: true });
+  // In-place project runs (multi-file builds). Never for C/C++ (artifacts).
+  const lang = (language || '').toLowerCase();
+  const inPlace = !!projectDir && !['c', 'cpp'].includes(lang);
+  const dir = inPlace ? path.resolve(projectDir) : uniqueDir();
+  if (!inPlace) await fs.mkdir(dir, { recursive: true });
   try {
-    switch ((language || '').toLowerCase()) {
+    switch (lang) {
       case 'javascript': return await runJavaScript(dir, source, filename, input);
       case 'typescript': return await runTypeScript(dir, source, filename, input);
       case 'react':      return await runReact(dir, source, filename, input);
@@ -327,7 +337,7 @@ async function run({ language, source, filename, input }) {
         });
     }
   } finally {
-    rmDir(dir);
+    if (!inPlace) rmDir(dir);
   }
 }
 
@@ -451,10 +461,19 @@ function execProcessLive({ cmd, args, cwd, timeout, sender, id, command, tool })
 
 // Writes the source into the sandbox dir and returns the { cmd, args } that
 // would run it, plus a human `command` for display. Compiles C/C++ first.
-async function prepareInteractiveProcess(language, dir, source, filename) {
+//
+// With `inPlace` (a project-folder run for multi-file builds) the instrumented
+// copy goes under a unique generated name NEXT TO the learner's file, so
+// require()/import of sibling modules resolves against the project folder
+// while the learner's own file is never touched. The caller deletes the copy
+// (`cleanupFile`) once the process exits.
+async function prepareInteractiveProcess(language, dir, source, filename, { inPlace = false } = {}) {
+  const rand = crypto.randomBytes(4).toString('hex');
   switch ((language || '').toLowerCase()) {
     case 'javascript': {
-      const file = path.join(dir, filename || 'main.js');
+      const file = inPlace
+        ? path.join(dir, `seec0de_run_${rand}.js`)
+        : path.join(dir, filename || 'main.js');
       // Instrumentation preamble: signals the renderer whenever the program
       // asks for input — on attaching a stdin reader, and on every
       // readline question (so multi-question scripts re-show the row).
@@ -488,7 +507,11 @@ try {
       await fs.writeFile(file, preamble + '\n' + source, 'utf8');
       const node = await firstAvailable(['node']);
       if (!node) throw new Error('Node.js not found on PATH. Install from https://nodejs.org and reopen seec0de.');
-      return { cmd: node, args: [file], command: `node ${path.basename(file)}`, tool: 'node' };
+      return {
+        cmd: node, args: [file],
+        command: `node ${filename || path.basename(file)}`, tool: 'node',
+        cleanupFile: inPlace ? file : null,
+      };
     }
     case 'typescript': {
       const file = path.join(dir, filename || 'main.ts');
@@ -523,10 +546,16 @@ try {
       await fs.writeFile(file, preamble + '\n' + source, 'utf8');
       const tool = await firstAvailable(['tsx', 'ts-node']);
       if (!tool) throw new Error('tsx / ts-node not found on PATH. Install with `npm i -g tsx` to run TypeScript here.');
-      return { cmd: tool, args: [file], command: `${tool} ${path.basename(file)}`, tool };
+      return {
+        cmd: tool, args: [file],
+        command: `${tool} ${filename || path.basename(file)}`, tool,
+        cleanupFile: inPlace ? file : null,
+      };
     }
     case 'react': {
-      const outFile = path.join(dir, (filename || 'main.jsx').replace(/\.jsx?$/, '.js'));
+      const outFile = inPlace
+        ? path.join(dir, `seec0de_run_${rand}.js`)
+        : path.join(dir, (filename || 'main.jsx').replace(/\.jsx?$/, '.js'));
       let compiled;
       try {
         compiled = transform(source, { transforms: ['jsx'] }).code;
@@ -555,7 +584,11 @@ global.waitFor = waitFor;
       await fs.writeFile(outFile, preamble + '\n' + compiled, 'utf8');
       const node = await firstAvailable(['node']);
       if (!node) throw new Error('Node.js not found on PATH. Install from https://nodejs.org and reopen seec0de.');
-      return { cmd: node, args: [outFile], command: `node ${path.basename(outFile)}`, tool: 'node (react)' };
+      return {
+        cmd: node, args: [outFile],
+        command: `node ${filename || path.basename(outFile)}`, tool: 'node (react)',
+        cleanupFile: inPlace ? outFile : null,
+      };
     }
     case 'python': {
       const file = path.join(dir, filename || 'main.py');
@@ -563,7 +596,9 @@ global.waitFor = waitFor;
       // Instrumentation wrapper: emits STDIN_WANTED_MARKER on stderr the
       // instant builtins.input() blocks, then delegates to the learner's
       // file. The marker is stripped before the learner ever sees it.
-      const wrapper = path.join(dir, 'seec0de_run.py');
+      // For in-place runs the wrapper gets a unique name so it never
+      // collides with (or clobbers) a learner file.
+      const wrapper = path.join(dir, inPlace ? `seec0de_run_${rand}.py` : 'seec0de_run.py');
       await fs.writeFile(wrapper, `
 import builtins, sys, runpy
 
@@ -580,7 +615,11 @@ runpy.run_path(${JSON.stringify(path.basename(file))}, run_name="__main__")
 `, 'utf8');
       const tool = await firstAvailable(IS_WINDOWS ? ['py', 'python', 'python3'] : ['python3', 'python']);
       if (!tool) throw new Error('Python not found on PATH. Install from https://www.python.org and reopen seec0de.');
-      return { cmd: tool, args: ['-u', 'seec0de_run.py'], command: `${tool} ${path.basename(file)}`, tool };
+      return {
+        cmd: tool, args: ['-u', path.basename(wrapper)],
+        command: `${tool} ${filename || path.basename(file)}`, tool,
+        cleanupFile: inPlace ? wrapper : null,
+      };
     }
     case 'c':
     case 'cpp': {
@@ -617,7 +656,7 @@ runpy.run_path(${JSON.stringify(path.basename(file))}, run_name="__main__")
 }
 
 async function startInteractiveRun(payload, sender) {
-  const { language, source, filename } = payload || {};
+  const { language, source, filename, projectDir } = payload || {};
   if (typeof source !== 'string' || !source.trim()) {
     throw new Error('No source code to run.');
   }
@@ -625,19 +664,29 @@ async function startInteractiveRun(payload, sender) {
     throw new Error(`Too many runs at once (max ${MAX_ACTIVE_RUNS}). Wait for one to finish.`);
   }
 
+  const lang = (language || '').toLowerCase();
+  // In-place project runs (multi-file builds) execute next to the learner's
+  // files; C/C++ always stays in the sandbox (compiler artifacts).
+  const inPlace = !!projectDir && !['c', 'cpp'].includes(lang);
   const id = crypto.randomUUID();
-  const dir = uniqueDir();
-  await fs.mkdir(dir, { recursive: true });
+  const dir = inPlace ? path.resolve(projectDir) : uniqueDir();
+  if (!inPlace) await fs.mkdir(dir, { recursive: true });
   let spec;
   try {
-    spec = await prepareInteractiveProcess((language || '').toLowerCase(), dir, source, filename);
+    spec = await prepareInteractiveProcess(lang, dir, source, filename, { inPlace });
   } catch (err) {
-    await rmDir(dir);
+    if (!inPlace) await rmDir(dir);
     throw err;
   }
-  // Keep the dir alive until the process closes, then clean it up.
   activeRuns.set(id, { pendingDir: dir });
-  execProcessLive({ ...spec, cwd: dir, timeout: INTERACTIVE_TIMEOUT_MS, sender, id }).then(() => rmDir(dir));
+  // Once the process closes, delete any instrumented copy and the temp dir
+  // (never the project folder itself — in-place runs leave learner files be).
+  execProcessLive({ ...spec, cwd: dir, timeout: INTERACTIVE_TIMEOUT_MS, sender, id }).then(() => {
+    if (spec.cleanupFile) {
+      fs.rm(spec.cleanupFile, { force: true }).catch(() => { /* ignore */ });
+    }
+    if (!inPlace) rmDir(dir);
+  });
   return { id };
 }
 
