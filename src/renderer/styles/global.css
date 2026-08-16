@@ -83,6 +83,7 @@
   --comment-highlight:  #6a9955;
   --number-highlight:   #b5cea8;
   --type-highlight:     #4ec9b0;
+  --keyword-soft:       rgba(86, 156, 214, 0.10);  /* faint tint behind keyword-colored inline code */
 
   /* Scrollbars. */
   --scrollbar-thumb: #2a2a2a;
@@ -135,6 +136,7 @@
   --comment-highlight:  #70756d;
   --number-highlight:   #a8d8a0;
   --type-highlight:     #9cc9ff;
+  --keyword-soft:       rgba(200, 182, 255, 0.12); /* faint tint behind keyword-colored inline code */
 
   --scrollbar-thumb: #353a30;
   --scrollbar-track: #080909;

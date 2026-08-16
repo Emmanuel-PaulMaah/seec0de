@@ -14,6 +14,7 @@ import {
 import lessonsData from '../data/lessons/index.js';
 import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
 import projects, { projectCheckpoint } from '../data/projects';
+import { renderInline } from './InlineCode';
 
 const LANGUAGE_LABELS = {
   python: 'Python',
@@ -354,20 +355,6 @@ export default function LearnHomeScreen({
   );
 }
 
-function renderInline(text) {
-  if (!text) return null;
-  return String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, index) => {
-    if (!part) return null;
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={index} style={styles.inlineCode}>{part.slice(1, -1)}</code>;
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-    return <React.Fragment key={index}>{part}</React.Fragment>;
-  });
-}
-
 const styles = {
   screen: {
     position: 'relative',
@@ -545,15 +532,6 @@ const styles = {
     marginTop: 8,
     color: 'var(--text-muted)',
     fontSize: 9.5,
-  },
-  inlineCode: {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.92em',
-    padding: '1px 3px',
-    border: '1px solid var(--border)',
-    borderRadius: 3,
-    background: 'var(--bg-input)',
-    color: 'var(--text-primary)',
   },
   courseTopline: { display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 10.5, fontWeight: 700 },
   courseTitle: { marginTop: 13, color: 'var(--text-primary)', fontSize: 14 },

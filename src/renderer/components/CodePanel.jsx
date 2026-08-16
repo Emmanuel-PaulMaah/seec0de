@@ -4,6 +4,7 @@ import { Lock, Unlock, Loader, X, Save, Play, Lightbulb } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
+import { registerEditor, unregisterEditor } from '../engine/editorBridge';
 
 // Languages currently supported by runnerService.js. Keep in sync.
 const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp', 'react']);
@@ -177,8 +178,28 @@ export default function CodePanel({
     setBtnPos(null);
   }, []);
 
+  // On CodePanel unmount, drop the bridge reference so insertIntoEditor
+  // stops hitting a disposed editor. (Tab switches remount the Editor child,
+  // which re-registers via onMount.)
+  useEffect(() => () => unregisterEditor(), []);
+
   const handleEditorMount = useCallback((editor) => {
     editorRef.current = editor;
+    // Leaf UI (inline code chips, Build panel example/solution blocks)
+    // inserts into this editor via the shared bridge — the live instance is
+    // always the most recently mounted one (tabs remount the Editor). The
+    // bridge writes through React state (the editor is controlled), so it
+    // gets the same content-setter as the onChange path.
+    registerEditor(editor, {
+      setContent: (content) => {
+        if (showingFile) {
+          onFileContentChange?.(fileTab.path, content);
+          return;
+        }
+        if (!editable && !lessonMode) return;
+        onCodeChange?.(generatedDisplayTab, content);
+      },
+    });
 
     editor.onDidChangeCursorSelection((e) => {
       if (lessonMode) {
@@ -221,7 +242,7 @@ export default function CodePanel({
         position: { top: coords.top + 24, left: coords.left + 20 },
       });
     });
-  }, [isPseudocode, lessonMode, tooltipLanguage, clearSelection]);
+  }, [isPseudocode, lessonMode, tooltipLanguage, clearSelection, showingFile, fileTab, editable, onFileContentChange, onCodeChange, generatedDisplayTab]);
 
   const handleChange = useCallback((val) => {
     const next = val ?? '';

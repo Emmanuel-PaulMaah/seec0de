@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  ChevronLeft, Lightbulb, RotateCcw, Eye, CheckCircle2,
-  XCircle, ArrowRight, Info, ListTree, Wrench,
+  ChevronLeft, Lightbulb, RotateCcw, Eye, EyeOff, CheckCircle2,
+  XCircle, ArrowRight, Info, ListTree, Wrench, Code2, X, Play,
 } from 'lucide-react';
 import { explainCode, traceCode } from '../engine/codeExplainer';
+import { renderInline } from './InlineCode';
 
 // ActiveLessonCard — the rich teaching view that replaces the
 // instruction textarea while a lesson is active.
@@ -33,6 +34,8 @@ export default function ActiveLessonCard({
   guidanceLevel = 'supported',
   attempts = 0,
   reflection = '',
+  check = null,             // { stepId, pass, details } — live step checks
+  projectDir = null,        // where this project's files live on disk
   checkpointComplete = false,
   onReflectionChange,
   onCompleteCheckpoint,
@@ -41,11 +44,13 @@ export default function ActiveLessonCard({
 }) {
   const language = lesson?.language || 'javascript';
   const [solutionShown, setSolutionShown] = useState(false);
+  const [examplesShown, setExamplesShown] = useState(false);
   const resultRef = React.useRef(null);
 
   // Reset hint progression + solution reveal whenever the lesson changes.
   useEffect(() => {
     setSolutionShown(false);
+    setExamplesShown(false);
   }, [lesson?.id]);
 
   useEffect(() => {
@@ -113,6 +118,19 @@ export default function ActiveLessonCard({
           <span>Start coding exercise</span>
           <ArrowRight size={13} />
         </button>
+      )}
+
+      {/* Project checkpoint — build-style step: target file, example lines,
+          and live check status (content checks run as you type; the Run
+          verdict still gates completion). */}
+      {!teachingOnly && isProjectCheckpoint && (
+        <ProjectStepBlock
+          lesson={lesson}
+          check={check}
+          projectDir={projectDir}
+          examplesShown={examplesShown}
+          onToggleExamples={() => setExamplesShown((v) => !v)}
+        />
       )}
 
       {/* Status footer */}
@@ -270,6 +288,73 @@ export default function ActiveLessonCard({
   );
 }
 
+// ProjectStepBlock — the build-style step surface for project checkpoints:
+// the target file chip, optional example code lines (shown on demand), and
+// the live check status from evaluateStep (App.jsx supplies it via `check`).
+function ProjectStepBlock({ lesson, check, projectDir, examplesShown, onToggleExamples }) {
+  const isCurrent = check && check.stepId === lesson.id;
+  const details = isCurrent ? check.details || [] : [];
+  const anyPending = details.some((d) => d.pending);
+  const failures = details.filter((d) => !d.pass && !d.pending);
+  const allPass = details.length > 0 && failures.length === 0 && !anyPending;
+
+  return (
+    <div style={styles.stepBox}>
+      <div style={styles.stepFileRow}>
+        <Code2 size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+        <span style={styles.stepFile} title={projectDir ? `${projectDir}/${lesson.file}` : lesson.file}>
+          {lesson.file}
+        </span>
+        <span style={styles.stepFileNote} title={projectDir || undefined}>
+          {projectDir ? `in ${projectDir}` : 'saved in your project folder'}
+        </span>
+      </div>
+
+      {lesson.examples?.length > 0 && (
+        <>
+          <button type="button" style={styles.stepExampleBtn} onClick={onToggleExamples}>
+            {examplesShown ? <EyeOff size={11} /> : <Code2 size={11} />}
+            <span style={{ marginLeft: 4 }}>{examplesShown ? 'Hide example lines' : 'Show example lines'}</span>
+          </button>
+          {examplesShown && (
+            <div style={styles.stepExamples}>
+              {lesson.examples.map((ex) => (
+                <div key={ex.label} style={styles.stepExample}>
+                  <div style={styles.stepExampleLabel}>{ex.label}</div>
+                  <pre style={styles.stepExampleCode}>{ex.code}</pre>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {isCurrent && details.length > 0 && (
+        <div style={styles.stepCheckBox}>
+          {allPass && (
+            <div style={styles.stepCheckLine}>
+              <CheckCircle2 size={11} style={{ color: 'var(--success)', flexShrink: 0 }} />
+              <span style={{ marginLeft: 6 }}>Code shape checks out.</span>
+            </div>
+          )}
+          {anyPending && (
+            <div style={styles.stepCheckLine}>
+              <Play size={11} style={{ flexShrink: 0 }} />
+              <span style={{ marginLeft: 6 }}>Code shape looks right — press Run to verify the output.</span>
+            </div>
+          )}
+          {failures.map((f) => (
+            <div key={f.id} style={styles.stepCheckLine}>
+              <X size={11} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+              <span style={{ marginLeft: 6 }}>{f.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function renderBlock(block, key, language) {
   if (!block || !block.type) return null;
   if (block.type === 'p') {
@@ -287,26 +372,6 @@ function renderBlock(block, key, language) {
     );
   }
   return null;
-}
-
-// Tiny inline renderer for lesson copy. Supports:
-//   `code`     → styled <code> span
-//   **bold**   → <strong>
-// Returns an array of React nodes, never raw HTML — no dangerouslySetInnerHTML
-// so untrusted text in lesson JSON can never become injected markup.
-function renderInline(text) {
-  if (!text) return null;
-  const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
-  return tokens.map((tok, i) => {
-    if (!tok) return null;
-    if (tok.startsWith('`') && tok.endsWith('`')) {
-      return <code key={i} style={styles.inlineCode}>{tok.slice(1, -1)}</code>;
-    }
-    if (tok.startsWith('**') && tok.endsWith('**')) {
-      return <strong key={i}>{tok.slice(2, -2)}</strong>;
-    }
-    return <React.Fragment key={i}>{tok}</React.Fragment>;
-  });
 }
 
 function TeachingCodeBlock({ code, language = 'javascript' }) {
@@ -589,15 +654,6 @@ const styles = {
     padding: '5px 6px',
     verticalAlign: 'top',
   },
-  inlineCode: {
-    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
-    fontSize: '0.92em',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border)',
-    color: 'var(--text-primary)',
-    padding: '1px 5px',
-    borderRadius: 3,
-  },
   note: {
     display: 'flex',
     alignItems: 'flex-start',
@@ -873,4 +929,79 @@ const styles = {
     fontWeight: 700,
   },
   nextBtnDisabled: { opacity: 0.42, cursor: 'not-allowed' },
+  stepBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    padding: 10,
+    border: '1px solid var(--border-strong)',
+    borderRadius: 6,
+    background: 'var(--bg-tertiary)',
+  },
+  stepFileRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    flexWrap: 'wrap',
+  },
+  stepFile: {
+    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
+    fontSize: 10.5,
+    color: 'var(--text-secondary)',
+    border: '1px solid var(--border)',
+    borderRadius: 4,
+    padding: '1px 6px',
+    background: 'var(--bg-elevated)',
+  },
+  stepFileNote: { fontSize: 9.5, color: 'var(--text-muted)' },
+  stepExampleBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
+    color: 'var(--text-secondary)',
+    fontSize: 10.5,
+    fontWeight: 500,
+    padding: '4px 9px',
+    borderRadius: 6,
+    cursor: 'pointer',
+  },
+  stepExamples: { display: 'flex', flexDirection: 'column', gap: 7 },
+  stepExample: { display: 'flex', flexDirection: 'column', gap: 3 },
+  stepExampleLabel: {
+    fontSize: 9.5,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: 'var(--text-muted)',
+    fontWeight: 600,
+  },
+  stepExampleCode: {
+    margin: 0,
+    padding: 7,
+    background: 'var(--bg-primary)',
+    border: '1px solid var(--border)',
+    borderRadius: 4,
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
+    fontSize: 10.5,
+    lineHeight: 1.5,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    overflowX: 'auto',
+  },
+  stepCheckBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 5,
+    paddingTop: 2,
+  },
+  stepCheckLine: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    fontSize: 10.5,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.45,
+  },
 };

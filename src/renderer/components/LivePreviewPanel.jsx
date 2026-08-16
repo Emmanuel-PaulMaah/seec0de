@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { translateError } from '../engine/errorTranslator';
 import { explainErrorWithAI, hasApiKey } from '../engine/aiService';
+import { renderInline } from './InlineCode';
 
 // LivePreviewPanel — the right-side "what does my code do?" surface.
 //
@@ -497,25 +498,6 @@ function AiExplainSkeleton() {
 }
 
 // Render the small subset of markdown we use in translator strings:
-// `code` becomes a styled <code> span, **bold** becomes <strong>. Anything
-// else passes through as plain text. Keeps the card light without pulling
-// in a markdown dependency.
-function renderInline(text) {
-  if (!text) return null;
-  // Split on a single regex that captures `code` or **bold**.
-  const parts = String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (!part) return null;
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={i} style={styles.inlineCode}>{part.slice(1, -1)}</code>;
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    return <React.Fragment key={i}>{part}</React.Fragment>;
-  });
-}
-
 function ConsoleView({ entries, inputEnabled, onInput }) {
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
@@ -858,15 +840,6 @@ const styles = {
     lineHeight: 1.6,
     color: 'var(--text-secondary)',
     marginBottom: 4,
-  },
-  inlineCode: {
-    fontFamily: '"JetBrains Mono", "Cascadia Code", Consolas, monospace',
-    fontSize: 11,
-    padding: '1px 5px',
-    background: 'var(--bg-input)',
-    border: '1px solid var(--border)',
-    borderRadius: 3,
-    color: 'var(--text-primary)',
   },
 
   consoleEmpty: {

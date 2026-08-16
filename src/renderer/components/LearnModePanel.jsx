@@ -3,6 +3,7 @@ import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight
 import LessonsPanel, { formatLanguage } from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
 import { isCourseActivity } from '../data/exerciseCatalog';
+import { renderInline as renderActivityInline } from './InlineCode';
 
 const PHASES = [
   { id: 'learn', label: 'Learn', icon: BookOpen },
@@ -27,6 +28,8 @@ export default function LearnModePanel({
   guidanceLevel = 'supported',
   guidanceSuccessStreak = 0,
   reflection = '',
+  lessonCheck = null,
+  learnProjectDir = null,
   checkpointComplete = false,
   announcement = '',
   onSelectLesson,
@@ -166,6 +169,8 @@ export default function LearnModePanel({
                 guidanceLevel={guidanceLevel}
                 attempts={attempts}
                 reflection={reflection}
+                check={lessonCheck}
+                projectDir={learnProjectDir}
                 checkpointComplete={checkpointComplete}
                 onReflectionChange={onReflectionChange}
                 onCompleteCheckpoint={onCompleteCheckpoint}
@@ -331,20 +336,6 @@ function ActivityGuide({
       )}
     </section>
   );
-}
-
-function renderActivityInline(text) {
-  if (!text) return null;
-  return String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, index) => {
-    if (!part) return null;
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={index} style={styles.inlineCode}>{part.slice(1, -1)}</code>;
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
-    }
-    return <React.Fragment key={index}>{part}</React.Fragment>;
-  });
 }
 
 const styles = {
@@ -522,15 +513,6 @@ const styles = {
     color: 'var(--text-primary)',
     fontSize: 11,
     lineHeight: 1.45,
-  },
-  inlineCode: {
-    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", Consolas, monospace)',
-    fontSize: '0.92em',
-    padding: '1px 4px',
-    border: '1px solid var(--border)',
-    borderRadius: 3,
-    background: 'var(--bg-input)',
-    color: 'var(--text-primary)',
   },
   codeAlongSteps: {
     display: 'flex',
