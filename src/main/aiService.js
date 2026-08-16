@@ -21,7 +21,7 @@ function isPermissionError(err) {
   return err && (err.code === 'EACCES' || err.code === 'EPERM');
 }
 
-// Load key on boot — try primary, then fallback.
+// Load key on boot. try primary, then fallback.
 function loadKeyFromDisk() {
   for (const p of [PRIMARY_KEY_PATH, FALLBACK_KEY_PATH]) {
     try {
@@ -120,7 +120,7 @@ function classifyNetworkError(err) {
   const msg = (err && err.message) || String(err);
 
   if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
-    return "Couldn't reach Gemini — DNS lookup failed. Check your internet connection, VPN, or DNS settings.";
+    return "Couldn't reach Gemini, DNS lookup failed. Check your internet connection, VPN, or DNS settings.";
   }
   if (code === 'ECONNRESET' || /socket hang up/i.test(msg)) {
     return "Connection to Gemini was reset. This usually means an antivirus, firewall, or corporate proxy is intercepting HTTPS traffic — try whitelisting seec0de or temporarily disabling HTTPS scanning.";
