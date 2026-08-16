@@ -62,52 +62,15 @@ The application will launch in its own Electron window with Webpack Hot Module R
 - **Interactive Tooltips:** Click any syntax-highlighted keyword in the Monaco Editor to view a definition and short code snippet (covers 15–30 keywords per language, including `rust match`, `go defer`, `python with`, `typescript interface`).
 - **Font Controls:** On-screen `A-` / `A+` buttons and keyboard shortcuts (`Ctrl/Cmd +` / `-` / `0`) scale Monaco Editor typography smoothly between 10px and 28px.
 
-<<<<<<< HEAD
 ### 9. User Profiles & Multi-File Workspace
 - **Profile Manager:** Manage multiple user profiles with independent settings, active learning tracks, and progress tracking.
 - **Monaco Multi-Tab Editor:** Edit project files with auto-save (600ms debounce), dirty file state indicators, and customized dark theme (`hc-black`).
-=======
-### Live Preview — html renders as you type
 
-the right-side **Live Preview** panel renders **HTML** live into a sandboxed iframe with a ~250ms debounce. every other previewable language (JS, Python, C, C++) shows a "press Run, see output in Console" placeholder so output is always a deliberate gesture. CSS pairs with HTML — open an `.html` file that links to your stylesheet & watch it apply.
-
-### select code → see explanations
-
-select any chunk of code in the editor & a floating **Explain** button appears. click it & a line-by-line breakdown lands in the right-side **Explanation** panel.
-
-**single Explain button**, same auto-fallback as Generate: when you're online + have an API key, it uses the AI for a contextual explanation that references your actual function & variable names. otherwise it falls back to the built-in glossary explainer. you don't have to decide.
-
-the line-by-line breakdown is a **single-open accordion** — every line starts collapsed; click one to expand it, & whichever line was previously open auto-closes. lets you focus on one line at a time instead of getting hit with the whole explanation at once.
-
-### errors get translated
-
-when Run fails, the **Console** tab stacks a small "what does that mean?" card above the raw stderr — title, plain-english explanation, and 2–5 concrete fixes that reference your actual variable/function names. covers the common beginner errors offline (regex-matched against the stderr you actually hit, no AI needed) across python, javascript, typescript, c, and c++. anything the offline translator doesn't recognise falls through to an **AI-translated** card with the same shape (small "AI" badge so you know the source), when you have a key + connection. the raw stderr stays visible underneath either way.
-
-### lessons mode
-
-the instruction panel has a **Build / Lessons** tab strip. *Build* is the existing "write what you want" surface. *Lessons* opens a curated track of starter exercises — pick one, the instruction fills in, an active-lesson card shows the goal + exercise, and the lesson marks itself complete the first time you Run successfully. completion sticks across launches.
-
-### editor font controls
-
-the editor toolbar has `A−` / size / `A+` buttons (and `Ctrl/⌘ +` / `Ctrl/⌘ −` / `Ctrl/⌘ 0` shortcuts) to scale Monaco between 10 px and 28 px. preference persists per-install.
-
-### keyword glossary
-
-click any highlighted keyword in the code to see:
-
-- a clear **definition** for that language
-- a tiny **example** showing it in use
-
-covers 15–30 keywords per language, including the language-specific ones (rust's `match`, go's `defer`, python's `with`, typescript's `interface` / `keyof` / `readonly`, & more). works in both read-only & editable mode.
-
-### file explorer + multi-file editing
-
-toggle the file explorer from the title bar to open any folder. files open as Monaco tabs alongside the pseudocode/language tabs; edits are **auto-saved ~600ms after your last keystroke** so you never have to think about Ctrl+S (it still works if you want it). dirty `•` indicators show the round-trip until the save lands.
-
-### explained terminal
-
-bottom-of-window collapsible terminal (`Ctrl + ``) that turns every command into a card with **a one-line explanation, stdout/stderr, exit status, and duration.** built-in explanations cover filesystem builtins, npm / pnpm / yarn, git, docker, node, python, go, cargo, dotnet, and PowerShell `Verb-Noun` cmdlets. `cd` and `clear` are handled client-side so the cwd persists across commands. up/down arrows walk the prompt history (last 50, persisted).
->>>>>>> origin/polish
+### 10. Build Panel — Guided Step-by-Step Projects
+- **Open a folder → guided projects:** With a folder open, the Build panel becomes a project builder. Pick a **Sample Project** from the accordion list, or **Build with AI** — describe an idea and Gemini designs a guided project with verifiable steps, checks, and a solution (AI projects land under **My Creations** and persist locally).
+- **Start-build dialog:** Before anything touches disk you choose a **project name** (doubles as the subfolder name), **where the files go** (the open folder or a new subfolder), and whether to **pre-fill starter files**.
+- **Verifiable steps:** Each step targets one file and runs **live content checks** as you edit; steps with runnable output are gated on **Run**, with a **Check step** button for setup-style steps. Completed steps collapse to a ✓ row, **Back** / clickable step rows let you revisit earlier steps, and finishing the project fires confetti + a fanfare (both respect the Sounds setting).
+- **Real multi-file projects:** The runner executes build files **in the project folder**, so multi-file code can `require()` sibling modules and be verified against its real output. Two terminal-first samples — **Realtime Chat** (`ws`) and **Notes API** (Express) — teach the real `npm init` / `npm install` workflow, verified via terminal checks.
 
 ---
 

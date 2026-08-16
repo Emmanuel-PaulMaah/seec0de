@@ -16,6 +16,24 @@ Section conventions:
 
 ## [Unreleased]
 
+## [4.3.0] - 2026-08-16
+
+### Added
+- **Guided step-by-step projects in the Build panel.** Opening a folder turns the Build panel into a guided project builder: pick a **Sample Project** from the accordion list or **Build with AI** (describe an idea; Gemini designs a project with steps, checks, and a solution), answer three start questions (project name, target subfolder vs. the open folder, starter files), then walk verifiable steps that write real files into the folder. Steps target one file each and run **live content checks** as you edit; steps with runnable output gate on **Run** (blocking `runOutput` / `runPasses` / `runCommand` checks), while content-only steps auto-advance on edit. A **Back** button and clickable completed-step rows let you revisit earlier steps (everything after reopens so you re-verify from there), and finishing the last step fires a `canvas-confetti` burst and a celebratory fanfare — both respect the Sounds setting.
+- **Build with AI project generator** ([`aiService.js`](src/renderer/engine/aiService.js)). Describe an idea and Gemini designs a guided project from a schema (scaffold, optional setup commands, one-file-per-step checks, cumulative solutions, reflection prompt). A stack picker (Auto / Python / JavaScript / TypeScript) nudges the language, and `sanitizeGeneratedProject()` is the trust boundary: safe relative paths, size caps, at most 8 steps / 6 scaffold files, and any check that can't hold against the AI's own step solution is dropped. Generated projects land under **My Creations** and persist in localStorage.
+- **Multi-file projects run in place.** The runner now executes build files **in the project folder** instead of a temp sandbox, so multi-file code can `require('./models/lesson')` and be verified against its real output; C/C++ stay sandboxed (compiler artifacts). Interactive and one-shot runs write an instrumented copy next to the learner's files for stdin support and never touch the learner's own file.
+- **Two terminal-first sample projects** teach the real full-stack workflow: **Realtime Chat** (`realtime-chat` — `npm init -y` + `npm install ws`, then an HTTP server, a WebSocket server, connection tracking, JSON message broadcasting, and a demo client that verifies the round-trip) and **Notes API** (`notes-api` — Express with GET/POST/DELETE routes, JSON bodies, 404 handling, and an in-process demo client). The learner types the npm commands themselves in the Terminal; the scaffold step is verified with `fileExists` + `runCommand` checks via the **Check step** button.
+- **Lesson project checkpoints in Learn Mode.** Build-style verifiable steps for lesson projects, with real files auto-created in a per-project `learn-projects` folder under userData (path-validated alongside the project root and temp dir, exposed via `window.seecode.fs.learnProjectsDir()`).
+- **Shared syntax-coloured inline code with insert-to-editor.** Backticked code across Build step titles/tasks/hints, lesson cards, Learn home, and Live Preview error cards now renders through one shared renderer ([`InlineCode.jsx`](src/renderer/components/InlineCode.jsx)) as theme-aware syntax-coloured chips (new `--keyword-soft` / `--keyword-highlight` tokens per theme in [`global.css`](src/renderer/styles/global.css)). Hovering a chip reveals an eye icon that **inserts the token at the cursor** in the editor through the normal editing pipeline (dirty tab → save → live checks); Build Panel example lines and solution blocks carry an **Insert** button that appends the block to the step's file.
+
+### Changed
+- **Inline code chips** are now syntax-coloured tokens that match the active theme instead of bordered boxes, replacing the five near-identical per-component renderers.
+- **Build Panel insertions are instant.** The click-to-copy clipboard behaviour and the eye-icon **typewriter** insert animation were removed — inserts land immediately, so learners read the code while it appears instead of waiting through a slow animation.
+
+### Fixed
+- **Going-back wiring in the Build panel.** [`InstructionPanel.jsx`](src/renderer/components/InstructionPanel.jsx) was dropping the `onGoBackStep` / `onCheckStep` / `buildSetup` props before they reached `BuildPanel`, so the go-back buttons and setup-command progress never rendered — the props now pass through.
+- **Clearer DNS-failure message** in the Gemini network-error classifier ([`src/main/aiService.js`](src/main/aiService.js)).
+
 ## [4.2.0] - 2026-08-13
 
 ### Added
