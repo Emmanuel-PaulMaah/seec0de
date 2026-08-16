@@ -100,6 +100,14 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   learningSession:     null,
   // Lesson feedback sounds (pass chime / fail tone). Off mutes them app-wide.
   soundsEnabled:       true,
+  // Active Build Panel project (see data/buildProjects.js). Stores only
+  // resumeable step progress; file contents live in the workspace tabs.
+  buildSession:        null,
+  // Projects the learner has started/exited — the "My Projects" list in the
+  // Build Panel. Each entry is lightweight ({ projectId, title, language,
+  // stepCount, stepIndex, updatedAt }); project data itself lives either in
+  // the static samples or the generated-project registry.
+  recentBuilds:        [],
   // Scaffolding fades only with the learner's permission. Successful lesson
   // completions without hints build toward an opt-in suggestion.
   guidanceLevel:       'supported',

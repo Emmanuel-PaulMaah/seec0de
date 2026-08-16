@@ -216,6 +216,96 @@ Remember: respond with ONLY valid JSON matching the required {title, plain, fixe
   };
 }
 
+// ---------------------------------------------------------------------------
+// Build projects (Build Panel → “Build with AI”)
+//
+// The learner types “build a calculator” and Gemini designs a guided project
+// on the spot. The system prompt demands the exact buildProjects.js schema
+// (see data/buildProjects.js), and sanitizeGeneratedProject() there re-checks
+// the shape, so a sloppy AI response degrades to a friendly error instead of
+// a broken build. The returned object is the raw parsed JSON; the data layer
+// owns validation.
+
+const BUILD_PROJECT_SYSTEM_PROMPT = `You are SEEC0DE, an expert programming instructor who designs guided, step-by-step build projects for beginners.
+
+The learner will build a real project in an open folder. Every step you design must be objectively VERIFIABLE: its \`checks\` must be true once the learner finishes that step and false before it.
+
+RULES:
+- Language: pick exactly ONE of: python, javascript, typescript. Default to python for CLI-style apps; javascript/typescript for anything with npm packages or multiple modules.
+- Projects can be MULTI-FILE: \`scaffold\` may contain several starter files (an LMS, a to-do web app, a note-taking CLI with a storage module, …). Keep it to 2-5 files, each with 1-2 TODO comments. Simple builds (calculator, quiz) stay single-file.
+- Each step targets exactly ONE file (its \`file\`), and the step's \`solution\` is that file's COMPLETE new content after the step (cumulative for that file). Never list more than one file per step.
+- \`scaffold\` is a tiny starter file with 1-2 TODO comments. The first step's task starts from the scaffold.
+- Produce 3-7 steps. Each step adds ONE clear skill: a function, a data structure, a fix, a feature, or a package install.
+- When a step needs a dependency or shell setup (e.g. \`npm init -y\`, \`npm install express\`), add \`setup\`: an array of shell command strings run ONCE in the project folder when that step becomes current. Project-level \`setup\` (also an array) runs once at the very start — use it for \`npm init -y\` or pip installs the whole project needs.
+- Each step must include:
+  * \`task\` — plain English; tells the learner exactly what to add and what output to expect (e.g. "expect Score: 2/3").
+  * \`file\` — the target file (any scaffold file, or a new file the learner must create).
+  * \`examples\` — 1-2 small code snippets ({label, code}) showing the key lines.
+  * \`hints\` — 1-3 short plain-English hints.
+  * \`checks\` — 2-4 checks verifying the step. Prefer content checks (fileContains, hasFunction, fileCount) plus one runOutput or runCommand check.
+  * \`solution\` — the COMPLETE target file content after this step. Every check MUST pass against this solution.
+- check types you may use (all JSON objects):
+  {"type": "fileExists", "file": "server.js"}
+  {"type": "fileContains", "file": "server.js", "pattern": "const express", "mode": "string"}   — pattern is a REGEX unless \`mode\` is \"string\"
+  {"type": "fileCount", "file": "models/lesson.js", "pattern": "class ", "atLeast": 1}
+  {"type": "hasFunction", "file": "server.js", "name": "startServer"}
+  {"type": "runOutput", "file": "server.js", "expect": "Listening on 3000", "match": "contains"}   — expect must appear VERBATIM in stdout
+  {"type": "runPasses", "file": "main.py"}
+  {"type": "runCommand", "command": "npm ls express --depth=0", "expect": "express", "match": "contains"}   — run a shell command in the project folder, compare stdout; great for verifying installs
+- runOutput \`expect\` values MUST appear verbatim in what the step's solution prints, using a literal string in the print/console.log call (e.g. print("Total: 15")) so output is deterministic.
+- runCommand is for setup verification ("is the package installed?") — keep the command simple and idempotent, and set \`expect\` to the literal stdout it prints (empty string when it prints nothing).
+- Patterns must be simple, literal-ish regexes matching the learner's likely code. Escape regex special characters properly.
+- Keep all text short and beginner-friendly.
+
+RESPONSE FORMAT:
+Respond with ONLY a valid JSON object — no markdown, no code fences, no extra text. Exact structure:
+{
+  "title": "short project name",
+  "language": "python", "javascript" or "typescript",
+  "summary": "one sentence",
+  "brief": "what the learner builds, in one sentence",
+  "concepts": ["functions", "loops"],
+  "scaffold": [{ "file": "main.py", "content": "..." }, { "file": "models/lesson.py", "content": "..." }],
+  "setup": ["npm init -y", "npm install express"],
+  "steps": [
+    {
+      "title": "step title",
+      "task": "...",
+      "file": "main.py",
+      "examples": [{ "label": "...", "code": "..." }],
+      "hints": ["...", "..."],
+      "setup": ["npm install express"],
+      "checks": [ ... ],
+      "solution": "complete target file content after this step"
+    }
+  ]
+}`;
+
+/**
+ * Ask Gemini to design a guided build project from a plain-English request
+ * (e.g. “build a calculator”). Returns the parsed JSON project object;
+ * validation happens in data/buildProjects.js (sanitizeGeneratedProject).
+ * Throws a friendly error when the response isn’t usable JSON.
+ */
+export async function generateBuildProjectWithAI(prompt) {
+  const p = `Design a guided build project for this request: "${prompt}"
+
+Remember: respond with ONLY valid JSON matching the required format.`;
+
+  const raw = await callGemini(p, BUILD_PROJECT_SYSTEM_PROMPT);
+
+  let cleaned = raw.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini returned an invalid response — try again or rephrase your request.');
+  }
+}
+
 export async function explainCodeWithAI(code, language) {
   const prompt = `Explain the following ${language} code in plain English, line by line.
 

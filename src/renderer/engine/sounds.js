@@ -1,8 +1,9 @@
 // Lesson feedback sounds, synthesised in-browser with the Web Audio API
 // so we don't need to ship audio files. `playLessonSound(true)` plays a
 // bright ascending chime when a lesson is nailed; `playLessonSound(false)`
-// plays a soft descending "nope" when a run fails. Muted via the
-// `soundsEnabled` setting (Settings → Sounds).
+// plays a soft descending "nope" when a run fails; `playProjectCompleteSound()`
+// plays a longer celebratory fanfare when a whole Build project is finished.
+// All muted via the `soundsEnabled` setting (Settings → Sounds).
 
 import { loadSettings } from './settings';
 
@@ -57,6 +58,20 @@ function playFail() {
   tone(ctx, { frequency: 261.63, endFrequency: 196.0, start: 0.3, duration: 0.5, type: 'triangle', volume: 0.22 });
 }
 
+// Project completion: a longer, fuller fanfare — the C-major arpeggio up two
+// octaves (C4…C6) with a sustained C6/G6 top, distinct from the single-lesson
+// chime so finishing a whole build feels bigger.
+function playComplete() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const notes = [261.63, 329.63, 392.0, 523.25, 659.25, 783.99, 1046.5]; // C4, D4… C6
+  notes.forEach((frequency, i) => {
+    tone(ctx, { frequency, start: i * 0.12, duration: 0.6, type: 'sine', volume: 0.22 });
+  });
+  tone(ctx, { frequency: 1046.5, start: 0.72, duration: 1.2, type: 'sine', volume: 0.1 });   // C6 held
+  tone(ctx, { frequency: 1567.98, start: 0.72, duration: 1.2, type: 'sine', volume: 0.12 }); // G6 held
+}
+
 export function playLessonSound(passed) {
   if (loadSettings().soundsEnabled === false) return;
   if (passed) {
@@ -64,4 +79,9 @@ export function playLessonSound(passed) {
   } else {
     playFail();
   }
+}
+
+export function playProjectCompleteSound() {
+  if (loadSettings().soundsEnabled === false) return;
+  playComplete();
 }

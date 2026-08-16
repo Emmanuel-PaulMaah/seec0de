@@ -2,11 +2,12 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Loader, Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
-  AlertCircle, X, FolderOpen,
+  AlertCircle, X,
 } from 'lucide-react';
 import { hasApiKey, subscribeHasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
 import FileExplorer from './FileExplorer';
+import BuildPanel from './BuildPanel';
 
 // ... (LANGUAGE_LABELS and labelFor unchanged)
 
@@ -29,6 +30,16 @@ export default function InstructionPanel({
   onDeleteFile,
   activeFilePath,
   refreshKey,
+  buildSession = null,
+  buildCheck = null,
+  onStartBuild,
+  onExitBuild,
+  recentBuilds = [],
+  onResumeBuild,
+  onCompleteStep,
+  onCheckStep,
+  onGoBackStep,
+  buildSetup = null,
 }) {
   // Track key-presence reactively. The cached `hasApiKey()` hydrates
   // asynchronously on module load AND flips whenever the SettingsDrawer
@@ -40,6 +51,10 @@ export default function InstructionPanel({
     const unsub = subscribeHasApiKey(setAiReady);
     return () => { unsub(); };
   }, []);
+
+  // Which surface the panel shows: the classic Generate flow (prompt →
+  // code in many languages) or the guided Build flow (project steps).
+  const [mode, setMode] = useState('generate');
 
   const labelFor = (id) => {
   const labels = {
@@ -95,22 +110,6 @@ export default function InstructionPanel({
     );
   }
 
-  // ---- folder open: file explorer replaces the build content ------------
-  if (rootPath) {
-    return (
-      <FileExplorer
-        rootPath={rootPath}
-        onPickFolder={onPickFolder}
-        onCloseFolder={onCloseFolder}
-        onOpenFile={onOpenFile}
-        onDeleteFile={onDeleteFile}
-        activeFilePath={activeFilePath}
-        refreshKey={refreshKey}
-      />
-    );
-  }
-
-
   // ---- expanded panel --------------------------------------------------
   return (
     <div style={styles.panel}>
@@ -133,20 +132,60 @@ export default function InstructionPanel({
         )}
       </div>
 
-      <div style={styles.inner}>
-        <div style={styles.scrollContent}>
-          <div style={styles.buildStack}>
+      {/* Generate / Build mode switch */}
+      <div style={styles.modeSwitch} role="tablist" aria-label="Panel mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'generate'}
+          style={{ ...styles.modeBtn, ...(mode === 'generate' ? styles.modeBtnActive : {}) }}
+          onClick={() => setMode('generate')}
+        >
+          {/* With a folder open the Generate surface is the file explorer,
+              so the tab reads “Files”; without one it’s the AI prompt flow. */}
+          {rootPath ? 'Files' : 'Generate'}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'build'}
+          style={{ ...styles.modeBtn, ...(mode === 'build' ? styles.modeBtnActive : {}) }}
+          onClick={() => setMode('build')}
+        >
+          Build
+        </button>
+      </div>
 
-            <button
-                type="button"
-                className="ui-toolbar-button"
-                style={styles.openFolderBtn}
-                onClick={onPickFolder}
-                title="Open a folder as your project"
-              >
-                <FolderOpen size={13} />
-                <span style={{ marginLeft: 6 }}>Open folder</span>
-              </button>
+      <div style={styles.inner}>
+        {mode === 'build' ? (
+          <BuildPanel
+            rootPath={rootPath}
+            onPickFolder={onPickFolder}
+            buildSession={buildSession}
+            onStartBuild={onStartBuild}
+            onExitBuild={onExitBuild}
+            check={buildCheck}
+            onOpenSettings={onOpenSettings}
+            recentBuilds={recentBuilds}
+            onResumeBuild={onResumeBuild}
+            onCompleteStep={onCompleteStep}
+            onCheckStep={onCheckStep}
+            onGoBackStep={onGoBackStep}
+            buildSetup={buildSetup}
+          />
+        ) : rootPath ? (
+          <FileExplorer
+            rootPath={rootPath}
+            onPickFolder={onPickFolder}
+            onCloseFolder={onCloseFolder}
+            onOpenFile={onOpenFile}
+            onDeleteFile={onDeleteFile}
+            activeFilePath={activeFilePath}
+            refreshKey={refreshKey}
+          />
+        ) : (
+          <div style={styles.scrollContent}>
+          <div style={styles.buildStack}>
 
               <p style={styles.headerHint}>
                 Describe what you want in plain English.
@@ -263,7 +302,7 @@ export default function InstructionPanel({
               )}
           </div>
         </div>
-
+        )}
       </div>
     </div>
   );
@@ -344,20 +383,6 @@ const styles = {
     color: 'var(--text-muted)',
     lineHeight: 1.5,
     marginBottom: 4,
-  },
-  openFolderBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-group)',
-    color: 'var(--text-secondary)',
-    fontSize: 'var(--text-sm)',
-    fontWeight: 500,
-    padding: '0 var(--space-3)',
-    minHeight: 'var(--control-standard)',
-    cursor: 'pointer',
   },
   collapseBtn: {
     background: 'transparent',
@@ -583,4 +608,28 @@ const styles = {
     cursor: 'pointer',
   },
 
+  modeSwitch: {
+    display: 'flex',
+    gap: 2,
+    padding: '6px 12px 0',
+    borderBottom: '1px solid var(--border)',
+  },
+  modeBtn: {
+    flex: 1,
+    padding: '5px 0',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    background: 'transparent',
+    color: 'var(--text-muted)',
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    transition: 'color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out)',
+  },
+  modeBtnActive: {
+    color: 'var(--accent)',
+    borderBottomColor: 'var(--accent)',
+  },
 };

@@ -22,10 +22,14 @@ import { loadSettings, updateSettings, listProfiles, switchProfile, deleteProfil
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
 import { verifyLessonOutput, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
 import { translateError } from './engine/errorTranslator';
-import { playLessonSound } from './engine/sounds';
+import { playLessonSound, playProjectCompleteSound } from './engine/sounds';
 import lessonsData from './data/lessons/index.js';
 import { findExercise, isCourseActivity } from './data/exerciseCatalog';
 import { findProjectCheckpoint, nextProjectCheckpoint } from './data/projects';
+import { findBuildProject } from './data/buildProjects';
+import { evaluateStep } from './engine/buildVerifier';
+// Confetti burst when a build's final step completes.
+import confetti from 'canvas-confetti';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
 // last time comes back the next time. Settings.showTerminal/showFileExplorer
@@ -273,6 +277,7 @@ export default function App() {
     setLearnPhase('learn');
     setLessonAttempts(0);
     setRevealedHints(0);
+    setLessonCheck(null);
     setActiveReflection(lesson?.kind === 'project-checkpoint'
       ? loadSettings().projectReflections?.[lesson.id] || ''
       : '');
@@ -307,6 +312,7 @@ export default function App() {
     setLessonStatus('idle');
     setLessonVerification(null);
     setLessonErrorCoaching([]);
+    setLessonCheck(null);
     setLearnPhase('run');
     setRunnerOutput(null);
     setLearnAnnouncement('Starter code restored.');
@@ -378,6 +384,31 @@ export default function App() {
   // ---- file manager state ----------------------------------------------
   const [rootPath, setRootPath] = useState(() => localStorage.getItem(STORAGE_KEY_FOLDER));
   const [openFiles, setOpenFiles] = useState([]);
+
+  // ---- Build Panel state (guided project building) ----------------------
+  // `buildSession` is the resumable step progress for the active project;
+  // `buildCheck` is the last verification result for the current step
+  // ({ stepId, pass, details }). A ref mirrors the session so async
+  // verification callbacks never act on a stale copy.
+  const [buildSession, setBuildSession] = useState(() => loadSettings().buildSession || null);
+  const [buildCheck, setBuildCheck] = useState(null);
+  // Live status of the current build's setup commands (project or step setup),
+  // rendered by BuildPanel's step card: { running, label, stepId, lines }.
+  const [buildSetup, setBuildSetup] = useState(null);
+  const buildSessionRef = useRef(null);
+  useEffect(() => { buildSessionRef.current = buildSession; }, [buildSession]);
+
+  // ---- Learn project files + checks --------------------------------------
+  // Lesson projects (data/projects.js) are build-style steps: each
+  // checkpoint targets a real file in an auto-created per-project folder
+  // (see fileService.js → fs:learn-projects-dir) and declares content
+  // `checks` that run live as the learner edits. `learnProjectDir` is the
+  // folder for the active project; `lessonCheck` is the last check result
+  // ({ stepId, pass, details }) shown in the Learn guide. Run-to-verify
+  // behaviour is unchanged — expectedOutput still gates the pass verdict.
+  const [learnProjectDir, setLearnProjectDir] = useState(null);
+  const [lessonCheck, setLessonCheck] = useState(null);
+  const learnProjectsRootRef = useRef(null);
   const [activePath, setActivePath] = useState(null);
   const workspaceCodePanelViewRef = useRef({
     activeGeneratedTab: 'pseudocode',
@@ -858,6 +889,411 @@ export default function App() {
     }
   }, [instruction, selectedLanguages, aiLoading, rootPath, settings.practicalLanguage, writeScratchFromResult]);
 
+  // ---- Build Panel handlers ---------------------------------------------
+  // Builds are verified against the learner's actual files. Content checks
+  // read the live editor buffer (open tab first, disk fallback); output
+  // checks reuse the normal Run pipeline's result.
+  const resolveBuildFile = useCallback(async (file) => {
+    if (!rootPath) return null;
+    const projectDir = buildSessionRef.current?.projectDir || '';
+    const full = joinPath(rootPath, projectDir, file);
+    const tab = openFiles.find((f) => f.path === full);
+    if (tab) return tab.content;
+    try {
+      const { content } = await window.seecode.fs.readFile(full);
+      return content;
+    } catch {
+      return null; // file not created yet
+    }
+  }, [rootPath, openFiles]);
+
+  // File resolver for Learn project checkpoints. Content checks read the
+  // live editor draft for the checkpoint's target file (the learner is
+  // editing it right now), falling back to the on-disk project file.
+  const resolveLessonFile = useCallback(async (file) => {
+    if (activeLesson?.kind === 'project-checkpoint' && file === activeLesson.file) {
+      const draft = generatedCode.code?.[activeLesson.language || 'javascript'];
+      if (typeof draft === 'string' && draft.trim()) return draft;
+    }
+    if (!learnProjectDir) return null;
+    try {
+      const { content } = await window.seecode.fs.readFile(joinPath(learnProjectDir, file));
+      return content;
+    } catch {
+      return null; // file not created yet
+    }
+  }, [activeLesson, learnProjectDir, generatedCode]);
+
+  const currentBuildStepInfo = useCallback(() => {
+    const session = buildSessionRef.current;
+    if (!session) return null;
+    const project = findBuildProject(session.projectId);
+    if (!project) return null;
+    const step = project.steps.find((s) => !session.completedStepIds.includes(s.id)) || null;
+    if (!step) return null;
+    return { step, projectId: project.id };
+  }, []);
+
+  // Confetti + fanfare when the learner finishes a project.
+  const fireCompletionConfetti = useCallback(() => {
+    try {
+      playProjectCompleteSound();
+      confetti({ particleCount: 140, spread: 80, origin: { y: 0.65 } });
+      setTimeout(() => confetti({ particleCount: 90, angle: 60, spread: 60, origin: { x: 0, y: 0.7 } }), 180);
+      setTimeout(() => confetti({ particleCount: 90, angle: 120, spread: 60, origin: { x: 1, y: 0.7 } }), 320);
+    } catch { /* celebration is decorative — never break the flow */ }
+  }, []);
+
+  const completeBuildStep = useCallback((stepId) => {
+    const session = buildSessionRef.current;
+    if (!session || !rootPath) return;
+    const project = findBuildProject(session.projectId);
+    if (!project) return;
+    if (session.completedStepIds.includes(stepId)) return;
+    const steps = project.steps;
+    const idx = steps.findIndex((s) => s.id === stepId);
+    if (idx < 0) return;
+    const finished = idx === steps.length - 1;
+    const next = {
+      ...session,
+      completedStepIds: [...session.completedStepIds, stepId],
+      completedAt: finished ? new Date().toISOString() : null,
+    };
+    buildSessionRef.current = next;
+    setBuildSession(next);
+    setBuildCheck(null);
+    setBuildSetup(null);
+    setSettings(updateSettings({ buildSession: next }));
+    if (finished) fireCompletionConfetti();
+    const nextStep = steps[idx + 1];
+    if (nextStep) {
+      const base = session.projectDir ? joinPath(rootPath, session.projectDir) : rootPath;
+      const p = joinPath(base, nextStep.file);
+      handleOpenFile(p);
+      setActivePath(p);
+      ensureStepSetup(nextStep, session.projectDir || '');
+    }
+  }, [rootPath, handleOpenFile, setSettings, ensureStepSetup, fireCompletionConfetti]);
+
+  // The "My Projects" list is a lightweight history of builds the learner has
+  // started (sample or AI-generated). Kept in settings so it survives restarts
+  // and is per-profile; the entry's stepIndex lets resume jump back to the
+  // first unfinished step.
+  const recordRecentBuild = useCallback((project, stepIndex, extra = {}) => {
+    if (!project) return;
+    const list = Array.isArray(settings.recentBuilds) ? settings.recentBuilds : [];
+    const rest = list.filter((r) => r.projectId !== project.id);
+    const entry = {
+      projectId: project.id,
+      title: project.title,
+      language: project.language,
+      stepCount: project.steps?.length || 0,
+      stepIndex,
+      updatedAt: new Date().toISOString(),
+      ...extra,
+    };
+    setSettings(updateSettings({ recentBuilds: [entry, ...rest].slice(0, 20) }));
+  }, [settings.recentBuilds, setSettings]);
+
+  // Start a build. `options` comes from the Build Panel's start dialog:
+  //   { projectDir: relative subfolder ('' = open folder root),
+  //     writeScaffold: false to skip writing the starter files }
+  const handleStartBuild = useCallback(async (project, options = {}) => {
+    if (!rootPath || !project) return;
+    const projectDir = typeof options.projectDir === 'string'
+      ? options.projectDir.replace(/^\/+|\/+$/g, '').replace(/\\/g, '/')
+      : '';
+    const writeScaffold = options.writeScaffold !== false;
+    const base = projectDir ? joinPath(rootPath, projectDir) : rootPath;
+
+    setBuildSetup(null);
+    if (projectDir) {
+      try { await window.seecode.fs.createDir(base); } catch (err) {
+        console.warn('[seec0de] build dir create failed:', err?.message || err);
+      }
+    }
+    for (const f of project.scaffold || []) {
+      try {
+        // With starter files off we still create EMPTY files so the editor
+        // opens cleanly — the learner writes everything from scratch.
+        await window.seecode.fs.writeFile(joinPath(base, f.file), writeScaffold ? f.content : '');
+      } catch (err) {
+        console.warn('[seec0de] build scaffold write failed:', err?.message || err);
+      }
+    }
+    const firstStep = project.steps[0];
+    if (firstStep) {
+      const p = joinPath(base, firstStep.file);
+      await handleOpenFile(p);
+      setActivePath(p);
+    }
+    const session = {
+      projectId: project.id,
+      projectDir,
+      completedStepIds: [],
+      setupDoneStepIds: [],
+      startedAt: new Date().toISOString(),
+      completedAt: null,
+    };
+    buildSessionRef.current = session;
+    setBuildSession(session);
+    setBuildCheck(null);
+    setSettings(updateSettings({ buildSession: session }));
+    recordRecentBuild(project, 0, { projectDir });
+    // Project-level setup runs once at the very start (npm init, pip install…).
+    if (project.setup?.length) {
+      await runSetupCommands(`Setup: ${project.title}`, project.setup, projectDir);
+    }
+    if (firstStep?.setup?.length) await ensureStepSetup(firstStep, projectDir);
+  }, [rootPath, handleOpenFile, setSettings, recordRecentBuild, runSetupCommands, ensureStepSetup]);
+
+  // Resume a previous build from "My Projects". Unlike handleStartBuild this
+  // does NOT rewrite the scaffold — the files should already be in the folder
+  // from the earlier session — it just re-opens the first unfinished step.
+  const handleResumeBuild = useCallback(async (projectId) => {
+    if (!rootPath) return;
+    const project = findBuildProject(projectId);
+    if (!project) return;
+    const entry = (settings.recentBuilds || []).find((r) => r.projectId === projectId);
+    const projectDir = entry?.projectDir || '';
+    const base = projectDir ? joinPath(rootPath, projectDir) : rootPath;
+    const completedIds = project.steps.slice(0, Math.max(0, entry?.stepIndex || 0)).map((s) => s.id);
+    const allDone = completedIds.length >= project.steps.length;
+    const session = {
+      projectId: project.id,
+      projectDir,
+      completedStepIds: completedIds,
+      setupDoneStepIds: [],
+      startedAt: entry?.updatedAt || new Date().toISOString(),
+      completedAt: allDone ? new Date().toISOString() : null,
+    };
+    buildSessionRef.current = session;
+    setBuildSession(session);
+    setBuildCheck(null);
+    setBuildSetup(null);
+    setSettings(updateSettings({ buildSession: session }));
+    const nextStep = project.steps.find((s) => !completedIds.includes(s.id));
+    if (nextStep) {
+      const p = joinPath(base, nextStep.file);
+      await handleOpenFile(p);
+      setActivePath(p);
+      if (nextStep?.setup?.length) await ensureStepSetup(nextStep, projectDir);
+    }
+  }, [rootPath, settings.recentBuilds, handleOpenFile, setSettings, ensureStepSetup]);
+
+  // ---- Build setup commands (npm install, pip install, …) --------------
+  // Runs shell commands inside the build's project folder and surfaces live
+  // progress in BuildPanel. Used for project-level `setup` (once, at start)
+  // and per-step `setup` (the first time a step becomes current).
+  const execInProject = useCallback(async (command, projectDir) => {
+    if (!rootPath) return { stdout: '', stderr: '[seec0de] no project folder', exitCode: -1 };
+    const cwd = projectDir ? joinPath(rootPath, projectDir) : rootPath;
+    try {
+      return await window.seecode.terminal.exec({ command, cwd });
+    } catch (err) {
+      return { stdout: '', stderr: `[seec0de] ${err.message}`, exitCode: -1 };
+    }
+  }, [rootPath]);
+
+  // Command executor for runCommand checks — runs in the build's project
+  // folder so `npm ls express` verifies the learner's actual install.
+  const execCommand = useCallback((command) => {
+    const session = buildSessionRef.current;
+    return execInProject(command, session?.projectDir || '');
+  }, [execInProject]);
+
+  const runSetupCommands = useCallback(async (label, commands, projectDir, stepId) => {
+    if (!commands?.length) return;
+    const lines = [];
+    const emit = () => setBuildSetup({ running: true, label, stepId: stepId ?? null, lines: [...lines] });
+    emit();
+    for (const command of commands) {
+      const res = await execInProject(command, projectDir);
+      lines.push({ command, exitCode: res.exitCode });
+      if ((res.stdout || '').trim()) lines.push({ text: res.stdout.trim() });
+      if ((res.stderr || '').trim()) lines.push({ text: res.stderr.trim() });
+      emit();
+    }
+    setBuildSetup({ running: false, label, stepId: stepId ?? null, lines: [...lines] });
+  }, [execInProject]);
+
+  // Runs the current step's setup commands the first time that step becomes
+  // current (tracked in the session so a re-render can't double-run them).
+  const ensureStepSetup = useCallback(async (step, projectDir) => {
+    const session = buildSessionRef.current;
+    if (!session || !step?.setup?.length) return;
+    if ((session.setupDoneStepIds || []).includes(step.id)) return;
+    const next = { ...session, setupDoneStepIds: [...(session.setupDoneStepIds || []), step.id] };
+    buildSessionRef.current = next;
+    setBuildSession(next);
+    setSettings(updateSettings({ buildSession: next }));
+    await runSetupCommands(`Setup: ${step.title}`, step.setup, projectDir || '', step.id);
+  }, [runSetupCommands, setSettings]);
+
+  const handleExitBuild = useCallback(() => {
+    // Capture where the learner left off so "My Projects" can resume it.
+    const session = buildSessionRef.current;
+    if (session) {
+      const project = findBuildProject(session.projectId);
+      if (project) recordRecentBuild(project, session.completedStepIds.length, { projectDir: session.projectDir || '' });
+    }
+    setBuildSession(null);
+    setBuildCheck(null);
+    setBuildSetup(null);
+    setSettings(updateSettings({ buildSession: null }));
+  }, [recordRecentBuild, setSettings]);
+
+  const handleBuildRunResult = useCallback((output, filename) => {
+    const info = currentBuildStepInfo();
+    if (!info) return;
+    const { step, projectId } = info;
+    // Only judge a run against the step's target file — running some other
+    // tab must not move the build forward.
+    if (filename && filename !== step.file) return;
+    // runCommand checks (e.g. "is express installed?") run in the project
+    // folder now that the learner pressed Run — content checks were already
+    // checked live on edit.
+    evaluateStep(step, { resolveFile: resolveBuildFile, output, execCommand }).then((result) => {
+      if (buildSessionRef.current?.projectId !== projectId) return; // session changed mid-check
+      setBuildCheck({ stepId: step.id, pass: result.pass, details: result.details });
+      if (result.pass) completeBuildStep(step.id);
+    });
+  }, [currentBuildStepInfo, resolveBuildFile, execCommand, completeBuildStep]);
+
+  // "Check step" — verify the current step's content + runCommand checks
+  // WITHOUT a file run. Needed for steps with no runnable output (e.g. the
+  // npm scaffold step, whose target is package.json): the learner types the
+  // commands in the Terminal, then clicks Check step to verify them.
+  const handleCheckBuildStep = useCallback(async (stepId) => {
+    const session = buildSessionRef.current;
+    if (!session || !rootPath) return;
+    const project = findBuildProject(session.projectId);
+    const step = project?.steps.find((s) => s.id === stepId);
+    if (!step) return;
+    const result = await evaluateStep(step, { resolveFile: resolveBuildFile, output: null, execCommand });
+    if (buildSessionRef.current?.projectId !== session.projectId) return; // session changed mid-check
+    setBuildCheck({ stepId: step.id, pass: result.pass, details: result.details });
+    if (result.pass) completeBuildStep(step.id);
+  }, [rootPath, resolveBuildFile, execCommand, completeBuildStep]);
+
+  // Go back to an already-completed step: it becomes current again and every
+  // step after it reopens (steps are cumulative — editing an earlier file can
+  // break what later steps built on). The learner re-verifies from there.
+  const handleGoBackBuildStep = useCallback((stepId) => {
+    const session = buildSessionRef.current;
+    if (!session || !rootPath) return;
+    const project = findBuildProject(session.projectId);
+    if (!project) return;
+    const idx = project.steps.findIndex((s) => s.id === stepId);
+    if (idx < 0 || !session.completedStepIds.includes(stepId)) return;
+    const next = {
+      ...session,
+      completedStepIds: session.completedStepIds.slice(0, idx),
+      completedAt: null,
+    };
+    buildSessionRef.current = next;
+    setBuildSession(next);
+    setBuildCheck(null);
+    setBuildSetup(null);
+    setSettings(updateSettings({ buildSession: next }));
+    const step = project.steps[idx];
+    const base = session.projectDir ? joinPath(rootPath, session.projectDir) : rootPath;
+    const p = joinPath(base, step.file);
+    handleOpenFile(p);
+    setActivePath(p);
+    ensureStepSetup(step, session.projectDir || ''); // skips if its setup already ran
+  }, [rootPath, handleOpenFile, setSettings, ensureStepSetup]);
+
+  // Debounced content check: as the learner edits the target file, re-run
+  // the current step's content checks. Steps that also need output stay
+  // open until the learner presses Run (evaluateStep marks those pending),
+  // so a step only auto-advances when its checks are fully content-based.
+  useEffect(() => {
+    if (!buildSession || !rootPath) return undefined;
+    const info = currentBuildStepInfo();
+    if (!info) return undefined;
+    const { step } = info;
+    const timer = setTimeout(async () => {
+      const result = await evaluateStep(step, { resolveFile: resolveBuildFile, output: null, contentOnly: true });
+      if (buildSessionRef.current?.projectId !== buildSession.projectId) return;
+      setBuildCheck({ stepId: step.id, pass: result.pass, details: result.details });
+      if (result.pass) completeBuildStep(step.id);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [openFiles, buildSession, rootPath, currentBuildStepInfo, resolveBuildFile, completeBuildStep]);
+
+  // Restore a saved build on launch: re-open the current step's file so the
+  // learner lands where they left off (and run that step's setup if it never
+  // ran — the session records which ones have).
+  useEffect(() => {
+    if (!buildSession || !rootPath) return;
+    const project = findBuildProject(buildSession.projectId);
+    const step = project?.steps.find((s) => !buildSession.completedStepIds.includes(s.id));
+    if (step) {
+      const base = buildSession.projectDir ? joinPath(rootPath, buildSession.projectDir) : rootPath;
+      const p = joinPath(base, step.file);
+      handleOpenFile(p);
+      setActivePath(p);
+      ensureStepSetup(step, buildSession.projectDir || '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---- Learn project folder + live checks --------------------------------
+  // Derive the active project's folder from the active lesson so switching
+  // checkpoints/projects swaps folders naturally.
+  useEffect(() => {
+    if (activeLesson?.kind !== 'project-checkpoint') {
+      setLearnProjectDir(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const resolveRoot = learnProjectsRootRef.current
+      ? Promise.resolve(learnProjectsRootRef.current)
+      : window.seecode.fs.learnProjectsDir().then((root) => {
+        learnProjectsRootRef.current = root;
+        return root;
+      });
+    resolveRoot
+      .then((base) => { if (!cancelled) setLearnProjectDir(joinPath(base, activeLesson.projectId)); })
+      .catch((err) => console.warn('[seec0de] learn projects dir failed:', err?.message || err));
+    return () => { cancelled = true; };
+  }, [activeLesson?.kind, activeLesson?.projectId]);
+
+  // Keep the project file on disk in sync with the lesson editor draft, so
+  // the auto-created folder always contains what the learner has written
+  // (mirrors the workspace auto-save rhythm).
+  useEffect(() => {
+    if (!inLessonMode || !learnProjectDir || activeLesson?.kind !== 'project-checkpoint') return undefined;
+    const file = activeLesson.file;
+    if (!file) return undefined;
+    const content = generatedCode.code?.[activeLesson.language || 'javascript'] || '';
+    const timer = setTimeout(async () => {
+      try {
+        await window.seecode.fs.createDir(learnProjectDir);
+        await window.seecode.fs.writeFile(joinPath(learnProjectDir, file), content);
+      } catch (err) {
+        console.warn('[seec0de] lesson project file write failed:', err?.message || err);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [inLessonMode, learnProjectDir, activeLesson?.kind, activeLesson?.language, activeLesson?.file, generatedCode]);
+
+  // Live content check: as the learner edits the checkpoint's file, re-run
+  // its content checks (debounced) so the guide shows "not yet — this is
+  // missing" feedback before they even press Run. Output gating stays with
+  // the Run verdict (run-to-verify), exactly like the lesson loop.
+  useEffect(() => {
+    if (!inLessonMode || activeLesson?.kind !== 'project-checkpoint') return undefined;
+    const checkpoint = activeLesson;
+    if (!checkpoint.checks?.length) return undefined;
+    const timer = setTimeout(async () => {
+      const result = await evaluateStep(checkpoint, { resolveFile: resolveLessonFile, output: null, contentOnly: true });
+      setLessonCheck({ stepId: checkpoint.id, pass: result.pass, details: result.details });
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [inLessonMode, activeLesson, resolveLessonFile, generatedCode]);
+
   // Clear any stale AI-error card the moment the learner edits the
   // instruction. Keeps the panel from showing a red banner that refers
   // to a prompt they've already moved on from.
@@ -966,12 +1402,32 @@ export default function App() {
   }, []);
 
   const handleRunCode = useCallback(async (payloadOverride) => {
-    const payload = payloadOverride || (
+    const base = payloadOverride || (
       RUNNABLE.has(livePreview.language)
         ? { language: livePreview.language, source: livePreview.code, filename: livePreview.filename }
         : null
     );
+    const payload = base ? { ...base } : null;
     if (!payload || !payload.source || runLoading) return;
+
+    // Build mode: when the learner runs a file inside the build's project
+    // folder, execute it IN PLACE (instead of a temp sandbox) so multi-file
+    // projects can require() their sibling modules. The filename becomes the
+    // path relative to the build folder, so nested step files (e.g.
+    // models/lesson.js) land in the right place. Running a file outside the
+    // build folder keeps the normal sandbox behaviour.
+    if (buildSessionRef.current && !inLessonMode && activePath) {
+      const pd = buildSessionRef.current.projectDir || '';
+      const base = pd ? joinPath(rootPath, pd) : rootPath;
+      const sep = base.includes('\\') ? '\\' : '/';
+      if (activePath === base || activePath.startsWith(base + sep)) {
+        const rel = activePath === base
+          ? (currentBuildStepInfo()?.step?.file || payload.filename)
+          : activePath.slice(base.length + 1);
+        payload.filename = rel.replace(/\\/g, '/');
+        payload.projectDir = base;
+      }
+    }
 
     const runOwner = runOwnerRef.current;
     const runProfileId = settings.activeProfileId;
@@ -1038,6 +1494,22 @@ export default function App() {
           setSettings(nextSettings);
         }
       }
+
+      // Learn project checkpoints: refresh the step's check details with the
+      // real run result (content checks plus any runOutput checks resolve
+      // now, mirroring the Build Panel's Run hook).
+      if (inLessonMode && activeLesson?.kind === 'project-checkpoint') {
+        evaluateStep(activeLesson, { resolveFile: resolveLessonFile, output: normalisedOutput }).then((result) => {
+          if (runOwner !== runOwnerRef.current) return; // context changed mid-check
+          setLessonCheck({ stepId: activeLesson.id, pass: result.pass, details: result.details });
+        });
+      }
+
+      // Build Panel: a Run also verifies the current build step's output
+      // checks (content checks were already checked on edit).
+      if (buildSessionRef.current && !inLessonMode) {
+        handleBuildRunResult(normalisedOutput, payload.filename);
+      }
     };
 
     let runId = null;
@@ -1098,6 +1570,17 @@ export default function App() {
         setLessonErrorCoaching(buildLessonErrorCoaching(stderr, payload.language, activeLesson));
         setLearnAnnouncement(describeLessonRunFailure(stderr, payload.language));
       }
+
+      if (buildSessionRef.current && !inLessonMode) {
+        handleBuildRunResult({
+          command: `run ${payload.language}`,
+          stdout: '',
+          stderr,
+          exitCode: -1,
+          durationMs: 0,
+          language: payload.language,
+        }, payload.filename);
+      }
     }
   }, [
     livePreview,
@@ -1106,10 +1589,14 @@ export default function App() {
     activeLesson,
     completedLessons,
     inLessonMode,
+    rootPath,
+    currentBuildStepInfo,
     settings.activeProfileId,
     settings.guidanceSuccessStreak,
     settings.learningReminders,
     revealedHints,
+    handleBuildRunResult,
+    resolveLessonFile,
   ]);
 
   const handleGuidanceChange = useCallback((guidanceLevel) => {
@@ -1137,6 +1624,9 @@ export default function App() {
   const hydrateLearningProfile = useCallback((nextSettings) => {
     const restored = restoredLearningState(nextSettings);
     setLearnMode(!!nextSettings.learnMode);
+    setBuildSession(nextSettings.buildSession || null);
+    setBuildCheck(null);
+    setLessonCheck(null);
     setActiveLesson(restored.lesson);
     setLearnCatalogLanguage(restored.lesson?.language || null);
     setLearnCatalogSection(restored.lesson
@@ -1633,6 +2123,8 @@ const beginExplanationResize = useCallback((event) => {
                 guidanceLevel={guidanceLevel}
                 guidanceSuccessStreak={settings.guidanceSuccessStreak || 0}
                 reflection={activeReflection}
+                lessonCheck={lessonCheck}
+                learnProjectDir={learnProjectDir}
                 checkpointComplete={completedProjectCheckpoints.includes(activeLesson?.id)}
                 announcement={learnAnnouncement}
                 onSelectLesson={handleSelectLesson}
@@ -1668,6 +2160,16 @@ const beginExplanationResize = useCallback((event) => {
                 onDeleteFile={handleCloseFile}
                 activeFilePath={activePath}
                 refreshKey={0}
+                buildSession={buildSession}
+                buildCheck={buildCheck}
+                buildSetup={buildSetup}
+                onStartBuild={handleStartBuild}
+                onExitBuild={handleExitBuild}
+                recentBuilds={settings.recentBuilds || []}
+                onResumeBuild={handleResumeBuild}
+                onCompleteStep={completeBuildStep}
+                onCheckStep={handleCheckBuildStep}
+                onGoBackStep={handleGoBackBuildStep}
               />
             )}
           </div>
