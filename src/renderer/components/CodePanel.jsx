@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import { Lock, Unlock, Loader, X, Save, Play, Lightbulb } from 'lucide-react';
+import { Lock, Pencil, Loader, X, Play, Lightbulb, Check } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
@@ -69,6 +69,29 @@ function defineSeec0deThemes(monaco) {
       'editorIndentGuide.activeBackground1': '#353A30',
     },
   });
+
+  monaco.editor.defineTheme('seec0de-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      { token: 'keyword', foreground: '6366F1' },
+      { token: 'string', foreground: 'C2410C' },
+      { token: 'number', foreground: '0D9488' },
+      { token: 'comment', foreground: '94A3B8', fontStyle: 'italic' },
+      { token: 'type', foreground: '0891B2' },
+    ],
+    colors: {
+      'editor.background': '#FFFFFF',
+      'editor.foreground': '#1A1D23',
+      'editorLineNumber.foreground': '#B0B5BF',
+      'editorLineNumber.activeForeground': '#525866',
+      'editor.selectionBackground': 'rgba(99, 102, 241, 0.15)',
+      'editor.inactiveSelectionBackground': 'rgba(99, 102, 241, 0.08)',
+      'editorCursor.foreground': '#6366F1',
+      'editorIndentGuide.background1': '#E2E4E8',
+      'editorIndentGuide.activeBackground1': '#D0D3D8',
+    },
+  });
 }
 
 // CodePanel — the middle column. Hosts the generator output (pseudocode +
@@ -94,7 +117,6 @@ export default function CodePanel({
   onActivatePath,
   onCloseFile,
   onFileContentChange,
-  onSaveActiveFile,
   // runner props
   onRunCode,
   runLoading = false,
@@ -439,21 +461,9 @@ export default function CodePanel({
               {runLoading
                 ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
                 : <Play size={12} />}
-              <span style={{ marginLeft: 4 }}>{runLoading ? 'Running…' : 'Run'}</span>
             </button>
           )}
-          {showingFile && (
-            <button
-              className="ui-toolbar-button"
-              style={{ ...styles.lockBtn, ...(fileTab.dirty ? styles.lockBtnActive : {}) }}
-              onClick={() => onSaveActiveFile?.()}
-              title="Save (Ctrl + S)"
-              disabled={!fileTab.dirty}
-            >
-              <Save size={12} />
-              <span style={{ marginLeft: 4 }}>{fileTab.dirty ? 'Save' : 'Saved'}</span>
-            </button>
-          )}
+
           {!showingFile && !folderOpen && !lessonMode && (
             <button
               className="ui-toolbar-button"
@@ -461,13 +471,20 @@ export default function CodePanel({
               onClick={() => { setEditable((e) => !e); clearSelection(); setTooltip(null); }}
               title={editable ? 'Switch to read-only' : 'Switch to editable (paste your own code)'}
             >
-              {editable
-                ? <><Unlock size={12} /> <span style={{ marginLeft: 4 }}>Editable</span></>
-                : <><Lock size={12} /> <span style={{ marginLeft: 4 }}>Read-only</span></>}
+              {editable ? <Pencil size={12} /> : <Lock size={12} />}
             </button>
           )}
         </div>
       </div>
+
+      {/* Auto-save indicator — only when a file is open. */}
+      {showingFile && (
+        <div style={styles.autoSaveBar}>
+          {fileTab.dirty
+            ? <><Loader size={10} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 4 }}>Saving…</span></>
+            : <><Check size={10} style={{ color: 'var(--success)' }} /><span style={{ marginLeft: 4 }}>Saved</span></>}
+        </div>
+      )}
 
       {/* Pseudocode-only banner: makes the lesson explicit. */}
       {isPseudocode && (generatedCode.pseudocode || '').trim().length > 0 && (
@@ -497,7 +514,7 @@ export default function CodePanel({
             height="100%"
             language={monacoLang}
             value={value}
-            theme={appTheme === 'seec0de-green' ? 'seec0de-green' : 'hc-black'}
+            theme={appTheme === 'seec0de-green' ? 'seec0de-green' : appTheme === 'seec0de-light' ? 'seec0de-light' : 'hc-black'}
             beforeMount={defineSeec0deThemes}
             onMount={handleEditorMount}
             onChange={handleChange}
@@ -663,6 +680,16 @@ const styles = {
     color: 'var(--text-primary)',
   },
 
+  autoSaveBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '3px var(--space-3)',
+    background: 'var(--bg-secondary)',
+    borderBottom: '1px solid var(--border)',
+    fontSize: 'var(--text-xs)',
+    color: 'var(--text-muted)',
+  },
   algoBanner: {
     display: 'flex',
     alignItems: 'center',

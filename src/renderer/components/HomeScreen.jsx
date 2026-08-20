@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ArrowRight, Code2, GraduationCap, Image, Sparkles } from 'lucide-react';
+import BulletinSection from './BulletinSection';
 
 export default function HomeScreen({
   username,
@@ -8,6 +9,7 @@ export default function HomeScreen({
   onOpenWorkspace,
   onOpenLearnMode,
   onOpenPostcards,
+  hideWordmark,
 }) {
   const headingRef = useRef(null);
 
@@ -49,18 +51,9 @@ export default function HomeScreen({
             </span>
             <ArrowRight size={17} style={styles.arrow} />
           </button>
-
-           {/*<button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenPostcards}>
-            <span style={{ ...styles.cardIcon, ...styles.postcardIcon }}><Image size={18} /></span>
-            <span style={styles.cardCopy}>
-              <span style={styles.cardEyebrow}>Your creations</span>
-              <strong style={styles.cardTitle}>Postcards</strong>
-              <span style={styles.cardText}>{postcardCount > 0 ? `${postcardCount} saved · capture or export a snippet.` : 'Save code, output, and what you learned.'}</span>
-            </span>
-            <ArrowRight size={17} style={styles.arrow} />
-          </button>*/}
-
         </div>
+
+        <BulletinSection />
 
         <div style={styles.futureLine}>
           <span style={styles.futureDot} />
@@ -68,7 +61,7 @@ export default function HomeScreen({
         </div>
       </section>
 
-      <div className="home-wordmark" style={styles.wordmark} aria-hidden="true">seec0de</div>
+      {!hideWordmark && <div className="home-wordmark" style={styles.wordmark} aria-hidden="true">seec0de</div>}
     </main>
   );
 }
@@ -79,6 +72,7 @@ const styles = {
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
+    overflowX: 'clip',
     display: 'flex',
     alignItems: 'center',
     background: 'var(--bg-primary)',
@@ -199,9 +193,9 @@ const styles = {
   wordmark: {
     position: 'absolute',
     left: '50%',
-    bottom: '-0.24em',
+    bottom: 0,
     zIndex: -1,
-    transform: 'translateX(-50%)',
+    transform: 'translateX(-50%) translateY(30%)',
     color: 'var(--text-primary)',
     opacity: 0.055,
     fontSize: 'clamp(120px, 23vw, 360px)',

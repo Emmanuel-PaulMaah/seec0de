@@ -76,7 +76,7 @@ export function Avatar({ profile, size = 48, style }) {
         ...dim,
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         background: initial ? colourFor(profile && profile.username) : 'var(--bg-tertiary)',
-        color: '#fff',
+        color: 'var(--text-on-accent)',
         fontSize: size * 0.42,
         fontWeight: 600,
         border: '1px solid var(--border)',
@@ -274,7 +274,7 @@ const styles = {
     textTransform: 'uppercase', letterSpacing: 0.6,
   },
   hint: { fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.5 },
-  errorText: { fontSize: 11.5, color: '#fca5a5', lineHeight: 1.5 },
+  errorText: { fontSize: 11.5, color: 'var(--danger-text-soft)', lineHeight: 1.5 },
 
   input: {
     background: 'var(--bg-input)',
@@ -341,6 +341,6 @@ const styles = {
   },
   avatarError: {
     position: 'absolute', top: '100%', marginTop: 6,
-    fontSize: 10.5, color: '#fca5a5', width: 140, textAlign: 'center',
+    fontSize: 10.5, color: 'var(--danger-text-soft)', width: 140, textAlign: 'center',
   },
 };

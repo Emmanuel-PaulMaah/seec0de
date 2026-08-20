@@ -573,7 +573,7 @@ const styles = {
     gap: 8,
   },
   errorIcon: {
-    color: '#e06c75',
+    color: 'var(--danger-text)',
     flexShrink: 0,
     marginTop: 1,
   },

@@ -249,7 +249,7 @@ const styles = {
     fontFamily: '"JetBrains Mono", Consolas, monospace',
   },
   pinInputError: { borderColor: 'var(--danger)' },
-  errorText: { fontSize: 12, color: '#fca5a5', margin: 0 },
+  errorText: { fontSize: 12, color: 'var(--danger-text-soft)', margin: 0 },
   unlockBtn: {
     width: 200,
     background: 'var(--accent)', border: '1px solid var(--accent)',

@@ -392,7 +392,7 @@ const styles = {
   },
   explanation: {
     fontSize: 'var(--text-xs)',
-    color: '#79c2ff',
+    color: 'var(--info-text)',
     fontStyle: 'italic',
     margin: '3px 0 4px 14px',
     fontFamily: 'var(--font-ui)',
@@ -407,7 +407,7 @@ const styles = {
     lineHeight: 1.4,
   },
   outputErr: {
-    color: '#e06c75',
+    color: 'var(--danger-text)',
   },
   runningHint: {
     margin: '4px 0 0 14px',

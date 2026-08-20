@@ -6,6 +6,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('seecode', {
+  zoom: {
+    in:  ()   => ipcRenderer.send('zoom:in'),
+    out: ()   => ipcRenderer.send('zoom:out'),
+    reset: () => ipcRenderer.send('zoom:reset'),
+  },
   fs: {
     openFolderDialog: () => ipcRenderer.invoke('fs:open-folder-dialog'),
     readDir:    (p)            => ipcRenderer.invoke('fs:read-dir', p),

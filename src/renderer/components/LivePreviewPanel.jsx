@@ -577,7 +577,7 @@ function levelLabel(level) {
 }
 
 const levelStyles = {
-  warn:   { color: '#f0b429' },
+  warn:   { color: 'var(--warning-text)' },
   error:  { color: 'var(--danger)' },
   stderr: { color: 'var(--danger)' },
   meta:   { color: 'var(--text-muted)' },
@@ -697,7 +697,7 @@ const styles = {
   iframe: {
     flex: 1,
     border: 'none',
-    background: '#ffffff',
+    background: 'var(--bg-secondary)',
     width: '100%',
     height: '100%',
   },

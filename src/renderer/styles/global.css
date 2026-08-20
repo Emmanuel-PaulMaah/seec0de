@@ -85,6 +85,14 @@
   --type-highlight:     #4ec9b0;
   --keyword-soft:       rgba(86, 156, 214, 0.10);  /* faint tint behind keyword-colored inline code */
 
+  /* Semantic text overrides — for hardcoded component colors. */
+  --danger-text:    #e06c75;
+  --danger-text-soft: #fca5a5;
+  --warning-text:     #f0b429;
+  --info-text:      #79c2ff;
+  --active-row-bg:  rgba(0, 122, 204, 0.16);
+  --terminal-bg:    #1e1e1e;
+
   /* Scrollbars. */
   --scrollbar-thumb: #2a2a2a;
   --scrollbar-track: #000000;
@@ -138,10 +146,68 @@
   --type-highlight:     #9cc9ff;
   --keyword-soft:       rgba(200, 182, 255, 0.12); /* faint tint behind keyword-colored inline code */
 
+  --danger-text:     #f08c8c;
+  --danger-text-soft: #fca5a5;
+  --warning-text:     #f0b429;
+  --info-text:       #79c2ff;
+  --active-row-bg:   rgba(200, 255, 77, 0.12);
+  --terminal-bg:     #0b0d0c;
+
   --scrollbar-thumb: #353a30;
   --scrollbar-track: #080909;
   --scrim:           rgba(8, 9, 9, 0.68);
   --shadow-lg:       0 28px 90px rgba(0, 0, 0, 0.50);
+}
+
+/* Sophisticated light theme — clean whites, soft grays, and a refined
+   indigo accent. Designed for bright environments and readability. */
+:root[data-theme="seec0de-light"] {
+  --bg-primary:     #f8f9fa;
+  --bg-secondary:   #ffffff;
+  --bg-tertiary:    #f0f1f3;
+  --bg-elevated:    #ffffff;
+  --bg-input:       #f4f5f7;
+
+  --border:         #e2e4e8;
+  --border-strong:  #d0d3d8;
+  --border-focus:   #6366f1;
+
+  --text-primary:   #1a1d23;
+  --text-secondary: #525866;
+  --text-muted:     #8b909a;
+
+  --accent:         #6366f1;   /* refined indigo */
+  --accent-hover:   #818cf8;
+  --accent-soft:    rgba(99, 102, 241, 0.10);
+  --text-on-accent: #ffffff;
+
+  --algorithm:      #7c3aed;
+  --algorithm-soft: rgba(124, 58, 237, 0.08);
+  --success:        #16a34a;
+  --success-soft:   rgba(22, 163, 74, 0.08);
+  --danger:         #dc2626;
+  --danger-soft:    rgba(220, 38, 38, 0.08);
+
+  --keyword-highlight:  #6366f1;
+  --string-highlight:   #c2410c;
+  --function-highlight: #0d9488;
+  --comment-highlight:  #94a3b8;
+  --number-highlight:   #0d9488;
+  --type-highlight:     #0891b2;
+  --keyword-soft:       rgba(99, 102, 241, 0.08);
+
+  --danger-text:     #dc2626;
+  --danger-text-soft: #ef4444;
+  --warning-text:     #d97706;
+  --info-text:       #2563eb;
+  --active-row-bg:   rgba(99, 102, 241, 0.08);
+  --terminal-bg:     #1e1e2e;
+
+  --scrollbar-thumb: #d0d3d8;
+  --scrollbar-track: #f8f9fa;
+  --scrim:           rgba(0, 0, 0, 0.32);
+  --shadow-sm:       0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-lg:       0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
 html, body, #root {
@@ -210,7 +276,6 @@ button:disabled {
 }
 
 .ui-panel-rail:hover:not(:disabled),
-.ui-tree-row:hover:not(:disabled),
 .ui-accordion-row:hover:not(:disabled) {
   color: var(--text-primary) !important;
   background: var(--bg-tertiary) !important;
@@ -358,7 +423,6 @@ a:focus-visible,
   to   { transform: translateX(0);    opacity: 1; }
 }
 
-/* Honour the OS-level reduce-motion preference. We zero out *decorative*
  * motion (modal slides, fades) but keep functional indicators (the spinner)
  * because removing them would harm clarity. */
 @media (prefers-reduced-motion: reduce) {

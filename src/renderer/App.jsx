@@ -186,7 +186,7 @@ export default function App() {
   );
 
   useEffect(() => {
-    const theme = settings.theme === 'seec0de-green' ? 'seec0de-green' : 'seec0de-dark';
+    const theme = settings.theme || 'seec0de-dark';
     document.documentElement.dataset.theme = theme;
   }, [settings.theme]);
 
@@ -611,6 +611,25 @@ export default function App() {
         e.preventDefault();
         const current = panels.findIndex((panel) => panel.contains(document.activeElement));
         panels[(current + 1) % panels.length].focus();
+      }
+
+      // Ctrl+= zoom in, Ctrl+- zoom out, Ctrl+0 reset zoom.
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        if (e.key === '=' || e.key === '+') {
+          e.preventDefault();
+          window.seecode?.zoom?.in();
+          return;
+        }
+        if (e.key === '-') {
+          e.preventDefault();
+          window.seecode?.zoom?.out();
+          return;
+        }
+        if (e.key === '0') {
+          e.preventDefault();
+          window.seecode?.zoom?.reset();
+          return;
+        }
       }
     };
     window.addEventListener('keydown', onKey);
@@ -2079,6 +2098,7 @@ const beginExplanationResize = useCallback((event) => {
           onOpenWorkspace={() => handleModeChange('workspace')}
           onOpenLearnMode={() => handleModeChange('learn')}
           onOpenPostcards={() => setLearningLibraryView('postcards')}
+          hideWordmark={!!gate}
         />
       ) : learnMode && !activeLesson ? (
         <LearnHomeScreen
@@ -2226,7 +2246,6 @@ const beginExplanationResize = useCallback((event) => {
               onActivatePath={setActivePath}
               onCloseFile={handleCloseFile}
               onFileContentChange={handleFileContentChange}
-              onSaveActiveFile={handleSaveActiveFile}
               onRunCode={handleRunCode}
               runLoading={runLoading}
               activeGeneratedTab={activeGeneratedTab}

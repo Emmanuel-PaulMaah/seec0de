@@ -1057,7 +1057,7 @@ const styles = {
     display: 'flex',
     alignItems: 'flex-start',
     fontSize: 10.5,
-    color: '#e06c75',
+    color: 'var(--danger-text)',
     lineHeight: 1.45,
   },
   subtleLink: {
@@ -1756,7 +1756,7 @@ const styles = {
   },
   dialogError: {
     fontSize: 11,
-    color: '#e06c75',
+    color: 'var(--danger-text)',
     lineHeight: 1.45,
   },
   dialogActions: {

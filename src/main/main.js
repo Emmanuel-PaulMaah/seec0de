@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, webFrame } = require('electron');
 const path = require('path');
 const https = require('https');
 const { autoUpdater } = require('electron-updater');
@@ -205,6 +205,27 @@ ipcMain.handle('update:install-now', () => {
   });
 
   return true;
+});
+
+// ---- zoom handlers --------------------------------------------------
+ipcMain.on('zoom:in', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const current = mainWindow.webContents.getZoomFactor();
+    mainWindow.webContents.setZoomFactor(Math.min(current + 0.1, 3.0));
+  }
+});
+
+ipcMain.on('zoom:out', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const current = mainWindow.webContents.getZoomFactor();
+    mainWindow.webContents.setZoomFactor(Math.max(current - 0.1, 0.3));
+  }
+});
+
+ipcMain.on('zoom:reset', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.setZoomFactor(1.0);
+  }
 });
 
 app.whenReady().then(() => {

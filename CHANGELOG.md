@@ -80,7 +80,7 @@ Section conventions:
 - **Lessons now teach before asking for code.** Teaching content occupies the full learning surface first, then transitions into a resizable lesson guide beside the editor and result panel for the coding exercise.
 - **Learn Mode and Workspace are isolated.** Learn Mode keeps its own draft, activity, output, and lesson state; Workspace files, folders, active tabs, and runner output do not leak into learning sessions or back into Workspace.
 - **Workspace visual system was redesigned.** The title bar, mode navigation, panels, controls, spacing, typography, and responsive behavior now use a unified, more breathable interface.
-- **Application and editor zoom are distinct.** `Ctrl++`, `Ctrl+-`, and `Ctrl+0` control the Electron window, while the code toolbar's A-/A+ controls change only editor text.
+- **Application and editor zoom are distinct.** `Ctrl+=`, `Ctrl+-`, and `Ctrl+0` control the Electron window, while the code toolbar's A-/A+ controls change only editor text.
 - **Terminal follows the opened project initially.** Opening or restoring an Explorer folder sets the terminal working directory, while subsequent `cd` commands remain authoritative until the project root changes.
 
 ### Fixed

@@ -193,7 +193,7 @@ export default function SettingsDrawer({
                   name="seec0de-dark"
                   description="High-contrast black and blue"
                   colors={['#000000', '#2f6fed', '#e6e6e6']}
-                  selected={settings.theme !== 'seec0de-green'}
+                  selected={settings.theme === 'seec0de-dark' || (!settings.theme || settings.theme === '')}
                   onClick={() => patch({ theme: 'seec0de-dark' })}
                 />
                 <ThemeChoice
@@ -202,6 +202,13 @@ export default function SettingsDrawer({
                   colors={['#0f1110', '#c8ff4d', '#f2f0e9']}
                   selected={settings.theme === 'seec0de-green'}
                   onClick={() => patch({ theme: 'seec0de-green' })}
+                />
+                <ThemeChoice
+                  name="seec0de-light"
+                  description="Clean white with indigo"
+                  colors={['#f8f9fa', '#6366f1', '#1a1d23']}
+                  selected={settings.theme === 'seec0de-light'}
+                  onClick={() => patch({ theme: 'seec0de-light' })}
                 />
               </div>
             </Field>
@@ -669,6 +676,9 @@ function ShortcutList() {
     ['Toggle file explorer', 'Ctrl', 'B'],
     ['Toggle terminal', 'Ctrl', '`'],
     ['Save active file', 'Ctrl', 'S'],
+    ['Zoom in', 'Ctrl', '='],
+    ['Zoom out', 'Ctrl', '-'],
+    ['Reset zoom', 'Ctrl', '0'],
     ['Cycle visible panels', 'F6'],
     ['Resize focused divider', '\u2190 / \u2192'],
   ];
@@ -1304,7 +1314,7 @@ const styles = {
     display: 'flex', flexWrap: 'wrap', gap: 6,
   },
   themeGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
+    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
   },
   themeChoice: {
     position: 'relative',
@@ -1422,7 +1432,7 @@ const styles = {
     background: 'transparent',
     border: '1px solid rgba(239, 68, 68, 0.4)',
     borderRadius: 6,
-    color: '#fca5a5',
+    color: 'var(--danger-text-soft)',
     fontSize: 12.5,
     padding: '7px 12px',
     alignSelf: 'flex-start',
@@ -1432,7 +1442,7 @@ const styles = {
     background: 'var(--danger)',
     border: '1px solid var(--danger)',
     borderRadius: 6,
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 12.5,
     fontWeight: 600,
     padding: '7px 12px',
@@ -1448,7 +1458,7 @@ const styles = {
     borderRadius: 6, padding: '6px 10px',
   },
   pinEditor: { display: 'flex', flexDirection: 'column', gap: 8 },
-  errorText: { fontSize: 11.5, color: '#fca5a5', lineHeight: 1.5, margin: 0 },
+  errorText: { fontSize: 11.5, color: 'var(--danger-text-soft)', lineHeight: 1.5, margin: 0 },
   deleteConfirm: {
     display: 'flex', flexDirection: 'column', gap: 8,
     background: 'var(--danger-soft)',
@@ -1456,7 +1466,7 @@ const styles = {
     borderRadius: 8,
     padding: '10px 12px',
   },
-  deleteWarn: { fontSize: 12, color: '#fca5a5', lineHeight: 1.5, margin: 0 },
+  deleteWarn: { fontSize: 12, color: 'var(--danger-text-soft)', lineHeight: 1.5, margin: 0 },
   disabled: { opacity: 0.5, cursor: 'not-allowed' },
   link: {
     fontSize: 11.5,
@@ -1506,7 +1516,7 @@ const styles = {
     position: 'absolute',
     top: 1, left: 1,
     width: 14, height: 14, borderRadius: 999,
-    background: '#e6e6e6',
+    background: 'var(--text-primary)',
     transition: 'transform var(--motion-base) var(--ease-out)',
   },
   knobOn: { transform: 'translateX(12px)' },
@@ -1532,7 +1542,7 @@ const styles = {
     borderRadius: 6,
     padding: '6px 8px',
     fontSize: 11,
-    color: '#fca5a5',
+    color: 'var(--danger-text-soft)',
     fontFamily: '"JetBrains Mono", Consolas, monospace',
     wordBreak: 'break-word',
     marginTop: 6,

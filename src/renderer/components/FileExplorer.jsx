@@ -1,30 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2 } from 'lucide-react';
+import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2, Copy, Scissors, Clipboard } from 'lucide-react';
 import { basename, dirname, joinPath } from '../engine/fileLanguage';
 
 // A small recursive file tree. Keeps state per-folder (open/closed + entries)
 // in a flat map keyed by absolute path, so we don't re-fetch on every render.
 //
-// Props:
-//   rootPath          string | null
-//   onPickFolder      () => Promise<void>     -- triggers main process dialog
-//   onCloseFolder     () => void
-//   onOpenFile        (path: string) => void  -- opens file in editor
-//   onDeleteFile      (path: string) => void  -- closes a deleted editor tab
-//   activeFilePath    string | null           -- highlighted in the tree
-//   refreshKey        number                  -- bump to force a refresh
-//
-// Selection & bulk actions: click selects a single row (and still opens it /
-// toggles it, same as before). Ctrl/Cmd+click toggles a row in/out of a
-// multi-selection; Shift+click selects a contiguous range in the currently
-// *visible* (expanded) tree order. When one or more rows are selected, a
-// floating toolbar appears with Rename (single selection only) and Delete
-// (any size). Moving is drag-and-drop only: drag the selection onto a
-// folder row (or the root header) to move everything there.
+// VS Code-style: right-click any file/folder for a context menu with
+// Rename, Copy Path, Delete, New File, New Folder, etc.
 
-// What kind of inline-input row we're showing under the header. Electron
-// disables `window.prompt()` by default (it returns null and the call
-// looks dead), so we render our own input instead of relying on it.
 const NEW_FILE   = 'file';
 const NEW_FOLDER = 'folder';
 
@@ -37,90 +20,43 @@ export default function FileExplorer({
   activeFilePath,
   refreshKey,
 }) {
-  const [tree, setTree] = useState({});      // path -> { entries, open }
+  const [tree, setTree] = useState({});
   const [error, setError] = useState(null);
-  const [creating, setCreating] = useState(null); // null | 'file' | 'folder'
+  const [creating, setCreating] = useState(null);
   const [draftName, setDraftName] = useState('');
   const [selectedDir, setSelectedDir] = useState(rootPath);
-  const [deleting, setDeleting] = useState(null); // { items: [{ path, name, isDir, parentPath }] } | null
-  const [renaming, setRenaming] = useState(null); // { path, name, parentPath } | null
+  const [deleting, setDeleting] = useState(null);
+  const [renaming, setRenaming] = useState(null);
   const [renameDraft, setRenameDraft] = useState('');
   const renameRef = useRef(null);
   const draftRef = useRef(null);
 
-  // ---- multi-select ---------------------------------------------------
-  // `selectedPaths` is the multi-selection (Ctrl/Cmd+click, Shift+click).
-  // `lastSelectedPath` is the anchor a Shift+click range is measured from.
-  const [selectedPaths, setSelectedPaths] = useState(() => new Set());
-  const [lastSelectedPath, setLastSelectedPath] = useState(null);
-
-  // ---- drag & drop (move) ----------------------------------------------
-  // `draggingPaths` is the set of paths being dragged (the row you grabbed,
-  // or the whole selection if you grabbed a row that was already selected).
-  // `dropTargetPath` is whichever folder row is currently being hovered
-  // over with a valid drop, purely for the highlight style.
-  const [draggingPaths, setDraggingPaths] = useState(null);
-  const [dropTargetPath, setDropTargetPath] = useState(null);
-
-  // Flatten the tree into the order it's actually rendered in (respecting
-  // which folders are currently expanded), plus a path -> info lookup.
-  // Both are needed for: Shift+click range selection (needs visual order)
-  // and the selection toolbar / bulk delete (needs name + isDir + parent
-  // for paths we only have as strings in `selectedPaths`).
-  const { visiblePaths, pathInfo } = useMemo(() => {
-    const paths = [];
-    const info = new Map();
-    const walk = (dirPath) => {
-      const entries = tree[dirPath]?.entries;
-      if (!entries) return;
-      for (const entry of entries) {
-        paths.push(entry.path);
-        info.set(entry.path, { name: entry.name, isDir: entry.isDir, parentPath: dirPath });
-        if (entry.isDir && tree[entry.path]?.open) walk(entry.path);
-      }
-    };
-    if (rootPath) walk(rootPath);
-    return { visiblePaths: paths, pathInfo: info };
-  }, [tree, rootPath]);
+  // ---- context menu ---------------------------------------------------
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, path, name, isDir, parentPath }
+  const contextMenuRef = useRef(null);
+  const [hoveredPath, setHoveredPath] = useState(null);
 
   const clearSelection = useCallback(() => {
-    setSelectedPaths(new Set());
-    setLastSelectedPath(null);
+    setContextMenu(null);
   }, []);
 
-  // Plain click: select just this row (replacing whatever was selected).
-  const selectOnly = useCallback((path) => {
-    setSelectedPaths(new Set([path]));
-    setLastSelectedPath(path);
-  }, []);
-
-  // Ctrl/Cmd+click: toggle this row in/out of the selection.
-  const toggleSelected = useCallback((path) => {
-    setSelectedPaths((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-    setLastSelectedPath(path);
-  }, []);
-
-  // Shift+click: select the contiguous visible range between the anchor
-  // (`lastSelectedPath`) and this row. Falls back to a plain single-select
-  // if the anchor has scrolled out of the current (expanded) tree.
-  const selectRange = useCallback((path) => {
-    const anchor = lastSelectedPath;
-    const anchorIndex = anchor ? visiblePaths.indexOf(anchor) : -1;
-    const targetIndex = visiblePaths.indexOf(path);
-    if (anchorIndex === -1 || targetIndex === -1) {
-      selectOnly(path);
-      return;
-    }
-    const [start, end] = anchorIndex < targetIndex ? [anchorIndex, targetIndex] : [targetIndex, anchorIndex];
-    setSelectedPaths(new Set(visiblePaths.slice(start, end + 1)));
-    // Intentionally don't move the anchor — shift-clicking again extends
-    // or shrinks the range from the same starting point, like Finder/VS Code.
-  }, [lastSelectedPath, visiblePaths, selectOnly]);
+  // Close context menu on click outside
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = (e) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target)) {
+        setContextMenu(null);
+      }
+    };
+    // Delay so the opening click doesn't immediately close it
+    const timer = setTimeout(() => {
+      window.addEventListener('mousedown', handler);
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('mousedown', handler);
+    };
+  }, [contextMenu]);
 
   const loadDir = useCallback(async (dirPath) => {
     try {
@@ -134,7 +70,6 @@ export default function FileExplorer({
     }
   }, []);
 
-  // Load root whenever it changes or refresh is requested.
   useEffect(() => {
     if (!rootPath) {
       setTree({});
@@ -149,8 +84,6 @@ export default function FileExplorer({
     loadDir(rootPath);
   }, [rootPath, refreshKey, loadDir, clearSelection]);
 
-  // Auto-focus the inline name input when it appears so the user can
-  // type immediately without a second click.
   useEffect(() => {
     if (creating && draftRef.current) draftRef.current.focus();
   }, [creating]);
@@ -162,24 +95,18 @@ export default function FileExplorer({
     }
   }, [renaming]);
 
-  // F2 renames the current single selection (standard desktop-app
-  // convention); Escape clears the selection. Both are skipped while a
-  // draft/rename/delete UI is already open — those own Escape themselves
-  // via their own inputs' onKeyDown.
+  // F2 renames the context-menu target (or clears menu on Escape)
   useEffect(() => {
     const onKey = (e) => {
       if (creating || renaming || deleting) return;
-      if (e.key === 'F2' && selectedPaths.size === 1) {
+      if (e.key === 'Escape' && contextMenu) {
         e.preventDefault();
-        startRenameSelection();
-      } else if (e.key === 'Escape' && selectedPaths.size > 0) {
-        e.preventDefault();
-        clearSelection();
+        setContextMenu(null);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [creating, renaming, deleting, selectedPaths, startRenameSelection, clearSelection]);
+  }, [creating, renaming, deleting, contextMenu]);
 
   const toggleDir = useCallback(async (dirPath) => {
     const node = tree[dirPath];
@@ -194,10 +121,12 @@ export default function FileExplorer({
     }));
   }, [tree, loadDir]);
 
-  const startCreate = useCallback((kind) => {
+  // ---- create ---------------------------------------------------------
+  const startCreate = useCallback((kind, targetDir) => {
     setError(null);
     setDraftName('');
     setCreating(kind);
+    if (targetDir) setSelectedDir(targetDir);
   }, []);
 
   const cancelCreate = useCallback(() => {
@@ -209,8 +138,7 @@ export default function FileExplorer({
     if (!rootPath || !creating) return;
     const name = draftName.trim();
     if (!name) { cancelCreate(); return; }
-    // One inline name creates inside whichever folder is selected in the tree.
-    if (/[\\/]/.test(name)) {
+    if (/[\\\/]/.test(name)) {
       setError('Name cannot contain "/" or "\\". Select a folder, then create the item there.');
       return;
     }
@@ -246,26 +174,14 @@ export default function FileExplorer({
     }
   }, [rootPath, loadDir]);
 
+  // ---- rename ---------------------------------------------------------
   const startRename = useCallback((entryPath, entryName, isDir) => {
     setError(null);
-
     const slash = Math.max(entryPath.lastIndexOf('/'), entryPath.lastIndexOf('\\'));
-    const parentPath = slash >+ 0 ? entryPath.slice(0, slash) : rootPath;
-
+    const parentPath = slash >= 0 ? entryPath.slice(0, slash) : rootPath;
     setRenaming({ path: entryPath, name: entryName, parentPath, isDir });
     setRenameDraft(entryName);
   }, [rootPath]);
-
-  // Toolbar entry point: rename whatever's currently selected. Only ever
-  // called while exactly one item is selected (the toolbar hides the
-  // Rename button otherwise), but guard anyway for safety.
-  const startRenameSelection = useCallback(() => {
-    if (selectedPaths.size !== 1) return;
-    const [path] = selectedPaths;
-    const info = pathInfo.get(path);
-    if (!info) return;
-    startRename(path, info.name, info.isDir);
-  }, [selectedPaths, pathInfo, startRename]);
 
   const cancelRename = useCallback(() => {
     setRenaming(null);
@@ -274,26 +190,19 @@ export default function FileExplorer({
 
   const commitRename = useCallback(async () => {
     if (!renaming) return;
-
     const nextName = renameDraft.trim();
-
     if (!nextName || nextName === renaming.name) {
       cancelRename();
       return;
     }
-
-    if (/[\\/]/.test(nextName)) {
+    if (/[\\\/]/.test(nextName)) {
       setError('Name cannot contain "/" or "\\".');
       return;
     }
-
     try {
       const nextPath = joinPath(renaming.parentPath, nextName);
-
       await window.seecode.fs.rename(renaming.path, nextPath);
-
       await loadDir(renaming.parentPath);
-
       if (renaming.isDir && (
         selectedDir === renaming.path
         || selectedDir?.startsWith(`${renaming.path}\\`)
@@ -301,37 +210,25 @@ export default function FileExplorer({
       )) {
         setSelectedDir(`${nextPath}${selectedDir.slice(renaming.path.length)}`);
       }
-
       if (activeFilePath === renaming.path) {
         onOpenFile?.(nextPath);
       }
-
       cancelRename();
     } catch (err) {
       setError(err.message || 'Failed to rename.');
     }
   }, [renaming, renameDraft, cancelRename, loadDir, activeFilePath, onOpenFile, selectedDir]);
 
-  // Builds the confirm-delete payload from one or more paths. Looks each
-  // path up in `pathInfo` (the flattened tree) for its name/isDir/parent;
-  // falls back to string-parsing for a lone path passed in directly (kept
-  // for safety, though every caller now goes through the selection).
-  const requestDelete = useCallback((paths) => {
-    setError(null);
-    const items = paths.map((path) => {
-      const info = pathInfo.get(path);
-      return info
-        ? { path, name: info.name, isDir: info.isDir, parentPath: info.parentPath }
-        : { path, name: basename(path), isDir: false, parentPath: dirname(path) || rootPath };
-    });
-    if (items.length === 0) return;
-    setDeleting({ items });
-  }, [pathInfo, rootPath]);
+  const onRenameKey = useCallback((e) => {
+    if (e.key === 'Enter')      { e.preventDefault(); commitRename(); }
+    else if (e.key === 'Escape'){ e.preventDefault(); cancelRename(); }
+  }, [commitRename, cancelRename]);
 
-  // Toolbar entry point: delete whatever's currently selected.
-  const requestDeleteSelection = useCallback(() => {
-    requestDelete(Array.from(selectedPaths));
-  }, [requestDelete, selectedPaths]);
+  // ---- delete ---------------------------------------------------------
+  const requestDelete = useCallback((path, name, isDir, parentPath) => {
+    setError(null);
+    setDeleting({ items: [{ path, name, isDir, parentPath }] });
+  }, []);
 
   const cancelDelete = useCallback(() => setDeleting(null), []);
 
@@ -340,33 +237,67 @@ export default function FileExplorer({
     try {
       const parentsToReload = new Set();
       for (const item of deleting.items) {
-        // eslint-disable-next-line no-await-in-loop -- deletes must not race each other on the same fs
         await window.seecode.fs.delete(item.path);
         if (!item.isDir) onDeleteFile?.(item.path);
         parentsToReload.add(item.parentPath);
       }
       await Promise.all(Array.from(parentsToReload).map((dir) => loadDir(dir)));
-      setSelectedPaths((prev) => {
-        const next = new Set(prev);
-        deleting.items.forEach((item) => next.delete(item.path));
-        return next;
-      });
       setDeleting(null);
     } catch (err) {
       setError(err.message || 'Failed to delete.');
     }
   }, [deleting, loadDir, onDeleteFile]);
 
-  // ---- drag & drop (move) ----------------------------------------------
+  // ---- copy path ------------------------------------------------------
+  const copyPath = useCallback(async (path) => {
+    try {
+      await navigator.clipboard.writeText(path);
+    } catch { /* clipboard blocked */ }
+  }, []);
 
-  // A drop is valid as long as none of the dragged paths are the target
-  // itself, an ancestor of the target (that would move a folder inside
-  // itself), or already the target's parent (a no-op drop).
+  const copyRelativePath = useCallback(async (path) => {
+    if (!rootPath) return;
+    const rel = path.startsWith(rootPath) ? path.slice(rootPath.length + 1) : path;
+    try {
+      await navigator.clipboard.writeText(rel);
+    } catch { /* clipboard blocked */ }
+  }, [rootPath]);
+
+  // ---- context menu handler -------------------------------------------
+  const openContextMenu = useCallback((e, path, name, isDir) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    const parentPath = slash >= 0 ? path.slice(0, slash) : rootPath;
+    setContextMenu({ x: e.clientX, y: e.clientY, path, name, isDir, parentPath });
+  }, [rootPath]);
+
+  // ---- drag & drop (move) ---------------------------------------------
+
+  const [draggingPaths, setDraggingPaths] = useState(null);
+  const [dropTargetPath, setDropTargetPath] = useState(null);
+
+  const { visiblePaths, pathInfo } = useMemo(() => {
+    const paths = [];
+    const info = new Map();
+    const walk = (dirPath) => {
+      const entries = tree[dirPath]?.entries;
+      if (!entries) return;
+      for (const entry of entries) {
+        paths.push(entry.path);
+        info.set(entry.path, { name: entry.name, isDir: entry.isDir, parentPath: dirPath });
+        if (entry.isDir && tree[entry.path]?.open) walk(entry.path);
+      }
+    };
+    if (rootPath) walk(rootPath);
+    return { visiblePaths: paths, pathInfo: info };
+  }, [tree, rootPath]);
+
   const isValidDropTarget = useCallback((dirPath) => {
     if (!draggingPaths || draggingPaths.length === 0) return false;
     return draggingPaths.every((path) => {
       if (path === dirPath) return false;
-      if (dirPath === path || dirPath.startsWith(`${path}/`) || dirPath.startsWith(`${path}\\`)) return false;
+      if (dirPath.startsWith(`${path}/`) || dirPath.startsWith(`${path}\\`)) return false;
       const parent = pathInfo.get(path)?.parentPath ?? (dirname(path) || rootPath);
       if (parent === dirPath) return false;
       return true;
@@ -374,19 +305,10 @@ export default function FileExplorer({
   }, [draggingPaths, pathInfo, rootPath]);
 
   const handleDragStart = useCallback((event, path) => {
-    // Dragging a row that's already part of the selection moves the whole
-    // selection; dragging an unselected row moves (and selects) just it.
-    const paths = selectedPaths.has(path) && selectedPaths.size > 1
-      ? Array.from(selectedPaths)
-      : [path];
-    if (paths.length === 1) selectOnly(path);
-    setDraggingPaths(paths);
+    setDraggingPaths([path]);
     event.dataTransfer.effectAllowed = 'move';
-    // Only used for the OS-level drag affordance — the actual move reads
-    // from `draggingPaths` state, since drag and drop here never leaves
-    // this component.
-    event.dataTransfer.setData('text/plain', paths.join('\n'));
-  }, [selectedPaths, selectOnly]);
+    event.dataTransfer.setData('text/plain', path);
+  }, []);
 
   const handleDragEnd = useCallback(() => {
     setDraggingPaths(null);
@@ -394,8 +316,6 @@ export default function FileExplorer({
   }, []);
 
   const handleDragOver = useCallback((event, dirPath) => {
-    // Always preventDefault so the drop event actually fires; whether the
-    // drop is *allowed* is reflected in dropEffect + the highlight state.
     event.preventDefault();
     const valid = isValidDropTarget(dirPath);
     event.dataTransfer.dropEffect = valid ? 'move' : 'none';
@@ -412,53 +332,27 @@ export default function FileExplorer({
     setDraggingPaths(null);
     setDropTargetPath(null);
     if (!paths || !isValidDropTarget(dirPath)) return;
-
     try {
       const parentsToReload = new Set([dirPath]);
-      const renamedPairs = []; // [oldPath, newPath] — for activeFilePath / selection follow-up
+      const renamedPairs = [];
       for (const path of paths) {
         const info = pathInfo.get(path);
         const sourceParent = info?.parentPath ?? (dirname(path) || rootPath);
         const nextPath = joinPath(dirPath, info?.name ?? basename(path));
-        // eslint-disable-next-line no-await-in-loop -- moves must not race each other on the same fs
         await window.seecode.fs.rename(path, nextPath);
         parentsToReload.add(sourceParent);
         renamedPairs.push([path, nextPath]);
       }
-
       await Promise.all(Array.from(parentsToReload).map((dir) => loadDir(dir)));
-
-      // Make sure the folder we just dropped into is expanded so the
-      // moved item is immediately visible.
       setTree((prev) => ({ ...prev, [dirPath]: { ...prev[dirPath], open: true } }));
-
-      // If a moved file was open in the editor, "re-open" it at its new
-      // path — same pattern commitRename uses.
       const movedActive = renamedPairs.find(([oldPath]) => oldPath === activeFilePath);
       if (movedActive) onOpenFile?.(movedActive[1]);
-
-      // Keep selection pointed at the moved items under their new paths.
-      setSelectedPaths((prev) => {
-        const next = new Set(prev);
-        renamedPairs.forEach(([oldPath, nextPath]) => {
-          if (next.has(oldPath)) { next.delete(oldPath); next.add(nextPath); }
-        });
-        return next;
-      });
     } catch (err) {
       setError(err.message || 'Failed to move.');
     }
   }, [draggingPaths, isValidDropTarget, pathInfo, rootPath, loadDir, activeFilePath, onOpenFile]);
 
-  const onRenameKey = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      commitRename();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      commitRename();
-    }
-  }, [commitRename, cancelRename]);
+  // ---- render ---------------------------------------------------------
 
   if (!rootPath) {
     return (
@@ -478,24 +372,25 @@ export default function FileExplorer({
 
   return (
     <div style={styles.panel}>
-      <div style={styles.header}>
-        <button
-          type="button"
-          className="ui-toolbar-button"
-          style={{
-            ...styles.headerLabel,
-            ...(selectedDir === rootPath ? styles.headerLabelSelected : {}),
-            ...(dropTargetPath === rootPath ? styles.headerLabelDropTarget : {}),
-          }}
-          title="Select project root as the creation target — also a drop target to move items back to the top level"
-          onClick={() => setSelectedDir(rootPath)}
-          onDragOver={(e) => handleDragOver(e, rootPath)}
-          onDragLeave={() => handleDragLeave(rootPath)}
-          onDrop={(e) => handleDrop(e, rootPath)}
-        >
+      <div
+        style={{
+          ...styles.header,
+          ...(dropTargetPath === rootPath ? styles.headerDropTarget : {}),
+        }}
+        onDragOver={(e) => handleDragOver(e, rootPath)}
+        onDragLeave={() => handleDragLeave(rootPath)}
+        onDrop={(e) => handleDrop(e, rootPath)}
+      >
+        <span style={{
+          ...styles.headerLabel,
+          ...(draggingPaths ? { pointerEvents: 'none' } : {}),
+        }}>
           {basename(rootPath) || rootPath}
-        </button>
-        <div style={styles.headerActions}>
+        </span>
+        <div style={{
+          ...styles.headerActions,
+          ...(draggingPaths ? { pointerEvents: 'none' } : {}),
+        }}>
           <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
             <Plus size={12} />
           </button>
@@ -543,7 +438,7 @@ export default function FileExplorer({
         <div style={styles.deleteConfirm} role="alert">
           <span style={styles.deleteText}>
             {deleting.items.length === 1
-              ? `Move “${deleting.items[0].name}” to the Recycle Bin?`
+              ? `Move "${deleting.items[0].name}" to the Recycle Bin?`
               : `Move ${deleting.items.length} items to the Recycle Bin?`}
           </span>
           <button type="button" style={styles.deleteBtn} onClick={commitDelete}>Delete</button>
@@ -551,36 +446,44 @@ export default function FileExplorer({
         </div>
       )}
 
-      {/* Selection toolbar — hidden while the delete-confirm bar is up so
-          the two don't stack. Rename only makes sense for a single item;
-          Delete and drag-to-move both work on the whole selection. */}
-      {!deleting && selectedPaths.size > 0 && (
-        <div style={styles.selectionToolbar}>
-          <span style={styles.selectionCount}>
-            {selectedPaths.size === 1 ? (pathInfo.get([...selectedPaths][0])?.name ?? '1 selected') : `${selectedPaths.size} selected`}
-          </span>
-          <div style={styles.selectionActions}>
-            {selectedPaths.size === 1 && (
-              <button type="button" className="ui-icon-button" style={styles.iconBtn} onClick={startRenameSelection} title="Rename (F2)">
-                <Pencil size={12} />
-              </button>
-            )}
-            <button type="button" className="ui-icon-button" style={styles.iconBtn} onClick={requestDeleteSelection} title="Delete selected">
-              <Trash2 size={12} />
-            </button>
-            <button type="button" className="ui-icon-button" style={styles.iconBtn} onClick={clearSelection} title="Clear selection (Esc)">
-              <X size={12} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {error && <div style={styles.error}>{error}</div>}
+
       <div
-        style={styles.tree}
-        // Clicking empty space below/between rows clears the selection —
-        // only when the click actually lands on this wrapper, not a row.
-        onClick={(e) => { if (e.target === e.currentTarget) clearSelection(); }}
+        style={{
+          ...styles.tree,
+          ...(dropTargetPath === rootPath && !tree[rootPath]?.open ? styles.treeDropTarget : {}),
+        }}
+        onContextMenu={(e) => {
+          // Right-click on empty space: context menu for creating new items
+          if (e.target === e.currentTarget) {
+            e.preventDefault();
+            setContextMenu({
+              x: e.clientX,
+              y: e.clientY,
+              path: rootPath,
+              name: basename(rootPath) || rootPath,
+              isDir: true,
+              parentPath: rootPath,
+              isBackground: true,
+            });
+          }
+        }}
+        onDragOver={(e) => {
+          // Empty space below folders → drop to project root
+          if (e.target === e.currentTarget) {
+            handleDragOver(e, rootPath);
+          }
+        }}
+        onDragLeave={(e) => {
+          if (e.target === e.currentTarget) {
+            handleDragLeave(rootPath);
+          }
+        }}
+        onDrop={(e) => {
+          if (e.target === e.currentTarget) {
+            handleDrop(e, rootPath);
+          }
+        }}
       >
         <TreeNode
           path={rootPath}
@@ -590,9 +493,9 @@ export default function FileExplorer({
           tree={tree}
           onToggleDir={toggleDir}
           onOpenFile={onOpenFile}
+          activeFilePath={activeFilePath}
           selectedDir={selectedDir}
           onSelectDir={setSelectedDir}
-          activeFilePath={activeFilePath}
           isRoot
           renaming={renaming}
           renameDraft={renameDraft}
@@ -600,10 +503,6 @@ export default function FileExplorer({
           onRenameDraftChange={setRenameDraft}
           onRenameKey={onRenameKey}
           onRenameBlur={commitRename}
-          selectedPaths={selectedPaths}
-          onSelectOnly={selectOnly}
-          onToggleSelected={toggleSelected}
-          onSelectRange={selectRange}
           draggingPaths={draggingPaths}
           dropTargetPath={dropTargetPath}
           onDragStart={handleDragStart}
@@ -611,24 +510,118 @@ export default function FileExplorer({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onContextMenu={openContextMenu}
+          hoveredPath={hoveredPath}
+          onHoverPath={setHoveredPath}
         />
       </div>
+
+      {/* ---- Context menu (VS Code style) ---- */}
+      {contextMenu && (
+        <ContextMenu
+          ref={contextMenuRef}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          isDir={contextMenu.isDir}
+          isBackground={contextMenu.isBackground}
+          menuPath={contextMenu.path}
+          menuName={contextMenu.name}
+          parentPath={contextMenu.parentPath}
+          onClose={() => setContextMenu(null)}
+          onNewFile={(dir) => { setContextMenu(null); startCreate(NEW_FILE, dir); }}
+          onNewFolder={(dir) => { setContextMenu(null); startCreate(NEW_FOLDER, dir); }}
+          onRename={() => {
+            setContextMenu(null);
+            startRename(contextMenu.path, contextMenu.name, contextMenu.isDir);
+          }}
+          onDelete={() => {
+            setContextMenu(null);
+            requestDelete(contextMenu.path, contextMenu.name, contextMenu.isDir, contextMenu.parentPath);
+          }}
+          onCopyPath={() => { setContextMenu(null); copyPath(contextMenu.path); }}
+          onCopyRelativePath={() => { setContextMenu(null); copyRelativePath(contextMenu.path); }}
+        />
+      )}
     </div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// ContextMenu — floating right-click menu, positioned at the cursor.
+// Styled after VS Code's file explorer context menu.
+// ---------------------------------------------------------------------------
+
+import { forwardRef } from 'react';
+
+const ContextMenu = forwardRef(function ContextMenu({
+  x, y, isDir, isBackground, menuPath, menuName, parentPath,
+  onClose, onNewFile, onNewFolder, onRename, onDelete,
+  onCopyPath, onCopyRelativePath,
+}, ref) {
+  // Build menu items based on what was right-clicked
+  const items = [];
+
+  if (isDir) {
+    items.push({ label: 'New File…', icon: <File size={12} />, action: () => onNewFile(menuPath) });
+    items.push({ label: 'New Folder…', icon: <FolderPlus size={12} />, action: () => onNewFolder(menuPath) });
+    items.push({ type: 'separator' });
+  }
+
+  if (!isBackground) {
+    items.push({ label: 'Rename', icon: <Pencil size={12} />, action: onRename, shortcut: 'F2' });
+    items.push({ label: 'Delete', icon: <Trash2 size={12} />, action: onDelete });
+    items.push({ type: 'separator' });
+  }
+
+  items.push({ label: 'Copy Path', icon: <Copy size={12} />, action: onCopyPath });
+  if (!isBackground) {
+    items.push({ label: 'Copy Relative Path', icon: <Copy size={12} />, action: onCopyRelativePath });
+  }
+
+  // Position: flip if menu would go off-screen
+  const menuWidth = 220;
+  const menuHeight = items.length * 28;
+  const finalX = x + menuWidth > window.innerWidth ? x - menuWidth : x;
+  const finalY = y + menuHeight > window.innerHeight ? y - menuHeight : y;
+
+  return (
+    <div ref={ref} style={{ ...styles.contextMenu, left: finalX, top: finalY }}>
+      {items.map((item, i) => {
+        if (item.type === 'separator') {
+          return <div key={`sep-${i}`} style={styles.contextSeparator} />;
+        }
+        return (
+          <button
+            key={item.label}
+            type="button"
+            style={styles.contextItem}
+            onClick={(e) => { e.stopPropagation(); item.action(); }}
+          >
+            <span style={styles.contextIcon}>{item.icon}</span>
+            <span style={styles.contextLabel}>{item.label}</span>
+            {item.shortcut && <span style={styles.contextShortcut}>{item.shortcut}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// TreeNode — recursive tree row renderer
+// ---------------------------------------------------------------------------
+
 function TreeNode({
   path, name, isDir, depth, tree, onToggleDir, onOpenFile, activeFilePath, selectedDir, onSelectDir, isRoot,
   renaming, renameDraft, renameRef, onRenameDraftChange, onRenameKey, onRenameBlur,
-  selectedPaths, onSelectOnly, onToggleSelected, onSelectRange,
   draggingPaths, dropTargetPath, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
+  onContextMenu, hoveredPath, onHoverPath,
 }) {
   const node = isDir ? tree[path] : null;
   const open = !!node?.open;
   const entries = node?.entries;
 
   if (isRoot) {
-    // The root just renders its children directly — we already show its name in the header.
     if (!entries) return <div style={styles.loading}>Loading…</div>;
     return (
       <>
@@ -651,10 +644,6 @@ function TreeNode({
             onRenameDraftChange={onRenameDraftChange}
             onRenameKey={onRenameKey}
             onRenameBlur={onRenameBlur}
-            selectedPaths={selectedPaths}
-            onSelectOnly={onSelectOnly}
-            onToggleSelected={onToggleSelected}
-            onSelectRange={onSelectRange}
             draggingPaths={draggingPaths}
             dropTargetPath={dropTargetPath}
             onDragStart={onDragStart}
@@ -662,6 +651,9 @@ function TreeNode({
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
+            onContextMenu={onContextMenu}
+            hoveredPath={hoveredPath}
+            onHoverPath={onHoverPath}
           />
         ))}
       </>
@@ -671,9 +663,9 @@ function TreeNode({
   const isActive = !isDir && path === activeFilePath;
   const isSelectedDir = isDir && path === selectedDir;
   const isRenaming = renaming?.path === path;
-  const isMultiSelected = selectedPaths.has(path);
   const isDragging = !!draggingPaths?.includes(path);
   const isDropTarget = isDir && dropTargetPath === path;
+  const isHovered = hoveredPath === path;
 
   return (
     <div>
@@ -683,31 +675,21 @@ function TreeNode({
           ...styles.row,
           ...(isActive ? styles.rowActive : {}),
           ...(isSelectedDir ? styles.rowSelected : {}),
-          ...(isMultiSelected ? styles.rowMultiSelected : {}),
           ...(isDragging ? styles.rowDragging : {}),
           ...(isDropTarget ? styles.rowDropTarget : {}),
+          ...(isHovered && !isActive && !isSelectedDir ? styles.rowHover : {}),
           paddingLeft: 8 + depth * 12,
         }}
-        // Rows are draggable (for move) except while being renamed, where
-        // a drag would just fight with text selection in the input.
         draggable={!isRenaming}
         onDragStart={(e) => onDragStart(e, path)}
         onDragEnd={onDragEnd}
         onDragOver={isDir ? (e) => onDragOver(e, path) : undefined}
         onDragLeave={isDir ? () => onDragLeave(path) : undefined}
         onDrop={isDir ? (e) => onDrop(e, path) : undefined}
+        onContextMenu={(e) => onContextMenu(e, path, name, isDir)}
+        onMouseEnter={() => onHoverPath?.(path)}
+        onMouseLeave={() => onHoverPath?.((prev) => prev === path ? null : prev)}
         onClick={(e) => {
-          // Shift/Ctrl(Cmd) clicks only change the selection — they don't
-          // open files or toggle folders, matching Finder/VS Code.
-          if (e.shiftKey) {
-            onSelectRange(path);
-            return;
-          }
-          if (e.ctrlKey || e.metaKey) {
-            onToggleSelected(path);
-            return;
-          }
-          onSelectOnly(path);
           if (isDir) {
             onSelectDir(path);
             onToggleDir(path);
@@ -760,10 +742,6 @@ function TreeNode({
           onRenameDraftChange={onRenameDraftChange}
           onRenameKey={onRenameKey}
           onRenameBlur={onRenameBlur}
-          selectedPaths={selectedPaths}
-          onSelectOnly={onSelectOnly}
-          onToggleSelected={onToggleSelected}
-          onSelectRange={onSelectRange}
           draggingPaths={draggingPaths}
           dropTargetPath={dropTargetPath}
           onDragStart={onDragStart}
@@ -771,21 +749,28 @@ function TreeNode({
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
+          onContextMenu={onContextMenu}
+          hoveredPath={hoveredPath}
+          onHoverPath={onHoverPath}
         />
       ))}
     </div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// styles
+// ---------------------------------------------------------------------------
+
 const styles = {
   panel: {
-  width: '100%',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  background: 'var(--bg-secondary)',
-  overflow: 'hidden',
-},
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    background: 'var(--bg-secondary)',
+    overflow: 'hidden',
+  },
   header: {
     height: 'var(--panel-header-height)',
     flexShrink: 0,
@@ -811,11 +796,7 @@ const styles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
-  headerLabelSelected: {
-    background: 'var(--accent-soft)',
-    color: 'var(--text-primary)',
-  },
-  headerLabelDropTarget: {
+  headerDropTarget: {
     background: 'var(--accent-soft)',
     outline: '1px dashed var(--border-focus)',
     outlineOffset: -1,
@@ -835,25 +816,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  rowActions: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 2,
-    marginLeft: 'auto',
-    opacity: 0.75,
-    flexShrink: 0,
-  },
-
-  rowAction: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 24,
-    height: 24,
-    borderRadius: 'var(--radius-control)',
-    color: 'var(--text-muted)',
   },
 
   renameInput: {
@@ -939,32 +901,8 @@ const styles = {
     border: '1px solid var(--danger)',
     borderRadius: 3,
     background: 'var(--danger)',
-    color: '#fff',
+    color: 'var(--text-on-accent)',
     fontSize: 10.5,
-  },
-  selectionToolbar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-    padding: '6px 8px',
-    background: 'var(--accent-soft)',
-    borderBottom: '1px solid var(--border)',
-  },
-  selectionCount: {
-    flex: 1,
-    minWidth: 0,
-    color: 'var(--text-primary)',
-    fontSize: 11,
-    fontWeight: 600,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  selectionActions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 2,
-    flexShrink: 0,
   },
   emptyState: {
     padding: 16,
@@ -992,6 +930,9 @@ const styles = {
     overflow: 'auto',
     padding: '4px 0',
   },
+  treeDropTarget: {
+    background: 'var(--accent-soft)',
+  },
   loading: {
     padding: 8,
     fontSize: 11,
@@ -1000,7 +941,7 @@ const styles = {
   error: {
     padding: 8,
     fontSize: 11,
-    color: '#e06c75',
+    color: 'var(--danger-text)',
     background: 'rgba(224, 108, 117, 0.08)',
     borderBottom: '1px solid var(--border)',
   },
@@ -1021,19 +962,11 @@ const styles = {
     textOverflow: 'ellipsis',
   },
   rowActive: {
-    background: 'rgba(0, 122, 204, 0.16)',
-    color: '#fff',
+    background: 'var(--active-row-bg)',
+    color: 'var(--text-on-accent)',
   },
   rowSelected: {
     background: 'var(--accent-soft)',
-  },
-  // Multi-selection (Ctrl/Cmd+click, Shift+click) — a distinct, slightly
-  // stronger highlight so it reads separately from the "active file" /
-  // "selected creation target" states above, which can overlap it.
-  rowMultiSelected: {
-    background: 'var(--accent-soft)',
-    outline: '1px solid var(--border-focus)',
-    outlineOffset: -1,
   },
   rowDragging: {
     opacity: 0.5,
@@ -1042,6 +975,9 @@ const styles = {
     background: 'var(--accent-soft)',
     outline: '1px dashed var(--border-focus)',
     outlineOffset: -1,
+  },
+  rowHover: {
+    background: 'var(--bg-tertiary)',
   },
   chev: {
     width: 12,
@@ -1057,5 +993,50 @@ const styles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
+  },
+
+  // ---- context menu ---------------------------------------------------
+  contextMenu: {
+    position: 'fixed',
+    zIndex: 1000,
+    minWidth: 200,
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 6,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+    padding: '4px 0',
+    animation: 'seec0de-fade-in 0.1s ease-out',
+  },
+  contextSeparator: {
+    height: 1,
+    margin: '4px 0',
+    background: 'var(--border)',
+  },
+  contextItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    padding: '5px 12px',
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--text-primary)',
+    fontSize: 12,
+    textAlign: 'left',
+    cursor: 'pointer',
+  },
+  contextIcon: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    color: 'var(--text-secondary)',
+    flexShrink: 0,
+  },
+  contextLabel: {
+    flex: 1,
+  },
+  contextShortcut: {
+    color: 'var(--text-muted)',
+    fontSize: 11,
+    marginLeft: 'auto',
   },
 };
