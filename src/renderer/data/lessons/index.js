@@ -4,6 +4,7 @@ import tsLessons from './typescript.json';
 import rtLessons from './react.json';
 import htmlLessons from './html.json';
 import cssLessons from './css.json';
+import gitLessons from './git.json';
 
 export default {
   schemaVersion: 2,
@@ -14,5 +15,6 @@ export default {
     ...rtLessons.tracks,
     ...htmlLessons.tracks,
     ...cssLessons.tracks,
+    ...gitLessons.tracks,
   ]
 };

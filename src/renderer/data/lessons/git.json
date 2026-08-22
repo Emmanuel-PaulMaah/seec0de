@@ -1,0 +1,617 @@
+{
+  "tracks": [
+    {
+      "id": "git-fundamentals",
+      "name": "Git & GitHub Fundamentals",
+      "language": "git",
+      "description": "Version control from scratch: init, stage, commit, branch, merge, and collaborate on GitHub.",
+      "lessons": [
+        {
+          "id": "git-01-what-is-git",
+          "title": "1. What is Version Control?",
+          "concept": "Version Control",
+          "summary": "Why Git exists and how it tracks changes over time.",
+          "activities": [
+            {
+              "id": "git-01-see",
+              "type": "worked-example",
+              "title": "Imagine editing a document",
+              "instruction": "Without version control, you might save files as report_v1.docx, report_v2_final.docx, report_v2_final_REALLY.docx. Git solves this by tracking every change you make in a project, storing snapshots, and letting you go back to any point in time.",
+              "example": "report.docx          <- the file you edit\nreport.docx          <- Git tracks what changed, when, and by whom\n\nIf you break something, you can undo it:\n  git restore report.docx"
+            },
+            {
+              "id": "git-01-predict",
+              "type": "prediction",
+              "title": "What does Git track?",
+              "question": "If you have a folder with 10 files and run `git init`, what happens?",
+              "choices": [
+                "Git immediately backs up all 10 files to the cloud",
+                "Git creates a hidden .git folder that will start tracking changes going forward",
+                "Git asks you to upload each file one by one"
+              ],
+              "answer": "Git creates a hidden .git folder that will start tracking changes going forward",
+              "explanation": "`git init` only creates the .git directory -- the actual tracking happens when you stage and commit files."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "**Version control** is a system that records changes to files over time so you can recall specific versions later." },
+            { "type": "p", "text": "**Git** is the most popular version control system. It was created by Linus Torvalds in 2005 to manage the Linux kernel source code." },
+            { "type": "p", "text": "Key concepts:" },
+            { "type": "p", "text": "- **Repository (repo):** A project folder that Git is tracking\n- **Commit:** A snapshot of your files at a specific moment\n- **Branch:** An independent line of development\n- **Remote:** A copy of the repo hosted on a server (like GitHub)" },
+            { "type": "note", "text": "Git stores snapshots, not diffs. Each commit records the state of every tracked file at that point in time." }
+          ],
+          "task": "This is a concept lesson -- no coding needed. Click 'Continue' to move to the next lesson where you'll start using Git commands.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": [],
+          "hints": [],
+          "solution": ""
+        },
+        {
+          "id": "git-02-init",
+          "title": "2. Creating a Repository",
+          "concept": "git init",
+          "summary": "Turn any folder into a Git repository.",
+          "activities": [
+            {
+              "id": "git-02-see",
+              "type": "worked-example",
+              "title": "Initialize a repository",
+              "instruction": "`git init` creates a hidden `.git` directory in the current folder. This directory contains all the metadata Git needs to track changes -- you never edit it directly.",
+              "example": "$ git init\nInitialized empty Git repository in ~/my-project/.git/"
+            },
+            {
+              "id": "git-02-predict",
+              "type": "prediction",
+              "title": "What happens after init?",
+              "question": "After running `git init`, what does `git status` show?",
+              "choices": [
+                "Nothing -- the repo is empty and has no files",
+                "An error saying no commits exist",
+                "A message that the repo is on branch main with no commits"
+              ],
+              "answer": "A message that the repo is on branch main with no commits",
+              "explanation": "Git creates a default branch (usually `main`) and reports that there are no commits yet."
+            },
+            {
+              "id": "git-02-drill",
+              "type": "drill",
+              "title": "Initialize your first repo",
+              "instruction": "Type the command to create a new Git repository in the sandbox terminal below.",
+              "successCriteria": "The terminal shows 'Initialized empty Git repository'"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every Git project starts with `git init`. This command creates the `.git` directory that stores all your version history." },
+            { "type": "code", "text": "git init" },
+            { "type": "p", "text": "After running this, your folder is a Git repository. But Git doesn't track anything yet -- you need to explicitly add files." },
+            { "type": "note", "text": "You only run `git init` once per project. After that, Git is always watching for changes." }
+          ],
+          "task": "In the sandbox terminal, initialize a new Git repository by running `git init`.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init"],
+          "hints": [
+            "Type `git init` in the terminal and press Enter.",
+            "You should see 'Initialized empty Git repository in ~/my-project/.git/'"
+          ],
+          "solution": "git init"
+        },
+        {
+          "id": "git-03-status",
+          "title": "3. Checking Status",
+          "concept": "git status",
+          "summary": "See what Git knows about your files.",
+          "activities": [
+            {
+              "id": "git-03-see",
+              "type": "worked-example",
+              "title": "Reading git status",
+              "instruction": "`git status` tells you which branch you're on, what files are staged, what's modified but not staged, and what's untracked.",
+              "example": "$ git status\nOn branch main\n\nNo commits yet\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n\thello.txt\n\nnothing added to commit but untracked files present"
+            },
+            {
+              "id": "git-03-predict",
+              "type": "prediction",
+              "title": "What does 'untracked' mean?",
+              "question": "If a file shows as 'Untracked' in `git status`, what does that mean?",
+              "choices": [
+                "Git is ignoring the file",
+                "Git sees the file but hasn't been told to track it yet",
+                "The file is corrupted"
+              ],
+              "answer": "Git sees the file but hasn't been told to track it yet",
+              "explanation": "Untracked files exist in your folder but Git doesn't save any version of them yet. Use `git add` to start tracking."
+            },
+            {
+              "id": "git-03-drill",
+              "type": "drill",
+              "title": "Check repository status",
+              "instruction": "First run `git init` to set up the repo, then check its status with `git status`.",
+              "successCriteria": "The terminal shows a status message with 'On branch main'"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git status` is the command you'll use most often. It tells you the current state of your repository." },
+            { "type": "code", "text": "git status" },
+            { "type": "p", "text": "The output has three sections:" },
+            { "type": "p", "text": "- **On branch main** -- which branch you're working on\n- **Changes to be committed** -- files in the staging area\n- **Untracked files** -- files Git sees but isn't tracking" },
+            { "type": "note", "text": "Run `git status` often. It's the best way to understand what Git is doing." }
+          ],
+          "task": "In the sandbox terminal, initialize a repository and then check its status.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "git status"],
+          "hints": [
+            "First run `git init`, then run `git status`.",
+            "The status should show 'On branch main' and 'No commits yet'."
+          ],
+          "solution": "git init\ngit status"
+        },
+        {
+          "id": "git-04-add",
+          "title": "4. Staging Changes",
+          "concept": "git add",
+          "summary": "Choose exactly what goes into your next commit.",
+          "activities": [
+            {
+              "id": "git-04-see",
+              "type": "worked-example",
+              "title": "The staging area",
+              "instruction": "The staging area (or index) is a middle ground between your working directory and the repository. You `git add` files to stage them, then `git commit` to save a snapshot of what's staged.",
+              "example": "$ touch hello.txt\n$ git add hello.txt\n$ git status\nOn branch main\n\nNo commits yet\n\nChanges to be committed:\n  (use \"git restore --staged <file>...\" to unstage)\n\tnew file:   hello.txt"
+            },
+            {
+              "id": "git-04-predict",
+              "type": "prediction",
+              "title": "Stage a single file",
+              "question": "You have 3 files: a.txt, b.txt, c.txt. What command stages only a.txt?",
+              "choices": [
+                "git add .",
+                "git add a.txt",
+                "git add --all a.txt"
+              ],
+              "answer": "git add a.txt",
+              "explanation": "`git add .` stages everything. `git add a.txt` stages just that one file."
+            },
+            {
+              "id": "git-04-drill",
+              "type": "drill",
+              "title": "Create and stage a file",
+              "instruction": "Create a file called hello.txt (using `touch hello.txt`), then stage it with `git add hello.txt`. Verify with `git status`.",
+              "successCriteria": "git status shows hello.txt under 'Changes to be committed'"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Think of `git add` as putting files into a shopping cart before checkout. You choose what goes in; only those items get committed." },
+            { "type": "code", "text": "git add hello.txt      # stage one file\ngit add .              # stage everything\ngit add *.txt          # stage all .txt files" },
+            { "type": "p", "text": "After staging, `git status` shows the file under 'Changes to be committed'." },
+            { "type": "note", "text": "You can unstage a file with `git restore --staged <file>`." }
+          ],
+          "task": "Create a file called `hello.txt` (using `touch hello.txt`), then stage it and verify with `git status`.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "touch hello.txt", "git add hello.txt", "git status"],
+          "hints": [
+            "First create the file: `touch hello.txt`",
+            "Then stage it: `git add hello.txt`",
+            "Check status: `git status` -- the file should appear under 'Changes to be committed'"
+          ],
+          "solution": "git init\ntouch hello.txt\ngit add hello.txt\ngit status"
+        },
+        {
+          "id": "git-05-commit",
+          "title": "5. Saving Snapshots",
+          "concept": "git commit",
+          "summary": "Lock in your changes with a commit.",
+          "activities": [
+            {
+              "id": "git-05-see",
+              "type": "worked-example",
+              "title": "Your first commit",
+              "instruction": "`git commit` saves everything in the staging area as a new snapshot. Always include a message describing what changed using `-m`.",
+              "example": "$ git commit -m \"Add hello.txt\"\n[main abc1234] Add hello.txt\n 1 file changed, 1 insertion(+)\n create mode 100644 hello.txt"
+            },
+            {
+              "id": "git-05-predict",
+              "type": "prediction",
+              "title": "Commit message etiquette",
+              "question": "Which commit message best describes adding a README file?",
+              "choices": [
+                "fix stuff",
+                "Add README with project description and install instructions",
+                "updated files"
+              ],
+              "answer": "Add README with project description and install instructions",
+              "explanation": "Good commit messages explain **what** changed and **why**. Avoid vague messages like 'fix stuff' or 'updated files'."
+            },
+            {
+              "id": "git-05-drill",
+              "type": "drill",
+              "title": "Stage and commit",
+              "instruction": "Create a file, stage it, and make your first commit with a message.",
+              "successCriteria": "git log shows the commit with your message"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A commit is a permanent snapshot of your staged files. Every commit gets a unique hash (like `abc1234`) and records who made it and when." },
+            { "type": "code", "text": "git commit -m \"Your message here\"" },
+            { "type": "p", "text": "After committing, the staging area is cleared. Your changes are now safely stored in the repository." },
+            { "type": "note", "text": "Write commit messages in the imperative mood: 'Add feature' not 'Added feature'. Start with a capital letter and keep it under 72 characters." }
+          ],
+          "task": "Create a file called `README.md`, stage it, and commit it with the message 'Add README'.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "touch README.md", "git add README.md", "git commit -m"],
+          "hints": [
+            "Create the file: `touch README.md`",
+            "Stage it: `git add README.md`",
+            "Commit with a message: `git commit -m \"Add README\"`"
+          ],
+          "solution": "git init\ntouch README.md\ngit add README.md\ngit commit -m \"Add README\""
+        },
+        {
+          "id": "git-06-log",
+          "title": "6. Viewing History",
+          "concept": "git log",
+          "summary": "See the timeline of commits in your project.",
+          "activities": [
+            {
+              "id": "git-06-see",
+              "type": "worked-example",
+              "title": "Reading git log",
+              "instruction": "`git log` shows the commit history in reverse chronological order. Each entry shows the commit hash, author, date, and message.",
+              "example": "$ git log\ncommit abc1234567890 (HEAD -> main)\nAuthor: You <you@example.com>\nDate:   Thu Aug 22 10:30:00 2026\n\n    Add README\n\ncommit def0987654321\nAuthor: You <you@example.com>\nDate:   Thu Aug 22 10:00:00 2026\n\n    Initial commit"
+            },
+            {
+              "id": "git-06-predict",
+              "type": "prediction",
+              "title": "What does HEAD mean?",
+              "question": "In `git log` output, what does `(HEAD -> main)` tell you?",
+              "choices": [
+                "The repo is corrupted",
+                "You are currently on the main branch, and HEAD points to the latest commit",
+                "main is the only branch"
+              ],
+              "answer": "You are currently on the main branch, and HEAD points to the latest commit",
+              "explanation": "HEAD is a pointer to the current commit. `HEAD -> main` means you're on the main branch."
+            },
+            {
+              "id": "git-06-drill",
+              "type": "drill",
+              "title": "Make commits and view history",
+              "instruction": "Make two commits, then run `git log` to see the history.",
+              "successCriteria": "git log shows at least two commits"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git log` is your project's timeline. It shows every commit from newest to oldest." },
+            { "type": "code", "text": "git log              # full log\ngit log --oneline     # compact: one line per commit" },
+            { "type": "p", "text": "Each commit has:" },
+            { "type": "p", "text": "- **Hash** -- a unique ID like `abc1234`\n- **Author** -- who made the change\n- **Date** -- when it was made\n- **Message** -- what the commit does" },
+            { "type": "note", "text": "Press `q` to exit the log viewer if it opens in a pager." }
+          ],
+          "task": "Make two separate commits (each with a different file and message), then run `git log` to see the history.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "git commit", "git log"],
+          "hints": [
+            "First commit: create a file, `git add` it, then `git commit -m \"First commit\"`",
+            "Second commit: create another file, `git add` it, then `git commit -m \"Second commit\"`",
+            "Then run `git log` to see both commits"
+          ],
+          "solution": "git init\ntouch file1.txt\ngit add file1.txt\ngit commit -m \"First commit\"\ntouch file2.txt\ngit add file2.txt\ngit commit -m \"Second commit\"\ngit log"
+        },
+        {
+          "id": "git-07-diff",
+          "title": "7. Seeing Changes",
+          "concept": "git diff",
+          "summary": "Compare what changed between versions.",
+          "activities": [
+            {
+              "id": "git-07-see",
+              "type": "worked-example",
+              "title": "Reading a diff",
+              "instruction": "`git diff` shows line-by-line changes in your working directory. Lines prefixed with `-` were removed; lines prefixed with `+` were added.",
+              "example": "$ echo \"Hello\" > greet.txt\ngit add greet.txt\ngit commit -m \"Add greet\"\n$ echo \"Hello, World\" > greet.txt\n$ git diff\ndiff --git a/greet.txt b/greet.txt\n--- a/greet.txt\n+++ b/greet.txt\n@@ -1 +1 @@\n-Hello\n+Hello, World"
+            },
+            {
+              "id": "git-07-predict",
+              "type": "prediction",
+              "title": "What does diff show?",
+              "question": "If you modify a file but don't `git add` it, what does `git diff` show?",
+              "choices": [
+                "Nothing -- you need to commit first",
+                "The difference between the working file and the last commit",
+                "An error message"
+              ],
+              "answer": "The difference between the working file and the last commit",
+              "explanation": "`git diff` compares your working directory to the last commit (HEAD). Staging doesn't matter for this comparison."
+            },
+            {
+              "id": "git-07-drill",
+              "type": "drill",
+              "title": "See a diff",
+              "instruction": "Create and commit a file, then modify it and run `git diff`.",
+              "successCriteria": "git diff shows the change you made"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git diff` shows you exactly what changed, line by line." },
+            { "type": "code", "text": "git diff                 # working dir vs HEAD\ngit diff --staged         # staged vs HEAD\ngit diff HEAD~1           # vs one commit back" },
+            { "type": "p", "text": "The output uses `+` for added lines and `-` for removed lines." },
+            { "type": "note", "text": "Run `git diff` before committing to review your changes one last time." }
+          ],
+          "task": "Create a file called `note.txt` with content 'v1', commit it, then change it to 'v2' and run `git diff`.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "git commit", "git diff"],
+          "hints": [
+            "1. `touch note.txt`, `echo v1 > note.txt`, `git add note.txt`, `git commit -m \"v1\"`",
+            "2. `echo v2 > note.txt`, `git diff`"
+          ],
+          "solution": "git init\ntouch note.txt\necho v1 > note.txt\ngit add note.txt\ngit commit -m \"v1\"\necho v2 > note.txt\ngit diff"
+        },
+        {
+          "id": "git-08-branch",
+          "title": "8. Creating Branches",
+          "concept": "git branch",
+          "summary": "Work on features in parallel without affecting main.",
+          "activities": [
+            {
+              "id": "git-08-see",
+              "type": "worked-example",
+              "title": "Branches are pointers",
+              "instruction": "A branch is a movable pointer to a commit. When you create a branch, Git makes a new pointer. The `*` marks which branch you're on.",
+              "example": "$ git branch\n* main\n\n$ git branch feature\n\n$ git branch\n  feature\n* main"
+            },
+            {
+              "id": "git-08-predict",
+              "type": "prediction",
+              "title": "Does branching copy files?",
+              "question": "When you run `git branch feature`, does Git duplicate all the files?",
+              "choices": [
+                "Yes -- it creates a full copy of the project",
+                "No -- it just creates a pointer to the current commit",
+                "It depends on the file size"
+              ],
+              "answer": "No -- it just creates a pointer to the current commit",
+              "explanation": "Branches are lightweight. Git only creates a new pointer (a 41-byte file), not a copy of the project."
+            },
+            {
+              "id": "git-08-drill",
+              "type": "drill",
+              "title": "Create and list branches",
+              "instruction": "Make an initial commit, then create a branch called `feature` and list all branches.",
+              "successCriteria": "git branch shows both 'main' and 'feature'"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Branches let you work on different features simultaneously without affecting the main codebase." },
+            { "type": "code", "text": "git branch feature     # create a new branch\ngit branch             # list branches\n\n  feature\n* main                  # * = current branch" },
+            { "type": "p", "text": "Creating a branch doesn't switch to it. Use `git checkout feature` or `git switch feature` to move to the new branch." },
+            { "type": "note", "text": "Branches are a core part of the Git workflow. The `main` branch is typically the stable, production-ready code." }
+          ],
+          "task": "Make an initial commit, create a branch called `feature`, then list all branches.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "git commit", "git branch feature", "git branch"],
+          "hints": [
+            "1. Create and commit a file to initialize the repo",
+            "2. Run `git branch feature`",
+            "3. Run `git branch` to see both branches"
+          ],
+          "solution": "git init\ntouch app.js\ngit add app.js\ngit commit -m \"Initial commit\"\ngit branch feature\ngit branch"
+        },
+        {
+          "id": "git-09-checkout",
+          "title": "9. Switching Branches",
+          "concept": "git checkout / git switch",
+          "summary": "Move between branches to work on different features.",
+          "activities": [
+            {
+              "id": "git-09-see",
+              "type": "worked-example",
+              "title": "Switching context",
+              "instruction": "`git switch` (or `git checkout`) moves you to a different branch. Your working directory updates to match that branch's files.",
+              "example": "$ git switch feature\nSwitched to branch 'feature'\n\n$ git branch\n* feature\n  main"
+            },
+            {
+              "id": "git-09-predict",
+              "type": "prediction",
+              "title": "What happens to your files?",
+              "question": "You're on `main` with file A.txt. You switch to `feature` which has file B.txt. What happens?",
+              "choices": [
+                "Both A.txt and B.txt exist",
+                "A.txt disappears and B.txt appears",
+                "An error occurs"
+              ],
+              "answer": "A.txt disappears and B.txt appears",
+              "explanation": "Switching branches updates your working directory to match the target branch. Files unique to the old branch are removed, and files unique to the new branch appear."
+            },
+            {
+              "id": "git-09-drill",
+              "type": "drill",
+              "title": "Switch between branches",
+              "instruction": "Create two branches with different files, then switch between them and verify the files change.",
+              "successCriteria": "git branch shows the current branch changed after each switch"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git switch` is the modern way to change branches. The older `git checkout` does the same thing but also handles other tasks." },
+            { "type": "code", "text": "git switch feature     # move to feature branch\ngit switch main        # move back to main" },
+            { "type": "p", "text": "When you switch, Git updates your working directory to match the target branch's commit." },
+            { "type": "note", "text": "Use `git switch -c new-branch` to create a branch and switch to it in one step." }
+          ],
+          "task": "Create a branch, switch to it, then switch back. Verify with `git branch` each time.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "git commit", "git branch", "git switch"],
+          "hints": [
+            "1. Initialize and commit to create the repo",
+            "2. Create a branch: `git branch feature`",
+            "3. Switch to it: `git switch feature`",
+            "4. Switch back: `git switch main`"
+          ],
+          "solution": "git init\ntouch app.js\ngit add app.js\ngit commit -m \"Initial commit\"\ngit branch feature\ngit switch feature\ngit switch main"
+        },
+        {
+          "id": "git-10-merge",
+          "title": "10. Merging Branches",
+          "concept": "git merge",
+          "summary": "Combine branches to bring work together.",
+          "activities": [
+            {
+              "id": "git-10-see",
+              "type": "worked-example",
+              "title": "Fast-forward merge",
+              "instruction": "When you merge a branch that is ahead of your current branch, Git does a 'fast-forward' -- it simply moves the pointer forward.",
+              "example": "$ git switch main\n$ git merge feature\nUpdating abc1234..def5678\nFast-forward\n 1 file changed, 10 insertions(+)"
+            },
+            {
+              "id": "git-10-predict",
+              "type": "prediction",
+              "title": "Which branch receives the changes?",
+              "question": "You're on `main` and run `git merge feature`. Where do the changes go?",
+              "choices": [
+                "Into the feature branch",
+                "Into the main branch",
+                "Into a new merge branch"
+              ],
+              "answer": "Into the main branch",
+              "explanation": "The branch you're on (main) receives the changes from the branch you specify (feature)."
+            },
+            {
+              "id": "git-10-drill",
+              "type": "drill",
+              "title": "Merge a branch",
+              "instruction": "Create a commit on main, create a branch and add another commit, then merge the branch back into main.",
+              "successCriteria": "git log shows the merge commit or fast-forward on main"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git merge` brings changes from one branch into another. It's how you combine parallel work." },
+            { "type": "code", "text": "git switch main          # make sure you're on the target branch\ngit merge feature        # merge feature into main" },
+            { "type": "p", "text": "There are two types of merges:" },
+            { "type": "p", "text": "- **Fast-forward**: The target branch is behind. Git just moves the pointer.\n- **Merge commit**: Both branches diverged. Git creates a new commit combining both." },
+            { "type": "note", "text": "After merging, you can safely delete the feature branch with `git branch -d feature`." }
+          ],
+          "task": "Create a branch, add a commit to it, switch back to main, and merge the branch.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git init", "git commit", "git branch", "git switch", "git merge"],
+          "hints": [
+            "1. Initialize and commit on main",
+            "2. Create and switch to a feature branch",
+            "3. Add a commit on the feature branch",
+            "4. Switch back to main: `git switch main`",
+            "5. Merge: `git merge feature`"
+          ],
+          "solution": "git init\ntouch app.js\ngit add app.js\ngit commit -m \"Initial commit\"\ngit branch feature\ngit switch feature\ntouch feature.js\ngit add feature.js\ngit commit -m \"Add feature\"\ngit switch main\ngit merge feature"
+        },
+        {
+          "id": "git-11-clone",
+          "title": "11. Cloning Repositories",
+          "concept": "git clone",
+          "summary": "Copy an existing repository from GitHub to your machine.",
+          "activities": [
+            {
+              "id": "git-11-see",
+              "type": "worked-example",
+              "title": "Copying a repo",
+              "instruction": "`git clone` downloads a complete copy of a remote repository, including all its history and branches.",
+              "example": "$ git clone https://github.com/user/repo.git\nCloning into 'repo'...\nremote: Enumerating objects: 12, done.\nremote: Total 12 (delta 2), reused 10 (delta 1)\nReceiving objects: 100% (12/12), done.\nResolving deltas: 100% (2/2), done."
+            },
+            {
+              "id": "git-11-predict",
+              "type": "prediction",
+              "title": "What does clone give you?",
+              "question": "After cloning a repo, what do you have on your machine?",
+              "choices": [
+                "Only the latest files",
+                "The complete history, all branches, and all files",
+                "Just the README"
+              ],
+              "answer": "The complete history, all branches, and all files",
+              "explanation": "Clone gives you everything -- every commit, every branch, every file. It's a full copy."
+            },
+            {
+              "id": "git-11-drill",
+              "type": "drill",
+              "title": "Clone a repository",
+              "instruction": "Clone the simulated remote repository `https://github.com/example/my-app.git`.",
+              "successCriteria": "The terminal shows 'Cloning into' and the clone completes"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git clone` is how you get a copy of someone else's project. It creates a new folder and downloads everything." },
+            { "type": "code", "text": "git clone https://github.com/user/repo.git" },
+            { "type": "p", "text": "After cloning, the repo has a remote called `origin` that points to the URL you cloned from." },
+            { "type": "note", "text": "You typically clone once, then use `git pull` to stay up to date." }
+          ],
+          "task": "Clone the repository `https://github.com/example/my-app.git` using the sandbox terminal.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git clone"],
+          "hints": [
+            "Run: `git clone https://github.com/example/my-app.git`",
+            "You should see 'Cloning into 'my-app'...'"
+          ],
+          "solution": "git clone https://github.com/example/my-app.git"
+        },
+        {
+          "id": "git-12-push-pull",
+          "title": "12. Push and Pull",
+          "concept": "git push / git pull",
+          "summary": "Share your work and sync with GitHub.",
+          "activities": [
+            {
+              "id": "git-12-see",
+              "type": "worked-example",
+              "title": "Sending and receiving changes",
+              "instruction": "`git push` uploads your commits to GitHub. `git pull` downloads and integrates new commits from GitHub.",
+              "example": "# Push your commits to GitHub:\n$ git push origin main\nEnumerating objects: 5, done.\nTotal 3 (delta 1), reused 0 (delta 0)\nTo https://github.com/user/repo.git\n   a1b2c3d..e4f5g6h  main -> main\n\n# Pull new changes from GitHub:\n$ git pull\nremote: Enumerating objects: 4, done.\nUnpacking objects: 100% (2/2), done.\nFrom https://github.com/user/repo\n   e4f5g6h..h7i8j9k  main -> origin/main\nUpdating e4f5g6h..h7i8j9k\nFast-forward"
+            },
+            {
+              "id": "git-12-predict",
+              "type": "prediction",
+              "title": "Push before pull?",
+              "question": "If your local branch is behind the remote, what should you do first?",
+              "choices": [
+                "git push to force your version",
+                "git pull to get the latest changes first",
+                "git merge with origin/main"
+              ],
+              "answer": "git pull to get the latest changes first",
+              "explanation": "Always pull first to get others' changes, resolve any conflicts, then push your work."
+            },
+            {
+              "id": "git-12-drill",
+              "type": "drill",
+              "title": "Push and pull",
+              "instruction": "Clone a repo, make a commit, push it, then pull to sync.",
+              "successCriteria": "Both push and pull commands complete successfully"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`git push` sends your commits to the remote (like GitHub). `git pull` downloads and merges changes from the remote." },
+            { "type": "code", "text": "git push origin main     # push main to GitHub\ngit pull                 # pull and merge changes" },
+            { "type": "p", "text": "The workflow is: make changes locally, commit them, then push. Before starting new work, pull to get the latest." },
+            { "type": "note", "text": "GitHub is the most popular Git hosting service. It provides a web interface for code review, issues, and collaboration." }
+          ],
+          "task": "Clone a repo, create and commit a file, push it, then pull to sync.",
+          "starterCode": "",
+          "matchType": "source-contains",
+          "sourceChecks": ["git clone", "git commit", "git push", "git pull"],
+          "hints": [
+            "1. `git clone https://github.com/example/repo.git`",
+            "2. `cd repo`, create a file, `git add` and `git commit`",
+            "3. `git push origin main`",
+            "4. `git pull`"
+          ],
+          "solution": "git clone https://github.com/example/repo.git\ncd repo\ntouch newfile.txt\ngit add newfile.txt\ngit commit -m \"Add new file\"\ngit push origin main\ngit pull"
+        }
+      ]
+    }
+  ]
+}

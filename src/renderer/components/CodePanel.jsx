@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
 import { Lock, Pencil, Loader, X, Play, Lightbulb, Check } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
+import SandboxTerminal from './SandboxTerminal';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
 import { registerEditor, unregisterEditor, setFocusTarget } from '../engine/editorBridge';
@@ -229,6 +230,9 @@ export default function CodePanel({
   // button stays so the lesson can verify the user's output.
   lessonMode = false,
   lessonLanguage = 'javascript',
+  lessonId = null,
+  sandboxResetTrigger = 0,
+  onSandboxCommand,
 }) {
   const generatedTabs = folderOpen
     ? []
@@ -240,6 +244,7 @@ export default function CodePanel({
   const [selection, setSelection] = useState(null);
   const [btnPos, setBtnPos] = useState(null);
   const editorRef = useRef(null);
+  const [lastSandboxCommand, setLastSandboxCommand] = useState('');
 
   // ---- editor font size -------------------------------------------------
   // Lives in CodePanel so the +/− controls sit next to the editor they
@@ -386,6 +391,30 @@ export default function CodePanel({
 
   const showExplainButtons = !lessonMode && (showingFile || (editable && !isPseudocode)) && selection && btnPos;
 
+  const editorOptions = useMemo(() => ({
+    readOnly: isReadOnly,
+    minimap: { enabled: false },
+    fontSize,
+    lineNumbers: 'on',
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',
+    quickSuggestions: {
+      other: true,
+      comments: false,
+      strings: false,
+    },
+    suggest: {
+      showKeywords: true,
+      showSnippets: true,
+      showModules: true,
+      insertMode: 'insert',
+    },
+    tabCompletion: 'on',
+    wordBasedSuggestions: 'off',
+    autoClosingBrackets: 'always',
+    autoClosingQuotes: 'always',
+  }), [isReadOnly, fontSize]);
+
   // ---- run button: figure out language + source for the runner ----------
   let runLanguage = null;
   let runFilename = null;
@@ -397,13 +426,22 @@ export default function CodePanel({
     runLanguage = generatedDisplayTab;
     runFilename = DEFAULT_FILENAME_FOR_LANG[generatedDisplayTab] || null;
   }
-  const canRun = !!onRunCode && !!runLanguage && (RUNNABLE.has(runLanguage) || (lessonMode && !RUNNABLE.has(runLanguage))) && (value || '').trim().length > 0;
-  const isSourceCheck = lessonMode && !!runLanguage && !RUNNABLE.has(runLanguage);
+  // For Git lessons, allow running to verify sandbox commands
+  const isGitLesson = lessonLanguage === 'git';
+  const canRun = isGitLesson
+    ? lessonMode
+    : !!onRunCode && !!runLanguage && (RUNNABLE.has(runLanguage) || (lessonMode && !RUNNABLE.has(runLanguage))) && (value || '').trim().length > 0;
+  const isSourceCheck = isGitLesson || (lessonMode && !!runLanguage && !RUNNABLE.has(runLanguage));
 
   const handleRun = useCallback(() => {
     if (!canRun) return;
-    onRunCode({ language: runLanguage, source: value, filename: runFilename });
-  }, [canRun, onRunCode, runLanguage, value, runFilename]);
+    // For Git lessons, pass sandbox commands as source for verification
+    if (isGitLesson) {
+      onRunCode({ language: 'git', source: '', filename: null });
+    } else {
+      onRunCode({ language: runLanguage, source: value, filename: runFilename });
+    }
+  }, [canRun, onRunCode, runLanguage, value, runFilename, isGitLesson]);
 
   // Run from the editor with the familiar build-tool shortcut. Ignore other
   // text inputs (for example the instruction panel) even though this listener
@@ -550,11 +588,11 @@ export default function CodePanel({
               style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}) }}
               onClick={handleRun}
               disabled={runLoading}
-              title={isSourceCheck ? 'Check your code' : `Run with ${runLanguage}`}
+              title={isGitLesson ? 'Check your Git commands' : isSourceCheck ? 'Check your code' : `Run with ${runLanguage}`}
             >
               {runLoading
                 ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
-                : isSourceCheck ? <Check size={12} /> : <Play size={12} />}
+                : <Check size={12} />}
             </button>
           )}
 
@@ -602,6 +640,18 @@ export default function CodePanel({
               Highlight any code in a file to get a line-by-line explanation.
             </p>
           </div>
+        ) : lessonMode && lessonLanguage === 'git' ? (
+          <SandboxTerminal
+            visible={true}
+            onToggle={() => {}}
+            resetKey={`${lessonId}-${sandboxResetTrigger}`}
+            onCommandRun={(command, output) => {
+              // Track the last command for verification
+              setLastSandboxCommand(command);
+              // Also report command + output to parent for lesson verification
+              onSandboxCommand?.(command, output);
+            }}
+          />
         ) : (
           <Editor
             key={showingFile ? `file:${activePath}` : `gen:${generatedDisplayTab}`}
@@ -613,29 +663,7 @@ export default function CodePanel({
             onMount={handleEditorMount}
             onFocus={() => setFocusTarget('editor')}
             onChange={handleChange}
-            options={{
-              readOnly: isReadOnly,
-              minimap: { enabled: false },
-              fontSize,
-              lineNumbers: 'on',
-              scrollBeyondLastLine: false,
-              wordWrap: 'on',
-              quickSuggestions: {
-                other: true,
-                comments: false,
-                strings: false,
-              },
-              suggest: {
-                showKeywords: true,
-                showSnippets: true,
-                showModules: true,
-                insertMode: 'insert',
-              },
-              tabCompletion: 'on',
-              wordBasedSuggestions: 'off',
-              autoClosingBrackets: 'always',
-              autoClosingQuotes: 'always',
-            }}
+            options={editorOptions}
           />
         )}
         {showExplainButtons && (

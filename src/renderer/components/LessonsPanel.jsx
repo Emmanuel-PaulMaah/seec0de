@@ -32,6 +32,7 @@ const LANGUAGE_LABELS = {
   csharp: 'C#',
   go: 'Go',
   rust: 'Rust',
+  git: 'Git & GitHub',
 };
 
 export function formatLanguage(id) {
@@ -49,7 +50,7 @@ export default function LessonsPanel({
 
   const uniqueLanguages = useMemo(() => {
     const available = Array.from(new Set(tracks.map(t => t.language).filter(Boolean)));
-    const preferredOrder = ['python', 'javascript', 'typescript', 'react'];
+    const preferredOrder = ['python', 'javascript', 'typescript', 'react', 'git'];
     return available.sort((left, right) => {
       const leftIndex = preferredOrder.indexOf(left);
       const rightIndex = preferredOrder.indexOf(right);

@@ -248,6 +248,18 @@ export default function App() {
   const learnDraftRef = useRef(restoredLearningState().generatedCode);
   const workspaceGeneratedCodeRef = useRef({ pseudocode: '', code: {} });
 
+  // Sandbox command history for Git lessons — tracks all commands and their
+  // output so they can be verified against sourceChecks.
+  const sandboxCommandsRef = useRef([]);
+  const [sandboxResetTrigger, setSandboxResetTrigger] = useState(0);
+  const addSandboxCommand = useCallback((cmd, output) => {
+    sandboxCommandsRef.current = [...sandboxCommandsRef.current, cmd + '\n' + output];
+  }, []);
+  const resetSandboxCommands = useCallback(() => {
+    sandboxCommandsRef.current = [];
+    setSandboxResetTrigger((n) => n + 1);
+  }, []);
+
   // ---- settings + completion -------------------------------------------
   const completedLessons = useMemo(() => settings.completedLessons || [], [settings.completedLessons]);
   const completedProjectCheckpoints = useMemo(
@@ -294,6 +306,8 @@ export default function App() {
       : 'Learning catalog opened.');
     runOwnerRef.current += 1;
     setRunLoading(false);
+    resetSandboxCommands();
+    if (lesson?.language === 'git') setPreviewVisible(false);
     if (lesson) {
       const lessonCode = { pseudocode: '', code: { [lesson.language || 'javascript']: lesson.starterCode || '' } };
       learnDraftRef.current = lessonCode;
@@ -316,6 +330,7 @@ export default function App() {
     setLessonCheck(null);
     setLearnPhase('run');
     setRunnerOutput(null);
+    resetSandboxCommands();
     setLearnAnnouncement('Starter code restored.');
   }, [activeLesson]);
 
@@ -1431,7 +1446,9 @@ export default function App() {
         : null
     );
     const payload = base ? { ...base } : null;
-    if (!payload || !payload.source || runLoading) return;
+    if (!payload || runLoading) return;
+    // Git lessons have no source code -- verification uses sandboxCommands instead
+    if (!payload.source && payload.language !== 'git') return;
 
     // Build mode: when the learner runs a file inside the build's project
     // folder, execute it IN PLACE (instead of a temp sandbox) so multi-file
@@ -1454,22 +1471,28 @@ export default function App() {
 
     const runOwner = runOwnerRef.current;
     const runProfileId = settings.activeProfileId;
+    const isGitLesson = activeLesson?.language === 'git';
     setRunLoading(true);
     setRunnerStream([]);
     setRunnerInputReady(false);
-    if (!previewVisible) setPreviewVisible(true);
+    if (!previewVisible && !isGitLesson) setPreviewVisible(true);
     if (inLessonMode) {
       setLearnPhase('run');
       setLessonAttempts((count) => count + 1);
       setLearnAnnouncement(`Checking ${payload.language} ${activeLesson.kind === 'exercise' ? 'exercise' : 'lesson'}…`);
 
-      // Source-based lessons (HTML, CSS) don't produce stdout — verify the
+      // Source-based lessons (HTML, CSS, Git) don't produce stdout — verify the
       // editor source directly instead of invoking the runner.
+      // For Git lessons, use the sandbox command history as the source.
       const isSourceLesson = activeLesson?.language === 'html'
         || (activeLesson?.matchType || '').startsWith('source-');
       if (isSourceLesson) {
         setRunLoading(false);
-        const verdict = verifyLessonSource(payload.source, activeLesson);
+        // For Git lessons, combine sandbox commands into a single source string
+        const sourceToVerify = activeLesson?.language === 'git'
+          ? sandboxCommandsRef.current.join('\n')
+          : payload.source;
+        const verdict = verifyLessonSource(sourceToVerify, activeLesson);
         playLessonSound(verdict.pass);
         setLessonVerification(verdict);
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
@@ -1519,11 +1542,15 @@ export default function App() {
       // fail we surface a diff so the learner can see *what* didn't
       // match instead of just "wrong, try again".
       if (inLessonMode) {
-        // HTML lessons don't produce stdout — verify source code instead.
+        // HTML/Git lessons don't produce stdout — verify source code instead.
+        // For Git lessons, use the sandbox command history as the source.
         const isSourceLesson = activeLesson?.language === 'html'
           || (activeLesson?.matchType || '').startsWith('source-');
+        const sourceToVerify = isSourceLesson && activeLesson?.language === 'git'
+          ? sandboxCommandsRef.current.join('\n')
+          : livePreview.code;
         const verdict = isSourceLesson
-          ? verifyLessonSource(livePreview.code, activeLesson)
+          ? verifyLessonSource(sourceToVerify, activeLesson)
           : verifyLessonOutput(normalisedOutput, activeLesson);
         playLessonSound(verdict.pass);
         setLessonVerification(verdict);
@@ -1708,6 +1735,7 @@ export default function App() {
     setActiveGeneratedTab(nextSettings.learnMode && restored.lesson ? restored.lesson.language : 'pseudocode');
     setActivePath(null);
     setRunnerOutput(null);
+    resetSandboxCommands();
     setLearnAnnouncement(nextSettings.learnMode && restored.lesson
       ? `${restored.lesson.title} resumed.`
       : nextSettings.learnMode ? 'Course list opened.' : '');
@@ -1949,8 +1977,9 @@ const beginExplanationResize = useCallback((event) => {
     setWidth((width) => Math.max(min, Math.min(max, width + arrowDirection * direction * step)));
   }, []);
 
+  const isGitLesson = activeLesson?.language === 'git';
   const learnResultVisible = learnMode && !!activeLesson && ['run', 'fix', 'complete'].includes(learnPhase);
-  const resultVisible = learnMode ? learnResultVisible : previewVisible;
+  const resultVisible = learnMode ? (isGitLesson ? false : learnResultVisible) : previewVisible;
   const guidanceLevel = ['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
     ? settings.guidanceLevel
     : 'supported';
@@ -2294,6 +2323,9 @@ const beginExplanationResize = useCallback((event) => {
               folderOpen={!learnMode && !!rootPath}
               lessonMode={inLessonMode}
               lessonLanguage={activeLesson?.language}
+              lessonId={activeLesson?.id}
+              sandboxResetTrigger={sandboxResetTrigger}
+              onSandboxCommand={addSandboxCommand}
             />
           </div>}
 
