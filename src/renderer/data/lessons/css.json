@@ -1,0 +1,949 @@
+{
+  "tracks": [
+    {
+      "id": "css-foundations",
+      "name": "CSS Foundations",
+      "language": "css",
+      "description": "Selectors, properties, colors, and the box model.",
+      "lessons": [
+        {
+          "id": "css-01-inline-internal",
+          "title": "1. Inline and Internal CSS",
+          "concept": "<style> and style=\"\"",
+          "summary": "Two ways to add CSS directly to an HTML page.",
+          "activities": [
+            {
+              "id": "css-01-see",
+              "type": "worked-example",
+              "title": "Adding color with a style attribute",
+              "instruction": "The simplest way to style an element is with the `style` attribute directly on the HTML tag. For multiple rules, use a `<style>` block in the `<head>`.",
+              "example": "<p style=\"color: blue;\">Blue text</p>\n\n<style>\n  p {\n    color: blue;\n  }\n</style>"
+            },
+            {
+              "id": "css-01-predict",
+              "type": "prediction",
+              "title": "Which takes priority?",
+              "question": "If you set `color: red` in a `<style>` block and `color: blue` on the element's `style` attribute, which color shows?",
+              "choices": [
+                "Red, because the style block comes first",
+                "Blue, because inline styles override internal styles",
+                "They mix and become purple"
+              ],
+              "answer": "Blue, because inline styles override internal styles",
+              "explanation": "Inline styles have higher specificity than style block rules. The browser always prefers the more specific declaration."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "CSS (Cascading Style Sheets) controls how HTML elements look. There are three ways to add CSS to a page, and we will start with the first two."
+            },
+            {
+              "type": "p",
+              "text": "**Inline CSS** uses the `style` attribute on an element:"
+            },
+            {
+              "type": "code",
+              "text": "<h1 style=\"color: red;\">Red Heading</h1>"
+            },
+            {
+              "type": "p",
+              "text": "**Internal CSS** uses a `<style>` tag in the `<head>`:"
+            },
+            {
+              "type": "code",
+              "text": "<head>\n  <style>\n    h1 {\n      color: red;\n    }\n  </style>\n</head>"
+            },
+            {
+              "type": "p",
+              "text": "Internal CSS is better for styling multiple elements at once. Inline CSS is handy for quick, one-off fixes."
+            },
+            {
+              "type": "note",
+              "text": "For real projects, you will use **external CSS** — a separate `.css` file linked with `<link>`. We will cover that later."
+            }
+          ],
+          "task": "Add a `<style>` block in the `<head>` that makes all `<h1>` elements green. Then add an `<h1>` saying 'Green Header'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add a <style> block here -->\n</head>\n<body>\n  <!-- Add an h1 here -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "<style>",
+            "h1\\s*\\{[^}]*color\\s*:\\s*green",
+            "<h1>",
+            "Green Header"
+          ],
+          "hints": [
+            "Add `<style>` and `</style>` inside `<head>`.",
+            "Inside the style block, write `h1 { color: green; }`.",
+            "Add `<h1>Green Header</h1>` inside `<body>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    h1 {\n      color: green;\n    }\n  </style>\n</head>\n<body>\n  <h1>Green Header</h1>\n</body>\n</html>"
+        },
+        {
+          "id": "css-02-selectors",
+          "title": "2. Element and Class Selectors",
+          "concept": "element .class #id",
+          "summary": "Targeting HTML elements with different selector types.",
+          "activities": [
+            {
+              "id": "css-02-see",
+              "type": "worked-example",
+              "title": "Three selector types",
+              "instruction": "An **element selector** targets all instances of a tag. A **class selector** (prefixed with `.`) targets elements with a matching `class` attribute. An **ID selector** (prefixed with `#`) targets a single element with a matching `id`.",
+              "example": "/* Element: all paragraphs */\np { color: gray; }\n\n/* Class: elements with class=\"highlight\" */\n.highlight { background: yellow; }\n\n/* ID: the one element with id=\"main-title\" */\n#main-title { font-size: 2rem; }"
+            },
+            {
+              "id": "css-02-predict",
+              "type": "prediction",
+              "title": "How many elements styled?",
+              "question": "Given `<p>One</p><p class=\"highlight\">Two</p><p>Three</p>` and the rule `.highlight { color: red; }`, how many paragraphs turn red?",
+              "choices": [
+                "All three",
+                "Only the second one",
+                "None — classes don't work like that"
+              ],
+              "answer": "Only the second one",
+              "explanation": "The `.highlight` selector only targets elements with `class=\"highlight\"`. Only the second paragraph has that class."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Selectors tell the browser **which elements** to style. The most common types are:"
+            },
+            {
+              "type": "code",
+              "text": "/* Element selector */\np { color: blue; }\n\n/* Class selector */\n.warning { color: red; }\n\n/* ID selector */\n#header { font-size: 24px; }"
+            },
+            {
+              "type": "p",
+              "text": "Use **element selectors** when you want all instances of a tag to look the same. Use **class selectors** when you want to style a group of related elements. Use **ID selectors** for unique, one-of-a-kind elements."
+            },
+            {
+              "type": "p",
+              "text": "In HTML, you apply classes and IDs like this:"
+            },
+            {
+              "type": "code",
+              "text": "<p class=\"warning\">This text is red.</p>\n<div id=\"header\">This div has special styles.</div>"
+            },
+            {
+              "type": "note",
+              "text": "Classes can be reused on many elements. IDs should only appear once per page. Prefer classes for styling — IDs are better used for JavaScript targeting and page anchors."
+            }
+          ],
+          "task": "Add a `<style>` block with: a `.box` class that gives a 1px solid black border, and a `#title` ID that sets font-size to 28px. Then create an `<h1 id=\"title\">` and two `<div class=\"box\">` elements with different text.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .box and #title rules -->\n</head>\n<body>\n  <!-- Add h1 with id=\"title\" and two divs with class=\"box\" -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.box\\s*\\{[^}]*border",
+            "#title\\s*\\{[^}]*font-size",
+            "id=\"title\"",
+            "class=\"box\""
+          ],
+          "hints": [
+            "Write `.box { border: 1px solid black; }` inside `<style>`.",
+            "Write `#title { font-size: 28px; }` inside `<style>`.",
+            "Use `<h1 id=\"title\">` and `<div class=\"box\">` in the body."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .box {\n      border: 1px solid black;\n    }\n    #title {\n      font-size: 28px;\n    }\n  </style>\n</head>\n<body>\n  <h1 id=\"title\">My Title</h1>\n  <div class=\"box\">First box</div>\n  <div class=\"box\">Second box</div>\n</body>\n</html>"
+        },
+        {
+          "id": "css-03-colors",
+          "title": "3. Colors and Backgrounds",
+          "concept": "color background-color",
+          "summary": "Setting text and background colors with keywords, hex, and RGB.",
+          "activities": [
+            {
+              "id": "css-03-see",
+              "type": "worked-example",
+              "title": "Color formats",
+              "instruction": "CSS accepts colors as named keywords, hex codes (`#RRGGBB`), or `rgb()` functions. All three work the same way — pick whichever is clearest for your use case.",
+              "example": "/* Named colors */\ncolor: red;\n\n/* Hex codes */\ncolor: #ff6600;\n\n/* RGB values */\ncolor: rgb(0, 128, 255);"
+            },
+            {
+              "id": "css-03-predict",
+              "type": "prediction",
+              "title": "What color is #000000?",
+              "question": "What color does the hex code `#000000` represent?",
+              "choices": [
+                "White",
+                "Black",
+                "Gray"
+              ],
+              "answer": "Black",
+              "explanation": "Hex `#000000` means zero red, zero green, zero blue — which is black. `#ffffff` (all channels maxed) is white."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The `color` property sets text color. The `background-color` property sets the background."
+            },
+            {
+              "type": "code",
+              "text": "p {\n  color: white;\n  background-color: #333;\n}"
+            },
+            {
+              "type": "p",
+              "text": "CSS supports several color formats:"
+            },
+            {
+              "type": "code",
+              "text": "/* Named keywords */\ncolor: tomato;\n\n/* Hex (6 digits: #RRGGBB) */\ncolor: #ff6347;\n\n/* Hex with transparency (8 digits) */\ncolor: #ff634780;\n\n/* RGB */\ncolor: rgb(255, 99, 71);\n\n/* HSL (hue, saturation, lightness) */\ncolor: hsl(9, 100%, 64%);"
+            },
+            {
+              "type": "p",
+              "text": "You can also make backgrounds semi-transparent:"
+            },
+            {
+              "type": "code",
+              "text": "background-color: rgba(255, 0, 0, 0.5);  /* 50% transparent red */\nbackground-color: hsla(200, 80%, 50%, 0.3);"
+            },
+            {
+              "type": "note",
+              "text": "The `background` shorthand property can set color, image, and position in one line: `background: #ff6347 url('img.png') no-repeat center;`"
+            }
+          ],
+          "task": "Create a `<style>` block that makes `<h1>` white text on a navy (`#1a1a2e`) background, and makes `<p>` have `#e0e0e0` text on a `#16213e` background. Then add an `<h1>` saying 'Night Mode' and a `<p>` saying 'Dark theme enabled.'",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with h1 and p color rules -->\n</head>\n<body>\n  <!-- Add h1 and p -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "h1\\s*\\{[^}]*color\\s*:\\s*white",
+            "h1\\s*\\{[^}]*background.*#1a1a2e",
+            "p\\s*\\{[^}]*color",
+            "<h1>",
+            "Night Mode"
+          ],
+          "hints": [
+            "Use `h1 { color: white; background-color: #1a1a2e; }`.",
+            "Use `p { color: #e0e0e0; background-color: #16213e; }`.",
+            "Add the `<h1>` and `<p>` tags in the body."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    h1 {\n      color: white;\n      background-color: #1a1a2e;\n    }\n    p {\n      color: #e0e0e0;\n      background-color: #16213e;\n    }\n  </style>\n</head>\n<body>\n  <h1>Night Mode</h1>\n  <p>Dark theme enabled.</p>\n</body>\n</html>"
+        },
+        {
+          "id": "css-04-box-model",
+          "title": "4. The Box Model",
+          "concept": "margin border padding content",
+          "summary": "Every element is a box with content, padding, border, and margin.",
+          "activities": [
+            {
+              "id": "css-04-see",
+              "type": "worked-example",
+              "title": "Anatomy of a box",
+              "instruction": "Every HTML element is a rectangular box. From inside out: **content** (text or image), **padding** (space inside the border), **border** (the edge), and **margin** (space outside the border).",
+              "example": ".card {\n  padding: 20px;\n  border: 2px solid black;\n  margin: 16px;\n}"
+            },
+            {
+              "id": "css-04-predict",
+              "type": "prediction",
+              "title": "What goes where?",
+              "question": "If an element has `padding: 10px` and `border: 2px solid`, what is the total space from the outer edge of the border to the start of the content?",
+              "choices": [
+                "10px",
+                "12px",
+                "22px"
+              ],
+              "answer": "12px",
+              "explanation": "Padding (10px) + border (2px) = 12px from the outer edge of the border to the content. Margin is outside the border, so it doesn't count."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The box model is the most important CSS concept. Every element is a box with four layers:"
+            },
+            {
+              "type": "code",
+              "text": "content  →  padding  →  border  →  margin\n(text)     (inner)      (edge)      (outer)"
+            },
+            {
+              "type": "p",
+              "text": "**`padding`** creates space between the content and the border. **`border`** is the visible edge. **`margin`** creates space between this element and its neighbors."
+            },
+            {
+              "type": "code",
+              "text": ".box {\n  width: 200px;\n  padding: 20px;\n  border: 2px solid black;\n  margin: 10px;\n}\n/* Total rendered width = 200 + 20*2 + 2*2 = 244px */"
+            },
+            {
+              "type": "p",
+              "text": "You can set each side individually or use shorthand:"
+            },
+            {
+              "type": "code",
+              "text": "/* Top, Right, Bottom, Left (clockwise) */\npadding: 10px 20px 10px 20px;\n\n/* Vertical | Horizontal */\npadding: 10px 20px;\n\n/* All four sides */\npadding: 10px;"
+            },
+            {
+              "type": "p",
+              "text": "By default, the `width` and `height` properties only set the content area. To include padding and border in the total width, use:"
+            },
+            {
+              "type": "code",
+              "text": "box-sizing: border-box;"
+            },
+            {
+              "type": "note",
+              "text": "Most developers apply `box-sizing: border-box` to all elements with a CSS reset. This makes sizing much more predictable."
+            }
+          ],
+          "task": "Add a `<style>` block with `* { box-sizing: border-box; }` as a reset. Then style `.card` with padding 16px, a 1px solid gray border, and margin 12px. Create three `<div class=\"card\">` elements with different text inside.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with box-sizing reset and .card styles -->\n</head>\n<body>\n  <!-- Add three divs with class=\"card\" -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\*\\s*\\{[^}]*box-sizing\\s*:\\s*border-box",
+            "\\.card\\s*\\{[^}]*padding",
+            "\\.card\\s*\\{[^}]*margin",
+            "class=\"card\""
+          ],
+          "hints": [
+            "Start with `* { box-sizing: border-box; }`.",
+            "Write `.card { padding: 16px; border: 1px solid gray; margin: 12px; }`.",
+            "Add three `<div class=\"card\">` elements in the body."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    * {\n      box-sizing: border-box;\n    }\n    .card {\n      padding: 16px;\n      border: 1px solid gray;\n      margin: 12px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">First card</div>\n  <div class=\"card\">Second card</div>\n  <div class=\"card\">Third card</div>\n</body>\n</html>"
+        },
+        {
+          "id": "css-05-typography",
+          "title": "5. Typography",
+          "concept": "font-family font-size font-weight line-height",
+          "summary": "Controlling fonts, sizes, weights, and line spacing.",
+          "activities": [
+            {
+              "id": "css-05-see",
+              "type": "worked-example",
+              "title": "Setting up a font stack",
+              "instruction": "The `font-family` property sets the typeface. Always provide a fallback list — if the first font is unavailable, the browser tries the next one.",
+              "example": "body {\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n  font-size: 16px;\n  line-height: 1.6;\n}"
+            },
+            {
+              "id": "css-05-predict",
+              "type": "prediction",
+              "title": "What is a font stack?",
+              "question": "In `font-family: Arial, Helvetica, sans-serif;`, what happens if Arial is not installed on the user's computer?",
+              "choices": [
+                "The text has no font and doesn't display",
+                "The browser tries Helvetica, then falls back to the generic sans-serif",
+                "The browser downloads Arial automatically"
+              ],
+              "answer": "The browser tries Helvetica, then falls back to the generic sans-serif",
+              "explanation": "Font stacks are tried in order. The generic family (`sans-serif`) is the final fallback that guarantees readable text."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Typography controls how text looks. The key properties are:"
+            },
+            {
+              "type": "code",
+              "text": "body {\n  font-family: 'Segoe UI', Arial, sans-serif;\n  font-size: 16px;\n  font-weight: 400;\n  line-height: 1.6;\n}"
+            },
+            {
+              "type": "p",
+              "text": "**`font-family`** sets the typeface. Always end with a generic family (`serif`, `sans-serif`, `monospace`) as a fallback."
+            },
+            {
+              "type": "p",
+              "text": "**`font-size`** controls how large the text is. Common units: `px`, `em` (relative to parent), `rem` (relative to root)."
+            },
+            {
+              "type": "code",
+              "text": "h1 { font-size: 2rem; }     /* 2x the root size */\np  { font-size: 1rem; }     /* base size */\nsmall { font-size: 0.875em; } /* 0.875x parent */"
+            },
+            {
+              "type": "p",
+              "text": "**`font-weight`** controls boldness: `400` is normal, `700` is bold, or use keywords `normal` and `bold`."
+            },
+            {
+              "type": "p",
+              "text": "**`line-height`** sets the spacing between lines. A value of `1.5` to `1.6` is comfortable for body text."
+            },
+            {
+              "type": "note",
+              "text": "For custom fonts, use `@font-face` or Google Fonts: `<link href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\" rel=\"stylesheet\">`"
+            }
+          ],
+          "task": "Add a `<style>` block that sets `body` to use `font-family: 'Helvetica Neue', Arial, sans-serif`, `font-size: 18px`, and `line-height: 1.5`. Then add a `<p>` with some sample text.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with body typography rules -->\n</head>\n<body>\n  <!-- Add a <p> with sample text -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "body\\s*\\{[^}]*font-family",
+            "font-size\\s*:\\s*18px",
+            "line-height\\s*:\\s*1\\.5",
+            "<p>"
+          ],
+          "hints": [
+            "Write `body { font-family: 'Helvetica Neue', Arial, sans-serif; }`.",
+            "Add `font-size: 18px;` and `line-height: 1.5;` to the same rule.",
+            "Add a `<p>` tag in the body with some text."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body {\n      font-family: 'Helvetica Neue', Arial, sans-serif;\n      font-size: 18px;\n      line-height: 1.5;\n    }\n  </style>\n</head>\n<body>\n  <p>CSS typography makes text beautiful and readable.</p>\n</body>\n</html>"
+        },
+        {
+          "id": "css-06-spacing",
+          "title": "6. Spacing and Sizing",
+          "concept": "margin padding width height",
+          "summary": "Controlling element dimensions and the space around them.",
+          "activities": [
+            {
+              "id": "css-06-see",
+              "type": "worked-example",
+              "title": "Centering a fixed-width box",
+              "instruction": "Setting `margin: 0 auto` on a block element with a defined `width` centers it horizontally. The auto margins split the remaining space equally on both sides.",
+              "example": ".container {\n  width: 600px;\n  margin: 0 auto;\n  padding: 24px;\n}"
+            },
+            {
+              "id": "css-06-predict",
+              "type": "prediction",
+              "title": "Why auto?",
+              "question": "What does `margin: 0 auto` do to a 500px-wide div inside a 1000px-wide parent?",
+              "choices": [
+                "Centers it with 250px margin on each side",
+                "Centers it with 250px margin on left and right (250px each)",
+                "It does nothing"
+              ],
+              "answer": "Centers it with 250px margin on left and right (250px each)",
+              "explanation": "Remaining space = 1000 - 500 = 500px. `auto` splits it evenly: 250px left, 250px right."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "You can control how much space an element takes up and how much room it has around it."
+            },
+            {
+              "type": "code",
+              "text": ".box {\n  width: 300px;\n  height: 200px;\n  margin: 20px auto;\n  padding: 16px;\n}"
+            },
+            {
+              "type": "p",
+              "text": "**`width` and `height`** set the content dimensions. Common values: `px`, `%`, `rem`, `vw` (viewport width)."
+            },
+            {
+              "type": "code",
+              "text": ".sidebar { width: 250px; }\n.main    { width: 70%; }\n.hero    { height: 100vh; }  /* full viewport height */"
+            },
+            {
+              "type": "p",
+              "text": "**`margin: auto`** is the classic centering trick for block elements with a set width."
+            },
+            {
+              "type": "code",
+              "text": "/* Center horizontally */\nmargin: 0 auto;\n\n/* Center both directions with flexbox (modern) */\ndisplay: flex;\njustify-content: center;\nalign-items: center;"
+            },
+            {
+              "type": "note",
+              "text": "Margin can collapse — when two vertical margins touch, the browser uses the larger one, not the sum. This only happens vertically, never horizontally."
+            }
+          ],
+          "task": "Create a `<style>` with `.banner` that has `width: 400px`, `height: 120px`, `margin: 20px auto`, `background-color: #e8f4f8`, and `text-align: center`. Add a `<div class=\"banner\">` with the text 'Welcome!'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .banner rules -->\n</head>\n<body>\n  <!-- Add div with class=\"banner\" -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.banner\\s*\\{[^}]*width",
+            "\\.banner\\s*\\{[^}]*height",
+            "margin.*auto",
+            "background-color",
+            "text-align\\s*:\\s*center",
+            "class=\"banner\"",
+            "Welcome"
+          ],
+          "hints": [
+            "Write `.banner { width: 400px; height: 120px; margin: 20px auto; background-color: #e8f4f8; text-align: center; }`.",
+            "Add `<div class=\"banner\">Welcome!</div>` in the body."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .banner {\n      width: 400px;\n      height: 120px;\n      margin: 20px auto;\n      background-color: #e8f4f8;\n      text-align: center;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"banner\">Welcome!</div>\n</body>\n</html>"
+        }
+      ]
+    },
+    {
+      "id": "css-layout",
+      "name": "Layout and Positioning",
+      "language": "css",
+      "description": "Flexbox, grid, and positioning techniques.",
+      "lessons": [
+        {
+          "id": "css-07-flexbox",
+          "title": "7. Flexbox Basics",
+          "concept": "display: flex",
+          "summary": "Laying out items in a row or column with flexbox.",
+          "activities": [
+            {
+              "id": "css-07-see",
+              "type": "worked-example",
+              "title": "A simple flex row",
+              "instruction": "Setting `display: flex` on a container makes its children lay out in a row by default. Use `justify-content` to distribute space along the main axis and `align-items` along the cross axis.",
+              "example": ".row {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  gap: 12px;\n}"
+            },
+            {
+              "id": "css-07-predict",
+              "type": "prediction",
+              "title": "What does gap do?",
+              "question": "In a flex container with `gap: 16px`, what is the space between each item?",
+              "choices": [
+                "16px on the left of each item only",
+                "16px between each pair of adjacent items",
+                "16px around every item on all sides"
+              ],
+              "answer": "16px between each pair of adjacent items",
+              "explanation": "`gap` adds consistent spacing between flex children without adding extra space at the edges."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Flexbox is a one-dimensional layout system. It arranges items in a row or a column and handles spacing, alignment, and sizing automatically."
+            },
+            {
+              "type": "code",
+              "text": ".container {\n  display: flex;\n  gap: 16px;\n}"
+            },
+            {
+              "type": "p",
+              "text": "**`justify-content`** distributes items along the main axis (horizontal in a row):"
+            },
+            {
+              "type": "code",
+              "text": "justify-content: flex-start;    /* packed to the left */\njustify-content: center;        /* centered */\njustify-content: space-between; /* equal space between items */\njustify-content: space-around;  /* equal space around items */"
+            },
+            {
+              "type": "p",
+              "text": "**`align-items`** positions items along the cross axis (vertical in a row):"
+            },
+            {
+              "type": "code",
+              "text": "align-items: stretch;    /* fill container height */\nalign-items: center;     /* centered vertically */\nalign-items: flex-start; /* top */\nalign-items: flex-end;   /* bottom */"
+            },
+            {
+              "type": "p",
+              "text": "To stack items vertically, add `flex-direction: column`:"
+            },
+            {
+              "type": "code",
+              "text": ".stack {\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}"
+            },
+            {
+              "type": "note",
+              "text": "Flexbox also handles sizing with `flex-grow`, `flex-shrink`, and `flex-basis` — but `gap`, `justify-content`, and `align-items` cover most layout needs."
+            }
+          ],
+          "task": "Create a flex container with `display: flex`, `gap: 12px`, and `justify-content: space-between`. Add three `<div class=\"box\">` children with text 'A', 'B', 'C'. Style `.box` with `padding: 16px`, `background: #dbeafe`, and `border-radius: 8px`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .row and .box rules -->\n</head>\n<body>\n  <!-- Add a flex container with three box children -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.row\\s*\\{[^}]*display\\s*:\\s*flex",
+            "justify-content\\s*:\\s*space-between",
+            "\\.box\\s*\\{[^}]*padding",
+            "\\.box\\s*\\{[^}]*background",
+            "gap",
+            "border-radius",
+            "class=\"box\""
+          ],
+          "hints": [
+            "Use `.row { display: flex; gap: 12px; justify-content: space-between; }`.",
+            "Use `.box { padding: 16px; background: #dbeafe; border-radius: 8px; }`.",
+            "Create `<div class=\"row\">` containing three `<div class=\"box\">` elements."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .row {\n      display: flex;\n      gap: 12px;\n      justify-content: space-between;\n    }\n    .box {\n      padding: 16px;\n      background: #dbeafe;\n      border-radius: 8px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"row\">\n    <div class=\"box\">A</div>\n    <div class=\"box\">B</div>\n    <div class=\"box\">C</div>\n  </div>\n</body>\n</html>"
+        },
+        {
+          "id": "css-08-grid",
+          "title": "8. CSS Grid Basics",
+          "concept": "display: grid",
+          "summary": "Two-dimensional layouts with rows and columns.",
+          "activities": [
+            {
+              "id": "css-08-see",
+              "type": "worked-example",
+              "title": "A three-column grid",
+              "instruction": "CSS Grid creates a two-dimensional layout. Define columns with `grid-template-columns` and rows with `grid-template-rows`. Items fill cells automatically.",
+              "example": ".grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr 1fr;\n  gap: 16px;\n}"
+            },
+            {
+              "id": "css-08-predict",
+              "type": "prediction",
+              "title": "What does 1fr mean?",
+              "question": "In `grid-template-columns: 1fr 2fr 1fr`, what does `2fr` mean compared to `1fr`?",
+              "choices": [
+                "It is twice as wide as a 1fr column",
+                "It is half as wide",
+                "fr means pixels, so it's 2px wide"
+              ],
+              "answer": "It is twice as wide as a 1fr column",
+              "explanation": "`fr` stands for fraction. `2fr` takes twice the available space as `1fr`. The total space is divided into 4 parts (1+2+1), and each column gets its share."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "CSS Grid is a two-dimensional layout system. It handles both rows and columns at once, making it perfect for page layouts and card grids."
+            },
+            {
+              "type": "code",
+              "text": ".grid {\n  display: grid;\n  grid-template-columns: 1fr 1fr 1fr;\n  gap: 16px;\n}"
+            },
+            {
+              "type": "p",
+              "text": "The `fr` unit分配s available space as a fraction. `1fr 1fr 1fr` creates three equal columns."
+            },
+            {
+              "type": "code",
+              "text": "/* Two columns: sidebar 250px, main fills the rest */\ngrid-template-columns: 250px 1fr;\n\n/* Four equal columns */\ngrid-template-columns: repeat(4, 1fr);\n\n/* Auto-fit: responsive columns */\ngrid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"
+            },
+            {
+              "type": "p",
+              "text": "You can also define explicit rows:"
+            },
+            {
+              "type": "code",
+              "text": "grid-template-rows: 60px 1fr 40px;\n/* header: 60px, main: flexible, footer: 40px */"
+            },
+            {
+              "type": "note",
+              "text": "Grid items can span multiple columns or rows with `grid-column: span 2` or `grid-row: span 3`."
+            }
+          ],
+          "task": "Create a grid layout with `display: grid` and `grid-template-columns: 1fr 1fr`. Add `gap: 16px`. Create four `<div class=\"card\">` items. Style `.card` with `padding: 20px`, `background: #f0f0f0`, and `border-radius: 8px`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .grid and .card rules -->\n</head>\n<body>\n  <!-- Add a grid container with four card children -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.grid\\s*\\{[^}]*display\\s*:\\s*grid",
+            "grid-template-columns",
+            "\\.card\\s*\\{[^}]*padding",
+            "gap",
+            "border-radius",
+            "class=\"card\""
+          ],
+          "hints": [
+            "Use `.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }`.",
+            "Use `.card { padding: 20px; background: #f0f0f0; border-radius: 8px; }`.",
+            "Create `<div class=\"grid\">` containing four `<div class=\"card\">` elements."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 16px;\n    }\n    .card {\n      padding: 20px;\n      background: #f0f0f0;\n      border-radius: 8px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"grid\">\n    <div class=\"card\">Card 1</div>\n    <div class=\"card\">Card 2</div>\n    <div class=\"card\">Card 3</div>\n    <div class=\"card\">Card 4</div>\n  </div>\n</body>\n</html>"
+        },
+        {
+          "id": "css-09-positioning",
+          "title": "9. Positioning",
+          "concept": "position relative absolute fixed",
+          "summary": "Placing elements precisely with position properties.",
+          "activities": [
+            {
+              "id": "css-09-see",
+              "type": "worked-example",
+              "title": "Position types in action",
+              "instruction": "`position: relative` offsets an element from its normal position. `position: absolute` removes it from flow and positions it relative to the nearest positioned ancestor. `position: fixed` pins it to the viewport.",
+              "example": ".badge {\n  position: absolute;\n  top: 8px;\n  right: 8px;\n  background: red;\n  color: white;\n  padding: 4px 8px;\n}"
+            },
+            {
+              "id": "css-09-predict",
+              "type": "prediction",
+              "title": "Fixed vs absolute",
+              "question": "What is the difference between `position: fixed` and `position: absolute`?",
+              "choices": [
+                "Fixed stays in place when scrolling; absolute scrolls with the page",
+                "Absolute stays in place when scrolling; fixed scrolls with the page",
+                "They are the same thing"
+              ],
+              "answer": "Fixed stays in place when scrolling; absolute scrolls with the page",
+              "explanation": "`fixed` is always relative to the viewport and stays put when the page scrolls. `absolute` is relative to the nearest positioned ancestor and scrolls with it."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "CSS positioning lets you place elements exactly where you want them. There are four position values:"
+            },
+            {
+              "type": "code",
+              "text": "position: static;   /* default — normal flow */\nposition: relative; /* offset from normal position */\nposition: absolute; /* removed from flow, positioned relative to ancestor */\nposition: fixed;    /* removed from flow, positioned relative to viewport */"
+            },
+            {
+              "type": "p",
+              "text": "**`relative`** keeps the element in flow but lets you offset it with `top`, `right`, `bottom`, `left`."
+            },
+            {
+              "type": "code",
+              "text": ".tooltip {\n  position: relative;\n  top: -4px;\n  left: 10px;\n}"
+            },
+            {
+              "type": "p",
+              "text": "**`absolute`** removes the element from the document flow. It positions relative to the nearest ancestor with `position: relative` (or any non-static value)."
+            },
+            {
+              "type": "code",
+              "text": ".parent { position: relative; }\n.child  { position: absolute; top: 0; right: 0; }"
+            },
+            {
+              "type": "p",
+              "text": "**`fixed`** pins the element to the viewport. Perfect for sticky headers or floating buttons."
+            },
+            {
+              "type": "note",
+              "text": "When you need an element to stay in the normal flow but act as a positioning context for absolute children, set `position: relative` on it — even without offset values."
+            }
+          ],
+          "task": "Create a `<div class=\"card\">` containing a `<span class=\"badge\">` with text 'New' and a `<p>` with some text. Style `.card` with `position: relative`, `padding: 24px`, `background: white`, and `border: 1px solid #ccc`. Style `.badge` with `position: absolute`, `top: 8px`, `right: 8px`, `background: #ef4444`, and `color: white`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .card and .badge rules -->\n</head>\n<body>\n  <!-- Add the card with badge and paragraph -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.card\\s*\\{[^}]*position\\s*:\\s*relative",
+            "\\.badge\\s*\\{[^}]*position\\s*:\\s*absolute",
+            "top",
+            "right",
+            "\\.badge\\s*\\{[^}]*background",
+            "\\.badge\\s*\\{[^}]*color",
+            "class=\"badge\"",
+            "New"
+          ],
+          "hints": [
+            "Use `.card { position: relative; padding: 24px; background: white; border: 1px solid #ccc; }`.",
+            "Use `.badge { position: absolute; top: 8px; right: 8px; background: #ef4444; color: white; }`.",
+            "Put `<span class=\"badge\">New</span>` inside the card div."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .card {\n      position: relative;\n      padding: 24px;\n      background: white;\n      border: 1px solid #ccc;\n    }\n    .badge {\n      position: absolute;\n      top: 8px;\n      right: 8px;\n      background: #ef4444;\n      color: white;\n      padding: 2px 8px;\n      border-radius: 4px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">\n    <span class=\"badge\">New</span>\n    <p>This card has a positioned badge.</p>\n  </div>\n</body>\n</html>"
+        }
+      ]
+    },
+    {
+      "id": "css-modern",
+      "name": "Modern CSS",
+      "language": "css",
+      "description": "Transitions, responsive design, and CSS variables.",
+      "lessons": [
+        {
+          "id": "css-10-variables",
+          "title": "10. CSS Variables",
+          "concept": "--custom-property var()",
+          "summary": "Reusable values with custom properties.",
+          "activities": [
+            {
+              "id": "css-10-see",
+              "type": "worked-example",
+              "title": "Defining and using variables",
+              "instruction": "CSS custom properties (variables) start with `--` and are accessed with `var()`. Define them on `:root` to make them available everywhere.",
+              "example": ":root {\n  --primary: #3b82f6;\n  --spacing: 16px;\n}\n\n.btn {\n  background: var(--primary);\n  padding: var(--spacing);\n}"
+            },
+            {
+              "id": "css-10-predict",
+              "type": "prediction",
+              "title": "Where to define?",
+              "question": "If you define `--color: red` on a `<div>`, can a `<p>` inside that div use `var(--color)`?",
+              "choices": [
+                "No, variables only work on the element they are defined on",
+                "Yes, child elements inherit custom properties from their parents",
+                "Only if you also define it on the p"
+              ],
+              "answer": "Yes, child elements inherit custom properties from their parents",
+              "explanation": "Custom properties follow the cascade. They are inherited, so children can use variables defined on any ancestor."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "CSS custom properties (variables) let you store values and reuse them throughout your stylesheet. They follow the cascade and are inherited by child elements."
+            },
+            {
+              "type": "code",
+              "text": ":root {\n  --primary: #3b82f6;\n  --danger: #ef4444;\n  --radius: 8px;\n  --spacing: 16px;\n}"
+            },
+            {
+              "type": "p",
+              "text": "Access them with `var()`. You can provide a fallback value as a second argument:"
+            },
+            {
+              "type": "code",
+              "text": "color: var(--primary);\nbackground: var(--unknown, gray);  /* falls back to gray */"
+            },
+            {
+              "type": "p",
+              "text": "Variables can be overridden at any level, which is great for theming:"
+            },
+            {
+              "type": "code",
+              "text": ":root {\n  --bg: white;\n  --text: black;\n}\n\n.dark-theme {\n  --bg: #1a1a2e;\n  --text: #e0e0e0;\n}"
+            },
+            {
+              "type": "note",
+              "text": "Custom properties are dynamic — you can change them with JavaScript: `element.style.setProperty('--primary', 'green')`."
+            }
+          ],
+          "task": "Define CSS variables on `:root`: `--primary: #6366f1`, `--bg: #f8fafc`, and `--text: #1e293b`. Style `body` to use these variables for background and color. Create a `.card` class using `--primary` for border-left and a 4px width.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with :root variables and body/card rules -->\n</head>\n<body>\n  <!-- Add a div with class=\"card\" and some text -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            ":root\\s*\\{[^}]*--primary",
+            ":root\\s*\\{[^}]*--bg",
+            "var\\(--primary\\)",
+            "var\\(--bg\\)",
+            "var\\(--text\\)",
+            "border-left",
+            "class=\"card\""
+          ],
+          "hints": [
+            "Define `:root { --primary: #6366f1; --bg: #f8fafc; --text: #1e293b; }`.",
+            "Use `body { background: var(--bg); color: var(--text); }`.",
+            "Use `.card { border-left: 4px solid var(--primary); padding: 16px; }`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    :root {\n      --primary: #6366f1;\n      --bg: #f8fafc;\n      --text: #1e293b;\n    }\n    body {\n      background: var(--bg);\n      color: var(--text);\n      font-family: sans-serif;\n    }\n    .card {\n      border-left: 4px solid var(--primary);\n      padding: 16px;\n      background: white;\n      margin: 16px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">This card uses CSS variables for theming.</div>\n</body>\n</html>"
+        },
+        {
+          "id": "css-11-transitions",
+          "title": "11. Transitions and Hover Effects",
+          "concept": "transition :hover",
+          "summary": "Animating state changes smoothly with transitions.",
+          "activities": [
+            {
+              "id": "css-11-see",
+              "type": "worked-example",
+              "title": "A smooth hover effect",
+              "instruction": "The `transition` property animates changes between states. Define which property to animate, how long it takes, and the timing function.",
+              "example": ".btn {\n  background: #3b82f6;\n  color: white;\n  padding: 12px 24px;\n  border: none;\n  border-radius: 6px;\n  transition: background 0.2s ease, transform 0.2s ease;\n}\n\n.btn:hover {\n  background: #2563eb;\n  transform: translateY(-2px);\n}"
+            },
+            {
+              "id": "css-11-predict",
+              "type": "prediction",
+              "title": "What does ease do?",
+              "question": "In `transition: background 0.3s ease`, what does `ease` control?",
+              "choices": [
+                "How long the transition takes",
+                "The speed curve of the animation (starts slow, speeds up, slows down at end)",
+                "Whether the transition repeats"
+              ],
+              "answer": "The speed curve of the animation (starts slow, speeds up, slows down at end)",
+              "explanation": "`ease` is the default timing function — it starts slowly, accelerates in the middle, and decelerates at the end. Other options: `linear`, `ease-in`, `ease-out`, `ease-in-out`."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Transitions make state changes smooth instead of instant. You define the transition on the base state, and the browser animates to the hover/active/focus state."
+            },
+            {
+              "type": "code",
+              "text": ".element {\n  transition: property duration timing-function delay;\n}\n\n/* Examples */\ntransition: background 0.3s ease;\ntransition: all 0.2s ease-in-out;\ntransition: transform 0.15s linear, opacity 0.3s ease;"
+            },
+            {
+              "type": "p",
+              "text": "Common timing functions:"
+            },
+            {
+              "type": "code",
+              "text": "linear          /* constant speed */\nease            /* default — slow start and end */\nease-in         /* slow start */\nease-out        /* slow end */\nease-in-out     /* slow start and end */"
+            },
+            {
+              "type": "p",
+              "text": "Popular properties to transition:"
+            },
+            {
+              "type": "code",
+              "text": "background-color  /* color changes */\ncolor             /* text color changes */\ntransform         /* movement, scale, rotation */\nopacity           /* fading in/out */\nbox-shadow       /* shadow effects */"
+            },
+            {
+              "type": "note",
+              "text": "For complex animations with multiple keyframes, use `@keyframes` instead of transitions. Transitions are best for simple two-state changes."
+            }
+          ],
+          "task": "Create a `.btn` class with `padding: 12px 24px`, `background: #10b981`, `color: white`, `border: none`, `border-radius: 6px`, and a `transition` on background and transform taking 0.2s with ease. Add `.btn:hover` that changes background to `#059669` and adds `transform: translateY(-2px)`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .btn and .btn:hover rules -->\n</head>\n<body>\n  <!-- Add a button or div with class=\"btn\" -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.btn\\s*\\{[^}]*padding",
+            "\\.btn\\s*\\{[^}]*background",
+            "\\.btn\\s*\\{[^}]*border-radius",
+            "\\.btn\\s*\\{[^}]*transition",
+            "\\.btn:hover\\s*\\{[^}]*background",
+            "\\.btn:hover\\s*\\{[^}]*transform",
+            "translateY",
+            "class=\"btn\""
+          ],
+          "hints": [
+            "Write `.btn { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 6px; transition: background 0.2s ease, transform 0.2s ease; }`.",
+            "Write `.btn:hover { background: #059669; transform: translateY(-2px); }`.",
+            "Add a `<button class=\"btn\">Hover me</button>` in the body."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .btn {\n      padding: 12px 24px;\n      background: #10b981;\n      color: white;\n      border: none;\n      border-radius: 6px;\n      transition: background 0.2s ease, transform 0.2s ease;\n      cursor: pointer;\n    }\n    .btn:hover {\n      background: #059669;\n      transform: translateY(-2px);\n    }\n  </style>\n</head>\n<body>\n  <button class=\"btn\">Hover me</button>\n</body>\n</html>"
+        },
+        {
+          "id": "css-12-responsive",
+          "title": "12. Responsive Design",
+          "concept": "@media query",
+          "summary": "Adapting layouts to different screen sizes.",
+          "activities": [
+            {
+              "id": "css-12-see",
+              "type": "worked-example",
+              "title": "A media query in action",
+              "instruction": "Media queries let you apply CSS rules only when certain conditions are met — like the viewport being below a certain width. This is how sites adapt from desktop to mobile.",
+              "example": ".sidebar {\n  display: none;\n}\n\n@media (min-width: 768px) {\n  .sidebar {\n    display: block;\n    width: 250px;\n  }\n}"
+            },
+            {
+              "id": "css-12-predict",
+              "type": "prediction",
+              "title": "Mobile-first vs desktop-first",
+              "question": "Which approach is generally recommended: writing styles for mobile first and adding `min-width` queries, or writing for desktop first and adding `max-width` queries?",
+              "choices": [
+                "Desktop first with max-width",
+                "Mobile first with min-width (recommended)",
+                "It doesn't matter, they are equivalent"
+              ],
+              "answer": "Mobile first with min-width (recommended)",
+              "explanation": "Mobile-first means you write base styles for small screens and progressively enhance for larger ones. This tends to produce cleaner, more maintainable CSS."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Responsive design ensures your site looks good on all screen sizes — phones, tablets, and desktops."
+            },
+            {
+              "type": "p",
+              "text": "The `@media` rule applies styles only when a condition is true:"
+            },
+            {
+              "type": "code",
+              "text": "/* Mobile first: base styles for small screens */\n.container {\n  padding: 8px;\n}\n\n/* Tablet and up */\n@media (min-width: 768px) {\n  .container {\n    padding: 16px;\n    max-width: 720px;\n    margin: 0 auto;\n  }\n}\n\n/* Desktop */\n@media (min-width: 1024px) {\n  .container {\n    max-width: 960px;\n  }\n}"
+            },
+            {
+              "type": "p",
+              "text": "Common breakpoints:"
+            },
+            {
+              "type": "code",
+              "text": "/* Mobile:    0 – 767px    (base styles) */\n/* Tablet:    768px+        (min-width: 768px) */\n/* Desktop:   1024px+       (min-width: 1024px) */\n/* Wide:      1280px+       (min-width: 1280px) */"
+            },
+            {
+              "type": "p",
+              "text": "You can also query for other conditions like height, orientation, and color scheme:"
+            },
+            {
+              "type": "code",
+              "text": "@media (prefers-color-scheme: dark) {\n  body { background: #1a1a2e; color: white; }\n}\n\n@media (orientation: portrait) {\n  .gallery { grid-template-columns: 1fr; }\n}"
+            },
+            {
+              "type": "note",
+              "text": "Use `max-width` for desktop-first: `@media (max-width: 767px)` means 'only on screens smaller than 768px'."
+            }
+          ],
+          "task": "Create a page with a `.hero` section that has `padding: 20px` and `text-align: center` by default. Add a media query for `min-width: 768px` that changes padding to `60px` and font-size to `24px`. Add an `<h1>` saying 'Responsive Title' inside the hero.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <!-- Add <style> with .hero rules and a media query -->\n</head>\n<body>\n  <!-- Add a div with class=\"hero\" and an h1 -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "\\.hero\\s*\\{[^}]*padding",
+            "\\.hero\\s*\\{[^}]*text-align",
+            "@media.*min-width",
+            "font-size",
+            "class=\"hero\"",
+            "Responsive Title"
+          ],
+          "hints": [
+            "Write `.hero { padding: 20px; text-align: center; }`.",
+            "Add `@media (min-width: 768px) { .hero { padding: 60px; font-size: 24px; } }`.",
+            "Create `<div class=\"hero\"><h1>Responsive Title</h1></div>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .hero {\n      padding: 20px;\n      text-align: center;\n    }\n    @media (min-width: 768px) {\n      .hero {\n        padding: 60px;\n        font-size: 24px;\n      }\n    }\n  </style>\n</head>\n<body>\n  <div class=\"hero\">\n    <h1>Responsive Title</h1>\n  </div>\n</body>\n</html>"
+        }
+      ]
+    }
+  ]
+}

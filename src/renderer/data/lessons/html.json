@@ -1,0 +1,1459 @@
+{
+  "tracks": [
+    {
+      "id": "html-foundations",
+      "name": "HTML Foundations",
+      "language": "html",
+      "description": "Document structure, headings, paragraphs, and links.",
+      "lessons": [
+        {
+          "id": "html-01-document",
+          "title": "1. The HTML Document",
+          "concept": "<!DOCTYPE html>",
+          "summary": "Every web page starts with a structured skeleton.",
+          "activities": [
+            {
+              "id": "html-01-see",
+              "type": "worked-example",
+              "title": "A minimal HTML page",
+              "instruction": "Every HTML document follows the same pattern: a doctype declaration, an `<html>` wrapper, a `<head>` for metadata, and a `<body>` for visible content.",
+              "example": "<!DOCTYPE html>\n<html>\n  <head>\n    <title>My Page</title>\n  </head>\n  <body>\n    <p>Hello, world!</p>\n  </body>\n</html>"
+            },
+            {
+              "id": "html-01-predict",
+              "type": "prediction",
+              "title": "What shows on screen?",
+              "question": "In the example above, what text will the browser actually display to the user?",
+              "choices": [
+                "My Page",
+                "Hello, world!",
+                "Both My Page and Hello, world!"
+              ],
+              "answer": "Hello, world!",
+              "explanation": "The `<title>` goes in the browser tab, not the page body. Only content inside `<body>` appears on the page."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "HTML stands for **HyperText Markup Language**. It is not a programming language — it is a markup language that tells the browser how to structure content."
+            },
+            {
+              "type": "p",
+              "text": "Every web page begins with `<!DOCTYPE html>`. This tells the browser to use modern HTML rules. Always put it as the very first line."
+            },
+            {
+              "type": "code",
+              "text": "<!DOCTYPE html>\n<html>\n  <head>\n    <title>My Page</title>\n  </head>\n  <body>\n    <p>Hello, world!</p>\n  </body>\n</html>"
+            },
+            {
+              "type": "p",
+              "text": "The `<html>` element wraps everything. Inside it, `<head>` holds information about the page (like its title), and `<body>` holds everything the user can see."
+            },
+            {
+              "type": "note",
+              "text": "The `<title>` appears in the browser tab — not on the page itself. It is important for search engines and bookmarks."
+            }
+          ],
+          "task": "Create a complete HTML document with a `<head>` containing a `<title>` reading 'My First Page', and a `<body>` containing a paragraph that says 'Welcome to HTML!'.",
+          "starterCode": "<!DOCTYPE html>\n<!-- Add <html>, <head>, <title>, <body>, and a <p> -->",
+          "matchType": "source-contains",
+          "sourceChecks": [
+            "title>My First Page</title>",
+            "p>Welcome to HTML!</p>"
+          ],
+          "hints": [
+            "Wrap everything in `<html>`.",
+            "Inside `<html>`, create a `<head>` with `<title>My First Page</title>`.",
+            "After `<head>`, create a `<body>` with `<p>Welcome to HTML!</p>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n  <head>\n    <title>My First Page</title>\n  </head>\n  <body>\n    <p>Welcome to HTML!</p>\n  </body>\n</html>"
+        },
+        {
+          "id": "html-02-headings",
+          "title": "2. Headings",
+          "concept": "<h1> to <h6>",
+          "summary": "Six levels of heading importance.",
+          "activities": [
+            {
+              "id": "html-02-see",
+              "type": "worked-example",
+              "title": "Heading hierarchy",
+              "instruction": "HTML provides six heading levels. `<h1>` is the most important (usually the page title), and `<h6>` is the least important.",
+              "example": "<h1>Main Title</h1>\n<h2>Section</h2>\n<h3>Subsection</h3>\n<h4>Detail</h4>"
+            },
+            {
+              "id": "html-02-predict",
+              "type": "prediction",
+              "title": "Which heading is largest?",
+              "question": "Which heading tag produces the largest text on screen?",
+              "choices": [
+                "<h6>",
+                "<h1>",
+                "<h3>"
+              ],
+              "answer": "<h1>",
+              "explanation": "`<h1>` is the largest heading. Headings get smaller as the number increases."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Headings give structure to your page. Think of them like chapter titles and section headers in a book."
+            },
+            {
+              "type": "code",
+              "text": "<h1>Main Title</h1>\n<h2>Section</h2>\n<h3>Subsection</h3>\n<h4>Detail</h4>\n<h5>Fine Detail</h5>\n<h6>Smallest</h6>"
+            },
+            {
+              "type": "p",
+              "text": "Every page should have exactly **one `<h1>`** — this is the main title. Use `<h2>` for major sections, `<h3>` for subsections inside those, and so on."
+            },
+            {
+              "type": "note",
+              "text": "Never skip heading levels. Going from `<h1>` straight to `<h4>` confuses screen readers and hurts accessibility."
+            },
+            {
+              "type": "p",
+              "text": "Search engines use headings to understand the structure of your page. Good heading hierarchy improves your page's SEO."
+            }
+          ],
+          "task": "Create a page with an `<h1>` saying 'Recipes', an `<h2>` saying 'Breakfast', and an `<h3>` saying 'Pancakes'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- Add h1, h2, h3 -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<h1>Recipes</h1>` for the main title.",
+            "Use `<h2>Breakfast</h2>` for the section.",
+            "Use `<h3>Pancakes</h3>` for the subsection."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h1>Recipes</h1>\n  <h2>Breakfast</h2>\n  <h3>Pancakes</h3>\n</body>\n</html>",
+          "sourceChecks": [
+            "h1>Recipes</h1>",
+            "h2>Breakfast</h2>",
+            "h3>Pancakes</h3>"
+          ]
+        },
+        {
+          "id": "html-03-paragraphs",
+          "title": "3. Paragraphs and Text",
+          "concept": "<p> <strong> <em>",
+          "summary": "Writing blocks of text and adding emphasis.",
+          "activities": [
+            {
+              "id": "html-03-see",
+              "type": "worked-example",
+              "title": "Paragraphs and inline formatting",
+              "instruction": "The `<p>` tag creates a paragraph. Inside text, `<strong>` makes bold text and `<em>` makes italic text.",
+              "example": "<p>This is a <strong>bold</strong> word.</p>\n<p>This is an <em>italic</em> word.</p>"
+            },
+            {
+              "id": "html-03-predict",
+              "type": "prediction",
+              "title": "Bold or strong?",
+              "question": "What is the difference between `<b>` and `<strong>`?",
+              "choices": [
+                "No difference — they look the same",
+                "`<strong>` tells the browser the text is important, `<b>` is just visual",
+                "`<b>` is bold, `<strong>` is underlined"
+              ],
+              "answer": "`<strong>` tells the browser the text is important, `<b>` is just visual",
+              "explanation": "`<strong>` carries meaning (importance), while `<b>` is purely visual. Always prefer `<strong>` for important text."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The `<p>` tag creates a paragraph — a block of text with space above and below. Browsers treat each `<p>` as a separate block."
+            },
+            {
+              "type": "code",
+              "text": "<p>HTML is fun to learn.</p>\n<p>It powers every website.</p>"
+            },
+            {
+              "type": "p",
+              "text": "For inline emphasis, use `<strong>` (bold, signals importance) and `<em>` (italic, signals emphasis). These are **semantic** tags — they tell the browser *why* the text is special, not just *how* it looks."
+            },
+            {
+              "type": "code",
+              "text": "<p>You must <strong>not</strong> share your password.</p>\n<p>I <em>really</em> like HTML.</p>"
+            },
+            {
+              "type": "p",
+              "text": "Other useful inline tags: `<br>` for a line break, `<hr>` for a horizontal rule (a dividing line), and `<span>` for styling a chunk of text without adding meaning."
+            },
+            {
+              "type": "note",
+              "text": "HTML ignores extra spaces and line breaks in your code. Two spaces look the same as one. Use `<br>` if you need a break inside a paragraph."
+            }
+          ],
+          "task": "Write a page with two paragraphs: the first says 'Learning HTML is exciting.' (with 'exciting' wrapped in `<strong>`), and the second says 'Start with the basics.' (with 'basics' wrapped in `<em>`).",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- Two paragraphs with inline formatting -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<p>` for each paragraph.",
+            "Wrap a word in `<strong>` to make it bold: `<strong>exciting</strong>`.",
+            "Wrap a word in `<em>` to make it italic: `<em>basics</em>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <p>Learning HTML is <strong>exciting</strong>.</p>\n  <p>Start with the <em>basics</em>.</p>\n</body>\n</html>",
+          "sourceChecks": [
+            "strong>exciting</strong>",
+            "em>basics</em>"
+          ]
+        },
+        {
+          "id": "html-04-links",
+          "title": "4. Links",
+          "concept": "<a href>",
+          "summary": "Connecting pages together with anchor tags.",
+          "activities": [
+            {
+              "id": "html-04-see",
+              "type": "worked-example",
+              "title": "Creating a hyperlink",
+              "instruction": "The `<a>` (anchor) tag creates a link. The `href` attribute specifies the destination URL.",
+              "example": "<a href=\"https://www.example.com\">Visit Example</a>"
+            },
+            {
+              "id": "html-04-predict",
+              "type": "prediction",
+              "title": "What is clickable?",
+              "question": "In `<a href=\"https://google.com\">Click me</a>`, what text does the user click on?",
+              "choices": [
+                "https://google.com",
+                "Click me",
+                "Both"
+              ],
+              "answer": "Click me",
+              "explanation": "The text between the opening and closing `<a>` tags is what the user sees and clicks. The `href` value is the destination."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Links are the foundation of the web. Without them, pages would be islands. The `<a>` tag turns text or images into clickable links."
+            },
+            {
+              "type": "code",
+              "text": "<a href=\"https://www.example.com\">Visit Example</a>"
+            },
+            {
+              "type": "p",
+              "text": "The `href` attribute stands for **Hypertext Reference** — it tells the browser where to go when the link is clicked."
+            },
+            {
+              "type": "p",
+              "text": "Links can point to other websites, other pages on your own site, or even specific sections on the same page."
+            },
+            {
+              "type": "code",
+              "text": "<!-- External link -->\n<a href=\"https://www.google.com\">Google</a>\n\n<!-- Link to another page on your site -->\n<a href=\"about.html\">About Us</a>\n\n<!-- Link to a section on the same page -->\n<a href=\"#contact\">Jump to Contact</a>\n\n<!-- Open in a new tab -->\n<a href=\"https://www.google.com\" target=\"_blank\">Google (new tab)</a>"
+            },
+            {
+              "type": "note",
+              "text": "The `target=\"_blank\"` attribute opens the link in a new tab. Always pair it with `rel=\"noopener noreferrer\"` for security."
+            }
+          ],
+          "task": "Create a paragraph that says 'Visit our' followed by a link to 'https://example.com' with the text 'homepage', then '. Thank you!'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- Paragraph with an inline link -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "The whole thing goes in one `<p>` tag.",
+            "Put the `<a>` tag between the text: `Visit our <a href=\"...\">homepage</a>. Thank you!`",
+            "Set `href=\"https://example.com\"`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <p>Visit our <a href=\"https://example.com\">homepage</a>. Thank you!</p>\n</body>\n</html>",
+          "sourceChecks": [
+            "a href=\"https://example.com\"",
+            ">homepage</a>"
+          ]
+        },
+        {
+          "id": "html-05-images",
+          "title": "5. Images",
+          "concept": "<img src alt>",
+          "summary": "Adding pictures to your page with attributes.",
+          "activities": [
+            {
+              "id": "html-05-see",
+              "type": "worked-example",
+              "title": "An image with alt text",
+              "instruction": "The `<img>` tag embeds an image. It is a **void element** — no closing tag needed. Always include an `alt` attribute describing the image.",
+              "example": "<img src=\"photo.jpg\" alt=\"A golden retriever playing fetch\">"
+            },
+            {
+              "id": "html-05-predict",
+              "type": "prediction",
+              "title": "Why alt text?",
+              "question": "Why is the `alt` attribute important?",
+              "choices": [
+                "It makes the image load faster",
+                "It describes the image for screen readers and when the image fails to load",
+                "It sets the image width"
+              ],
+              "answer": "It describes the image for screen readers and when the image fails to load",
+              "explanation": "Alt text is read by screen readers for visually impaired users and shown when the image cannot load."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The `<img>` tag embeds an image directly into the page. It is a **void element** — it has no closing tag."
+            },
+            {
+              "type": "code",
+              "text": "<img src=\"photo.jpg\" alt=\"A golden retriever\">"
+            },
+            {
+              "type": "p",
+              "text": "The two essential attributes are:"
+            },
+            {
+              "type": "p",
+              "text": "**`src`** (source) — the path to the image file. This can be a local file or a URL."
+            },
+            {
+              "type": "p",
+              "text": "**`alt`** (alternative text) — a text description. Screen readers read this aloud, and browsers show it when the image fails to load. Every `<img>` should have `alt`."
+            },
+            {
+              "type": "code",
+              "text": "<!-- Local file -->\n<img src=\"images/cat.png\" alt=\"A sleeping cat\">\n\n<!-- Full URL -->\n<img src=\"https://example.com/logo.png\" alt=\"Company logo\">\n\n<!-- Controlling size -->\n<img src=\"photo.jpg\" alt=\"A sunset\" width=\"400\" height=\"300\">"
+            },
+            {
+              "type": "note",
+              "text": "Use `width` and `height` attributes to prevent the page from jumping while images load. The values are in pixels."
+            }
+          ],
+          "task": "Add an image to your page: `src=\"garden.jpg\"`, `alt=\"A beautiful garden with flowers\"`, and `width=\"500\"`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h1>My Garden</h1>\n  <!-- Add an img tag here -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<img src=\"...\" alt=\"...\">` — no closing tag needed.",
+            "Add `width=\"500\"` as a third attribute.",
+            "Complete tag: `<img src=\"garden.jpg\" alt=\"A beautiful garden with flowers\" width=\"500\">`"
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h1>My Garden</h1>\n  <img src=\"garden.jpg\" alt=\"A beautiful garden with flowers\" width=\"500\">\n</body>\n</html>",
+          "sourceChecks": [
+            "img",
+            "src=\"garden.jpg\"",
+            "alt=\"A beautiful garden with flowers\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "html-lists-tables",
+      "name": "Lists and Tables",
+      "language": "html",
+      "description": "Organize content with lists and structured tables.",
+      "lessons": [
+        {
+          "id": "html-06-ul",
+          "title": "6. Unordered Lists",
+          "concept": "<ul> <li>",
+          "summary": "Bullet-pointed lists for items without a specific order.",
+          "activities": [
+            {
+              "id": "html-06-see",
+              "type": "worked-example",
+              "title": "A bulleted grocery list",
+              "instruction": "Use `<ul>` (unordered list) to wrap `<li>` (list item) elements. The browser displays them with bullets.",
+              "example": "<ul>\n  <li>Apples</li>\n  <li>Bananas</li>\n  <li>Cherries</li>\n</ul>"
+            },
+            {
+              "id": "html-06-predict",
+              "type": "prediction",
+              "title": "Bullets or numbers?",
+              "question": "What does a `<ul>` display its items as?",
+              "choices": [
+                "Numbered list",
+                "Bulleted list",
+                "Checkboxes"
+              ],
+              "answer": "Bulleted list",
+              "explanation": "`<ul>` creates a bulleted (unordered) list. Use `<ol>` for numbered (ordered) lists."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Unordered lists display items with bullet points. They are perfect for lists where the order does not matter — like ingredients, features, or reminders."
+            },
+            {
+              "type": "code",
+              "text": "<ul>\n  <li>Apples</li>\n  <li>Bananas</li>\n  <li>Cherries</li>\n</ul>"
+            },
+            {
+              "type": "p",
+              "text": "The `<ul>` element is the container. Each `<li>` is an individual item inside it. You cannot put text directly inside `<ul>` — it must be wrapped in `<li>` tags."
+            },
+            {
+              "type": "p",
+              "text": "Lists can be nested. Put a `<ul>` or `<ol>` inside an `<li>` to create sub-lists."
+            },
+            {
+              "type": "code",
+              "text": "<ul>\n  <li>Fruits\n    <ul>\n      <li>Apples</li>\n      <li>Bananas</li>\n    </ul>\n  </li>\n  <li>Vegetables\n    <ul>\n      <li>Carrots</li>\n      <li>Broccoli</li>\n    </ul>\n  </li>\n</ul>"
+            },
+            {
+              "type": "note",
+              "text": "The default bullet style varies by browser. You can change it with CSS using `list-style-type`."
+            }
+          ],
+          "task": "Create an unordered list of three programming languages: HTML, CSS, and JavaScript.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Languages of the Web</h2>\n  <!-- Add a <ul> with three <li> items -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Wrap the list in `<ul>`.",
+            "Each language goes in its own `<li>` tag.",
+            "Close the list with `</ul>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Languages of the Web</h2>\n  <ul>\n    <li>HTML</li>\n    <li>CSS</li>\n    <li>JavaScript</li>\n  </ul>\n</body>\n</html>",
+          "sourceChecks": [
+            "<ul>",
+            "<li>HTML</li>",
+            "<li>CSS</li>",
+            "<li>JavaScript</li>"
+          ]
+        },
+        {
+          "id": "html-07-ol",
+          "title": "7. Ordered Lists",
+          "concept": "<ol> <li>",
+          "summary": "Numbered lists for steps, rankings, and sequences.",
+          "activities": [
+            {
+              "id": "html-07-see",
+              "type": "worked-example",
+              "title": "A numbered to-do list",
+              "instruction": "Use `<ol>` (ordered list) to create numbered items. The browser automatically numbers each `<li>`.",
+              "example": "<ol>\n  <li>Wake up</li>\n  <li>Brush teeth</li>\n  <li>Make coffee</li>\n</ol>"
+            },
+            {
+              "id": "html-07-predict",
+              "type": "prediction",
+              "title": "Automatic numbering",
+              "question": "If you add a new `<li>` in the middle of an `<ol>`, what happens to the numbering?",
+              "choices": [
+                "You must manually renumber all items",
+                "The browser automatically renumbers everything",
+                "The list breaks"
+              ],
+              "answer": "The browser automatically renumbers everything",
+              "explanation": "The browser handles numbering automatically. Insert, remove, or reorder items and the numbers update."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Ordered lists use numbers instead of bullets. Use them for step-by-step instructions, rankings, or anything where sequence matters."
+            },
+            {
+              "type": "code",
+              "text": "<ol>\n  <li>Wake up</li>\n  <li>Brush teeth</li>\n  <li>Make coffee</li>\n</ol>"
+            },
+            {
+              "type": "p",
+              "text": "You can change the numbering style with the `type` attribute:"
+            },
+            {
+              "type": "code",
+              "text": "<!-- Numbers (default) -->\n<ol type=\"1\">\n  <li>First</li>\n</ol>\n\n<!-- Letters -->\n<ol type=\"A\">\n  <li>First</li>\n</ol>\n\n<!-- Lowercase letters -->\n<ol type=\"a\">\n  <li>First</li>\n</ol>\n\n<!-- Roman numerals -->\n<ol type=\"I\">\n  <li>First</li>\n</ol>"
+            },
+            {
+              "type": "p",
+              "text": "The `start` attribute lets you begin numbering from a specific value:"
+            },
+            {
+              "type": "code",
+              "text": "<ol start=\"5\">\n  <li>Fifth</li>\n  <li>Sixth</li>\n</ol>"
+            },
+            {
+              "type": "note",
+              "text": "Like `<ul>`, you cannot put text directly inside `<ol>`. Every piece of content must be wrapped in an `<li>`."
+            }
+          ],
+          "task": "Create an ordered list with three steps: 'Open the file', 'Edit the code', 'Save changes'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>How to Code</h2>\n  <!-- Add an <ol> with three <li> steps -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<ol>` instead of `<ul>` for numbered steps.",
+            "Each step goes in an `<li>` tag.",
+            "Make sure to close with `</ol>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>How to Code</h2>\n  <ol>\n    <li>Open the file</li>\n    <li>Edit the code</li>\n    <li>Save changes</li>\n  </ol>\n</body>\n</html>",
+          "sourceChecks": [
+            "<ol>",
+            "<li>Open the file</li>",
+            "<li>Edit the code</li>",
+            "<li>Save changes</li>"
+          ]
+        },
+        {
+          "id": "html-08-tables",
+          "title": "8. Tables",
+          "concept": "<table> <tr> <td> <th>",
+          "summary": "Structuring data in rows and columns.",
+          "activities": [
+            {
+              "id": "html-08-see",
+              "type": "worked-example",
+              "title": "A simple table",
+              "instruction": "Tables use `<table>` as the container, `<tr>` for rows, `<th>` for header cells (bold and centered), and `<td>` for data cells.",
+              "example": "<table>\n  <tr>\n    <th>Name</th>\n    <th>Age</th>\n  </tr>\n  <tr>\n    <td>Alice</td>\n    <td>30</td>\n  </tr>\n  <tr>\n    <td>Bob</td>\n    <td>25</td>\n  </tr>\n</table>"
+            },
+            {
+              "id": "html-08-predict",
+              "type": "prediction",
+              "title": "Header vs data cells",
+              "question": "What is the visual difference between `<th>` and `<td>`?",
+              "choices": [
+                "`<th>` is bold and centered by default; `<td>` is plain",
+                "There is no difference",
+                "`<th>` is red, `<td>` is blue"
+              ],
+              "answer": "`<th>` is bold and centered by default; `<td>` is plain",
+              "explanation": "Browsers style `<th>` header cells as bold and centered to visually distinguish them from data cells."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Tables organize data into rows and columns. While they were once used for page layout, today they should only be used for actual tabular data."
+            },
+            {
+              "type": "p",
+              "text": "The four essential tags are:"
+            },
+            {
+              "type": "p",
+              "text": "**`<table>`** — the container for the entire table.\n**`<tr>`** — a table row.\n**`<th>`** — a header cell (bold, centered).\n**`<td>`** — a data cell (regular text)."
+            },
+            {
+              "type": "code",
+              "text": "<table>\n  <tr>\n    <th>Name</th>\n    <th>Age</th>\n  </tr>\n  <tr>\n    <td>Alice</td>\n    <td>30</td>\n  </tr>\n</table>"
+            },
+            {
+              "type": "p",
+              "text": "For better semantics, wrap header rows in `<thead>` and data rows in `<tbody>`:"
+            },
+            {
+              "type": "code",
+              "text": "<table>\n  <thead>\n    <tr>\n      <th>Name</th>\n      <th>Score</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Alice</td>\n      <td>95</td>\n    </tr>\n    <tr>\n      <td>Bob</td>\n      <td>87</td>\n    </tr>\n  </tbody>\n</table>"
+            },
+            {
+              "type": "note",
+              "text": "The `colspan` attribute lets a cell span multiple columns: `<th colspan=\"2\">Full Name</th>`."
+            }
+          ],
+          "task": "Create a table with headers 'Fruit' and 'Price', and two data rows: 'Apple' / '$1.50' and 'Banana' / '$0.75'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Fruit Prices</h2>\n  <!-- Build the table -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Start with `<table>` and close with `</table>`.",
+            "First `<tr>` has two `<th>` cells for headers.",
+            "Each data row uses `<tr>` with two `<td>` cells."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Fruit Prices</h2>\n  <table>\n    <tr>\n      <th>Fruit</th>\n      <th>Price</th>\n    </tr>\n    <tr>\n      <td>Apple</td>\n      <td>$1.50</td>\n    </tr>\n    <tr>\n      <td>Banana</td>\n      <td>$0.75</td>\n    </tr>\n  </table>\n</body>\n</html>",
+          "sourceChecks": [
+            "<table>",
+            "<th>Fruit</th>",
+            "<td>Apple</td>",
+            "<td>$1.50</td>"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "html-forms",
+      "name": "Forms and Inputs",
+      "language": "html",
+      "description": "Collecting user data with forms, inputs, and buttons.",
+      "lessons": [
+        {
+          "id": "html-09-form-basics",
+          "title": "9. Form Basics",
+          "concept": "<form>",
+          "summary": "The container that wraps interactive input elements.",
+          "activities": [
+            {
+              "id": "html-09-see",
+              "type": "worked-example",
+              "title": "A login form",
+              "instruction": "The `<form>` element wraps input fields and a submit button. The `action` attribute specifies where the data is sent.",
+              "example": "<form action=\"/login\" method=\"POST\">\n  <label for=\"user\">Username:</label>\n  <input type=\"text\" id=\"user\" name=\"username\">\n\n  <label for=\"pass\">Password:</label>\n  <input type=\"password\" id=\"pass\" name=\"password\">\n\n  <button type=\"submit\">Log In</button>\n</form>"
+            },
+            {
+              "id": "html-09-predict",
+              "type": "prediction",
+              "title": "What is method POST?",
+              "question": "What does `method=\"POST\"` do on a form?",
+              "choices": [
+                "Sends data in the URL",
+                "Sends data in the request body (hidden from the URL)",
+                "Posts the data to social media"
+              ],
+              "answer": "Sends data in the request body (hidden from the URL)",
+              "explanation": "POST sends form data in the HTTP request body, not in the URL. GET appends data to the URL as query parameters."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "A form is a container for input elements. When the user clicks Submit, the browser collects the data and sends it somewhere."
+            },
+            {
+              "type": "p",
+              "text": "Two important attributes on `<form>`:"
+            },
+            {
+              "type": "p",
+              "text": "**`action`** — the URL where form data is sent.\n**`method`** — how the data is sent (`GET` puts it in the URL, `POST` hides it in the request body)."
+            },
+            {
+              "type": "code",
+              "text": "<form action=\"/submit\" method=\"POST\">\n  <input type=\"text\" name=\"query\">\n  <button type=\"submit\">Search</button>\n</form>"
+            },
+            {
+              "type": "p",
+              "text": "The `name` attribute on each input is crucial — it becomes the key in the submitted data. Without `name`, the input's value is not sent."
+            },
+            {
+              "type": "note",
+              "text": "Every `<label>` should have a `for` attribute matching the `id` of its input. This makes the label clickable and improves accessibility."
+            }
+          ],
+          "task": "Create a form with `action=\"/signup\"` and `method=\"POST\"`. Inside, add a text input named `email` with a label 'Email:', and a submit button labeled 'Sign Up'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Sign Up</h2>\n  <!-- Create the form -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Start with `<form action=\"/signup\" method=\"POST\">`.",
+            "Add a `<label for=\"email\">Email:</label>` and `<input type=\"text\" id=\"email\" name=\"email\">`.",
+            "Add a `<button type=\"submit\">Sign Up</button>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Sign Up</h2>\n  <form action=\"/signup\" method=\"POST\">\n    <label for=\"email\">Email:</label>\n    <input type=\"text\" id=\"email\" name=\"email\">\n    <button type=\"submit\">Sign Up</button>\n  </form>\n</body>\n</html>",
+          "sourceChecks": [
+            "<form",
+            "action=\"/signup\"",
+            "name=\"email\"",
+            "button type=\"submit\""
+          ]
+        },
+        {
+          "id": "html-10-input-types",
+          "title": "10. Input Types",
+          "concept": "<input type>",
+          "summary": "Text, email, password, number, checkbox, radio, and more.",
+          "activities": [
+            {
+              "id": "html-10-see",
+              "type": "worked-example",
+              "title": "Different input types",
+              "instruction": "The `<input>` tag changes behavior based on its `type` attribute. Each type provides the right keyboard and validation for its purpose.",
+              "example": "<input type=\"text\" placeholder=\"Your name\">\n<input type=\"email\" placeholder=\"you@email.com\">\n<input type=\"password\" placeholder=\"Secret\">\n<input type=\"number\" min=\"0\" max=\"100\">\n<input type=\"checkbox\" id=\"agree\">\n<input type=\"radio\" name=\"plan\" value=\"free\"> Free"
+            },
+            {
+              "id": "html-10-predict",
+              "type": "prediction",
+              "title": "Type behavior",
+              "question": "What happens when a user types 'hello' in an `<input type=\"email\">` and tries to submit?",
+              "choices": [
+                "It submits normally",
+                "The browser shows a validation error",
+                "Nothing happens"
+              ],
+              "answer": "The browser shows a validation error",
+              "explanation": "Browsers validate `type=\"email\"` inputs — they must contain an @ symbol. Invalid values trigger a built-in error message."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The `<input>` element is the most versatile form element. Its `type` attribute determines what kind of data it collects and how it behaves."
+            },
+            {
+              "type": "p",
+              "text": "Common input types:"
+            },
+            {
+              "type": "code",
+              "text": "<!-- Plain text -->\n<input type=\"text\" name=\"name\">\n\n<!-- Email (browser validates @) -->\n<input type=\"email\" name=\"email\">\n\n<!-- Password (hides characters) -->\n<input type=\"password\" name=\"password\">\n\n<!-- Number (shows spinner, validates) -->\n<input type=\"number\" name=\"age\" min=\"0\" max=\"120\">\n\n<!-- Date picker -->\n<input type=\"date\" name=\"birthday\">"
+            },
+            {
+              "type": "p",
+              "text": "For choices, use checkboxes and radio buttons:"
+            },
+            {
+              "type": "code",
+              "text": "<!-- Checkbox: can select multiple -->\n<input type=\"checkbox\" id=\"newsletter\" name=\"newsletter\" value=\"yes\">\n<label for=\"newsletter\">Subscribe to newsletter</label>\n\n<!-- Radio: can select only one (same name = same group) -->\n<input type=\"radio\" name=\"plan\" value=\"free\" id=\"free\">\n<label for=\"free\">Free</label>\n<input type=\"radio\" name=\"plan\" value=\"pro\" id=\"pro\">\n<label for=\"pro\">Pro</label>"
+            },
+            {
+              "type": "note",
+              "text": "Radio buttons with the same `name` form a group — only one can be selected. Checkboxes are independent."
+            },
+            {
+              "type": "p",
+              "text": "The `placeholder` attribute shows hint text inside the input before the user types. The `required` attribute makes the field mandatory."
+            }
+          ],
+          "task": "Create a form with: a text input (name='username'), a password input (name='password'), and a checkbox with label 'Remember me'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Login</h2>\n  <form>\n    <!-- Add inputs here -->\n  </form>\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<input type=\"text\" name=\"username\">`.",
+            "Use `<input type=\"password\" name=\"password\">`.",
+            "For the checkbox: `<input type=\"checkbox\" id=\"remember\"> <label for=\"remember\">Remember me</label>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Login</h2>\n  <form>\n    <input type=\"text\" name=\"username\">\n    <input type=\"password\" name=\"password\">\n    <input type=\"checkbox\" id=\"remember\">\n    <label for=\"remember\">Remember me</label>\n  </form>\n</body>\n</html>",
+          "sourceChecks": [
+            "type=\"text\"",
+            "type=\"password\"",
+            "type=\"checkbox\"",
+            "Remember me"
+          ]
+        },
+        {
+          "id": "html-11-select-textarea",
+          "title": "11. Dropdowns and Text Areas",
+          "concept": "<select> <textarea>",
+          "summary": "Dropdown menus and multi-line text input.",
+          "activities": [
+            {
+              "id": "html-11-see",
+              "type": "worked-example",
+              "title": "A dropdown and a text area",
+              "instruction": "The `<select>` element creates a dropdown menu with `<option>` items. The `<textarea>` creates a multi-line text box.",
+              "example": "<select name=\"color\">\n  <option value=\"red\">Red</option>\n  <option value=\"blue\">Blue</option>\n  <option value=\"green\">Green</option>\n</select>\n\n<textarea name=\"bio\" rows=\"5\" cols=\"40\">Tell us about yourself...</textarea>"
+            },
+            {
+              "id": "html-11-predict",
+              "type": "prediction",
+              "title": "Option values",
+              "question": "When the user selects 'Blue' in the dropdown, what value is submitted?",
+              "choices": [
+                "Blue",
+                "blue (the value attribute)",
+                "The position number (2)"
+              ],
+              "answer": "blue (the value attribute)",
+              "explanation": "The `value` attribute is what gets submitted. The text between `<option>` tags is what the user sees."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "For dropdown menus, use `<select>` with `<option>` children. Each option has a `value` attribute — this is what gets submitted to the server."
+            },
+            {
+              "type": "code",
+              "text": "<select name=\"country\">\n  <option value=\"us\">United States</option>\n  <option value=\"uk\">United Kingdom</option>\n  <option value=\"jp\">Japan</option>\n</select>"
+            },
+            {
+              "type": "p",
+              "text": "You can pre-select an option with the `selected` attribute:"
+            },
+            {
+              "type": "code",
+              "text": "<option value=\"uk\" selected>United Kingdom</option>"
+            },
+            {
+              "type": "p",
+              "text": "For longer text input, use `<textarea>` instead of `<input>`. It supports multiple lines and can be resized by the user."
+            },
+            {
+              "type": "code",
+              "text": "<textarea name=\"message\" rows=\"6\" cols=\"50\" placeholder=\"Write your message...\">\n</textarea>"
+            },
+            {
+              "type": "note",
+              "text": "`rows` and `cols` set the initial size. The user can usually drag to resize, which you can control with CSS."
+            }
+          ],
+          "task": "Create a form with a `<select>` dropdown named 'plan' with three options ('Free', 'Pro', 'Enterprise'), and a `<textarea>` named 'message' with 4 rows.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Contact Us</h2>\n  <form>\n    <!-- Add select and textarea -->\n  </form>\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<select name=\"plan\">` with three `<option>` children.",
+            "Use `<textarea name=\"message\" rows=\"4\"></textarea>`.",
+            "Each option needs a `value` attribute and display text."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Contact Us</h2>\n  <form>\n    <select name=\"plan\">\n      <option value=\"free\">Free</option>\n      <option value=\"pro\">Pro</option>\n      <option value=\"enterprise\">Enterprise</option>\n    </select>\n    <textarea name=\"message\" rows=\"4\"></textarea>\n  </form>\n</body>\n</html>",
+          "sourceChecks": [
+            "<select",
+            "name=\"plan\"",
+            "<option",
+            "<textarea",
+            "name=\"message\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "html-semantic",
+      "name": "Semantic HTML",
+      "language": "html",
+      "description": "Meaningful tags that describe your content's purpose.",
+      "lessons": [
+        {
+          "id": "html-12-semantic-overview",
+          "title": "12. Why Semantic HTML Matters",
+          "concept": "semantic elements",
+          "summary": "Using the right tag for the right job.",
+          "activities": [
+            {
+              "id": "html-12-see",
+              "type": "worked-example",
+              "title": "Div soup vs semantic HTML",
+              "instruction": "Semantic tags like `<header>`, `<nav>`, `<main>`, `<article>`, and `<footer>` describe the purpose of content. Compare this with using `<div>` for everything.",
+              "example": "<!-- Semantic (good) -->\n<header>\n  <nav>...</nav>\n</header>\n<main>\n  <article>\n    <h1>Post Title</h1>\n    <p>Content...</p>\n  </article>\n</main>\n<footer>...</footer>"
+            },
+            {
+              "id": "html-12-predict",
+              "type": "prediction",
+              "title": "Why not just use divs?",
+              "question": "What is the main advantage of semantic tags over `<div>`?",
+              "choices": [
+                "They look different visually",
+                "They convey meaning to browsers, screen readers, and search engines",
+                "They load faster"
+              ],
+              "answer": "They convey meaning to browsers, screen readers, and search engines",
+              "explanation": "Semantic tags don't change the visual appearance much, but they communicate the *role* of each section to assistive technology and search engines."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Semantic HTML means using tags that describe the **meaning** of content, not just its appearance."
+            },
+            {
+              "type": "p",
+              "text": "The key semantic layout tags are:"
+            },
+            {
+              "type": "code",
+              "text": "<header>    — introductory content or navigation bar\n<nav>        — navigation links\n<main>       — the main content of the page\n<article>    — self-contained content (blog post, news story)\n<section>    — a thematic grouping of content\n<aside>      — tangentially related content (sidebar)\n<footer>     — footer information (copyright, links)"
+            },
+            {
+              "type": "p",
+              "text": "A typical page layout looks like this:"
+            },
+            {
+              "type": "code",
+              "text": "<body>\n  <header>\n    <nav>\n      <a href=\"/\">Home</a>\n      <a href=\"/about\">About</a>\n    </nav>\n  </header>\n  <main>\n    <article>\n      <h1>My Blog Post</h1>\n      <p>Today I learned about semantic HTML...</p>\n    </article>\n    <aside>\n      <p>Related: CSS Basics</p>\n    </aside>\n  </main>\n  <footer>\n    <p>&copy; 2026 My Website</p>\n  </footer>\n</body>"
+            },
+            {
+              "type": "note",
+              "text": "Screen readers use semantic tags to help visually impaired users navigate a page. Using `<nav>` tells them 'this section contains navigation links'."
+            }
+          ],
+          "task": "Create a page structure with a `<header>` containing a `<nav>` (with one link to '#'), a `<main>` with a `<section>` containing an `<h2>` and a `<p>`, and a `<footer>`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- Build semantic structure -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Start with `<header>` containing a `<nav>`.",
+            "The `<main>` element wraps your `<section>`.",
+            "End with a `<footer>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <header>\n    <nav>\n      <a href=\"#\">Home</a>\n    </nav>\n  </header>\n  <main>\n    <section>\n      <h2>Welcome</h2>\n      <p>This is the main content.</p>\n    </section>\n  </main>\n  <footer>\n    <p>&copy; 2026</p>\n  </footer>\n</body>\n</html>",
+          "sourceChecks": [
+            "<header>",
+            "<nav>",
+            "<main>",
+            "<footer>"
+          ]
+        },
+        {
+          "id": "html-13-block-inline",
+          "title": "13. Block vs Inline Elements",
+          "concept": "block vs inline",
+          "summary": "Understanding how elements flow on the page.",
+          "activities": [
+            {
+              "id": "html-13-see",
+              "type": "worked-example",
+              "title": "Block vs inline behavior",
+              "instruction": "Block elements (`div`, `p`, `h1`-`h6`, `ul`, `table`) start on a new line and take the full width. Inline elements (`span`, `a`, `strong`, `em`, `img`) flow within the text.",
+              "example": "<!-- Block elements stack vertically -->\n<p>First paragraph</p>\n<p>Second paragraph</p>\n\n<!-- Inline elements flow in a line -->\n<p>I am <strong>bold</strong> and <em>italic</em> text.</p>"
+            },
+            {
+              "id": "html-13-predict",
+              "type": "prediction",
+              "title": "Block stacking",
+              "question": "Two `<div>` elements will appear as:",
+              "choices": [
+                "Side by side on the same line",
+                "Stacked vertically, one on top of the other",
+                "Overlapping each other"
+              ],
+              "answer": "Stacked vertically, one on top of the other",
+              "explanation": "Block elements always start on a new line and occupy the full available width, so they stack vertically."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "HTML elements fall into two display categories: **block** and **inline**."
+            },
+            {
+              "type": "p",
+              "text": "**Block elements** start on a new line and stretch to fill the available width:"
+            },
+            {
+              "type": "code",
+              "text": "<div>, <p>, <h1>–<h6>, <ul>, <ol>, <table>, <form>, <header>, <footer>, <main>, <section>, <article>"
+            },
+            {
+              "type": "p",
+              "text": "**Inline elements** do not start a new line. They flow within the surrounding text:"
+            },
+            {
+              "type": "code",
+              "text": "<span>, <a>, <strong>, <em>, <img>, <br>, <code>, <label>, <input>"
+            },
+            {
+              "type": "p",
+              "text": "The `<div>` is a generic block container — it has no meaning by itself, so use semantic tags instead when possible. The `<span>` is the inline equivalent."
+            },
+            {
+              "type": "code",
+              "text": "<div style=\"border: 1px solid red;\">\n  <p>This paragraph is inside a div.</p>\n  <p>This paragraph is also inside the same div.</p>\n</div>\n\n<p>This paragraph is <span style=\"color: red;\">red text</span> in a sentence.</p>"
+            },
+            {
+              "type": "note",
+              "text": "You can change an element's display behavior with CSS: `display: inline` or `display: block`."
+            }
+          ],
+          "task": "Create a page with three block elements: an `<h2>`, a `<p>`, and a `<div>` containing the text 'This is a generic container'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- h2, p, and div -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<h2>`, `<p>`, and `<div>` — each on its own line.",
+            "The div just needs a text node inside it.",
+            "All three are block elements, so they will stack vertically."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Page Title</h2>\n  <p>This is a paragraph of text.</p>\n  <div>This is a generic container</div>\n</body>\n</html>",
+          "sourceChecks": [
+            "<h2>",
+            "<p>",
+            "<div>"
+          ]
+        },
+        {
+          "id": "html-14-details-figure",
+          "title": "14. Details, Figures, and Other Semantics",
+          "concept": "<details> <figure> <blockquote>",
+          "summary": "Built-in interactive and semantic elements.",
+          "activities": [
+            {
+              "id": "html-14-see",
+              "type": "worked-example",
+              "title": "A collapsible section",
+              "instruction": "The `<details>` element creates a disclosure widget that the user can open and close. The `<summary>` inside it is the visible label.",
+              "example": "<details>\n  <summary>Click to expand</summary>\n  <p>Here is the hidden content that appears when you click.</p>\n</details>"
+            },
+            {
+              "id": "html-14-predict",
+              "type": "prediction",
+              "title": "No JavaScript needed!",
+              "question": "Does the `<details>` element require JavaScript to open and close?",
+              "choices": [
+                "Yes, you need JS to toggle it",
+                "No, the browser handles it natively",
+                "It only works in Chrome"
+              ],
+              "answer": "No, the browser handles it natively",
+              "explanation": "The `<details>` element is a native HTML disclosure widget — no JavaScript required. It works in all modern browsers."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "HTML has several powerful semantic elements that also provide built-in functionality:"
+            },
+            {
+              "type": "code",
+              "text": "<!-- Collapsible content -->\n<details>\n  <summary>Click to expand</summary>\n  <p>Hidden content here!</p>\n</details>"
+            },
+            {
+              "type": "p",
+              "text": "The `<figure>` element wraps self-contained content like images, code blocks, or diagrams. Use `<figcaption>` for the caption:"
+            },
+            {
+              "type": "code",
+              "text": "<figure>\n  <img src=\"chart.png\" alt=\"Sales chart\">\n  <figcaption>Figure 1: Q4 Sales Results</figcaption>\n</figure>"
+            },
+            {
+              "type": "p",
+              "text": "The `<blockquote>` element marks a quotation from another source:"
+            },
+            {
+              "type": "code",
+              "text": "<blockquote cite=\"https://example.com\">\n  <p>The best way to learn HTML is to practice.</p>\n</blockquote>"
+            },
+            {
+              "type": "p",
+              "text": "Other useful semantic tags:"
+            },
+            {
+              "type": "code",
+              "text": "<abbr title=\"HyperText Markup Language\">HTML</abbr>\n<mark>highlighted text</mark>\n<del>deleted text</del>\n<ins>inserted text</ins>\n<code>inline code</code>"
+            },
+            {
+              "type": "note",
+              "text": "The `<abbr>` tag is great for accessibility — screen readers can announce the full form when available."
+            }
+          ],
+          "task": "Create a `<details>` element with a `<summary>` saying 'What is HTML?' and a `<p>` inside saying 'HTML is a markup language for building web pages.'",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>FAQ</h2>\n  <!-- Add a <details> element -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Start with `<details>`.",
+            "Inside, put `<summary>What is HTML?</summary>`.",
+            "After the summary, add `<p>HTML is a markup language for building web pages.</p>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>FAQ</h2>\n  <details>\n    <summary>What is HTML?</summary>\n    <p>HTML is a markup language for building web pages.</p>\n  </details>\n</body>\n</html>",
+          "sourceChecks": [
+            "<details>",
+            "<summary>What is HTML?</summary>",
+            "<p>HTML is a markup"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "html-media",
+      "name": "Media and Embedding",
+      "language": "html",
+      "description": "Audio, video, iframes, and embedding external content.",
+      "lessons": [
+        {
+          "id": "html-15-audio-video",
+          "title": "15. Audio and Video",
+          "concept": "<audio> <video>",
+          "summary": "Embedding multimedia content directly in your page.",
+          "activities": [
+            {
+              "id": "html-15-see",
+              "type": "worked-example",
+              "title": "A video player",
+              "instruction": "The `<video>` tag embeds a video with built-in playback controls. The `<source>` element specifies the file and format.",
+              "example": "<video controls width=\"640\">\n  <source src=\"movie.mp4\" type=\"video/mp4\">\n  <source src=\"movie.webm\" type=\"video/webm\">\n  Your browser does not support video.\n</video>"
+            },
+            {
+              "id": "html-15-predict",
+              "type": "prediction",
+              "title": "Fallback text",
+              "question": "What does the text 'Your browser does not support video.' do?",
+              "choices": [
+                "It shows an error message",
+                "It only appears if the browser cannot play the video",
+                "It is always visible"
+              ],
+              "answer": "It only appears if the browser cannot play the video",
+              "explanation": "Content inside `<video>` (outside `<source>`) is fallback content — only shown if the browser cannot handle the element."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The `<video>` and `<audio>` elements embed media directly in your page with native browser controls."
+            },
+            {
+              "type": "code",
+              "text": "<!-- Video with controls -->\n<video controls width=\"640\" height=\"360\">\n  <source src=\"movie.mp4\" type=\"video/mp4\">\n  <source src=\"movie.webm\" type=\"video/webm\">\n  Your browser does not support video.\n</video>\n\n<!-- Audio with controls -->\n<audio controls>\n  <source src=\"song.mp3\" type=\"audio/mpeg\">\n  <source src=\"song.ogg\" type=\"audio/ogg\">\n  Your browser does not support audio.\n</audio>"
+            },
+            {
+              "type": "p",
+              "text": "The `controls` attribute adds play, pause, and volume buttons. Without it, the media plays but has no visible controls."
+            },
+            {
+              "type": "p",
+              "text": "Other useful attributes:"
+            },
+            {
+              "type": "p",
+              "text": "**`autoplay`** — starts playing automatically (often blocked by browsers).\n**`loop`** — replays when finished.\n**`muted`** — starts muted (required for autoplay in most browsers).\n**`poster`** — an image shown before the video plays."
+            },
+            {
+              "type": "note",
+              "text": "Always provide at least two source formats (like MP4 and WebM) for wider browser compatibility."
+            }
+          ],
+          "task": "Add a `<video>` element with `controls` and `width=\"480\"`. Include one `<source>` pointing to 'demo.mp4' with type 'video/mp4'. Add fallback text 'Video not supported.'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Demo Video</h2>\n  <!-- Add video element -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<video controls width=\"480\">`.",
+            "Inside, add `<source src=\"demo.mp4\" type=\"video/mp4\">`.",
+            "Add fallback text before the closing `</video>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Demo Video</h2>\n  <video controls width=\"480\">\n    <source src=\"demo.mp4\" type=\"video/mp4\">\n    Video not supported.\n  </video>\n</body>\n</html>",
+          "sourceChecks": [
+            "<video",
+            "controls",
+            "src=\"demo.mp4\""
+          ]
+        },
+        {
+          "id": "html-16-iframes",
+          "title": "16. Iframes — Embedding External Content",
+          "concept": "<iframe>",
+          "summary": "Displaying another webpage inside your page.",
+          "activities": [
+            {
+              "id": "html-16-see",
+              "type": "worked-example",
+              "title": "Embedding a map",
+              "instruction": "The `<iframe>` element embeds another HTML document inside the current page. Commonly used for maps, videos, and third-party widgets.",
+              "example": "<iframe\n  src=\"https://www.example.com\"\n  width=\"600\"\n  height=\"400\"\n  title=\"Example website\"\n  loading=\"lazy\"\n></iframe>"
+            },
+            {
+              "id": "html-16-predict",
+              "type": "prediction",
+              "title": "Security boundary",
+              "question": "Can JavaScript inside an iframe access the parent page's content?",
+              "choices": [
+                "Yes, always",
+                "Only if both pages are on the same domain (same-origin policy)",
+                "Never, under any circumstances"
+              ],
+              "answer": "Only if both pages are on the same domain (same-origin policy)",
+              "explanation": "The same-origin policy prevents cross-origin iframes from accessing the parent. Same-domain iframes have more access."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "An `<iframe>` (inline frame) embeds another webpage inside your current page. The browser loads the external URL in a separate browsing context."
+            },
+            {
+              "type": "code",
+              "text": "<iframe\n  src=\"https://www.example.com\"\n  width=\"600\"\n  height=\"400\"\n  title=\"Description of the embedded content\"\n  loading=\"lazy\"\n></iframe>"
+            },
+            {
+              "type": "p",
+              "text": "The `title` attribute is required for accessibility — screen readers use it to describe the embedded content."
+            },
+            {
+              "type": "p",
+              "text": "The `loading=\"lazy\"` attribute tells the browser to defer loading until the iframe is about to enter the viewport — this improves page performance."
+            },
+            {
+              "type": "p",
+              "text": "Common iframe use cases: embedded maps, YouTube videos, payment forms, and third-party widgets."
+            },
+            {
+              "type": "note",
+              "text": "Iframes can be a security risk. Never embed untrusted content without the `sandbox` attribute, which restricts what the embedded page can do."
+            }
+          ],
+          "task": "Embed an iframe pointing to 'https://example.com' with `width=\"500\"`, `height=\"300\"`, and a `title` saying 'Example page'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Embedded Content</h2>\n  <!-- Add iframe -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<iframe src=\"...\" width=\"500\" height=\"300\" title=\"...\">`.",
+            "Set the src to 'https://example.com'.",
+            "Set the title to 'Example page'."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Embedded Content</h2>\n  <iframe src=\"https://example.com\" width=\"500\" height=\"300\" title=\"Example page\"></iframe>\n</body>\n</html>",
+          "sourceChecks": [
+            "<iframe",
+            "src=\"https://example.com\"",
+            "title=\"Example page\""
+          ]
+        }
+      ]
+    },
+    {
+      "id": "html-advanced",
+      "name": "Advanced HTML",
+      "language": "html",
+      "description": "Meta tags, entities, data attributes, and best practices.",
+      "lessons": [
+        {
+          "id": "html-17-head-meta",
+          "title": "17. The Head — Meta Tags and SEO",
+          "concept": "<meta> <link>",
+          "summary": "Information that search engines and browsers need.",
+          "activities": [
+            {
+              "id": "html-17-see",
+              "type": "worked-example",
+              "title": "A complete head section",
+              "instruction": "The `<head>` contains metadata — information about the page, not visible content. Key elements include `<meta>` tags and `<link>` tags.",
+              "example": "<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <meta name=\"description\" content=\"A guide to HTML\">\n  <title>HTML Guide</title>\n  <link rel=\"stylesheet\" href=\"styles.css\">\n</head>"
+            },
+            {
+              "id": "html-17-predict",
+              "type": "prediction",
+              "title": "Viewport meta tag",
+              "question": "What does `<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">` do?",
+              "choices": [
+                "Sets the page background color",
+                "Makes the page responsive on mobile devices",
+                "Adds a loading spinner"
+              ],
+              "answer": "Makes the page responsive on mobile devices",
+              "explanation": "The viewport meta tag tells mobile browsers to set the page width to the device width and start at 100% zoom, enabling responsive design."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "The `<head>` section contains metadata that browsers, search engines, and social media platforms use to understand your page."
+            },
+            {
+              "type": "code",
+              "text": "<head>\n  <!-- Character encoding (always include) -->\n  <meta charset=\"UTF-8\">\n\n  <!-- Responsive design (always include) -->\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\n  <!-- SEO description -->\n  <meta name=\"description\" content=\"A beginner guide to HTML\">\n\n  <!-- Page title (shows in browser tab) -->\n  <title>HTML Guide</title>\n\n  <!-- Link to CSS -->\n  <link rel=\"stylesheet\" href=\"styles.css\">\n</head>"
+            },
+            {
+              "type": "p",
+              "text": "For social media sharing, add Open Graph tags:"
+            },
+            {
+              "type": "code",
+              "text": "<meta property=\"og:title\" content=\"HTML Guide\">\n<meta property=\"og:description\" content=\"Learn HTML from scratch\">\n<meta property=\"og:image\" content=\"https://example.com/preview.jpg\">\n<meta property=\"og:url\" content=\"https://example.com/html-guide\">"
+            },
+            {
+              "type": "p",
+              "text": "The `charset=\"UTF-8\"` meta tag should always be the first thing in your `<head>`. It ensures special characters display correctly."
+            },
+            {
+              "type": "note",
+              "text": "Good meta descriptions improve click-through rates from search engine results. Keep them under 160 characters."
+            }
+          ],
+          "task": "Create a complete `<head>` with: charset UTF-8, viewport meta tag, a description meta tag saying 'My awesome website', and a title 'My Site'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n  <!-- Build the head section -->\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Start with `<head>`.",
+            "Add `<meta charset=\"UTF-8\">` first.",
+            "Add the viewport and description meta tags.",
+            "Finish with `<title>My Site</title>` and close with `</head>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <meta name=\"description\" content=\"My awesome website\">\n  <title>My Site</title>\n</head>\n<body>\n</body>\n</html>",
+          "sourceChecks": [
+            "meta charset",
+            "meta name=\"viewport\"",
+            "meta name=\"description\"",
+            "<title>My Site</title>"
+          ]
+        },
+        {
+          "id": "html-18-entities",
+          "title": "18. HTML Entities and Special Characters",
+          "concept": "&amp; &lt; &gt;",
+          "summary": "Writing characters that have special meaning in HTML.",
+          "activities": [
+            {
+              "id": "html-18-see",
+              "type": "worked-example",
+              "title": "Escaping special characters",
+              "instruction": "Some characters have special meaning in HTML (like `<` and `>` for tags). To display them as text, use entity references.",
+              "example": "<p>Use &lt;div&gt; to create a container.</p>\n<p>Tom &amp; Jerry is a classic show.</p>\n<p>The symbol &copy; represents copyright.</p>"
+            },
+            {
+              "id": "html-18-predict",
+              "type": "prediction",
+              "title": "Entity display",
+              "question": "What does `&amp;` display as on screen?",
+              "choices": [
+                "&amp;",
+                "&",
+                "amp"
+              ],
+              "answer": "&",
+              "explanation": "`&amp;` is the HTML entity for the ampersand character `&`. It displays as a single `&` on the page."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "HTML reserves `<`, `>`, `&`, and double quotes for markup purposes. To display these characters as text, you must use **HTML entities**."
+            },
+            {
+              "type": "code",
+              "text": "<!-- Less than -->\n&lt;   displays as: <\n\n<!-- Greater than -->\n&gt;   displays as: >\n\n<!-- Ampersand -->\n&amp;  displays as: &\n\n<!-- Quotation mark -->\n&quot; displays as: \""
+            },
+            {
+              "type": "p",
+              "text": "You can also use entity references for special symbols:"
+            },
+            {
+              "type": "code",
+              "text": "&copy;   → ©   (copyright)\n&reg;    → ®   (registered)\n&trade;  → ™   (trademark)\n&euro;   → €   (euro)\n&pound;  → £   (pound)\n&yen;    → ¥   (yen)\n&nbsp;   →     (non-breaking space)"
+            },
+            {
+              "type": "p",
+              "text": "The most common entity is `&nbsp;` (non-breaking space). It prevents the browser from collapsing whitespace or breaking at that point."
+            },
+            {
+              "type": "code",
+              "text": "<!-- Two spaces (browser collapses the extra) -->\n<p>Hello     World</p>\n\n<!-- Two non-breaking spaces (both preserved) -->\n<p>Hello&nbsp;&nbsp;&nbsp;World</p>"
+            },
+            {
+              "type": "note",
+              "text": "Inside `<code>` or `<pre>` blocks, browsers preserve whitespace, so you may not need `&nbsp;` there."
+            }
+          ],
+          "task": "Write a paragraph that says 'In HTML, use < and > to create tags, and use & to write &amp;.' — make sure the angle brackets and ampersand display as text, not as HTML.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- Use HTML entities for < > and & -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `&lt;` for <, `&gt;` for >, and `&amp;` for &.",
+            "The paragraph text: 'In HTML, use &lt; and &gt; to create tags, and use &amp; to write &amp;.'",
+            "Wrap it all in a `<p>` tag."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <p>In HTML, use &lt; and &gt; to create tags, and use &amp; to write &amp;.</p>\n</body>\n</html>",
+          "sourceChecks": [
+            "&lt;",
+            "&gt;",
+            "&amp;"
+          ]
+        },
+        {
+          "id": "html-19-data-attrs",
+          "title": "19. Data Attributes and IDs",
+          "concept": "data-* id class",
+          "summary": "Storing custom data and identifying elements.",
+          "activities": [
+            {
+              "id": "html-19-see",
+              "type": "worked-example",
+              "title": "Custom data on elements",
+              "instruction": "Data attributes let you store custom information on any HTML element. They start with `data-` and can be read with JavaScript.",
+              "example": "<div data-user-id=\"42\" data-role=\"admin\">\n  Admin User\n</div>\n\n<button data-action=\"delete\" data-confirm=\"true\">\n  Delete Item\n</button>"
+            },
+            {
+              "id": "html-19-predict",
+              "type": "prediction",
+              "title": "Where does custom data go?",
+              "question": "Can data attributes be placed on any HTML element?",
+              "choices": [
+                "Only on `<div>` elements",
+                "Only on form elements",
+                "Yes, on any HTML element"
+              ],
+              "answer": "Yes, on any HTML element",
+              "explanation": "Data attributes are universal — you can add them to any HTML element: divs, paragraphs, images, buttons, etc."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Every HTML element can have an `id` (unique identifier) and `class` (shared label for CSS/JS). These are the most common attributes."
+            },
+            {
+              "type": "code",
+              "text": "<div id=\"header\" class=\"main-header\">Title</div>\n<p class=\"intro\">Welcome!</p>\n<button class=\"btn primary\">Click me</button>"
+            },
+            {
+              "type": "p",
+              "text": "**IDs** must be unique on the page — only one element can have a given ID. They are used for direct targeting and for `<label for=\"...\">` connections."
+            },
+            {
+              "type": "p",
+              "text": "**Classes** can be shared by multiple elements. They are the primary way to apply CSS styles and group elements for JavaScript."
+            },
+            {
+              "type": "p",
+              "text": "**Data attributes** (`data-*`) store custom data on elements. They are read by JavaScript with `element.dataset`."
+            },
+            {
+              "type": "code",
+              "text": "<!-- Data attributes -->\n<li data-price=\"9.99\" data-category=\"books\">JavaScript Basics</li>\n\n<!-- Reading in JavaScript -->\n<!-- element.dataset.price gives '9.99' -->\n<!-- element.dataset.category gives 'books' -->"
+            },
+            {
+              "type": "note",
+              "text": "Keep IDs lowercase with hyphens (like `main-header`), not camelCase or underscores."
+            }
+          ],
+          "task": "Create three list items, each with a `data-color` attribute: 'red', 'blue', 'green'. Give the first item `id=\"primary\"` and all three items `class=\"color-option\"`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Choose a Color</h2>\n  <ul>\n    <!-- Three <li> items with data-color, class, and one id -->\n  </ul>\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Each `<li>` needs `class=\"color-option\"` and `data-color=\"...\"`.",
+            "The first item also gets `id=\"primary\"`.",
+            "Example: `<li id=\"primary\" class=\"color-option\" data-color=\"red\">Red</li>`"
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <h2>Choose a Color</h2>\n  <ul>\n    <li id=\"primary\" class=\"color-option\" data-color=\"red\">Red</li>\n    <li class=\"color-option\" data-color=\"blue\">Blue</li>\n    <li class=\"color-option\" data-color=\"green\">Green</li>\n  </ul>\n</body>\n</html>",
+          "sourceChecks": [
+            "data-color",
+            "id=\"primary\"",
+            "class=\"color-option\""
+          ]
+        },
+        {
+          "id": "html-20-accessibility",
+          "title": "20. Accessibility Basics",
+          "concept": "ARIA roles alt text",
+          "summary": "Making your pages usable by everyone.",
+          "activities": [
+            {
+              "id": "html-20-see",
+              "type": "worked-example",
+              "title": "Accessible form",
+              "instruction": "Accessibility means making your site usable by everyone, including people with disabilities. Screen readers, keyboard navigation, and proper labels are key.",
+              "example": "<form>\n  <label for=\"search\">Search:</label>\n  <input type=\"search\" id=\"search\" name=\"q\" aria-describedby=\"search-hint\">\n  <span id=\"search-hint\">Type a keyword to search the site.</span>\n  <button type=\"submit\">Go</button>\n</form>"
+            },
+            {
+              "id": "html-20-predict",
+              "type": "prediction",
+              "title": "What does aria-describedby do?",
+              "question": "What does the `aria-describedby` attribute do?",
+              "choices": [
+                "Changes the element's color",
+                "Links the input to a description that screen readers will read",
+                "Makes the element required"
+              ],
+              "answer": "Links the input to a description that screen readers will read",
+              "explanation": "`aria-describedby` points to an element whose text is read by screen readers as additional description of the current element."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Web accessibility (often abbreviated a11y) ensures your content is usable by people with visual, motor, auditory, or cognitive disabilities."
+            },
+            {
+              "type": "p",
+              "text": "HTML gives you many built-in accessibility features:"
+            },
+            {
+              "type": "code",
+              "text": "<!-- 1. Always use alt text on images -->\n<img src=\"chart.png\" alt=\"Sales chart showing Q4 growth of 20%\">\n\n<!-- 2. Label every form input -->\n<label for=\"email\">Email:</label>\n<input type=\"email\" id=\"email\" name=\"email\">\n\n<!-- 3. Use proper heading hierarchy -->\n<h1>Page Title</h1>\n  <h2>Section</h2>\n    <h3>Subsection</h3>\n\n<!-- 4. Use semantic HTML elements -->\n<nav>Navigation</nav>\n<main>Main content</main>"
+            },
+            {
+              "type": "p",
+              "text": "ARIA (Accessible Rich Internet Applications) attributes add extra information when HTML alone is not enough:"
+            },
+            {
+              "type": "code",
+              "text": "<!-- aria-label: describes the element -->\n<button aria-label=\"Close dialog\">X</button>\n\n<!-- aria-live: announces changes -->\n<div aria-live=\"polite\">New message received</div>\n\n<!-- aria-hidden: hides from screen readers -->\n<div aria-hidden=\"true\">Decorative only</div>"
+            },
+            {
+              "type": "note",
+              "text": "The first rule of ARIA: use native HTML elements when possible. Only add ARIA attributes when HTML alone cannot convey the right semantics."
+            }
+          ],
+          "task": "Create an accessible image with `alt=\"A sunset over the ocean\"`, a `<label>` for a text input (id='name'), and a `<button>` with `aria-label=\"Close menu\"`.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<body>\n  <!-- Accessible img, label+input, button with aria-label -->\n</body>\n</html>",
+          "matchType": "source-contains",
+          "hints": [
+            "Use `<img src=\"...\" alt=\"A sunset over the ocean\">`.",
+            "Pair the label and input: `<label for=\"name\">Name:</label>` and `<input type=\"text\" id=\"name\">`.",
+            "Add `aria-label=\"Close menu\"` to the `<button>`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<body>\n  <img src=\"sunset.jpg\" alt=\"A sunset over the ocean\">\n  <label for=\"name\">Name:</label>\n  <input type=\"text\" id=\"name\">\n  <button aria-label=\"Close menu\">X</button>\n</body>\n</html>",
+          "sourceChecks": [
+            "alt=\"A sunset over the ocean\"",
+            "for=\"name\"",
+            "aria-label=\"Close menu\""
+          ]
+        }
+      ]
+    }
+  ]
+}
