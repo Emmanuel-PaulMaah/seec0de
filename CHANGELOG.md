@@ -16,6 +16,21 @@ Section conventions:
 
 ## [Unreleased]
 
+## [4.3.1] - 2026-08-22
+
+### Added
+- **Git & GitHub lesson track with interactive sandbox terminal.** A new `git` language joins the Learn Mode catalog: [`git.json`](src/renderer/data/lessons/git.json) ships exercises covering basic Git workflows, backed by a [`SandboxTerminal`](src/renderer/components/SandboxTerminal.jsx) component and [`gitSandbox.js`](src/renderer/engine/gitSandbox.js) engine that simulate git operations in-browser. Lesson verification uses sandbox command history as the source string — the Check button verifies the learner ran the right commands in the right order.
+- **CSS course in Learn Mode.** Twelve lessons covering CSS fundamentals — selectors, box model, layout, flexbox, grid, typography, colours, units, responsive design, and more. The HTML course is also registered in the language catalog.
+- **Source-based lesson verification for HTML/CSS/Git lessons.** Lessons that don't produce stdout (HTML source, CSS source, Git commands) are now verified by inspecting the editor source or sandbox command history directly, using `verifyLessonSource`. A Check button replaces Run for these lesson types.
+- **Detached browser window with local file server.** Multi-file projects (e.g. HTML + CSS + JS) can be previewed in a standalone browser window served from a local HTTP server, so `require()` and relative imports work correctly.
+- **AI fallback for terminal command explanations.** When a failed run or terminal command produces output the offline regex translator can't match, the system now asks Gemini to explain the error in the same `{title, plain, fixes}` shape, with an "AI" badge on the card.
+- **Focus-aware click-to-insert for editor and terminal.** Clicking an inline code chip or suggestion now inserts the text at the cursor position in Monaco or at the terminal prompt, depending on which panel has focus.
+
+### Changed
+- **Toolbar simplified.** Context menu, zoom controls, light theme support, and an in-app bulletin have been streamlined for a cleaner interface.
+- **Accent and active-row opacity tokens adjusted** for better visibility in both the dark and light themes.
+- **Preview browser button moved** from the editor toolbar into the panel header.
+
 ## [4.3.0] - 2026-08-16
 
 ### Added
