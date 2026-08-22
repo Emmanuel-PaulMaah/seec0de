@@ -353,3 +353,70 @@ Remember: respond with ONLY valid JSON matching the required format.`;
     lineByLine,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Terminal command / error explanations (AI fallback)
+//
+// The offline commandExplainer covers common commands. For anything it
+// doesn't recognise, or for stderr output, we ask Gemini for a one-line
+// explanation. Responses are cached per unique input to avoid redundant
+// round-trips when the user re-runs the same command.
+
+const TERMINAL_EXPLAIN_SYSTEM_PROMPT = `You are SEEC0DE, an expert programming tutor who explains terminal commands and errors in one brief sentence a beginner can understand.
+
+RULES:
+- For a COMMAND: explain what it does in ONE short sentence (≤ 20 words). Be direct, not verbose.
+- For an ERROR: explain what went wrong in ONE short sentence (≤ 25 words). Reference the actual command/output if relevant.
+- Never use jargon when a simpler word works. No markdown, no code fences.
+- If the input is empty or unrecognisable, return null.
+
+RESPONSE FORMAT:
+You MUST respond with ONLY a valid JSON object:
+{
+  "explanation": "one brief sentence" or null
+}`;
+
+const terminalExplainCache = new Map();
+
+/**
+ * Ask Gemini for a one-line explanation of a terminal command or error.
+ * Falls back to null when offline, no API key, or the model returns nothing.
+ * Results are cached so the same command/error only hits the API once.
+ *
+ * @param {string} input   — the command text OR stderr output
+ * @param {'command'|'error'} kind  — what we're explaining
+ * @returns {Promise<string|null>}
+ */
+export async function explainTerminalWithAI(input, kind = 'command') {
+  const text = String(input || '').trim();
+  if (!text) return null;
+
+  const cacheKey = `${kind}:${text}`;
+  if (terminalExplainCache.has(cacheKey)) return terminalExplainCache.get(cacheKey);
+
+  // Only attempt AI when a key is available and we're online.
+  if (!hasApiKey()) return null;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return null;
+
+  try {
+    const label = kind === 'error' ? 'error output' : 'command';
+    const prompt = kind === 'error'
+      ? `Explain this terminal ${label} in one brief sentence:\n\n${text}`
+      : `Explain what this terminal ${label} does in one brief sentence:\n\n${text}`;
+
+    const raw = await callGemini(prompt, TERMINAL_EXPLAIN_SYSTEM_PROMPT);
+    let cleaned = raw.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+    const parsed = JSON.parse(cleaned);
+    const explanation = typeof parsed.explanation === 'string' && parsed.explanation.trim()
+      ? parsed.explanation.trim()
+      : null;
+
+    terminalExplainCache.set(cacheKey, explanation);
+    return explanation;
+  } catch {
+    return null;
+  }
+}
