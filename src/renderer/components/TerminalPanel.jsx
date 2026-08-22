@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Terminal as TermIcon, Trash2, ChevronDown, ChevronUp, Loader, Play } from 'lucide-react';
 import { explain } from '../engine/commandExplainer';
+import { explainTerminalWithAI } from '../engine/aiService';
+import { setFocusTarget } from '../engine/editorBridge';
 
 // A bottom-of-screen "explained terminal" — each command becomes a card with
 // the input line, a one-line explanation, and the output. Not a full PTY.
@@ -76,7 +78,7 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
     pushHistory(command);
 
     const id = ++idCounter.current;
-    const explanation = explain(command);
+    let explanation = explain(command);
 
     // Handle `cd` client-side because each spawn uses a fresh shell.
     if (/^cd(\s|$)/.test(command)) {
@@ -84,6 +86,14 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
       setEntries((prev) => [...prev, {
         id, command, explanation, status: 'running', cwd, stdout: '', stderr: '', exitCode: null, durationMs: 0,
       }]);
+      // AI fallback: if the offline explainer didn't know this command.
+      if (!explanation) {
+        explainTerminalWithAI(command, 'command').then((aiExplanation) => {
+          if (aiExplanation) {
+            setEntries((prev) => prev.map((e) => e.id === id ? { ...e, explanation: aiExplanation } : e));
+          }
+        });
+      }
       try {
         const { cwd: nextCwd } = await window.seecode.terminal.resolveCd({ cwd, target });
         setCwd(nextCwd);
@@ -107,13 +117,34 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
     setEntries((prev) => [...prev, {
       id, command, explanation, status: 'running', cwd, stdout: '', stderr: '', exitCode: null, durationMs: 0,
     }]);
+    // AI fallback: if the offline explainer didn't know this command.
+    if (!explanation) {
+      explainTerminalWithAI(command, 'command').then((aiExplanation) => {
+        if (aiExplanation) {
+          setEntries((prev) => prev.map((e) => e.id === id ? { ...e, explanation: aiExplanation } : e));
+        }
+      });
+    }
     setRunning(true);
     try {
       const result = await window.seecode.terminal.exec({ command, cwd });
+      // AI fallback for errors: if the command failed and had no offline explanation.
+      if (result.exitCode !== 0 && result.stderr && !explanation) {
+        const aiErrorExplanation = await explainTerminalWithAI(result.stderr, 'error');
+        if (aiErrorExplanation) {
+          result.explanation = aiErrorExplanation;
+        }
+      }
       setEntries((prev) => prev.map((e) => e.id === id ? { ...e, ...result, status: 'done' } : e));
     } catch (err) {
+      // AI fallback for exceptions.
+      let errorExplanation = null;
+      if (!explanation) {
+        errorExplanation = await explainTerminalWithAI(err.message, 'error');
+      }
       setEntries((prev) => prev.map((e) => e.id === id ? {
         ...e, status: 'done', stderr: `[seec0de] ${err.message}\n`, exitCode: -1,
+        explanation: errorExplanation || explanation,
       } : e));
     } finally {
       setRunning(false);
@@ -140,7 +171,21 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
   // Expose imperative API for other components.
   useEffect(() => {
     if (!apiRef) return;
-    apiRef.current = { runCommand, pushEntry };
+    apiRef.current = {
+      runCommand,
+      pushEntry,
+      // setText: insert text into the terminal input (focus-aware insertion)
+      setText: (text) => {
+        setInput((prev) => prev + text);
+        // Focus the terminal input after inserting
+        setTimeout(() => inputRef.current?.focus(), 0);
+      },
+      // isFocused: check if the terminal input has focus
+      isFocused: () => {
+        const el = inputRef.current;
+        return el && document.activeElement === el;
+      },
+    };
   }, [apiRef, runCommand, pushEntry]);
 
   const handleSubmit = (e) => {
@@ -220,6 +265,7 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
           value={input}
           onChange={(ev) => setInput(ev.target.value)}
           onKeyDown={handleKey}
+          onFocus={() => setFocusTarget('terminal')}
           placeholder={running ? 'Running…' : 'Type a command and press Enter'}
           spellCheck={false}
           autoComplete="off"

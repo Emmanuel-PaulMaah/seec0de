@@ -15,6 +15,18 @@
 
 let currentEditor = null;
 let setContentFn = null;
+let terminalApiRef = null;
+
+// Which panel last gained focus: 'editor' | 'terminal' | null.
+// Updated by focus/blur handlers registered from CodePanel and
+// TerminalPanel.  This persists across click events that steal
+// focus (e.g. clicking an InlineCode chip), so we always know
+// where the user was last typing.
+let lastFocusTarget = null;
+
+export function setFocusTarget(target) {
+  lastFocusTarget = target;
+}
 
 export function registerEditor(editor, { setContent } = {}) {
   currentEditor = editor;
@@ -26,6 +38,14 @@ export function unregisterEditor() {
   setContentFn = null;
 }
 
+export function registerTerminal(apiRef) {
+  terminalApiRef = apiRef;
+}
+
+export function unregisterTerminal() {
+  terminalApiRef = null;
+}
+
 // Inserts `text` into the active editor.
 //
 //   insert: 'cursor' — at the cursor position (single tokens)
@@ -34,6 +54,20 @@ export function unregisterEditor() {
 // Returns true when the insert went through (false when there's no live
 // editor or no way to push content — the caller then shows no feedback).
 export function insertIntoEditor(text, { insert = 'cursor' } = {}) {
+  // Focus-aware routing: if the terminal last had focus, insert there.
+  // We use lastFocusTarget (set by focus/blur events) instead of
+  // document.activeElement, because clicking an InlineCode chip steals
+  // focus before the click handler fires.
+  if (lastFocusTarget === 'terminal') {
+    const termApi = terminalApiRef?.current;
+    if (termApi) {
+      const content = String(text ?? '');
+      if (!content) return true;
+      termApi.setText(content);
+      return true;
+    }
+  }
+
   const editor = currentEditor;
   if (!editor) return false;
   const model = editor.getModel?.();
