@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>seec0de Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #1a1d23;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #c0c4cc;
+      overflow: hidden;
+    }
+
+    /* ---- toolbar ---------------------------------------------------- */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #22262e;
+      border-bottom: 1px solid #2e3239;
+      flex-shrink: 0;
+      -webkit-app-region: drag;
+    }
+    .toolbar > * { -webkit-app-region: no-drag; }
+
+    .toolbar-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: #8b8f98;
+      margin-right: 4px;
+      user-select: none;
+    }
+
+    .nav-group {
+      display: flex;
+      gap: 2px;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: #8b8f98;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); color: #c0c4cc; }
+    .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+    .vp-group {
+      display: flex;
+      gap: 2px;
+      background: #1a1d23;
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .vp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: #8b8f98;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .vp-btn:hover { background: rgba(255,255,255,0.06); color: #c0c4cc; }
+    .vp-btn.active { background: #3b82f6; color: #fff; }
+
+    .spacer { flex: 1; }
+
+    .url-bar {
+      flex: 1;
+      max-width: 420px;
+      margin: 0 8px;
+    }
+    .url-input {
+      width: 100%;
+      background: #1a1d23;
+      border: 1px solid #2e3239;
+      border-radius: 4px;
+      color: #c0c4cc;
+      font-size: 11px;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      padding: 4px 8px;
+      outline: none;
+    }
+    .url-input:focus { border-color: #3b82f6; }
+
+    /* ---- iframe area ------------------------------------------------ */
+    .preview-wrap {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      background: #1a1d23;
+      overflow: hidden;
+    }
+    #preview-frame {
+      border: none;
+      background: #fff;
+      width: 100%;
+      height: 100%;
+      transition: max-width 0.25s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="toolbar-label">PREVIEW</span>
+
+    <div class="vp-group" id="viewport-group">
+      <button class="vp-btn active" data-vp="full" title="Full width">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/></svg>
+        Full
+      </button>
+      <button class="vp-btn" data-vp="laptop" title="Laptop (1024px)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+        Laptop
+      </button>
+      <button class="vp-btn" data-vp="tablet" title="Tablet (768px)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2"/></svg>
+        Tablet
+      </button>
+      <button class="vp-btn" data-vp="mobile" title="Mobile (375px)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2"/></svg>
+        Mobile
+      </button>
+    </div>
+
+    <div class="url-bar">
+      <input class="url-input" id="url-input" type="text" spellcheck="false" autocomplete="off" />
+    </div>
+
+    <div class="nav-group">
+      <button class="nav-btn" id="back-btn" disabled title="Back (Alt+←)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="nav-btn" id="forward-btn" disabled title="Forward (Alt+→)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="nav-btn" id="refresh-btn" title="Refresh (F5)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
+    </div>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="preview-wrap">
+    <iframe id="preview-frame" sandbox="allow-scripts allow-modals allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+  </div>
+
+  <script>
+    const VIEWPORTS = {
+      full:   null,
+      laptop: 1024,
+      tablet: 768,
+      mobile: 375,
+    };
+
+    const frame     = document.getElementById('preview-frame');
+    const urlInput  = document.getElementById('url-input');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const backBtn   = document.getElementById('back-btn');
+    const fwdBtn    = document.getElementById('forward-btn');
+    const btns      = document.querySelectorAll('.vp-btn[data-vp]');
+
+    // --- Navigation history ------------------------------------------------
+    // history[] stores every visited URL. cursor points to the current one.
+    // Back = cursor--, Forward = cursor++.
+    let history = [];
+    let cursor  = -1;
+    // Set while we programmatically navigate (back/forward) so the
+    // postMessage listener doesn't double-record the URL.
+    let navigating = false;
+
+    let lastTrackedUrl = '';
+
+    function pushHistory(url) {
+      if (!url) return;
+      // Deduplicate consecutive entries (e.g. initial load + postMessage).
+      if (history[cursor] === url) return;
+      // Trim forward history when navigating to a new page.
+      history = history.slice(0, cursor + 1);
+      history.push(url);
+      cursor = history.length - 1;
+      lastTrackedUrl = url;
+      syncNavButtons();
+      urlInput.value = url;
+    }
+
+    function goBack() {
+      if (cursor <= 0) return;
+      navigating = true;
+      cursor--;
+      lastTrackedUrl = history[cursor];
+      frame.src = history[cursor];
+      syncNavButtons();
+      urlInput.value = history[cursor];
+    }
+
+    function goForward() {
+      if (cursor >= history.length - 1) return;
+      navigating = true;
+      cursor++;
+      lastTrackedUrl = history[cursor];
+      frame.src = history[cursor];
+      syncNavButtons();
+      urlInput.value = history[cursor];
+    }
+
+    function syncNavButtons() {
+      backBtn.disabled = cursor <= 0;
+      fwdBtn.disabled  = cursor >= history.length - 1;
+    }
+
+    // --- PostMessage listener (injected by fileServer into every HTML page) -
+    window.addEventListener('message', (e) => {
+      if (!e.data) return;
+      if (e.data.type === 'nav' && e.data.url) {
+        if (navigating) {
+          // This load was triggered by back/forward — already recorded.
+          navigating = false;
+          return;
+        }
+        pushHistory(e.data.url);
+      }
+      // External link clicked inside the iframe — open in system browser.
+      if (e.data.type === 'external' && e.data.url) {
+        if (window.previewApi?.openExternal) {
+          window.previewApi.openExternal(e.data.url);
+        }
+      }
+    });
+
+    // --- Initial load -------------------------------------------------------
+    const initialUrl = new URLSearchParams(window.location.search).get('url') || '';
+    if (initialUrl) {
+      frame.src = initialUrl;
+      pushHistory(initialUrl);
+    }
+
+    // --- Viewport buttons ---------------------------------------------------
+    btns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        btns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const w = VIEWPORTS[btn.dataset.vp];
+        frame.style.maxWidth = w ? w + 'px' : 'none';
+      });
+    });
+
+    // --- Refresh button + F5 ------------------------------------------------
+    function reloadFrame() {
+      if (history[cursor]) {
+        const url = history[cursor];
+        const sep = url.includes('?') ? '&' : '?';
+        navigating = true;
+        frame.src = url + sep + '_t=' + Date.now();
+      }
+    }
+    refreshBtn.addEventListener('click', reloadFrame);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F5') { e.preventDefault(); reloadFrame(); }
+    });
+
+    // --- Back / Forward buttons ---------------------------------------------
+    backBtn.addEventListener('click', goBack);
+    fwdBtn.addEventListener('click', goForward);
+
+    // Alt+Left / Alt+Right keyboard shortcuts.
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey && e.key === 'ArrowLeft')  { e.preventDefault(); goBack(); }
+      if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); goForward(); }
+    });
+
+    // --- Fallback: detect iframe navigation via <iframe> load event ---------
+    // The injected nav tracker postMessage can be unreliable (timing,
+    // cross-origin file://→http://, etc.), so we also catch navigations
+    // by listening to the iframe's load event and polling its contentURL.
+    frame.addEventListener('load', () => {
+      if (navigating) { navigating = false; return; }
+      try {
+        const url = frame.contentWindow?.location?.href;
+        if (url && url !== 'about:blank' && url !== lastTrackedUrl) {
+          lastTrackedUrl = url;
+          pushHistory(url);
+        }
+      } catch (_) {
+        // Cross-origin — can't read URL, fall back to polling.
+      }
+    });
+
+    // --- URL bar navigation -------------------------------------------------
+    urlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        let val = urlInput.value.trim();
+        if (val && !val.startsWith('http')) val = 'http://' + val;
+        if (val) {
+          navigating = true;
+          frame.src = val;
+          pushHistory(val);
+        }
+        urlInput.blur();
+      }
+    });
+
+    // --- Polling fallback for iframe URL changes ----------------------------
+    // Covers edge cases where both postMessage and load events miss a
+    // navigation (e.g. hash changes, pushState in SPAs).
+    setInterval(() => {
+      try {
+        const url = frame.contentWindow?.location?.href;
+        if (url && url !== 'about:blank' && url !== lastTrackedUrl) {
+          lastTrackedUrl = url;
+          pushHistory(url);
+        }
+      } catch (_) { /* cross-origin, ignore */ }
+    }, 500);
+  </script>
+</body>
+</html>
