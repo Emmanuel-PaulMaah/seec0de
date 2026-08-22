@@ -79,3 +79,68 @@ export function nextLessonAfter(lessonsData, currentId) {
   if (idx < 0 || idx >= all.length - 1) return null;
   return all[idx + 1];
 }
+
+// ---------------------------------------------------------------------------
+// Source-code verification
+//
+// For languages like HTML that don't produce stdout (they render in the
+// live preview instead), we verify by checking the editor source code
+// against a list of required patterns.
+//
+// Lessons declare `sourceChecks` — an array of strings or regex patterns
+// that must all be found in the source. Match type is governed by
+// `matchType`:
+//   - "source-contains"  → every entry in sourceChecks must appear as a
+//                            substring (case-insensitive) in the source.
+//   - "source-regex"     → every entry in sourceChecks is treated as a
+//                            regex that must match.
+//
+// Returns `{ pass, expected, actual, reason }` — same shape as
+// verifyLessonOutput so the UI can render it without changes.
+
+export function verifyLessonSource(sourceCode, lesson) {
+  if (!lesson) {
+    return { pass: false, expected: '', actual: '', reason: 'No lesson active.' };
+  }
+
+  const source   = String(sourceCode || '');
+  const checks   = lesson.sourceChecks || [];
+  const matchType = lesson.matchType || 'source-contains';
+
+  // If no source checks are defined, fall back to a simple content
+  // check: the lesson's expectedOutput (treated as a required substring
+  // of the source).
+  if (checks.length === 0 && lesson.expectedOutput) {
+    checks.push(lesson.expectedOutput);
+  }
+
+  if (checks.length === 0) {
+    // Nothing to verify — auto-pass (teaching-only lesson).
+    return { pass: true, expected: '', actual: '', reason: '' };
+  }
+
+  const failed = [];
+  for (const check of checks) {
+    if (matchType === 'source-regex') {
+      try {
+        if (!new RegExp(check, 'i').test(source)) failed.push(check);
+      } catch {
+        failed.push(check);
+      }
+    } else {
+      // source-contains (default)
+      if (!source.toLowerCase().includes(String(check).toLowerCase())) {
+        failed.push(check);
+      }
+    }
+  }
+
+  const pass = failed.length === 0;
+  const expected = failed.map((f) => `Must contain: ${f}`).join('\n');
+  return {
+    pass,
+    expected,
+    actual: source.slice(0, 500),
+    reason: pass ? '' : `Your code is missing required content.\n${expected}`,
+  };
+}
