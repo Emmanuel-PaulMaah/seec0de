@@ -84,4 +84,10 @@ contextBridge.exposeInMainWorld('seecode', {
       return () => ipcRenderer.removeListener('update:status', listener);
     },
   },
+  preview: {
+    startServer: (rootPath) => ipcRenderer.invoke('preview:start-server', rootPath),
+    stopServer:  ()         => ipcRenderer.invoke('preview:stop-server'),
+    getStatus:  ()         => ipcRenderer.invoke('preview:get-status'),
+    openDetached: (opts)   => ipcRenderer.invoke('preview:open-detached', opts),
+  },
 });

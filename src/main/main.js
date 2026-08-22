@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, webFrame } = require('electron');
+const { app, BrowserWindow, ipcMain, webFrame, shell } = require('electron');
 const path = require('path');
 const https = require('https');
 const { autoUpdater } = require('electron-updater');
@@ -7,6 +7,7 @@ const log = require('electron-log');
 const { registerFileServiceHandlers } = require('./fileService');
 const { registerTerminalServiceHandlers } = require('./terminalService');
 const { registerRunnerServiceHandlers } = require('./runnerService');
+const fileServer = require('./fileServer');
 
 // Optional AI handlers. App should not crash if this file does not exist yet.
 let registerAiServiceHandlers = null;
@@ -232,6 +233,7 @@ app.whenReady().then(() => {
   registerFileServiceHandlers();
   registerTerminalServiceHandlers();
   registerRunnerServiceHandlers();
+  registerPreviewHandlers();
 
   if (typeof registerAiServiceHandlers === 'function') {
     registerAiServiceHandlers();
@@ -242,9 +244,73 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  fileServer.stop();
   if (process.platform !== 'darwin') app.quit();
 });
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+
+// ---- Preview server + detached browser window ----------------------------
+let detachedPreview = null;
+
+function registerPreviewHandlers() {
+  ipcMain.handle('preview:start-server', async (_e, rootPath) => {
+    try {
+      return await fileServer.start(rootPath);
+    } catch (err) {
+      return { error: err.message || String(err) };
+    }
+  });
+
+  ipcMain.handle('preview:stop-server', () => {
+    fileServer.stop();
+    return true;
+  });
+
+  ipcMain.handle('preview:get-status', () => {
+    return fileServer.getStatus();
+  });
+
+  ipcMain.handle('preview:open-external', (_e, url) => {
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      shell.openExternal(url);
+    }
+  });
+
+  ipcMain.handle('preview:open-detached', (_e, { url } = {}) => {
+    // Close existing detached preview if any.
+    if (detachedPreview && !detachedPreview.isDestroyed()) {
+      detachedPreview.focus();
+      return { ok: true, focused: true };
+    }
+
+    const previewUrl = url || fileServer.getStatus().url || 'about:blank';
+
+    detachedPreview = new BrowserWindow({
+      width: 1024,
+      height: 700,
+      minWidth: 400,
+      minHeight: 300,
+      title: 'seec0de Preview',
+      backgroundColor: '#1a1d23',
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        preload: path.join(__dirname, 'previewPreload.js'),
+      },
+    });
+
+    // Load the viewport-toolbar template, passing the project URL as a query param.
+    const templatePath = path.join(__dirname, 'previewWindow.html');
+    const templateUrl = `file://${templatePath}?url=${encodeURIComponent(previewUrl)}`;
+    detachedPreview.loadURL(templateUrl);
+
+    // Clean up reference when closed.
+    detachedPreview.on('closed', () => { detachedPreview = null; });
+
+    return { ok: true, url: previewUrl };
+  });
+}
