@@ -20,7 +20,7 @@ import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
 import { loadSettings, updateSettings, listProfiles, switchProfile, deleteProfile } from './engine/settings';
 import { fileInfo, basename, joinPath } from './engine/fileLanguage';
-import { verifyLessonOutput, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
+import { verifyLessonOutput, verifyLessonSource, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
 import { translateError } from './engine/errorTranslator';
 import { playLessonSound, playProjectCompleteSound } from './engine/sounds';
 import lessonsData from './data/lessons/index.js';
@@ -28,6 +28,7 @@ import { findExercise, isCourseActivity } from './data/exerciseCatalog';
 import { findProjectCheckpoint, nextProjectCheckpoint } from './data/projects';
 import { findBuildProject } from './data/buildProjects';
 import { evaluateStep } from './engine/buildVerifier';
+import { registerTerminal } from './engine/editorBridge';
 // Confetti burst when a build's final step completes.
 import confetti from 'canvas-confetti';
 
@@ -468,6 +469,9 @@ export default function App() {
 
   // ---- runner state ----------------------------------------------------
   const terminalApi = useRef(null);
+  // Register the terminal with the editor bridge so click-to-insert can
+  // route text to whichever panel has focus (terminal input or code editor).
+  useEffect(() => { registerTerminal(terminalApi); }, []);
   const runOwnerRef = useRef(0);
   const [runLoading, setRunLoading] = useState(false);
   // Each run produces a fresh object (never mutated); LivePreviewPanel
@@ -1457,7 +1461,39 @@ export default function App() {
     if (inLessonMode) {
       setLearnPhase('run');
       setLessonAttempts((count) => count + 1);
-      setLearnAnnouncement(`Running ${payload.language} ${activeLesson.kind === 'exercise' ? 'exercise' : 'lesson'}…`);
+      setLearnAnnouncement(`Checking ${payload.language} ${activeLesson.kind === 'exercise' ? 'exercise' : 'lesson'}…`);
+
+      // Source-based lessons (HTML, CSS) don't produce stdout — verify the
+      // editor source directly instead of invoking the runner.
+      const isSourceLesson = activeLesson?.language === 'html'
+        || (activeLesson?.matchType || '').startsWith('source-');
+      if (isSourceLesson) {
+        setRunLoading(false);
+        const verdict = verifyLessonSource(payload.source, activeLesson);
+        playLessonSound(verdict.pass);
+        setLessonVerification(verdict);
+        setLessonStatus(verdict.pass ? 'pass' : 'fail');
+        setLearnPhase(verdict.pass ? 'complete' : 'fix');
+        setLearnAnnouncement(verdict.pass
+          ? `${activeLesson.kind === 'exercise' ? 'Exercise' : 'Lesson'} passed. Your progress is saved.`
+          : 'Your code doesn\'t match what the lesson expects. Check the diff below, then try again.');
+        if (verdict.pass) {
+          setLessonErrorCoaching([]);
+          if (activeLesson.kind !== 'project-checkpoint' && !completedLessons.includes(activeLesson.id)) {
+            const next = [...completedLessons, activeLesson.id];
+            const nextSettings = updateSettings({ completedLessons: next });
+            setSettings(nextSettings);
+          }
+        } else {
+          const missing = (verdict.expected || '').replace(/^Must contain: /gm, '').split('\n').filter(Boolean);
+          setLessonErrorCoaching([{
+            title: 'Your code is missing required content',
+            plain: `Compare your code against the lesson task. The following ${missing.length === 1 ? 'pattern was' : 'patterns were'} not found:`,
+            fixes: missing.map((m) => `Must contain: ${m}`),
+          }]);
+        }
+        return;
+      }
     }
 
     // Applies the final result (from the runner:exit event or a start
@@ -1483,7 +1519,12 @@ export default function App() {
       // fail we surface a diff so the learner can see *what* didn't
       // match instead of just "wrong, try again".
       if (inLessonMode) {
-        const verdict = verifyLessonOutput(normalisedOutput, activeLesson);
+        // HTML lessons don't produce stdout — verify source code instead.
+        const isSourceLesson = activeLesson?.language === 'html'
+          || (activeLesson?.matchType || '').startsWith('source-');
+        const verdict = isSourceLesson
+          ? verifyLessonSource(livePreview.code, activeLesson)
+          : verifyLessonOutput(normalisedOutput, activeLesson);
         playLessonSound(verdict.pass);
         setLessonVerification(verdict);
         setLessonStatus(verdict.pass ? 'pass' : 'fail');
@@ -2291,6 +2332,7 @@ const beginExplanationResize = useCallback((event) => {
                 code={livePreview.code}
                 language={livePreview.language}
                 filename={livePreview.filename}
+                projectRoot={rootPath}
                 runnerOutput={runnerOutput}
                 runnerStream={runnerStream}
                 runnerInputEnabled={runnerInputReady}

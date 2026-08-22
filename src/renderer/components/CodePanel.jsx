@@ -4,7 +4,7 @@ import { Lock, Pencil, Loader, X, Play, Lightbulb, Check } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
-import { registerEditor, unregisterEditor } from '../engine/editorBridge';
+import { registerEditor, unregisterEditor, setFocusTarget } from '../engine/editorBridge';
 
 // Languages currently supported by runnerService.js. Keep in sync.
 const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp', 'react']);
@@ -46,7 +46,100 @@ const LANGUAGE_LABELS = {
   csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C', react: 'React',
 };
 
+// ---- HTML auto-close completions -------------------------------------------
+// Common void elements that should NOT get a closing tag.
+const VOID_ELEMENTS = new Set([
+  'area','base','br','col','embed','hr','img','input',
+  'link','meta','param','source','track','wbr',
+]);
+// Common HTML5 tags for autocomplete.
+const HTML_TAGS = [
+  'html','head','body','div','span','p','a','h1','h2','h3','h4','h5','h6',
+  'ul','ol','li','table','thead','tbody','tr','td','th','form','input',
+  'button','select','option','textarea','label','fieldset','legend',
+  'header','footer','main','nav','section','article','aside','figure','figcaption',
+  'img','video','audio','source','canvas','svg','iframe','script','style',
+  'link','meta','title','base','br','hr','pre','code','blockquote','cite',
+  'dl','dt','dd','details','summary','dialog','template','slot','picture',
+];
+
+let _htmlCompletionRegistered = false;
+function registerHtmlCompletions(monaco) {
+  if (_htmlCompletionRegistered) return;
+  _htmlCompletionRegistered = true;
+
+  monaco.languages.registerCompletionItemProvider('html', {
+    triggerCharacters: ['<', ' '],
+    provideCompletionItems(model, position) {
+      const line = model.getLineContent(position.lineNumber);
+      const textBefore = line.slice(0, position.column - 1);
+
+      // After '<' → suggest tag names with closing tag.
+      const tagMatch = textBefore.match(/<([a-zA-Z]*)$/);
+      if (tagMatch) {
+        const prefix = tagMatch[1].toLowerCase();
+        const suggestions = HTML_TAGS
+          .filter((t) => t.startsWith(prefix))
+          .map((tag) => ({
+            label: tag,
+            kind: monaco.languages.CompletionItemKind.Property,
+            insertText: VOID_ELEMENTS.has(tag)
+              ? tag
+              : `${tag}>$0</${tag}>`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            detail: VOID_ELEMENTS.has(tag) ? `<${tag}> (void)` : `<${tag}>…</${tag}>`,
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column - tagMatch[0].length + 1,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            },
+          }));
+        return { suggestions };
+      }
+
+      // After '<tag ' → suggest common attributes.
+      const attrMatch = textBefore.match(/<([a-zA-Z]+)\s+([a-zA-Z-]*)$/);
+      if (attrMatch) {
+        const attrPrefix = attrMatch[2].toLowerCase();
+        const attrs = ['class','id','style','href','src','alt','title','name','value','type','placeholder','disabled','hidden','role','aria-label','onclick','data-id'];
+        const suggestions = attrs
+          .filter((a) => a.startsWith(attrPrefix))
+          .map((attr) => ({
+            label: attr,
+            kind: monaco.languages.CompletionItemKind.Property,
+            insertText: `${attr}="$1"`,
+            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            detail: attr,
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column - attrPrefix.length,
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            },
+          }));
+        return { suggestions };
+      }
+
+      return { suggestions: [] };
+    },
+  });
+}
+
 function defineSeec0deThemes(monaco) {
+  // Register HTML tag + attribute completions with auto-closing tags.
+  registerHtmlCompletions(monaco);
+
+  // Also enable Monaco's built-in auto-closing if available.
+  try {
+    if (monaco.languages?.html?.htmlDefaults) {
+      monaco.languages.html.htmlDefaults.setOptions({
+        autoClosingTags: true,
+        autoIndent: true,
+      });
+    }
+  } catch { /* CDN loader may not expose htmlDefaults */ }
+
   monaco.editor.defineTheme('seec0de-green', {
     base: 'vs-dark',
     inherit: true,
@@ -304,7 +397,8 @@ export default function CodePanel({
     runLanguage = generatedDisplayTab;
     runFilename = DEFAULT_FILENAME_FOR_LANG[generatedDisplayTab] || null;
   }
-  const canRun = !!onRunCode && !!runLanguage && RUNNABLE.has(runLanguage) && (value || '').trim().length > 0;
+  const canRun = !!onRunCode && !!runLanguage && (RUNNABLE.has(runLanguage) || (lessonMode && !RUNNABLE.has(runLanguage))) && (value || '').trim().length > 0;
+  const isSourceCheck = lessonMode && !!runLanguage && !RUNNABLE.has(runLanguage);
 
   const handleRun = useCallback(() => {
     if (!canRun) return;
@@ -456,11 +550,11 @@ export default function CodePanel({
               style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}) }}
               onClick={handleRun}
               disabled={runLoading}
-              title={`Run with ${runLanguage}`}
+              title={isSourceCheck ? 'Check your code' : `Run with ${runLanguage}`}
             >
               {runLoading
                 ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
-                : <Play size={12} />}
+                : isSourceCheck ? <Check size={12} /> : <Play size={12} />}
             </button>
           )}
 
@@ -517,6 +611,7 @@ export default function CodePanel({
             theme={appTheme === 'seec0de-green' ? 'seec0de-green' : appTheme === 'seec0de-light' ? 'seec0de-light' : 'hc-black'}
             beforeMount={defineSeec0deThemes}
             onMount={handleEditorMount}
+            onFocus={() => setFocusTarget('editor')}
             onChange={handleChange}
             options={{
               readOnly: isReadOnly,
@@ -525,6 +620,21 @@ export default function CodePanel({
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
               wordWrap: 'on',
+              quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: false,
+              },
+              suggest: {
+                showKeywords: true,
+                showSnippets: true,
+                showModules: true,
+                insertMode: 'insert',
+              },
+              tabCompletion: 'on',
+              wordBasedSuggestions: 'off',
+              autoClosingBrackets: 'always',
+              autoClosingQuotes: 'always',
             }}
           />
         )}
