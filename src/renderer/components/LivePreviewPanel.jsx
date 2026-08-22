@@ -3,6 +3,7 @@ import {
   Eye, Terminal as TermIcon, RefreshCw,
   ChevronLeft, ChevronRight, Trash2, Code2, FileCode2,
   AlertTriangle, Wrench, X as CloseIcon, Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { translateError } from '../engine/errorTranslator';
 import { explainErrorWithAI, hasApiKey } from '../engine/aiService';
@@ -56,6 +57,7 @@ export default function LivePreviewPanel({
   code = '',
   language = 'plaintext',
   filename = null,
+  projectRoot = null,
   runnerOutput = null,
   runnerStream = [],
   runnerInputEnabled = false,
@@ -71,6 +73,10 @@ export default function LivePreviewPanel({
   const [consoleEntries, setConsoleEntries] = useState([]);
   const [debouncedCode, setDebouncedCode] = useState(code);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const handleRefresh = useCallback(() => {
+    setDebouncedCode(code);
+    setRefreshNonce((n) => n + 1);
+  }, [code]);
   // Error-translator cards. Recomputed whenever a runner result lands
   // with a non-zero exit code + stderr we recognise. A single stderr can
   // contain many distinct errors (compilers and chained exceptions love
@@ -234,11 +240,6 @@ export default function LivePreviewPanel({
     [errorTranslations, dismissedTitles]
   );
 
-  const handleRefresh = useCallback(() => {
-    setDebouncedCode(code);
-    setRefreshNonce((n) => n + 1);
-  }, [code]);
-
   // ---- collapsed rail (32 px) ------------------------------------------
   if (!visible) {
     return (
@@ -302,6 +303,24 @@ export default function LivePreviewPanel({
               aria-label="Clear console"
             >
               <Trash2 size={12} />
+            </button>
+          )}
+          {view === 'preview' && previewable && projectRoot && (
+            <button
+              type="button"
+              className="ui-icon-button"
+              style={styles.iconBtn}
+              onClick={() => {
+                window.seecode.preview.startServer(projectRoot).then((result) => {
+                  if (result?.url) {
+                    window.seecode.preview.openDetached({ url: result.url });
+                  }
+                });
+              }}
+              title="Open in seec0de Browser"
+              aria-label="Open in seec0de Browser"
+            >
+              <ExternalLink size={12} />
             </button>
           )}
           {view === 'preview' && previewable && (
@@ -697,7 +716,7 @@ const styles = {
   iframe: {
     flex: 1,
     border: 'none',
-    background: 'var(--bg-secondary)',
+    background: '#ffffff',
     width: '100%',
     height: '100%',
   },
