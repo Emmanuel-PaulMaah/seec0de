@@ -74,7 +74,8 @@
           "hints": [
             "Put `: string` after the variable name."
           ],
-          "solution": "const course: string = 'TypeScript';\nconsole.log(course);"
+          "solution": "const course: string = 'TypeScript';\nconsole.log(course);",
+          "reflectionPrompt": "What does the `: string` annotation prevent you from doing?"
         },
         {
           "id": "ts-02-inference",

@@ -192,7 +192,8 @@
 "Assign the string with `tool = ...`.",
 "Print `tool` without quotes."
 ],
-"solution": "tool = 'seec0de'\nprint(tool)\n"
+"solution": "tool = 'seec0de'\nprint(tool)\n",
+"reflectionPrompt": "Why give the value a name instead of writing 'seec0de' directly in the print call?"
 },
 {
 "id": "py-05-update-variable",
@@ -577,7 +578,8 @@
 "Loop while `count <= 3`.",
 "Increase `count` with `count += 1` inside the loop."
 ],
-"solution": "count = 1\nwhile count <= 3:\n    print(count)\n    count += 1\n"
+"solution": "count = 1\nwhile count <= 3:\n    print(count)\n    count += 1\n",
+"reflectionPrompt": "What would happen if the line `count += 1` were removed from inside the loop?"
 },
 {
 "id": "py-18-break",

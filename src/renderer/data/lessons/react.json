@@ -790,7 +790,8 @@
             "Start from the useState example shown above."
           ],
           "solution": "function Counter() {\n  const [count, setCount] = React.useState(0);\n  return <p>Count: {count}</p>;\n}\n\nrender(<Counter />);\nconsole.log(screen.getByText(/Count/).textContent);",
-          "expectedOutput": "Count: 0"
+          "expectedOutput": "Count: 0",
+          "reflectionPrompt": "Why can't you just change `count` directly (count = count + 1) instead of calling setCount?"
         },
         {
           "id": "react-12-events",
@@ -1148,7 +1149,8 @@
             "Start from the useEffect example shown above."
           ],
           "solution": "function Logger() {\n  React.useEffect(() => {\n    console.log(\"mounted\");\n  }, []);\n  return <p>Ready</p>;\n}\n\nrender(<Logger />);",
-          "expectedOutput": "mounted"
+          "expectedOutput": "mounted",
+          "reflectionPrompt": "Why put the console.log inside useEffect instead of writing it directly in the component body?"
         },
         {
           "id": "react-17-effect-cleanup",

@@ -301,7 +301,8 @@
             "Write `.card { padding: 16px; border: 1px solid gray; margin: 12px; }`.",
             "Add three `<div class=\"card\">` elements in the body."
           ],
-          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    * {\n      box-sizing: border-box;\n    }\n    .card {\n      padding: 16px;\n      border: 1px solid gray;\n      margin: 12px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">First card</div>\n  <div class=\"card\">Second card</div>\n  <div class=\"card\">Third card</div>\n</body>\n</html>"
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    * {\n      box-sizing: border-box;\n    }\n    .card {\n      padding: 16px;\n      border: 1px solid gray;\n      margin: 12px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"card\">First card</div>\n  <div class=\"card\">Second card</div>\n  <div class=\"card\">Third card</div>\n</body>\n</html>",
+          "reflectionPrompt": "Why does box-sizing: border-box make layout math simpler than the default content-box?"
         },
         {
           "id": "css-05-typography",
@@ -545,7 +546,8 @@
             "Use `.box { padding: 16px; background: #dbeafe; border-radius: 8px; }`.",
             "Create `<div class=\"row\">` containing three `<div class=\"box\">` elements."
           ],
-          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .row {\n      display: flex;\n      gap: 12px;\n      justify-content: space-between;\n    }\n    .box {\n      padding: 16px;\n      background: #dbeafe;\n      border-radius: 8px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"row\">\n    <div class=\"box\">A</div>\n    <div class=\"box\">B</div>\n    <div class=\"box\">C</div>\n  </div>\n</body>\n</html>"
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .row {\n      display: flex;\n      gap: 12px;\n      justify-content: space-between;\n    }\n    .box {\n      padding: 16px;\n      background: #dbeafe;\n      border-radius: 8px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"row\">\n    <div class=\"box\">A</div>\n    <div class=\"box\">B</div>\n    <div class=\"box\">C</div>\n  </div>\n</body>\n</html>",
+          "reflectionPrompt": "Why use display: flex instead of just floating elements side by side?"
         },
         {
           "id": "css-08-grid",

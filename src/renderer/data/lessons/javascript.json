@@ -126,7 +126,8 @@
             "Start the line with `let score = 42;`",
             "Then on the next line: `console.log(score);`"
           ],
-          "solution": "let score = 42;\nconsole.log(score);\n"
+          "solution": "let score = 42;\nconsole.log(score);\n",
+          "reflectionPrompt": "Why give the value a name instead of writing 42 directly in the print statement?"
         },
         {
           "id": "js-03-const",
@@ -369,7 +370,8 @@
             "Start a counter at 1. Loop while it's <= 5. Print it. Add 1 each pass.",
             "let i = 1; while (i <= 5) { console.log(i); i = i + 1; }"
           ],
-          "solution": "let i = 1;\nwhile (i <= 5) {\n  console.log(i);\n  i = i + 1;\n}\n"
+          "solution": "let i = 1;\nwhile (i <= 5) {\n  console.log(i);\n  i = i + 1;\n}\n",
+          "reflectionPrompt": "What would happen if the line `i = i + 1` were removed from inside the loop?"
         },
         {
           "id": "js-10-for",
@@ -402,7 +404,8 @@
             "Start at 2, go up to 10, step by 2.",
             "for (let i = 2; i <= 10; i = i + 2) { console.log(i); }"
           ],
-          "solution": "for (let i = 2; i <= 10; i = i + 2) {\n  console.log(i);\n}\n"
+          "solution": "for (let i = 2; i <= 10; i = i + 2) {\n  console.log(i);\n}\n",
+          "reflectionPrompt": "Why does a for loop need three parts separated by semicolons? What happens if you leave one out?"
         },
         {
           "id": "js-11-arrays",
@@ -521,7 +524,8 @@
             "Inside the function: `return n * n;`",
             "function square(n) { return n * n; } console.log(square(7));"
           ],
-          "solution": "function square(n) {\n  return n * n;\n}\nconsole.log(square(7));\n"
+          "solution": "function square(n) {\n  return n * n;\n}\nconsole.log(square(7));\n",
+          "reflectionPrompt": "Why put code inside a function instead of writing it at the top level?"
         },
         {
           "id": "js-14-objects",

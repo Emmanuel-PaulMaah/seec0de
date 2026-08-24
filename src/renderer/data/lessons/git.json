@@ -95,7 +95,8 @@
             "Type `git init` in the terminal and press Enter.",
             "You should see 'Initialized empty Git repository in ~/my-project/.git/'"
           ],
-          "solution": "git init"
+          "solution": "git init",
+          "reflectionPrompt": "What does git init actually create on disk? Why is the .git folder hidden?"
         },
         {
           "id": "git-03-status",
@@ -197,7 +198,8 @@
             "Then stage it: `git add hello.txt`",
             "Check status: `git status` -- the file should appear under 'Changes to be committed'"
           ],
-          "solution": "git init\ntouch hello.txt\ngit add hello.txt\ngit status"
+          "solution": "git init\ntouch hello.txt\ngit add hello.txt\ngit status",
+          "reflectionPrompt": "Why do you need git add before committing? What happens if you skip it?"
         },
         {
           "id": "git-05-commit",
@@ -248,7 +250,8 @@
             "Stage it: `git add README.md`",
             "Commit with a message: `git commit -m \"Add README\"`"
           ],
-          "solution": "git init\ntouch README.md\ngit add README.md\ngit commit -m \"Add README\""
+          "solution": "git init\ntouch README.md\ngit add README.md\ngit commit -m \"Add README\"",
+          "reflectionPrompt": "What makes a good commit message? Why not just write 'update' every time?"
         },
         {
           "id": "git-06-log",
@@ -401,7 +404,8 @@
             "2. Run `git branch feature`",
             "3. Run `git branch` to see both branches"
           ],
-          "solution": "git init\ntouch app.js\ngit add app.js\ngit commit -m \"Initial commit\"\ngit branch feature\ngit branch"
+          "solution": "git init\ntouch app.js\ngit add app.js\ngit commit -m \"Initial commit\"\ngit branch feature\ngit branch",
+          "reflectionPrompt": "Why create a branch instead of just editing files on main? What problem does it solve?"
         },
         {
           "id": "git-09-checkout",

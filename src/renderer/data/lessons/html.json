@@ -67,7 +67,8 @@
             "Inside `<html>`, create a `<head>` with `<title>My First Page</title>`.",
             "After `<head>`, create a `<body>` with `<p>Welcome to HTML!</p>`."
           ],
-          "solution": "<!DOCTYPE html>\n<html>\n  <head>\n    <title>My First Page</title>\n  </head>\n  <body>\n    <p>Welcome to HTML!</p>\n  </body>\n</html>"
+          "solution": "<!DOCTYPE html>\n<html>\n  <head>\n    <title>My First Page</title>\n  </head>\n  <body>\n    <p>Welcome to HTML!</p>\n  </body>\n</html>",
+          "reflectionPrompt": "What would happen if you removed the <!DOCTYPE html> line from the top of the file?"
         },
         {
           "id": "html-02-headings",
@@ -265,7 +266,8 @@
           "sourceChecks": [
             "a href=\"https://example.com\"",
             ">homepage</a>"
-          ]
+          ],
+          "reflectionPrompt": "Why does the link need an href attribute? What happens if you write <a>text</a> without one?"
         },
         {
           "id": "html-05-images",
@@ -861,7 +863,8 @@
             "<nav>",
             "<main>",
             "<footer>"
-          ]
+          ],
+          "reflectionPrompt": "Why use <header> and <nav> instead of just <div> for everything?"
         },
         {
           "id": "html-13-block-inline",
