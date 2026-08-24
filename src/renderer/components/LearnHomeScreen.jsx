@@ -24,6 +24,7 @@ const LANGUAGE_LABELS = {
   html: 'HTML',
   css: 'CSS',
   git: 'Git & GitHub',
+  nodejs: 'Node.js',
 };
 
 function languageLabel(language) {
@@ -50,7 +51,7 @@ export default function LearnHomeScreen({
   const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
     const available = Array.from(new Set(tracks.map((track) => track.language).filter(Boolean)));
-    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'git'].filter((language) => available.includes(language));
+    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'git', 'nodejs'].filter((language) => available.includes(language));
   }, [tracks]);
   const languageTracks = tracks.filter((track) => track.language === selectedLanguage);
   const languageExercises = exercises.filter((exercise) => exercise.language === selectedLanguage);

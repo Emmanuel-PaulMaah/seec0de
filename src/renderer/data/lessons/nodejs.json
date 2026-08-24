@@ -1,0 +1,828 @@
+{
+  "tracks": [
+    {
+      "id": "nodejs-core",
+      "name": "Node.js Core",
+      "language": "nodejs",
+      "description": "The Node.js runtime, process object, built-in modules, and the file system.",
+      "lessons": [
+        {
+          "id": "node-01-what-is-node",
+          "title": "1. What is Node.js?",
+          "concept": "Node.js runtime",
+          "summary": "JavaScript runs outside the browser — here's how.",
+          "activities": [
+            {
+              "id": "node-01-see",
+              "type": "worked-example",
+              "title": "JavaScript beyond the browser",
+              "instruction": "Node.js is a runtime that lets you run JavaScript on your computer instead of in a browser. You write `.js` files and run them with the `node` command.",
+              "example": "// File: hello.js\nconsole.log('Hello from Node.js!');\n\n// Run: node hello.js\n// Output: Hello from Node.js!"
+            },
+            {
+              "id": "node-01-predict",
+              "type": "prediction",
+              "title": "What runs this code?",
+              "question": "Where does `console.log('Hi')` run when you type `node hello.js` in the terminal?",
+              "choices": [
+                "In a web browser",
+                "In the Node.js runtime on your computer",
+                "On a remote server"
+              ],
+              "answer": "In the Node.js runtime on your computer",
+              "explanation": "Node.js executes JavaScript directly on your machine using the V8 engine — no browser needed."
+            },
+            {
+              "id": "node-01-edit",
+              "type": "edit",
+              "title": "Print your first Node.js message",
+              "instruction": "Print exactly: Hello from Node.js!"
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Node.js takes JavaScript out of the browser. Instead of writing code that runs in Chrome or Firefox, you write `.js` files and run them with the `node` command from your terminal." },
+            { "type": "code", "text": "console.log('Hello from Node.js!');\n// Run: node hello.js\n// Output: Hello from Node.js!" },
+            { "type": "p", "text": "Under the hood, Node.js uses Google's V8 engine — the same engine Chrome uses. But instead of `window` and `document`, you get `process`, `Buffer`, and access to the file system." },
+            { "type": "note", "text": "Node.js is great for servers, command-line tools, and scripts — anything that doesn't need a browser." }
+          ],
+          "task": "Print exactly: Hello from Node.js!",
+          "starterCode": "// Print Hello from Node.js!\n",
+          "expectedOutput": "Hello from Node.js!",
+          "matchType": "exact",
+          "hints": [
+            "Use `console.log()` with the message in quotes.",
+            "console.log('Hello from Node.js!');"
+          ],
+          "solution": "console.log('Hello from Node.js!');\n",
+          "reflectionPrompt": "What's the difference between running JavaScript in a browser versus running it with Node.js?"
+        },
+        {
+          "id": "node-02-process",
+          "title": "2. The process object",
+          "concept": "process",
+          "summary": "Access information about the running program and the system.",
+          "activities": [
+            {
+              "id": "node-02-see",
+              "type": "worked-example",
+              "title": "Reading system info",
+              "instruction": "The global `process` object gives you info about the current Node.js process — the Node version, platform, memory usage, and command-line arguments.",
+              "example": "console.log('Node version:', process.version);\nconsole.log('Platform:', process.platform);\nconsole.log('Memory:', process.memoryUsage().rss, 'bytes');"
+            },
+            {
+              "id": "node-02-predict",
+              "type": "prediction",
+              "title": "What is process.version?",
+              "question": "What does `process.version` return?",
+              "choices": [
+                "The version of the file you're running",
+                "The version of Node.js (e.g. v20.11.0)",
+                "The version of your operating system"
+              ],
+              "answer": "The version of Node.js (e.g. v20.11.0)",
+              "explanation": "process.version returns the Node.js version string, like 'v20.11.0'."
+            },
+            {
+              "id": "node-02-edit",
+              "type": "edit",
+              "title": "Print the Node.js version",
+              "instruction": "Print the Node.js version using process.version."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`process` is a global object in Node.js — you can use it anywhere without importing it. It tells you about the current running program." },
+            { "type": "code", "text": "console.log('Node version:', process.version);\nconsole.log('Platform:', process.platform);\nconsole.log('Memory:', process.memoryUsage().rss, 'bytes');" },
+            { "type": "p", "text": "`process.version` returns the Node.js version. `process.platform` tells you the OS (`win32`, `darwin`, `linux`). `process.memoryUsage()` shows how much memory the program is using." },
+            { "type": "note", "text": "You can also read command-line arguments from `process.argv` — an array of strings the user passed when running the script." }
+          ],
+          "task": "Print the Node.js version using process.version.",
+          "starterCode": "// Print the Node.js version\n",
+          "expectedOutput": "Node version:",
+          "matchType": "contains",
+          "hints": [
+            "Use `console.log('Node version:', process.version);`",
+            "process.version is a string like 'v20.11.0'."
+          ],
+          "solution": "console.log('Node version:', process.version);\n",
+          "reflectionPrompt": "Why is process a global object instead of something you have to import?"
+        },
+        {
+          "id": "node-03-arguments",
+          "title": "3. Command-line arguments",
+          "concept": "process.argv",
+          "summary": "Accept input from the terminal when running a script.",
+          "activities": [
+            {
+              "id": "node-03-see",
+              "type": "worked-example",
+              "title": "Reading arguments",
+              "instruction": "`process.argv` is an array. The first two elements are the Node executable and the script path. Everything after that is user-provided input.",
+              "example": "// Run: node greet.js Alice\nconsole.log('Hello, ' + process.argv[2] + '!');\n// Output: Hello, Alice!"
+            },
+            {
+              "id": "node-03-predict",
+              "type": "prediction",
+              "title": "Which index?",
+              "question": "If you run `node app.js banana`, what is `process.argv[2]`?",
+              "choices": [
+                "'node'",
+                "'app.js'",
+                "'banana'"
+              ],
+              "answer": "'banana'",
+              "explanation": "process.argv[0] is 'node', process.argv[1] is 'app.js', and process.argv[2] is the first user argument 'banana'."
+            },
+            {
+              "id": "node-03-edit",
+              "type": "edit",
+              "title": "Echo the first argument",
+              "instruction": "Print whatever argument is passed as process.argv[2]."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "When you run `node script.js hello world`, Node puts the arguments into `process.argv` — an array of strings." },
+            { "type": "code", "text": "// Run: node greet.js Alice\nconsole.log('Hello, ' + process.argv[2] + '!');\n// Output: Hello, Alice!" },
+            { "type": "p", "text": "`process.argv[0]` is always the path to Node itself. `process.argv[1]` is the path to your script. `process.argv[2]` is the first real argument the user typed." },
+            { "type": "note", "text": "Arguments are always strings. If you need a number, convert it with `Number()` or `parseInt()`." }
+          ],
+          "task": "Print whatever argument is passed as process.argv[2].",
+          "starterCode": "// Print the first command-line argument\n",
+          "expectedOutput": "process.argv[2]",
+          "matchType": "contains",
+          "hints": [
+            "Access the argument with process.argv[2].",
+            "console.log(process.argv[2]);"
+          ],
+          "solution": "console.log(process.argv[2]);\n",
+          "reflectionPrompt": "Why are process.argv[0] and process.argv[1] skipped? What would happen if they weren't?"
+        },
+        {
+          "id": "node-04-path",
+          "title": "4. The path module",
+          "concept": "require('path')",
+          "summary": "Work with file paths in a way that works on any operating system.",
+          "activities": [
+            {
+              "id": "node-04-see",
+              "type": "worked-example",
+              "title": "Building paths safely",
+              "instruction": "The `path` module helps you build file paths that work on Windows, macOS, and Linux. Never join paths with string concatenation — use `path.join()` instead.",
+              "example": "const path = require('path');\n\nconsole.log(path.join('src', 'utils', 'index.js'));\n// Output: src/utils/index.js (or src\\utils\\index.js on Windows)"
+            },
+            {
+              "id": "node-04-predict",
+              "type": "prediction",
+              "title": "What does path.join do?",
+              "question": "What does `path.join('a', 'b', 'c.js')` return?",
+              "choices": [
+                "'a/b/c.js'",
+                "'abc.js'",
+                "'a\\\\b\\\\c.js'"
+              ],
+              "answer": "'a/b/c.js'",
+              "explanation": "path.join combines path segments with the correct separator for the current OS."
+            },
+            {
+              "id": "node-04-edit",
+              "type": "edit",
+              "title": "Join two path segments",
+              "instruction": "Use path.join() to combine 'data' and 'users.json', then print the result."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The `path` module is a built-in Node.js module. You load it with `require('path')` — no installation needed." },
+            { "type": "code", "text": "const path = require('path');\n\nconsole.log(path.join('src', 'utils', 'index.js'));\n// src/utils/index.js" },
+            { "type": "p", "text": "`path.join()` takes any number of string arguments and combines them into one path, using the correct separator for the operating system." },
+            { "type": "note", "text": "Other useful path methods: `path.basename('/a/b.txt')` returns `'b.txt'`, `path.extname('file.js')` returns `'.js'`." }
+          ],
+          "task": "Use path.join() to combine 'data' and 'users.json', then print the result.",
+          "starterCode": "const path = require('path');\n\n// Join 'data' and 'users.json' and print the result\n",
+          "expectedOutput": "data/users.json",
+          "matchType": "contains",
+          "hints": [
+            "path.join('data', 'users.json') returns the joined path.",
+            "console.log(path.join('data', 'users.json'));"
+          ],
+          "solution": "const path = require('path');\nconsole.log(path.join('data', 'users.json'));\n",
+          "reflectionPrompt": "Why can't you just use string concatenation like 'data' + '/' + 'users.json'?"
+        },
+        {
+          "id": "node-05-os",
+          "title": "5. The os module",
+          "concept": "require('os')",
+          "summary": "Get information about the operating system.",
+          "activities": [
+            {
+              "id": "node-05-see",
+              "type": "worked-example",
+              "title": "System information",
+              "instruction": "The `os` module gives you details about the operating system — platform, CPU info, memory, home directory, and more.",
+              "example": "const os = require('os');\n\nconsole.log('Platform:', os.platform());\nconsole.log('CPUs:', os.cpus().length);\nconsole.log('Free memory:', os.freemem(), 'bytes');"
+            },
+            {
+              "id": "node-05-predict",
+              "type": "prediction",
+              "title": "What is os.platform()?",
+              "question": "What does `os.platform()` return on a Windows computer?",
+              "choices": [
+                "'windows'",
+                "'win32'",
+                "'Windows'"
+              ],
+              "answer": "'win32'",
+              "explanation": "os.platform() returns 'win32' on Windows, 'darwin' on macOS, and 'linux' on Linux."
+            },
+            {
+              "id": "node-05-edit",
+              "type": "edit",
+              "title": "Print the OS platform and memory",
+              "instruction": "Print the OS platform and total memory using the os module."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The `os` module is another built-in module. Load it with `require('os')`." },
+            { "type": "code", "text": "const os = require('os');\n\nconsole.log('Platform:', os.platform());\nconsole.log('CPUs:', os.cpus().length);\nconsole.log('Free memory:', os.freemem(), 'bytes');" },
+            { "type": "p", "text": "`os.platform()` returns `'win32'`, `'darwin'` (macOS), or `'linux'`. `os.cpus()` returns an array of CPU info objects. `os.freemem()` returns free memory in bytes." },
+            { "type": "note", "text": "Other useful methods: `os.homedir()` returns your home directory, `os.uptime()` returns how long the system has been running." }
+          ],
+          "task": "Print the OS platform and total memory using the os module.",
+          "starterCode": "const os = require('os');\n\n// Print the platform and total memory\n",
+          "expectedOutput": "Platform:",
+          "matchType": "contains",
+          "hints": [
+            "Use os.platform() and os.totalmem().",
+            "console.log('Platform:', os.platform());"
+          ],
+          "solution": "const os = require('os');\nconsole.log('Platform:', os.platform());\nconsole.log('Total memory:', os.totalmem(), 'bytes');\n",
+          "reflectionPrompt": "When would you use os.platform() to make your code behave differently on different operating systems?"
+        },
+        {
+          "id": "node-06-fs",
+          "title": "6. Reading and writing files",
+          "concept": "require('fs')",
+          "summary": "The file system module — read, write, and manage files.",
+          "activities": [
+            {
+              "id": "node-06-see",
+              "type": "worked-example",
+              "title": "Synchronous file operations",
+              "instruction": "The `fs` module has both synchronous and asynchronous versions. Synchronous methods end with `Sync` and block until the operation finishes — simpler for scripts.",
+              "example": "const fs = require('fs');\n\n// Write a file\nfs.writeFileSync('hello.txt', 'Hello, Node!');\n\n// Read it back\nconst content = fs.readFileSync('hello.txt', 'utf8');\nconsole.log(content);\n// Output: Hello, Node!"
+            },
+            {
+              "id": "node-06-predict",
+              "type": "prediction",
+              "title": "Sync vs async",
+              "question": "What is the difference between `fs.readFile()` and `fs.readFileSync()`?",
+              "choices": [
+                "readFileSync is faster",
+                "readFileSync blocks the program until the file is read",
+                "readFile only works on Linux"
+              ],
+              "answer": "readFileSync blocks the program until the file is read",
+              "explanation": "Sync methods block execution. Async methods return immediately and call a callback when done — better for servers but more complex."
+            },
+            {
+              "id": "node-06-edit",
+              "type": "edit",
+              "title": "Write and read a file",
+              "instruction": "Write 'Node.js is fun' to a file called note.txt, then read it back and print the content."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The `fs` (file system) module lets you read and write files. It's one of the most important built-in Node.js modules." },
+            { "type": "code", "text": "const fs = require('fs');\n\n// Write a file\nfs.writeFileSync('hello.txt', 'Hello, Node!');\n\n// Read it back\nconst content = fs.readFileSync('hello.txt', 'utf8');\nconsole.log(content);" },
+            { "type": "p", "text": "`writeFileSync(path, data)` creates or overwrites a file. `readFileSync(path, 'utf8')` reads it as a string. The `'utf8'` argument tells Node to return text instead of raw bytes." },
+            { "type": "note", "text": "In real applications, use the async versions (`fs.readFile`, `fs.writeFile`) with callbacks or promises so your program doesn't freeze while waiting for disk I/O." }
+          ],
+          "task": "Write 'Node.js is fun' to a file called note.txt, then read it back and print the content.",
+          "starterCode": "const fs = require('fs');\n\n// Write 'Node.js is fun' to note.txt, then read and print it\n",
+          "expectedOutput": "Node.js is fun",
+          "matchType": "contains",
+          "hints": [
+            "fs.writeFileSync('note.txt', 'Node.js is fun');",
+            "fs.readFileSync('note.txt', 'utf8') returns the content as a string."
+          ],
+          "solution": "const fs = require('fs');\nfs.writeFileSync('note.txt', 'Node.js is fun');\nconst content = fs.readFileSync('note.txt', 'utf8');\nconsole.log(content);\n",
+          "reflectionPrompt": "Why does readFileSync need 'utf8' as the second argument? What happens without it?"
+        }
+      ]
+    },
+    {
+      "id": "nodejs-modules",
+      "name": "Modules & npm",
+      "language": "nodejs",
+      "description": "How Node.js organizes code into modules and manages packages with npm.",
+      "lessons": [
+        {
+          "id": "node-07-require",
+          "title": "7. require() and modules",
+          "concept": "require()",
+          "summary": "Loading code from other files using CommonJS modules.",
+          "activities": [
+            {
+              "id": "node-07-see",
+              "type": "worked-example",
+              "title": "Requiring a file",
+              "instruction": "`require()` loads code from another file. When you require a file, Node runs it and returns whatever that file exports.",
+              "example": "// math.js\nfunction add(a, b) { return a + b; }\nmodule.exports = { add };\n\n// app.js\nconst math = require('./math');\nconsole.log(math.add(2, 3));\n// Output: 5"
+            },
+            {
+              "id": "node-07-predict",
+              "type": "prediction",
+              "title": "What gets exported?",
+              "question": "If math.js has `module.exports = { add }` and you `require('./math')`, what does the variable `math` contain?",
+              "choices": [
+                "The entire math.js file as a string",
+                "An object with an `add` property (the function)",
+                "Just the number 5"
+              ],
+              "answer": "An object with an `add` property (the function)",
+              "explanation": "module.exports defines what require() returns. Here it's an object with the add function."
+            },
+            {
+              "id": "node-07-edit",
+              "type": "edit",
+              "title": "Export and use a function",
+              "instruction": "Create a multiply function, export it with module.exports, then require it and call multiply(4, 5). Print the result."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Node.js uses the CommonJS module system. Every file is a module. You export things with `module.exports` and load them with `require()`." },
+            { "type": "code", "text": "// math.js\nfunction add(a, b) { return a + b; }\nmodule.exports = { add };\n\n// app.js\nconst math = require('./math');\nconsole.log(math.add(2, 3)); // 5" },
+            { "type": "p", "text": "The `./` in `require('./math')` means 'relative to the current file'. Without it, Node looks in the `node_modules` folder." },
+            { "type": "note", "text": "Each file gets its own scope — variables defined in one file aren't visible in another unless explicitly exported." }
+          ],
+          "task": "Create a multiply function, export it, require it, and print multiply(4, 5).",
+          "starterCode": "// multiply.js\nfunction multiply(a, b) {\n  return a * b;\n}\nmodule.exports = { multiply };\n\n// app.js\n// require multiply.js and call multiply(4, 5)\n",
+          "expectedOutput": "20",
+          "matchType": "exact",
+          "hints": [
+            "module.exports = { multiply };",
+            "const { multiply } = require('./multiply');"
+          ],
+          "solution": "// multiply.js\nfunction multiply(a, b) {\n  return a * b;\n}\nmodule.exports = { multiply };\n\n// app.js\nconst { multiply } = require('./multiply');\nconsole.log(multiply(4, 5));\n",
+          "reflectionPrompt": "Why does each file get its own scope? What problem does this solve?"
+        },
+        {
+          "id": "node-08-exports",
+          "title": "8. Exporting patterns",
+          "concept": "module.exports",
+          "summary": "Different ways to export functions, classes, and values.",
+          "activities": [
+            {
+              "id": "node-08-see",
+              "type": "worked-example",
+              "title": "Export styles",
+              "instruction": "There are two main export styles: export an object with named properties, or export a single function/class directly.",
+              "example": "// Style 1: Named exports\nmodule.exports = { add, subtract };\n\n// Style 2: Default export\nmodule.exports = function add(a, b) { return a + b; };\n\n// Style 3: Class export\nmodule.exports = class Calculator { ... };"
+            },
+            {
+              "id": "node-08-predict",
+              "type": "prediction",
+              "title": "Which require() call?",
+              "question": "If a file does `module.exports = function greet(name) { ... }`, how do you use it?",
+              "choices": [
+                "const greet = require('./file'); greet('Alice');",
+                "const { greet } = require('./file'); greet('Alice');",
+                "require('./file').default('Alice');"
+              ],
+              "answer": "const greet = require('./file'); greet('Alice');",
+              "explanation": "When you export a single function directly, require() returns that function — no destructuring needed."
+            },
+            {
+              "id": "node-08-edit",
+              "type": "edit",
+              "title": "Export a class and use it",
+              "instruction": "Create a Timer class with a start() method that prints 'Timer started', export it, require it, and call start()."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "You can export anything: functions, objects, classes, arrays, or primitive values. The key is what you put on `module.exports`." },
+            { "type": "code", "text": "// Style 1: Named exports\nmodule.exports = { add, subtract };\nconst { add, subtract } = require('./math');\n\n// Style 2: Default export\nmodule.exports = function greet(name) { ... };\nconst greet = require('./greet');" },
+            { "type": "p", "text": "Named exports work best when a module provides multiple things. Default exports work best when a module provides one main thing." },
+            { "type": "note", "text": "You can also use `exports.name = value` as shorthand, but never reassign `exports` itself — always use `module.exports`." }
+          ],
+          "task": "Create a Timer class with start() that prints 'Timer started', export it, require it, and call start().",
+          "starterCode": "// timer.js\nclass Timer {\n  start() {\n    // print 'Timer started'\n  }\n}\nmodule.exports = Timer;\n\n// app.js\n// require Timer and call start()\n",
+          "expectedOutput": "Timer started",
+          "matchType": "exact",
+          "hints": [
+            "In start(): console.log('Timer started');",
+            "const Timer = require('./timer'); const t = new Timer(); t.start();"
+          ],
+          "solution": "// timer.js\nclass Timer {\n  start() {\n    console.log('Timer started');\n  }\n}\nmodule.exports = Timer;\n\n// app.js\nconst Timer = require('./timer');\nconst t = new Timer();\nt.start();\n",
+          "reflectionPrompt": "When would you use a default export versus named exports?"
+        },
+        {
+          "id": "node-09-builtins",
+          "title": "9. Built-in modules",
+          "concept": "Built-in modules",
+          "summary": "Node.js ships with modules for common tasks — no installation needed.",
+          "activities": [
+            {
+              "id": "node-09-see",
+              "type": "worked-example",
+              "title": "Common built-in modules",
+              "instruction": "Node.js includes many built-in modules. You don't need to install them — just `require()` them by name.",
+              "example": "const path = require('path');   // file paths\nconst os = require('os');       // OS info\nconst fs = require('fs');       // file system\nconst url = require('url');     // URL parsing\nconst http = require('http');   // HTTP server\n\nconsole.log(path.extname('app.js'));\n// Output: .js"
+            },
+            {
+              "id": "node-09-predict",
+              "type": "prediction",
+              "title": "Built-in vs installed",
+              "question": "Which of these requires `npm install`?",
+              "choices": [
+                "require('fs')",
+                "require('express')",
+                "require('path')"
+              ],
+              "answer": "require('express')",
+              "explanation": "fs and path are built-in — they come with Node.js. Express is a third-party package that must be installed with npm."
+            },
+            {
+              "id": "node-09-edit",
+              "type": "edit",
+              "title": "Use three built-in modules",
+              "instruction": "Print the file extension of 'index.html' using path.extname(), the OS platform using os.platform(), and whether a file exists using fs.existsSync('package.json')."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Node.js ships with dozens of built-in modules. The most commonly used ones are `fs`, `path`, `os`, `http`, `url`, `crypto`, and `events`." },
+            { "type": "code", "text": "const path = require('path');\nconst os = require('os');\nconst fs = require('fs');\n\nconsole.log(path.extname('app.js')); // .js\nconsole.log(os.platform());          // win32\nconsole.log(fs.existsSync('app.js')); // true or false" },
+            { "type": "p", "text": "Built-in modules use `require('name')` — no `./` prefix. Third-party packages also use `require('name')` but must be installed first." },
+            { "type": "note", "text": "Run `node -e \"console.log(Object.keys(require('module').builtinModules))\"` to see all built-in modules." }
+          ],
+          "task": "Print the extension of 'index.html', the OS platform, and whether 'package.json' exists.",
+          "starterCode": "const path = require('path');\nconst os = require('os');\nconst fs = require('fs');\n\n// Print: extension of 'index.html', platform, and whether 'package.json' exists\n",
+          "expectedOutput": ".html",
+          "matchType": "contains",
+          "hints": [
+            "path.extname('index.html') returns '.html'.",
+            "fs.existsSync('package.json') returns true or false."
+          ],
+          "solution": "const path = require('path');\nconst os = require('os');\nconst fs = require('fs');\nconsole.log(path.extname('index.html'));\nconsole.log(os.platform());\nconsole.log(fs.existsSync('package.json'));\n",
+          "reflectionPrompt": "Why does Node.js include so many built-in modules instead of making you install everything?"
+        },
+        {
+          "id": "node-10-packagejson",
+          "title": "10. package.json",
+          "concept": "package.json",
+          "summary": "The manifest file that describes your Node.js project.",
+          "activities": [
+            {
+              "id": "node-10-see",
+              "type": "worked-example",
+              "title": "Understanding package.json",
+              "instruction": "Every Node.js project has a `package.json` file. It stores the project name, version, dependencies, and scripts.",
+              "example": "{\n  \"name\": \"my-app\",\n  \"version\": \"1.0.0\",\n  \"description\": \"A sample app\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"start\": \"node index.js\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\"\n  }\n}"
+            },
+            {
+              "id": "node-10-predict",
+              "type": "prediction",
+              "title": "What is dependencies?",
+              "question": "What does the `dependencies` field in package.json do?",
+              "choices": [
+                "Lists files the project needs to run",
+                "Lists npm packages the project needs to run",
+                "Lists commands to run at startup"
+              ],
+              "answer": "Lists npm packages the project needs to run",
+              "explanation": "dependencies lists the npm packages your project uses. When someone runs npm install, these packages are downloaded."
+            },
+            {
+              "id": "node-10-edit",
+              "type": "edit",
+              "title": "Read package.json",
+              "instruction": "Use require() to load package.json and print the project name and version."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`package.json` is the manifest for a Node.js project. It tells npm (and other tools) everything about your project." },
+            { "type": "code", "text": "// You can require JSON files directly in Node.js\nconst pkg = require('./package.json');\nconsole.log(pkg.name, pkg.version);" },
+            { "type": "p", "text": "Key fields: `name` (project name), `version` (semver), `main` (entry point), `scripts` (commands), `dependencies` (packages your app needs)." },
+            { "type": "note", "text": "Run `npm init` to create a package.json interactively, or `npm init -y` to accept all defaults." }
+          ],
+          "task": "Load package.json with require() and print the name and version.",
+          "starterCode": "// Load package.json and print name and version\n",
+          "expectedOutput": "name",
+          "matchType": "contains",
+          "hints": [
+            "const pkg = require('./package.json');",
+            "console.log(pkg.name, pkg.version);"
+          ],
+          "solution": "const pkg = require('./package.json');\nconsole.log(pkg.name, pkg.version);\n",
+          "reflectionPrompt": "Why can you require() a JSON file directly? What does Node do with it?"
+        },
+        {
+          "id": "node-11-npm",
+          "title": "11. npm — installing packages",
+          "concept": "npm install",
+          "summary": "The Node Package Manager — how to add third-party code to your project.",
+          "activities": [
+            {
+              "id": "node-11-see",
+              "type": "worked-example",
+              "title": "Using npm",
+              "instruction": "npm (Node Package Manager) lets you install packages created by other developers. After installing, you can require() them in your code.",
+              "example": "// In the terminal:\n// npm install lodash\n\n// In your code:\nconst _ = require('lodash');\nconsole.log(_.capitalize('hello'));\n// Output: Hello"
+            },
+            {
+              "id": "node-11-predict",
+              "type": "prediction",
+              "title": "Where do packages go?",
+              "question": "When you run `npm install express`, where does the code go?",
+              "choices": [
+                "Into a node_modules folder in your project",
+                "Into a global system folder",
+                "Into your source code"
+              ],
+              "answer": "Into a node_modules folder in your project",
+              "explanation": "npm downloads packages into the node_modules folder. The package.json records what's installed."
+            },
+            {
+              "id": "node-11-edit",
+              "type": "edit",
+              "title": "Install and use a package",
+              "instruction": "Install the 'chalk' package with npm, then require it and print 'Hello' in green."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "npm is the package manager that comes with Node.js. It has over 2 million packages — libraries for almost everything." },
+            { "type": "code", "text": "// Install a package\nnpm install lodash\n\n// Use it in your code\nconst _ = require('lodash');\nconsole.log(_.capitalize('hello')); // Hello" },
+            { "type": "p", "text": "`npm install <name>` downloads the package into `node_modules/` and adds it to `package.json` dependencies. Other developers can then run `npm install` to get all the same packages." },
+            { "type": "note", "text": "Never commit the `node_modules` folder to git — it's huge. The `package.json` and `package-lock.json` files are enough to recreate it." }
+          ],
+          "task": "Install the 'chalk' package, require it, and print 'Hello' in green.",
+          "starterCode": "// After installing chalk:\n// npm install chalk\n\nconst chalk = require('chalk');\n// Print 'Hello' in green\n",
+          "expectedOutput": "Hello",
+          "matchType": "contains",
+          "hints": [
+            "chalk.green('Hello') wraps the text in green ANSI codes.",
+            "console.log(chalk.green('Hello'));"
+          ],
+          "solution": "const chalk = require('chalk');\nconsole.log(chalk.green('Hello'));\n",
+          "reflectionPrompt": "Why should node_modules never be committed to git?"
+        }
+      ]
+    },
+    {
+      "id": "nodejs-server",
+      "name": "Server Basics",
+      "language": "nodejs",
+      "description": "Build HTTP servers with the built-in http module and understand request/response.",
+      "lessons": [
+        {
+          "id": "node-12-http-intro",
+          "title": "12. The http module",
+          "concept": "require('http')",
+          "summary": "Create a basic HTTP server with Node.js.",
+          "activities": [
+            {
+              "id": "node-12-see",
+              "type": "worked-example",
+              "title": "Hello server",
+              "instruction": "The built-in `http` module can create a web server. `http.createServer()` takes a callback that runs for every incoming request.",
+              "example": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('Hello, World!');\n});\n\nserver.listen(3000, () => {\n  console.log('Server running on port 3000');\n});"
+            },
+            {
+              "id": "node-12-predict",
+              "type": "prediction",
+              "title": "What does listen() do?",
+              "question": "What does `server.listen(3000)` do?",
+              "choices": [
+                "Reads a file on port 3000",
+                "Opens port 3000 and waits for incoming connections",
+                "Closes the server after 3000 milliseconds"
+              ],
+              "answer": "Opens port 3000 and waits for incoming connections",
+              "explanation": "listen() binds the server to a port and starts listening for HTTP requests."
+            },
+            {
+              "id": "node-12-edit",
+              "type": "edit",
+              "title": "Create a server that responds",
+              "instruction": "Create an HTTP server on port 3000 that responds with 'Hello from Node!'."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The `http` module is built into Node.js. You can create a web server in just a few lines — no frameworks needed." },
+            { "type": "code", "text": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('Hello, World!');\n});\n\nserver.listen(3000, () => {\n  console.log('Server running on port 3000');\n});" },
+            { "type": "p", "text": "`createServer()` takes a callback with two arguments: `req` (the incoming request) and `res` (the response you send back). `res.writeHead()` sets the status code and headers. `res.end()` sends the body and finishes the response." },
+            { "type": "note", "text": "Port 3000 is a common default for development servers. You can use any available port number." }
+          ],
+          "task": "Create an HTTP server on port 3000 that responds with 'Hello from Node!'.",
+          "starterCode": "const http = require('http');\n\n// Create a server that responds with 'Hello from Node!'\n",
+          "expectedOutput": "Hello from Node!",
+          "matchType": "contains",
+          "hints": [
+            "res.writeHead(200, { 'Content-Type': 'text/plain' });",
+            "res.end('Hello from Node!');"
+          ],
+          "solution": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('Hello from Node!');\n});\n\nserver.listen(3000, () => {\n  console.log('Server running on port 3000');\n});\n",
+          "reflectionPrompt": "Why does Node.js need a callback for each request instead of just writing code that runs once?"
+        },
+        {
+          "id": "node-13-request-url",
+          "title": "13. Reading the request",
+          "concept": "req.url",
+          "summary": "Inspect incoming requests — URL, method, and headers.",
+          "activities": [
+            {
+              "id": "node-13-see",
+              "type": "worked-example",
+              "title": "Request details",
+              "instruction": "The `req` object tells you everything about the incoming request: the URL path, HTTP method, headers, and any data sent by the client.",
+              "example": "const http = require('http');\n\nhttp.createServer((req, res) => {\n  console.log(req.method, req.url);\n  // GET /\n  // GET /about\n  // POST /api\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('You requested: ' + req.url);\n}).listen(3000);"
+            },
+            {
+              "id": "node-13-predict",
+              "type": "prediction",
+              "title": "What is req.url?",
+              "question": "If a user visits `http://localhost:3000/about`, what is `req.url`?",
+              "choices": [
+                "'http://localhost:3000/about'",
+                "'/about'",
+                "'about'"
+              ],
+              "answer": "'/about'",
+              "explanation": "req.url is just the path portion — '/about'. It doesn't include the protocol, hostname, or port."
+            },
+            {
+              "id": "node-13-edit",
+              "type": "edit",
+              "title": "Route based on URL",
+              "instruction": "Create a server that responds with 'Home page' when the URL is '/' and 'About page' when the URL is '/about'."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every request has a URL path, an HTTP method (GET, POST, etc.), and headers. You read these from the `req` object." },
+            { "type": "code", "text": "http.createServer((req, res) => {\n  console.log(req.method, req.url);\n  // GET /\n  // GET /about\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('You requested: ' + req.url);\n}).listen(3000);" },
+            { "type": "p", "text": "`req.url` is the path (like `/` or `/about`). `req.method` is the HTTP method (`GET`, `POST`, etc.). `req.headers` is an object with all the request headers." },
+            { "type": "note", "text": "This is the foundation of routing — deciding what to send back based on the URL and method." }
+          ],
+          "task": "Create a server that responds with 'Home page' for '/' and 'About page' for '/about'.",
+          "starterCode": "const http = require('http');\n\nhttp.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  // Check req.url and respond accordingly\n}).listen(3000);\n",
+          "expectedOutput": "Home page",
+          "matchType": "contains",
+          "hints": [
+            "Use if (req.url === '/') to check the path.",
+            "res.end('Home page'); for the root, res.end('About page'); for /about."
+          ],
+          "solution": "const http = require('http');\n\nhttp.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  if (req.url === '/') {\n    res.end('Home page');\n  } else if (req.url === '/about') {\n    res.end('About page');\n  } else {\n    res.writeHead(404);\n    res.end('Not found');\n  }\n}).listen(3000);\n",
+          "reflectionPrompt": "What happens if a user visits a URL you didn't handle? How should you respond?"
+        },
+        {
+          "id": "node-14-response",
+          "title": "14. Sending different responses",
+          "concept": "res.writeHead",
+          "summary": "Control status codes, headers, and response bodies.",
+          "activities": [
+            {
+              "id": "node-14-see",
+              "type": "worked-example",
+              "title": "Status codes and headers",
+              "instruction": "You control the response with `res.writeHead()` (status code + headers) and `res.end()` (the body). Common status codes: 200 (OK), 404 (Not Found), 500 (Server Error).",
+              "example": "http.createServer((req, res) => {\n  if (req.url === '/json') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ message: 'Hello!' }));\n  } else {\n    res.writeHead(404, { 'Content-Type': 'text/plain' });\n    res.end('Not found');\n  }\n}).listen(3000);"
+            },
+            {
+              "id": "node-14-predict",
+              "type": "prediction",
+              "title": "Content-Type matters",
+              "question": "Why is `Content-Type: application/json` important when sending JSON?",
+              "choices": [
+                "It tells the browser to format the JSON nicely",
+                "It tells the client to parse the response as JSON, not plain text",
+                "It makes the response faster"
+              ],
+              "answer": "It tells the client to parse the response as JSON, not plain text",
+              "explanation": "Content-Type tells the client what format the data is in. Without it, the client might treat JSON as plain text."
+            },
+            {
+              "id": "node-14-edit",
+              "type": "edit",
+              "title": "Send a JSON response",
+              "instruction": "Create a server that responds to '/api' with a JSON object: { \"status\": \"ok\", \"count\": 42 }."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The response has three parts: status code, headers, and body. You set the status and headers with `writeHead()`, then send the body with `end()`." },
+            { "type": "code", "text": "res.writeHead(200, { 'Content-Type': 'application/json' });\nres.end(JSON.stringify({ message: 'Hello!' }));" },
+            { "type": "p", "text": "Status codes tell the client what happened: `200` = OK, `301` = Redirect, `404` = Not Found, `500` = Server Error. The `Content-Type` header tells the client what format the body is in." },
+            { "type": "note", "text": "For JSON responses, always set `Content-Type: application/json` and use `JSON.stringify()` to convert your object to a string." }
+          ],
+          "task": "Create a server that responds to '/api' with { \"status\": \"ok\", \"count\": 42 } as JSON.",
+          "starterCode": "const http = require('http');\n\nhttp.createServer((req, res) => {\n  if (req.url === '/api') {\n    // Send JSON response\n  } else {\n    res.writeHead(404);\n    res.end('Not found');\n  }\n}).listen(3000);\n",
+          "expectedOutput": "ok",
+          "matchType": "contains",
+          "hints": [
+            "res.writeHead(200, { 'Content-Type': 'application/json' });",
+            "res.end(JSON.stringify({ status: 'ok', count: 42 }));"
+          ],
+          "solution": "const http = require('http');\n\nhttp.createServer((req, res) => {\n  if (req.url === '/api') {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ status: 'ok', count: 42 }));\n  } else {\n    res.writeHead(404);\n    res.end('Not found');\n  }\n}).listen(3000);\n",
+          "reflectionPrompt": "Why do you need JSON.stringify() instead of just passing the object to res.end()?"
+        },
+        {
+          "id": "node-15-events",
+          "title": "15. Events and EventEmitter",
+          "concept": "events",
+          "summary": "Node.js is built on events — learn the EventEmitter pattern.",
+          "activities": [
+            {
+              "id": "node-15-see",
+              "type": "worked-example",
+              "title": "Emitting and listening",
+              "instruction": "The `events` module provides `EventEmitter` — an object that can emit named events and call functions when they fire. This pattern is everywhere in Node.js.",
+              "example": "const { EventEmitter } = require('events');\n\nconst emitter = new EventEmitter();\n\nemitter.on('greet', (name) => {\n  console.log('Hello, ' + name + '!');\n});\n\nemitter.emit('greet', 'Alice');\n// Output: Hello, Alice!"
+            },
+            {
+              "id": "node-15-predict",
+              "type": "prediction",
+              "title": "Order of events",
+              "question": "If you call `emit('data')` before `on('data', fn)`, what happens?",
+              "choices": [
+                "The handler runs immediately",
+                "The handler never runs for that emit",
+                "The handler runs on the next emit"
+              ],
+              "answer": "The handler never runs for that emit",
+              "explanation": "Events are not queued. If you emit before anyone is listening, the event is lost."
+            },
+            {
+              "id": "node-15-edit",
+              "type": "edit",
+              "title": "Create and use an emitter",
+              "instruction": "Create an EventEmitter, listen for a 'ready' event that prints 'System ready!', then emit it."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Many Node.js objects emit events: HTTP servers emit `'request'`, streams emit `'data'` and `'end'`, processes emit `'exit'`. Understanding events helps you work with all of them." },
+            { "type": "code", "text": "const { EventEmitter } = require('events');\n\nconst emitter = new EventEmitter();\n\nemitter.on('greet', (name) => {\n  console.log('Hello, ' + name + '!');\n});\n\nemitter.emit('greet', 'Alice');" },
+            { "type": "p", "text": "`on(event, callback)` registers a listener. `emit(event, ...args)` fires the event and calls all registered listeners with the arguments you pass." },
+            { "type": "note", "text": "The HTTP server you built earlier uses this pattern: `server.on('request', callback)` is the same as passing the callback to `createServer()`." }
+          ],
+          "task": "Create an EventEmitter, listen for 'ready' that prints 'System ready!', then emit it.",
+          "starterCode": "const { EventEmitter } = require('events');\n\nconst emitter = new EventEmitter();\n\n// Listen for 'ready' and emit it\n",
+          "expectedOutput": "System ready!",
+          "matchType": "exact",
+          "hints": [
+            "emitter.on('ready', () => console.log('System ready!'));",
+            "emitter.emit('ready');"
+          ],
+          "solution": "const { EventEmitter } = require('events');\n\nconst emitter = new EventEmitter();\nemitter.on('ready', () => {\n  console.log('System ready!');\n});\nemitter.emit('ready');\n",
+          "reflectionPrompt": "How is the EventEmitter pattern different from just calling a function directly?"
+        },
+        {
+          "id": "node-16-json-api",
+          "title": "16. Building a JSON API",
+          "concept": "JSON API",
+          "summary": "Combine everything — build a server that handles multiple routes and returns JSON.",
+          "activities": [
+            {
+              "id": "node-16-see",
+              "type": "worked-example",
+              "title": "A simple API",
+              "instruction": "A real API uses different routes to return different data. Combine req.url, status codes, and JSON to build one.",
+              "example": "const http = require('http');\n\nconst data = {\n  '/api/users': [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }],\n  '/api/status': { uptime: process.uptime() }\n};\n\nhttp.createServer((req, res) => {\n  const response = data[req.url];\n  if (response) {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify(response));\n  } else {\n    res.writeHead(404, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ error: 'Not found' }));\n  }\n}).listen(3000);"
+            },
+            {
+              "id": "node-16-predict",
+              "type": "prediction",
+              "title": "Route matching",
+              "question": "What happens when a user visits `/api/unknown`?",
+              "choices": [
+                "The server crashes",
+                "It returns a 404 JSON error",
+                "It returns the users list"
+              ],
+              "answer": "It returns a 404 JSON error",
+              "explanation": "Since '/api/unknown' is not a key in the data object, the response is undefined, so the server returns a 404."
+            },
+            {
+              "id": "node-16-edit",
+              "type": "edit",
+              "title": "Add a route",
+              "instruction": "Add a '/api/time' route to the server that returns { \"time\": <current time as a string> }."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A JSON API is a server that accepts HTTP requests and returns JSON data. Each URL path (route) returns different information." },
+            { "type": "code", "text": "const data = {\n  '/api/users': [{ id: 1, name: 'Alice' }],\n  '/api/status': { uptime: process.uptime() }\n};\n\n// Check if the route exists in our data\nconst response = data[req.url];" },
+            { "type": "p", "text": "This is the foundation of every web API. Frameworks like Express build on this same pattern — they just make routing and response handling more convenient." },
+            { "type": "note", "text": "In a real API, you'd also handle POST, PUT, DELETE methods and parse request bodies. The http module gives you all the building blocks." }
+          ],
+          "task": "Add a '/api/time' route that returns { \"time\": <current time string> }.",
+          "starterCode": "const http = require('http');\n\nconst data = {\n  '/api/users': [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }],\n  '/api/status': { uptime: process.uptime() },\n  '/api/time': null  // Add the time route here\n};\n\nhttp.createServer((req, res) => {\n  const response = data[req.url];\n  if (response) {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify(response));\n  } else {\n    res.writeHead(404, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ error: 'Not found' }));\n  }\n}).listen(3000);\n",
+          "expectedOutput": "time",
+          "matchType": "contains",
+          "hints": [
+            "new Date().toLocaleTimeString() returns a time string.",
+            "Set data['/api/time'] to { time: new Date().toLocaleTimeString() }."
+          ],
+          "solution": "const http = require('http');\n\nconst data = {\n  '/api/users': [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }],\n  '/api/status': { uptime: process.uptime() },\n  '/api/time': { time: new Date().toLocaleTimeString() }\n};\n\nhttp.createServer((req, res) => {\n  const response = data[req.url];\n  if (response) {\n    res.writeHead(200, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify(response));\n  } else {\n    res.writeHead(404, { 'Content-Type': 'application/json' });\n    res.end(JSON.stringify({ error: 'Not found' }));\n  }\n}).listen(3000);\n",
+          "reflectionPrompt": "What would you need to change to make this API handle POST requests with data from the client?"
+        }
+      ]
+    }
+  ]
+}

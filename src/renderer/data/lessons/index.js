@@ -5,6 +5,7 @@ import rtLessons from './react.json';
 import htmlLessons from './html.json';
 import cssLessons from './css.json';
 import gitLessons from './git.json';
+import nodeLessons from './nodejs.json';
 
 export default {
   schemaVersion: 2,
@@ -16,5 +17,6 @@ export default {
     ...htmlLessons.tracks,
     ...cssLessons.tracks,
     ...gitLessons.tracks,
+    ...nodeLessons.tracks,
   ]
 };

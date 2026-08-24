@@ -40,11 +40,13 @@ const DEFAULT_FILENAME_FOR_LANG = {
 const LANGUAGE_MONACO_MAP = {
   python: 'python', javascript: 'javascript', java: 'java', cpp: 'cpp',
   csharp: 'csharp', go: 'go', rust: 'rust', typescript: 'typescript', c: 'c', react: 'javascript',
+  nodejs: 'javascript',
 };
 
 const LANGUAGE_LABELS = {
   python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
   csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C', react: 'React',
+  nodejs: 'Node.js',
 };
 
 // ---- HTML auto-close completions -------------------------------------------

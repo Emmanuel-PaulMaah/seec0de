@@ -324,7 +324,8 @@ async function run({ language, source, filename, input, projectDir }) {
   if (!inPlace) await fs.mkdir(dir, { recursive: true });
   try {
     switch (lang) {
-      case 'javascript': return await runJavaScript(dir, source, filename, input);
+      case 'javascript':
+      case 'nodejs':     return await runJavaScript(dir, source, filename, input);
       case 'typescript': return await runTypeScript(dir, source, filename, input);
       case 'react':      return await runReact(dir, source, filename, input);
       case 'python':     return await runPython(dir, source, filename, input);
@@ -470,7 +471,8 @@ function execProcessLive({ cmd, args, cwd, timeout, sender, id, command, tool })
 async function prepareInteractiveProcess(language, dir, source, filename, { inPlace = false } = {}) {
   const rand = crypto.randomBytes(4).toString('hex');
   switch ((language || '').toLowerCase()) {
-    case 'javascript': {
+    case 'javascript':
+    case 'nodejs': {
       const file = inPlace
         ? path.join(dir, `seec0de_run_${rand}.js`)
         : path.join(dir, filename || 'main.js');
@@ -744,7 +746,7 @@ function registerRunnerServiceHandlers() {
   ipcMain.handle('runner:run', async (_e, payload) => {
     try {
       const { language, source, filePath } = payload || {};
-      if (!['javascript', 'typescript', 'python', 'c', 'cpp', 'react'].includes(language)) {
+      if (!['javascript', 'typescript', 'python', 'c', 'cpp', 'react', 'nodejs'].includes(language)) {
         throw new Error(`Unsupported runner language: ${language}`);
       }
       return await run(payload || {});
