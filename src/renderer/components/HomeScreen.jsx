@@ -82,10 +82,11 @@ const styles = {
     position: 'absolute',
     inset: 0,
     zIndex: -3,
-    opacity: 0.2,
+    opacity: 0,
     backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
     backgroundSize: '64px 64px',
     maskImage: 'linear-gradient(to bottom, black, transparent 76%)',
+    animation: 'grid-reveal 1.2s ease-out 0.3s forwards',
   },
   glow: {
     position: 'absolute',
@@ -189,6 +190,7 @@ const styles = {
     borderRadius: '50%',
     background: 'var(--accent)',
     boxShadow: '0 0 12px var(--accent)',
+    animation: 'community-dot-pulse 2.5s ease-in-out infinite',
   },
   wordmark: {
     position: 'absolute',
@@ -204,5 +206,6 @@ const styles = {
     lineHeight: 0.78,
     whiteSpace: 'nowrap',
     userSelect: 'none',
+    WebkitTextStroke: '1px rgba(242, 240, 233, 0.08)',
   },
 };

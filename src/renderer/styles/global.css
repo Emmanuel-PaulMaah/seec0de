@@ -223,10 +223,10 @@ html, body, #root {
   text-rendering: optimizeLegibility;
 }
 
-::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
 button {
   font-family: inherit;
@@ -297,6 +297,63 @@ input, textarea {
   font-family: inherit;
 }
 
+h1, h2, h3 {
+  letter-spacing: 0.02em;
+}
+
+code, pre, kbd, samp, .mono {
+  font-variant-numeric: tabular-nums;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 2px 6px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-control);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}
+
+@keyframes textarea-focus-glow {
+  0%   { box-shadow: 0 0 0 0 var(--accent-soft); }
+  50%  { box-shadow: 0 0 0 4px var(--accent-soft); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes run-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(47, 111, 237, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(47, 111, 237, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(47, 111, 237, 0); }
+}
+
+@keyframes community-dot-pulse {
+  0%, 100% { box-shadow: 0 0 8px var(--accent); opacity: 1; }
+  50%      { box-shadow: 0 0 16px var(--accent); opacity: 0.7; }
+}
+
+@keyframes explanation-slide-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes grid-reveal {
+  from { opacity: 0; }
+  to   { opacity: 0.2; }
+}
+
+.settings-section-header:hover {
+  background: var(--bg-tertiary) !important;
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+}
+
 /* ---------------------------------------------------------------------------
  * Focus rings — visible, on-brand, and only when keyboard navigating
  * (not on every mouse click). Matches WCAG focus-visible guidance.
@@ -323,12 +380,22 @@ a:focus-visible,
   border-color: var(--accent) !important;
   background: var(--accent-soft) !important;
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(47, 111, 237, 0.12);
+  transition: transform var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out),
+              border-color var(--motion-base) var(--ease-out),
+              background var(--motion-base) var(--ease-out);
 }
 
 .learn-home-card:hover {
   border-color: var(--accent) !important;
   background: var(--accent-soft) !important;
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(47, 111, 237, 0.12);
+  transition: transform var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out),
+              border-color var(--motion-base) var(--ease-out),
+              background var(--motion-base) var(--ease-out);
 }
 
 @media (max-width: 720px) {

@@ -587,7 +587,7 @@ export default function CodePanel({
           {canRun && (
             <button
               className="ui-toolbar-button ui-primary-button"
-              style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}) }}
+              style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}), animation: !runLoading ? 'run-pulse 1.2s ease-out 1' : 'none' }}
               onClick={handleRun}
               disabled={runLoading}
               title={isGitLesson ? 'Check your Git commands' : isSourceCheck ? 'Check your code' : `Run with ${runLanguage}`}
@@ -738,6 +738,7 @@ const styles = {
     color: 'var(--text-primary)',
     borderBottomColor: 'var(--text-primary)',
     background: 'var(--bg-primary)',
+    boxShadow: '0 2px 8px rgba(47, 111, 237, 0.15)',
   },
   // Pseudocode tab keeps its dedicated algorithm accent — that mark is
   // pedagogical (it tells the learner "this tab is the lesson, not just

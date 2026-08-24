@@ -76,6 +76,7 @@ export default function InstructionPanel({
 
   // ---- suggestions -----------------------------------------------------
   const [seed, setSeed] = useState(0);
+  const [textareaFocused, setTextareaFocused] = useState(false);
   const suggestions = useMemo(() => pickSuggestions(4), [seed]);
 
   // Suggestion chips are hand-tuned prompts that map onto a built-in
@@ -242,9 +243,11 @@ export default function InstructionPanel({
               </div>
 
               <textarea
-                style={styles.textarea}
+                style={{ ...styles.textarea, ...(textareaFocused ? styles.textareaFocus : {}) }}
                 value={instruction}
                 onChange={(e) => onInstructionChange(e.target.value)}
+                onFocus={() => setTextareaFocused(true)}
+                onBlur={() => setTextareaFocused(false)}
                 placeholder={'e.g. "read a CSV of student grades and print the top 5 averages"'}
                 aria-label="Instruction for the program"
               />
@@ -512,7 +515,11 @@ const styles = {
     resize: 'none',
     outline: 'none',
     lineHeight: 1.55,
-    transition: 'border-color var(--motion-fast) var(--ease-out)',
+    transition: 'border-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out)',
+  },
+  textareaFocus: {
+    borderColor: 'var(--accent)',
+    animation: 'textarea-focus-glow 0.6s ease-out 1',
   },
 
   actions: {

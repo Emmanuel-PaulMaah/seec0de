@@ -648,11 +648,17 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
 
 function Section({ id, icon, title, open, onToggle, children }) {
   const bodyId = `settings-section-${id}`;
+  const [hovered, setHovered] = useState(false);
   return (
     <section style={styles.section}>
       <button
         type="button"
-        style={styles.sectionHeader}
+        style={{
+          ...styles.sectionHeader,
+          ...(hovered ? { background: 'var(--bg-tertiary)', borderLeftColor: 'var(--accent)', paddingLeft: 10 } : {}),
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         onClick={() => onToggle?.(id)}
         aria-expanded={open}
         aria-controls={bodyId}
@@ -1219,11 +1225,12 @@ const styles = {
     margin: 0,
     background: 'transparent',
     border: 'none',
+    borderLeft: '2px solid transparent',
     color: 'var(--text-muted)',
     cursor: 'pointer',
     textAlign: 'left',
     borderRadius: 6,
-    transition: 'background var(--motion-base) var(--ease-out)',
+    transition: 'background var(--motion-base) var(--ease-out), border-left-color var(--motion-base) var(--ease-out), padding-left var(--motion-base) var(--ease-out)',
   },
   sectionIcon: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

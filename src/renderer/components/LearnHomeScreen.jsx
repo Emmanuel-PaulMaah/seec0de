@@ -144,6 +144,7 @@ export default function LearnHomeScreen({
                 const matchingTracks = tracks.filter((track) => track.language === language);
                 const lessons = matchingTracks.flatMap((track) => track.lessons || []);
                 const done = lessons.filter((lesson) => completedLessons.includes(lesson.id)).length;
+                const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
                 return (
                   <button key={language} type="button" className="learn-home-card" style={styles.launchCard} onClick={() => chooseLanguage(language)}>
                     <span style={styles.cardIcon}><Code2 size={20} /></span>
@@ -153,6 +154,11 @@ export default function LearnHomeScreen({
                       <span style={styles.cardText}>{matchingTracks.length} courses · {lessons.length} lessons · {done} complete</span>
                     </span>
                     <ArrowRight size={18} style={styles.arrow} />
+                    {lessons.length > 0 && (
+                      <div style={styles.launchCardProgress}>
+                        <div style={{ ...styles.launchCardProgressFill, width: `${pct}%` }} />
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -204,6 +210,7 @@ export default function LearnHomeScreen({
               {languageTracks.map((track) => {
                 const lessons = track.lessons || [];
                 const done = lessons.filter((lesson) => completedLessons.includes(lesson.id)).length;
+                const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
                 return (
                   <button key={track.id} type="button" className="learn-home-card" style={styles.courseCard} onClick={() => setActiveTrackId(track.id)}>
                     <span style={styles.courseTopline}>
@@ -212,6 +219,11 @@ export default function LearnHomeScreen({
                     <strong style={styles.courseTitle}>{track.name}</strong>
                     <span style={styles.courseText}>{track.description}</span>
                     <span style={styles.openCourse}>Open course <ArrowRight size={13} /></span>
+                    {lessons.length > 0 && (
+                      <div style={styles.courseProgress}>
+                        <div style={{ ...styles.courseProgressFill, width: `${pct}%` }} />
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -449,6 +461,20 @@ const styles = {
     color: 'var(--text-primary)',
     textAlign: 'left',
   },
+  launchCardProgress: {
+    gridColumn: '1 / -1',
+    height: 3,
+    borderRadius: 2,
+    background: 'var(--border)',
+    marginTop: 10,
+    overflow: 'hidden',
+  },
+  launchCardProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+    background: 'var(--accent)',
+    transition: 'width 400ms cubic-bezier(0.16, 1, 0.3, 1)',
+  },
   cardIcon: {
     width: 42,
     height: 42,
@@ -488,6 +514,21 @@ const styles = {
     color: 'var(--text-primary)',
     textAlign: 'left',
   },
+  courseProgress: {
+    width: '100%',
+    height: 3,
+    borderRadius: 2,
+    background: 'var(--border)',
+    marginTop: 'auto',
+    paddingTop: 12,
+    overflow: 'hidden',
+  },
+  courseProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+    background: 'var(--accent)',
+    transition: 'width 400ms cubic-bezier(0.16, 1, 0.3, 1)',
+  },
   challengeTypeCard: {
     display: 'flex',
     flexDirection: 'column',
@@ -499,6 +540,15 @@ const styles = {
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     textAlign: 'left',
+  },
+  challengeTypeProgress: {
+    width: '100%',
+    height: 3,
+    borderRadius: 2,
+    background: 'var(--border)',
+    marginTop: 'auto',
+    paddingTop: 12,
+    overflow: 'hidden',
   },
   challengeTypeTopline: {
     display: 'flex',
@@ -584,5 +634,6 @@ const styles = {
     letterSpacing: '-0.09em',
     lineHeight: 0.78,
     userSelect: 'none',
+    WebkitTextStroke: '1px rgba(242, 240, 233, 0.06)',
   },
 };

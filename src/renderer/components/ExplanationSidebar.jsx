@@ -121,7 +121,7 @@ export default function ExplanationSidebar({
                     const isOpen = openIndex === i;
 
                     return (
-                      <div key={i} style={styles.lineItem}>
+                      <div key={i} style={{ ...styles.lineItem, animationDelay: `${i * 40}ms` }}>
                         <button
                           type="button"
                           className="ui-accordion-row"
@@ -295,6 +295,7 @@ const styles = {
 
   lineItem: {
     borderTop: '1px solid var(--border)',
+    animation: 'explanation-slide-in 200ms ease-out both',
   },
 
   lineHeader: {
