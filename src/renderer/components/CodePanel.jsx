@@ -594,7 +594,7 @@ export default function CodePanel({
             >
               {runLoading
                 ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
-                : <Check size={12} />}
+                : lessonMode ? <Check size={12} /> : <Play size={12} />}
             </button>
           )}
 
