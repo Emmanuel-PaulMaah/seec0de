@@ -244,6 +244,9 @@ export default function App() {
   const [revealedHints, setRevealedHints] = useState(() => restoredLearningState().revealedHints);
   const [activeActivityId, setActiveActivityId] = useState(() => restoredLearningState().activityId);
   const [activeReflection, setActiveReflection] = useState(() => restoredLearningState().reflection);
+  const [activeConceptNote, setActiveConceptNote] = useState(
+    () => loadSettings().conceptNotes?.[restoredLearningState().lesson?.id] || ''
+  );
   const [learnAnnouncement, setLearnAnnouncement] = useState('');
   const learnDraftRef = useRef(restoredLearningState().generatedCode);
   const workspaceGeneratedCodeRef = useRef({ pseudocode: '', code: {} });
@@ -294,6 +297,7 @@ export default function App() {
     setActiveReflection(lesson?.kind === 'project-checkpoint'
       ? loadSettings().projectReflections?.[lesson.id] || ''
       : '');
+    setActiveConceptNote(loadSettings().conceptNotes?.[lesson?.id] || '');
     const initialActivities = lesson?.kind === 'exercise'
       ? lesson.activities || []
       : (lesson?.activities || []).filter(isCourseActivity);
@@ -392,6 +396,15 @@ export default function App() {
     setActiveReflection(activeReflection.trim());
     setLearnAnnouncement('Checkpoint complete. Your verified code and reflection are saved.');
   }, [activeLesson, activeReflection, lessonStatus, settings.completedProjectCheckpoints, settings.projectReflections, settings.learningReminders]);
+
+  const handleSaveConceptNote = useCallback(() => {
+    if (!activeLesson || !activeConceptNote.trim()) return;
+    const notes = { ...(settings.conceptNotes || {}), [activeLesson.id]: activeConceptNote.trim() };
+    const nextSettings = updateSettings({ conceptNotes: notes });
+    setSettings(nextSettings);
+    setActiveConceptNote(activeConceptNote.trim());
+    setLearnAnnouncement('Explanation saved. You can review it later in your concept notes.');
+  }, [activeLesson, activeConceptNote]);
 
   useEffect(() => {
     setSelectedLanguages(deriveLanguages(settings));
@@ -2225,6 +2238,10 @@ const beginExplanationResize = useCallback((event) => {
                 onGuidanceChange={handleGuidanceChange}
                 onGuidanceSuggestionLater={handleGuidanceSuggestionLater}
                 onReflectionChange={setActiveReflection}
+                conceptNote={activeLesson?.kind !== 'project-checkpoint' ? activeConceptNote : ''}
+                onConceptNoteChange={setActiveConceptNote}
+                onSaveConceptNote={handleSaveConceptNote}
+                allConceptNotes={settings.conceptNotes || {}}
                 onCompleteCheckpoint={handleCompleteCheckpoint}
                 onNextLesson={handleNextLesson}
                 onStartExercise={handleStartLessonExercise}

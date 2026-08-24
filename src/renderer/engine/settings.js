@@ -88,6 +88,9 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   // Project checkpoints require both verified output and a written reflection.
   completedProjectCheckpoints: [],
   projectReflections:  {},
+  // Self-explanation notes keyed by lesson ID. Learners write these after
+  // passing a lesson to reinforce understanding.
+  conceptNotes:        {},
   // Small, learner-authored portfolio artifacts and gentle local review cues.
   codePostcards:       [],
   learningReminders:   [],

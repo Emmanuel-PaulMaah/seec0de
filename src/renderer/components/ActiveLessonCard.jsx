@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   ChevronLeft, Lightbulb, RotateCcw, Eye, EyeOff, CheckCircle2,
   XCircle, ArrowRight, Info, ListTree, Wrench, Code2, X, Play,
+  MessageSquareText,
 } from 'lucide-react';
 import { explainCode, traceCode } from '../engine/codeExplainer';
 import { renderInline } from './InlineCode';
@@ -37,6 +38,9 @@ export default function ActiveLessonCard({
   check = null,             // { stepId, pass, details } — live step checks
   projectDir = null,        // where this project's files live on disk
   checkpointComplete = false,
+  conceptNote = '',
+  onConceptNoteChange,
+  onSaveConceptNote,
   onReflectionChange,
   onCompleteCheckpoint,
   teachingOnly = false,
@@ -144,6 +148,17 @@ export default function ActiveLessonCard({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Self-explanation prompt — after pass, for non-checkpoint lessons */}
+      {status === 'pass' && lesson.reflectionPrompt && lesson.kind !== 'project-checkpoint' && (
+        <SelfExplanationSection
+          prompt={lesson.reflectionPrompt}
+          concept={lesson.concept}
+          note={conceptNote}
+          onNoteChange={onConceptNoteChange}
+          onSave={onSaveConceptNote}
+        />
       )}
 
       {status === 'fail' && verification && (
@@ -283,6 +298,57 @@ export default function ActiveLessonCard({
           <span>{isProjectCheckpoint ? 'Next checkpoint' : 'Next lesson'}</span>
           <ArrowRight size={13} />
         </button>
+      )}
+    </div>
+  );
+}
+
+// SelfExplanationSection — shown after a lesson passes. Asks the learner to
+// explain the concept in their own words before moving on. Optional and
+// non-blocking: the Next lesson button is always available.
+function SelfExplanationSection({ prompt, concept, note, onNoteChange, onSave }) {
+  const [saved, setSaved] = useState(!!note);
+
+  const handleSave = () => {
+    onSave?.();
+    setSaved(true);
+  };
+
+  const handleChange = (e) => {
+    setSaved(false);
+    onNoteChange?.(e.target.value);
+  };
+
+  return (
+    <div style={styles.explainBox}>
+      <div style={styles.explainHeader}>
+        <MessageSquareText size={13} style={{ color: 'var(--accent)' }} />
+        <span style={styles.explainTitle}>Explain it back</span>
+      </div>
+      <div style={styles.explainPrompt}>{prompt}</div>
+      {concept && <div style={styles.explainHint}>Think about what <code style={styles.explainConcept}>{concept}</code> does and why it matters.</div>}
+      <textarea
+        style={styles.explainInput}
+        rows={3}
+        value={note}
+        onChange={handleChange}
+        placeholder="Write your explanation in your own words…"
+      />
+      <div style={styles.explainActions}>
+        <button
+          type="button"
+          style={{ ...styles.explainSaveBtn, ...(!note.trim() ? styles.explainSaveBtnDisabled : {}) }}
+          disabled={!note.trim()}
+          onClick={handleSave}
+        >
+          <CheckCircle2 size={12} />
+          {saved ? 'Saved' : 'Save explanation'}
+        </button>
+      </div>
+      {saved && (
+        <div style={styles.explainSaved}>
+          Explanation saved — you can review it later in your concept notes.
+        </div>
       )}
     </div>
   );
@@ -1003,5 +1069,79 @@ const styles = {
     fontSize: 10.5,
     color: 'var(--text-secondary)',
     lineHeight: 1.45,
+  },
+  explainBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 7,
+    padding: 11,
+    border: '1px solid var(--border-strong)',
+    borderRadius: 7,
+    background: 'var(--bg-tertiary)',
+  },
+  explainHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  explainTitle: {
+    color: 'var(--text-primary)',
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  explainPrompt: {
+    color: 'var(--text-secondary)',
+    fontSize: 11.5,
+    lineHeight: 1.5,
+  },
+  explainHint: {
+    color: 'var(--text-muted)',
+    fontSize: 10.5,
+    lineHeight: 1.4,
+  },
+  explainConcept: {
+    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
+    fontSize: 11,
+    color: 'var(--keyword-highlight)',
+    background: 'var(--keyword-soft)',
+    padding: '1px 4px',
+    borderRadius: 3,
+  },
+  explainInput: {
+    width: '100%',
+    boxSizing: 'border-box',
+    resize: 'vertical',
+    padding: 8,
+    border: '1px solid var(--border)',
+    borderRadius: 5,
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
+    font: 'inherit',
+    fontSize: 11,
+    lineHeight: 1.5,
+  },
+  explainActions: {
+    display: 'flex',
+    gap: 6,
+  },
+  explainSaveBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    padding: '6px 10px',
+    border: 0,
+    borderRadius: 5,
+    background: 'var(--accent)',
+    color: 'var(--text-on-accent)',
+    fontSize: 10.5,
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  explainSaveBtnDisabled: { opacity: 0.42, cursor: 'not-allowed' },
+  explainSaved: {
+    color: 'var(--success, #4ade80)',
+    fontSize: 10,
+    lineHeight: 1.4,
   },
 };

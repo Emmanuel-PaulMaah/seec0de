@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft } from 'lucide-react';
+import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft, MessageSquareText } from 'lucide-react';
 import LessonsPanel, { formatLanguage } from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
 import { isCourseActivity } from '../data/exerciseCatalog';
@@ -40,6 +40,10 @@ export default function LearnModePanel({
   onGuidanceChange,
   onGuidanceSuggestionLater,
   onReflectionChange,
+  conceptNote = '',
+  onConceptNoteChange,
+  onSaveConceptNote,
+  allConceptNotes = {},
   onCompleteCheckpoint,
   onNextLesson,
   onStartExercise,
@@ -173,6 +177,9 @@ export default function LearnModePanel({
                 projectDir={learnProjectDir}
                 checkpointComplete={checkpointComplete}
                 onReflectionChange={onReflectionChange}
+                conceptNote={conceptNote}
+                onConceptNoteChange={onConceptNoteChange}
+                onSaveConceptNote={onSaveConceptNote}
                 onCompleteCheckpoint={onCompleteCheckpoint}
                 teachingOnly={phase === 'learn'}
                 onStartExercise={showingTeaching
@@ -202,6 +209,9 @@ export default function LearnModePanel({
               <div style={styles.intro}>
                 Each language has guided courses now and a home for focused challenges as the library grows.
               </div>
+            )}
+            {catalogLanguage && Object.keys(allConceptNotes).length > 0 && (
+              <ConceptNotesSummary notes={allConceptNotes} language={catalogLanguage} />
             )}
             <LessonsPanel
               completedLessons={completedLessons}
@@ -335,6 +345,41 @@ function ActivityGuide({
         </div>
       )}
     </section>
+  );
+}
+
+// ConceptNotesSummary — small expandable section in the catalog showing
+// saved self-explanation notes for the selected language.
+function ConceptNotesSummary({ notes, language }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const noteEntries = Object.entries(notes).filter(([id]) => {
+    const prefix = language.slice(0, 2).toLowerCase();
+    return id.startsWith(prefix + '-');
+  });
+  if (noteEntries.length === 0) return null;
+
+  return (
+    <div style={styles.notesSummary}>
+      <button
+        type="button"
+        style={styles.notesToggle}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <MessageSquareText size={12} />
+        <span>{noteEntries.length} concept {noteEntries.length === 1 ? 'note' : 'notes'} saved</span>
+        <span style={styles.notesChevron}>{expanded ? '▾' : '▸'}</span>
+      </button>
+      {expanded && (
+        <div style={styles.notesList}>
+          {noteEntries.map(([id, text]) => (
+            <div key={id} style={styles.noteItem}>
+              <div style={styles.noteId}>{id}</div>
+              <div style={styles.noteText}>{text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -632,6 +677,50 @@ const styles = {
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
     fontSize: 11.5,
+    lineHeight: 1.5,
+  },
+  notesSummary: {
+    marginBottom: 12,
+    border: '1px solid var(--border)',
+    borderRadius: 7,
+    background: 'var(--bg-tertiary)',
+    overflow: 'hidden',
+  },
+  notesToggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    width: '100%',
+    padding: '8px 10px',
+    border: 'none',
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    fontSize: 11,
+    cursor: 'pointer',
+  },
+  notesChevron: {
+    marginLeft: 'auto',
+    color: 'var(--text-muted)',
+    fontSize: 10,
+  },
+  notesList: {
+    display: 'flex',
+    flexDirection: 'column',
+    borderTop: '1px solid var(--border)',
+  },
+  noteItem: {
+    padding: '7px 10px',
+    borderBottom: '1px solid var(--border)',
+  },
+  noteId: {
+    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
+    fontSize: 9.5,
+    color: 'var(--text-muted)',
+    marginBottom: 2,
+  },
+  noteText: {
+    fontSize: 11,
+    color: 'var(--text-secondary)',
     lineHeight: 1.5,
   },
   status: {
