@@ -20,8 +20,6 @@ export default function HomeScreen({
   return (
     <main className="home-screen" style={styles.screen}>
       <div style={styles.grid} aria-hidden="true" />
-      <div style={styles.glow} aria-hidden="true" />
-
       <section className="home-content" style={styles.content} aria-labelledby="home-heading">
         <div style={styles.kicker}><Sparkles size={12} /> Your coding home</div>
         <h1 ref={headingRef} tabIndex={-1} id="home-heading" style={styles.heading}>
@@ -87,16 +85,6 @@ const styles = {
     backgroundSize: '64px 64px',
     maskImage: 'linear-gradient(to bottom, black, transparent 76%)',
     animation: 'grid-reveal 1.2s ease-out 0.3s forwards',
-  },
-  glow: {
-    position: 'absolute',
-    zIndex: -2,
-    top: '-28%',
-    right: '-12%',
-    width: '60vw',
-    height: '60vw',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, var(--accent-soft), transparent 68%)',
   },
   content: {
     width: 'min(880px, calc(100% - 64px))',

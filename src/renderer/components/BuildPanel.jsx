@@ -13,8 +13,13 @@ import { LANGUAGES } from '../engine/languages';
 import { renderInline } from './InlineCode';
 import { insertIntoEditor } from '../engine/editorBridge';
 
-// Stack choices for the "Build with AI" box — Auto lets the AI pick.
-const AI_STACKS = ['auto', 'python', 'javascript', 'typescript'];
+// Stack choices for the "Build with AI" dropdown — Auto lets the AI pick.
+const AI_STACKS = [
+  { id: 'auto', label: 'Auto' },
+  { id: 'python', label: 'Python' },
+  { id: 'javascript', label: 'JavaScript' },
+  { id: 'typescript', label: 'TypeScript' },
+];
 
 // BuildPanel — the "Build" mode of the left panel.
 //
@@ -55,7 +60,6 @@ export default function BuildPanel({
   // The "Build with AI" box is collapsed behind a toggle by default so the
   // picker stays light — expand it only when you actually want to describe
   // an idea.
-  const [aiOpen, setAiOpen] = useState(false);
   // Sample Projects language filter — a compact icon button that opens a
   // dropdown menu of languages (replaces the old row of filter pills).
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -205,25 +209,13 @@ export default function BuildPanel({
           sample project below.
         </p>
 
-        {/* Build with AI — collapsed behind a toggle so the picker stays light */}
-        <div style={styles.aiToggleRow}>
-          <button
-            type="button"
-            style={styles.aiToggle}
-            onClick={() => setAiOpen((v) => !v)}
-            aria-expanded={aiOpen}
-            aria-controls="build-ai-box"
-          >
-            <Wand2 size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-            <span style={styles.aiToggleLabel}>Build with AI</span>
-            {aiOpen
-              ? <ChevronUp size={13} style={styles.aiToggleChevron} />
-              : <ChevronDown size={13} style={styles.aiToggleChevron} />}
-          </button>
-        </div>
-
-        {aiOpen && (
-          <div id="build-ai-box" style={styles.aiBox}>
+        {/* Build with AI — always-visible prompt box */}
+        <div className="ai-prompt-card" style={styles.aiPromptCard}>
+          <div style={styles.aiPromptHeader}>
+            <span style={styles.aiPromptIcon}><Wand2 size={14} /></span>
+            <span style={styles.aiPromptTitle}>Build with AI</span>
+          </div>
+          <div style={styles.aiPromptBody}>
             <textarea
               style={styles.aiInput}
               rows={2}
@@ -232,49 +224,50 @@ export default function BuildPanel({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAiBuild(); }
               }}
-              placeholder={'e.g. "build a calculator"'}
+              placeholder="Describe what you want to build…"
               aria-label="Describe the project to build"
             />
-            {/* Stack — pick the language the AI should build in (Auto lets it decide) */}
-            <div style={styles.aiStackRow}>
-              {AI_STACKS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  aria-pressed={aiStack === s}
-                  style={{ ...styles.langPill, ...(aiStack === s ? styles.langPillActive : {}) }}
-                  onClick={() => setAiStack(s)}
+            <div style={styles.aiPromptFooter}>
+              <div style={styles.aiLangSelect}>
+                <span style={styles.aiLangLabel}>Language</span>
+                <select
+                  className="ai-lang-dropdown"
+                  style={styles.aiLangDropdown}
+                  value={aiStack}
+                  onChange={(e) => setAiStack(e.target.value)}
+                  aria-label="Select language for AI build"
                 >
-                  {s === 'auto' ? 'Auto' : labelFor(s)}
-                </button>
-              ))}
-            </div>
-            <div style={styles.aiActions}>
+                  {AI_STACKS.map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+                <ChevronDown size={11} style={styles.aiLangChevron} />
+              </div>
               <button
                 type="button"
                 className="ui-primary-button"
-                style={{ ...styles.aiBtn, ...(aiLoading || !aiPrompt.trim() ? styles.aiBtnDisabled : {}) }}
+                style={{ ...styles.aiSendBtn, ...(aiLoading || !aiPrompt.trim() ? styles.aiSendBtnDisabled : {}) }}
                 onClick={handleAiBuild}
                 disabled={aiLoading || !aiPrompt.trim()}
               >
                 {aiLoading
-                  ? <><Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 5 }}>Planning…</span></>
-                  : <><Wand2 size={12} /><span style={{ marginLeft: 5 }}>Build it</span></>}
+                  ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /></>
+                  : <><ArrowRight size={13} /></>}
               </button>
             </div>
-            {aiError && (
-              <div style={styles.aiError} role="alert">
-                <AlertCircle size={11} style={{ flexShrink: 0 }} />
-                <span style={{ marginLeft: 5 }}>{aiError}</span>
-              </div>
-            )}
-            {!aiReady && !aiError && (
-              <button style={styles.subtleLink} onClick={onOpenSettings}>
-                Add a free Gemini key in Settings for AI builds →
-              </button>
-            )}
           </div>
-        )}
+          {aiError && (
+            <div style={styles.aiError} role="alert">
+              <AlertCircle size={11} style={{ flexShrink: 0 }} />
+              <span style={{ marginLeft: 5 }}>{aiError}</span>
+            </div>
+          )}
+          {!aiReady && !aiError && (
+            <button style={styles.subtleLink} onClick={onOpenSettings}>
+              Add a free Gemini key in Settings for AI builds →
+            </button>
+          )}
+        </div>
 
         {/* My Creations / Sample Projects — pill tabs: click one to see it */}
         <div style={styles.pillRow} role="tablist" aria-label="Project picker">
@@ -980,51 +973,114 @@ const styles = {
     outline: 'none',
     transition: 'border-color var(--motion-fast) var(--ease-out)',
   },
-  aiToggleRow: {
-    display: 'flex',
-  },
-  aiToggle: {
-    flex: 1,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-group)',
-    color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    fontWeight: 600,
-    padding: '9px 12px',
-    cursor: 'pointer',
-    transition: 'border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)',
-  },
-  aiToggleLabel: {
-    flex: 1,
-    textAlign: 'left',
-  },
-  aiToggleChevron: {
-    color: 'var(--text-muted)',
-    flexShrink: 0,
-  },
-  aiBox: {
+  aiPromptCard: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
-    padding: 14,
-    background: 'var(--bg-tertiary)',
+    gap: 0,
     border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-card)',
+    background: 'var(--bg-tertiary)',
+    overflow: 'hidden',
+    transition: 'border-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out)',
+  },
+  aiPromptHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 14px',
+    borderBottom: '1px solid var(--border)',
+  },
+  aiPromptIcon: {
+    width: 26,
+    height: 26,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 7,
+    background: 'var(--accent-soft)',
+    color: 'var(--accent)',
+    flexShrink: 0,
+  },
+  aiPromptTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: 'var(--text-primary)',
+  },
+  aiPromptBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0,
+  },
+  aiPromptFooter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    padding: '8px 12px',
+    borderTop: '1px solid var(--border)',
+  },
+  aiLangSelect: {
+    position: 'relative',
+    display: 'inline-flex',
+    alignItems: 'center',
+  },
+  aiLangLabel: {
+    fontSize: 10,
+    fontWeight: 600,
+    color: 'var(--text-muted)',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginRight: 6,
+  },
+  aiLangDropdown: {
+    appearance: 'none',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border)',
+    borderRadius: 6,
+    color: 'var(--text-primary)',
+    fontSize: 11.5,
+    fontWeight: 500,
+    padding: '5px 24px 5px 10px',
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'border-color var(--motion-fast) var(--ease-out)',
+    fontFamily: 'inherit',
+  },
+  aiLangChevron: {
+    position: 'absolute',
+    right: 8,
+    color: 'var(--text-muted)',
+    pointerEvents: 'none',
+  },
+  aiSendBtn: {
+    width: 32,
+    height: 32,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    background: 'var(--accent)',
+    border: 'none',
+    color: 'var(--text-on-accent)',
+    cursor: 'pointer',
+    flexShrink: 0,
+    transition: 'background var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out)',
+  },
+  aiSendBtnDisabled: {
+    background: 'var(--bg-elevated)',
+    color: 'var(--text-muted)',
+    opacity: 0.5,
+    cursor: 'not-allowed',
   },
   aiInput: {
-    background: 'var(--bg-input)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-group)',
+    background: 'transparent',
+    border: 'none',
     color: 'var(--text-primary)',
-    fontSize: 'var(--text-sm)',
-    padding: '10px 12px',
+    fontSize: 12.5,
+    padding: '12px 14px',
     resize: 'none',
     outline: 'none',
-    lineHeight: 1.5,
+    lineHeight: 1.55,
     fontFamily: 'inherit',
     transition: 'border-color var(--motion-fast) var(--ease-out)',
   },
@@ -1105,25 +1161,7 @@ const styles = {
     background: 'rgba(128,128,128,0.18)',
     color: 'inherit',
   },
-  langPill: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border)',
-    color: 'var(--text-muted)',
-    fontSize: 11,
-    fontWeight: 500,
-    padding: '5px 12px',
-    borderRadius: 999,
-    cursor: 'pointer',
-    transition: 'background var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out)',
-  },
-  langPillActive: {
-    background: 'var(--bg-elevated)',
-    borderColor: 'var(--text-secondary)',
-    color: 'var(--text-primary)',
-    fontWeight: 600,
-  },
+
   filterRow: {
     display: 'flex',
     alignItems: 'center',
