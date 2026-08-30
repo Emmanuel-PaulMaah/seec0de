@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, Code2, GraduationCap, Image, Sparkles } from 'lucide-react';
+import { ArrowRight, Code2, GraduationCap, Sparkles } from 'lucide-react';
 import BulletinSection from './BulletinSection';
 
 export default function HomeScreen({
@@ -20,6 +20,7 @@ export default function HomeScreen({
   return (
     <main className="home-screen" style={styles.screen}>
       <div style={styles.grid} aria-hidden="true" />
+      <div style={styles.glowOrb} aria-hidden="true" />
       <section className="home-content" style={styles.content} aria-labelledby="home-heading">
         <div style={styles.kicker}><Sparkles size={12} /> Your coding home</div>
         <h1 ref={headingRef} tabIndex={-1} id="home-heading" style={styles.heading}>
@@ -37,7 +38,7 @@ export default function HomeScreen({
               <strong style={styles.cardTitle}>{hasActiveLesson ? 'Continue learning' : 'Start learning'}</strong>
               <span style={styles.cardText}>Lessons, activities, feedback, and saved progress.</span>
             </span>
-            <ArrowRight size={17} style={styles.arrow} />
+            <ArrowRight size={16} style={styles.arrow} />
           </button>
 
           <button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenWorkspace}>
@@ -47,7 +48,7 @@ export default function HomeScreen({
               <strong style={styles.cardTitle}>Open Workspace</strong>
               <span style={styles.cardText}>Files, editor, terminal, runner, and explanations.</span>
             </span>
-            <ArrowRight size={17} style={styles.arrow} />
+            <ArrowRight size={16} style={styles.arrow} />
           </button>
         </div>
 
@@ -85,6 +86,18 @@ const styles = {
     backgroundSize: '64px 64px',
     maskImage: 'linear-gradient(to bottom, black, transparent 76%)',
     animation: 'grid-reveal 1.2s ease-out 0.3s forwards',
+  },
+  glowOrb: {
+    position: 'absolute',
+    top: '-20%',
+    left: '30%',
+    width: '40%',
+    height: '50%',
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(200, 255, 77, 0.04) 0%, transparent 70%)',
+    filter: 'blur(80px)',
+    zIndex: -2,
+    pointerEvents: 'none',
   },
   content: {
     width: 'min(880px, calc(100% - 64px))',
@@ -131,8 +144,8 @@ const styles = {
     minWidth: 0,
     padding: 16,
     border: '1px solid var(--border-strong)',
-    borderRadius: 10,
-    background: 'color-mix(in srgb, var(--bg-elevated) 90%, transparent)',
+    borderRadius: 'var(--radius-lg)',
+    background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     textAlign: 'left',
   },
@@ -143,11 +156,10 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     border: '1px solid var(--border)',
-    borderRadius: 8,
+    borderRadius: 'var(--radius-md)',
     background: 'var(--accent-soft)',
     color: 'var(--accent)',
   },
-  postcardIcon: { color: 'var(--string)', background: 'color-mix(in srgb, var(--string) 14%, transparent)' },
   cardCopy: {
     minWidth: 0,
     display: 'flex',

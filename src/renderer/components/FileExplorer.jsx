@@ -1,15 +1,27 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2, Copy, Scissors, Clipboard } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, forwardRef } from 'react';
+import { Folder, FolderOpen, File, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2, Copy, Scissors, Clipboard } from 'lucide-react';
 import { basename, dirname, joinPath } from '../engine/fileLanguage';
+import { FileTree, FileTreeFolder, FileTreeFile } from './motion/file-tree';
 
-// A small recursive file tree. Keeps state per-folder (open/closed + entries)
-// in a flat map keyed by absolute path, so we don't re-fetch on every render.
-//
-// VS Code-style: right-click any file/folder for a context menu with
-// Rename, Copy Path, Delete, New File, New Folder, etc.
+// Migrated to beUI FileTree — declarative tree with spring animations,
+// keyboard navigation, and a shared-layout hover pill. Context menu,
+// create/rename/delete overlays remain as before.
 
 const NEW_FILE   = 'file';
 const NEW_FOLDER = 'folder';
+
+// Map file extensions to lucide icons with color
+function iconForFile(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const colorMap = {
+    js: 'text-yellow-400', jsx: 'text-sky-400', ts: 'text-blue-400', tsx: 'text-sky-400',
+    py: 'text-green-400', rb: 'text-red-400', go: 'text-cyan-400', rs: 'text-orange-400',
+    css: 'text-violet-400', html: 'text-orange-300', json: 'text-amber-400',
+    md: 'text-muted-foreground', txt: 'text-muted-foreground',
+  };
+  const cls = colorMap[ext] || 'text-muted-foreground';
+  return <File size={14} className={cls} />;
+}
 
 export default function FileExplorer({
   rootPath,
@@ -32,7 +44,7 @@ export default function FileExplorer({
   const draftRef = useRef(null);
 
   // ---- context menu ---------------------------------------------------
-  const [contextMenu, setContextMenu] = useState(null); // { x, y, path, name, isDir, parentPath }
+  const [contextMenu, setContextMenu] = useState(null);
   const contextMenuRef = useRef(null);
   const [hoveredPath, setHoveredPath] = useState(null);
 
@@ -40,7 +52,6 @@ export default function FileExplorer({
     setContextMenu(null);
   }, []);
 
-  // Close context menu on click outside
   useEffect(() => {
     if (!contextMenu) return;
     const handler = (e) => {
@@ -48,7 +59,6 @@ export default function FileExplorer({
         setContextMenu(null);
       }
     };
-    // Delay so the opening click doesn't immediately close it
     const timer = setTimeout(() => {
       window.addEventListener('mousedown', handler);
     }, 0);
@@ -95,7 +105,6 @@ export default function FileExplorer({
     }
   }, [renaming]);
 
-  // F2 renames the context-menu target (or clears menu on Escape)
   useEffect(() => {
     const onKey = (e) => {
       if (creating || renaming || deleting) return;
@@ -119,6 +128,33 @@ export default function FileExplorer({
       ...prev,
       [dirPath]: { ...prev[dirPath], open: !prev[dirPath].open },
     }));
+  }, [tree, loadDir]);
+
+  // ---- beUI FileTree expanded state -----------------------------------
+  const expandedIds = useMemo(() => {
+    const ids = [];
+    for (const [path, node] of Object.entries(tree)) {
+      if (node.open) ids.push(path);
+    }
+    return ids;
+  }, [tree]);
+
+  const handleExpandedChange = useCallback((nextExpanded) => {
+    // Find newly expanded dirs that need loading
+    for (const id of nextExpanded) {
+      if (!tree[id]?.entries) {
+        loadDir(id);
+      }
+    }
+    setTree((prev) => {
+      const next = { ...prev };
+      for (const [path, node] of Object.entries(next)) {
+        if (node) {
+          next[path] = { ...node, open: nextExpanded.includes(path) };
+        }
+      }
+      return next;
+    });
   }, [tree, loadDir]);
 
   // ---- create ---------------------------------------------------------
@@ -250,17 +286,13 @@ export default function FileExplorer({
 
   // ---- copy path ------------------------------------------------------
   const copyPath = useCallback(async (path) => {
-    try {
-      await navigator.clipboard.writeText(path);
-    } catch { /* clipboard blocked */ }
+    try { await navigator.clipboard.writeText(path); } catch { /* clipboard blocked */ }
   }, []);
 
   const copyRelativePath = useCallback(async (path) => {
     if (!rootPath) return;
     const rel = path.startsWith(rootPath) ? path.slice(rootPath.length + 1) : path;
-    try {
-      await navigator.clipboard.writeText(rel);
-    } catch { /* clipboard blocked */ }
+    try { await navigator.clipboard.writeText(rel); } catch { /* clipboard blocked */ }
   }, [rootPath]);
 
   // ---- context menu handler -------------------------------------------
@@ -272,85 +304,44 @@ export default function FileExplorer({
     setContextMenu({ x: e.clientX, y: e.clientY, path, name, isDir, parentPath });
   }, [rootPath]);
 
-  // ---- drag & drop (move) ---------------------------------------------
+  // ---- build declarative tree for beUI FileTree ----------------------
+  const fileTreeChildren = useMemo(() => {
+    if (!rootPath || !tree[rootPath]?.entries) return null;
 
-  const [draggingPaths, setDraggingPaths] = useState(null);
-  const [dropTargetPath, setDropTargetPath] = useState(null);
-
-  const { visiblePaths, pathInfo } = useMemo(() => {
-    const paths = [];
-    const info = new Map();
-    const walk = (dirPath) => {
+    function buildNodes(dirPath, depth) {
       const entries = tree[dirPath]?.entries;
-      if (!entries) return;
-      for (const entry of entries) {
-        paths.push(entry.path);
-        info.set(entry.path, { name: entry.name, isDir: entry.isDir, parentPath: dirPath });
-        if (entry.isDir && tree[entry.path]?.open) walk(entry.path);
-      }
-    };
-    if (rootPath) walk(rootPath);
-    return { visiblePaths: paths, pathInfo: info };
-  }, [tree, rootPath]);
-
-  const isValidDropTarget = useCallback((dirPath) => {
-    if (!draggingPaths || draggingPaths.length === 0) return false;
-    return draggingPaths.every((path) => {
-      if (path === dirPath) return false;
-      if (dirPath.startsWith(`${path}/`) || dirPath.startsWith(`${path}\\`)) return false;
-      const parent = pathInfo.get(path)?.parentPath ?? (dirname(path) || rootPath);
-      if (parent === dirPath) return false;
-      return true;
-    });
-  }, [draggingPaths, pathInfo, rootPath]);
-
-  const handleDragStart = useCallback((event, path) => {
-    setDraggingPaths([path]);
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', path);
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    setDraggingPaths(null);
-    setDropTargetPath(null);
-  }, []);
-
-  const handleDragOver = useCallback((event, dirPath) => {
-    event.preventDefault();
-    const valid = isValidDropTarget(dirPath);
-    event.dataTransfer.dropEffect = valid ? 'move' : 'none';
-    setDropTargetPath(valid ? dirPath : null);
-  }, [isValidDropTarget]);
-
-  const handleDragLeave = useCallback((dirPath) => {
-    setDropTargetPath((prev) => (prev === dirPath ? null : prev));
-  }, []);
-
-  const handleDrop = useCallback(async (event, dirPath) => {
-    event.preventDefault();
-    const paths = draggingPaths;
-    setDraggingPaths(null);
-    setDropTargetPath(null);
-    if (!paths || !isValidDropTarget(dirPath)) return;
-    try {
-      const parentsToReload = new Set([dirPath]);
-      const renamedPairs = [];
-      for (const path of paths) {
-        const info = pathInfo.get(path);
-        const sourceParent = info?.parentPath ?? (dirname(path) || rootPath);
-        const nextPath = joinPath(dirPath, info?.name ?? basename(path));
-        await window.seecode.fs.rename(path, nextPath);
-        parentsToReload.add(sourceParent);
-        renamedPairs.push([path, nextPath]);
-      }
-      await Promise.all(Array.from(parentsToReload).map((dir) => loadDir(dir)));
-      setTree((prev) => ({ ...prev, [dirPath]: { ...prev[dirPath], open: true } }));
-      const movedActive = renamedPairs.find(([oldPath]) => oldPath === activeFilePath);
-      if (movedActive) onOpenFile?.(movedActive[1]);
-    } catch (err) {
-      setError(err.message || 'Failed to move.');
+      if (!entries) return [];
+      return entries.map((entry) => {
+        if (entry.isDir) {
+          const children = tree[entry.path]?.open ? buildNodes(entry.path, depth + 1) : [];
+          return (
+            <FileTreeFolder
+              key={entry.path}
+              value={entry.path}
+              name={entry.name}
+              icon={tree[entry.path]?.open
+                ? <FolderOpen size={14} className="text-foreground" />
+                : <Folder size={14} className="text-muted-foreground" />}
+            >
+              {children}
+            </FileTreeFolder>
+          );
+        }
+        const isRenaming = renaming?.path === entry.path;
+        return (
+          <FileTreeFile
+            key={entry.path}
+            value={entry.path}
+            name={entry.name}
+            icon={iconForFile(entry.name)}
+            className={entry.path === activeFilePath ? 'bg-[var(--active-row-bg)]! text-[var(--text-on-accent)]!' : ''}
+          />
+        );
+      });
     }
-  }, [draggingPaths, isValidDropTarget, pathInfo, rootPath, loadDir, activeFilePath, onOpenFile]);
+
+    return buildNodes(rootPath, 0);
+  }, [rootPath, tree, activeFilePath, renaming]);
 
   // ---- render ---------------------------------------------------------
 
@@ -372,25 +363,11 @@ export default function FileExplorer({
 
   return (
     <div style={styles.panel}>
-      <div
-        style={{
-          ...styles.header,
-          ...(dropTargetPath === rootPath ? styles.headerDropTarget : {}),
-        }}
-        onDragOver={(e) => handleDragOver(e, rootPath)}
-        onDragLeave={() => handleDragLeave(rootPath)}
-        onDrop={(e) => handleDrop(e, rootPath)}
-      >
-        <span style={{
-          ...styles.headerLabel,
-          ...(draggingPaths ? { pointerEvents: 'none' } : {}),
-        }}>
+      <div style={styles.header}>
+        <span style={styles.headerLabel}>
           {basename(rootPath) || rootPath}
         </span>
-        <div style={{
-          ...styles.headerActions,
-          ...(draggingPaths ? { pointerEvents: 'none' } : {}),
-        }}>
+        <div style={styles.headerActions}>
           <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
             <Plus size={12} />
           </button>
@@ -448,72 +425,40 @@ export default function FileExplorer({
 
       {error && <div style={styles.error}>{error}</div>}
 
+      {/* beUI FileTree — spring-animated, keyboard-navigable */}
       <div
-        style={{
-          ...styles.tree,
-          ...(dropTargetPath === rootPath && !tree[rootPath]?.open ? styles.treeDropTarget : {}),
-        }}
+        style={styles.tree}
         onContextMenu={(e) => {
-          // Right-click on empty space: context menu for creating new items
           if (e.target === e.currentTarget) {
             e.preventDefault();
             setContextMenu({
-              x: e.clientX,
-              y: e.clientY,
-              path: rootPath,
-              name: basename(rootPath) || rootPath,
-              isDir: true,
-              parentPath: rootPath,
-              isBackground: true,
+              x: e.clientX, y: e.clientY,
+              path: rootPath, name: basename(rootPath) || rootPath,
+              isDir: true, parentPath: rootPath, isBackground: true,
             });
           }
         }}
-        onDragOver={(e) => {
-          // Empty space below folders → drop to project root
-          if (e.target === e.currentTarget) {
-            handleDragOver(e, rootPath);
-          }
-        }}
-        onDragLeave={(e) => {
-          if (e.target === e.currentTarget) {
-            handleDragLeave(rootPath);
-          }
-        }}
-        onDrop={(e) => {
-          if (e.target === e.currentTarget) {
-            handleDrop(e, rootPath);
-          }
-        }}
       >
-        <TreeNode
-          path={rootPath}
-          name={basename(rootPath) || rootPath}
-          isDir
-          depth={0}
-          tree={tree}
-          onToggleDir={toggleDir}
-          onOpenFile={onOpenFile}
-          activeFilePath={activeFilePath}
-          selectedDir={selectedDir}
-          onSelectDir={setSelectedDir}
-          isRoot
-          renaming={renaming}
-          renameDraft={renameDraft}
-          renameRef={renameRef}
-          onRenameDraftChange={setRenameDraft}
-          onRenameKey={onRenameKey}
-          onRenameBlur={commitRename}
-          draggingPaths={draggingPaths}
-          dropTargetPath={dropTargetPath}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onContextMenu={openContextMenu}
-          hoveredPath={hoveredPath}
-          onHoverPath={setHoveredPath}
-        />
+        {fileTreeChildren ? (
+          <FileTree
+            value={activeFilePath || null}
+            onValueChange={(path) => {
+              // Only open files, not directories (dirs toggle via expand)
+              const node = tree[path];
+              if (!node) onOpenFile?.(path);
+            }}
+            expandedIds={expandedIds}
+            onExpandedChange={handleExpandedChange}
+            ariaLabel="Project files"
+            classNames={{
+              item: 'rounded-md',
+            }}
+          >
+            {fileTreeChildren}
+          </FileTree>
+        ) : (
+          <div style={styles.loading}>Loading…</div>
+        )}
       </div>
 
       {/* ---- Context menu (VS Code style) ---- */}
@@ -547,38 +492,30 @@ export default function FileExplorer({
 }
 
 // ---------------------------------------------------------------------------
-// ContextMenu — floating right-click menu, positioned at the cursor.
-// Styled after VS Code's file explorer context menu.
+// ContextMenu — floating right-click menu
 // ---------------------------------------------------------------------------
-
-import { forwardRef } from 'react';
 
 const ContextMenu = forwardRef(function ContextMenu({
   x, y, isDir, isBackground, menuPath, menuName, parentPath,
   onClose, onNewFile, onNewFolder, onRename, onDelete,
   onCopyPath, onCopyRelativePath,
 }, ref) {
-  // Build menu items based on what was right-clicked
   const items = [];
-
   if (isDir) {
     items.push({ label: 'New File…', icon: <File size={12} />, action: () => onNewFile(menuPath) });
     items.push({ label: 'New Folder…', icon: <FolderPlus size={12} />, action: () => onNewFolder(menuPath) });
     items.push({ type: 'separator' });
   }
-
   if (!isBackground) {
     items.push({ label: 'Rename', icon: <Pencil size={12} />, action: onRename, shortcut: 'F2' });
     items.push({ label: 'Delete', icon: <Trash2 size={12} />, action: onDelete });
     items.push({ type: 'separator' });
   }
-
   items.push({ label: 'Copy Path', icon: <Copy size={12} />, action: onCopyPath });
   if (!isBackground) {
     items.push({ label: 'Copy Relative Path', icon: <Copy size={12} />, action: onCopyRelativePath });
   }
 
-  // Position: flip if menu would go off-screen
   const menuWidth = 220;
   const menuHeight = items.length * 28;
   const finalX = x + menuWidth > window.innerWidth ? x - menuWidth : x;
@@ -606,157 +543,6 @@ const ContextMenu = forwardRef(function ContextMenu({
     </div>
   );
 });
-
-// ---------------------------------------------------------------------------
-// TreeNode — recursive tree row renderer
-// ---------------------------------------------------------------------------
-
-function TreeNode({
-  path, name, isDir, depth, tree, onToggleDir, onOpenFile, activeFilePath, selectedDir, onSelectDir, isRoot,
-  renaming, renameDraft, renameRef, onRenameDraftChange, onRenameKey, onRenameBlur,
-  draggingPaths, dropTargetPath, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
-  onContextMenu, hoveredPath, onHoverPath,
-}) {
-  const node = isDir ? tree[path] : null;
-  const open = !!node?.open;
-  const entries = node?.entries;
-
-  if (isRoot) {
-    if (!entries) return <div style={styles.loading}>Loading…</div>;
-    return (
-      <>
-        {entries.map((entry) => (
-          <TreeNode
-            key={entry.path}
-            path={entry.path}
-            name={entry.name}
-            isDir={entry.isDir}
-            depth={0}
-            tree={tree}
-            onToggleDir={onToggleDir}
-            onOpenFile={onOpenFile}
-            activeFilePath={activeFilePath}
-            selectedDir={selectedDir}
-            onSelectDir={onSelectDir}
-            renaming={renaming}
-            renameDraft={renameDraft}
-            renameRef={renameRef}
-            onRenameDraftChange={onRenameDraftChange}
-            onRenameKey={onRenameKey}
-            onRenameBlur={onRenameBlur}
-            draggingPaths={draggingPaths}
-            dropTargetPath={dropTargetPath}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            onContextMenu={onContextMenu}
-            hoveredPath={hoveredPath}
-            onHoverPath={onHoverPath}
-          />
-        ))}
-      </>
-    );
-  }
-
-  const isActive = !isDir && path === activeFilePath;
-  const isSelectedDir = isDir && path === selectedDir;
-  const isRenaming = renaming?.path === path;
-  const isDragging = !!draggingPaths?.includes(path);
-  const isDropTarget = isDir && dropTargetPath === path;
-  const isHovered = hoveredPath === path;
-
-  return (
-    <div>
-      <button
-        className="ui-tree-row"
-        style={{
-          ...styles.row,
-          ...(isActive ? styles.rowActive : {}),
-          ...(isSelectedDir ? styles.rowSelected : {}),
-          ...(isDragging ? styles.rowDragging : {}),
-          ...(isDropTarget ? styles.rowDropTarget : {}),
-          ...(isHovered && !isActive && !isSelectedDir ? styles.rowHover : {}),
-          paddingLeft: 8 + depth * 12,
-        }}
-        draggable={!isRenaming}
-        onDragStart={(e) => onDragStart(e, path)}
-        onDragEnd={onDragEnd}
-        onDragOver={isDir ? (e) => onDragOver(e, path) : undefined}
-        onDragLeave={isDir ? () => onDragLeave(path) : undefined}
-        onDrop={isDir ? (e) => onDrop(e, path) : undefined}
-        onContextMenu={(e) => onContextMenu(e, path, name, isDir)}
-        onMouseEnter={() => onHoverPath?.(path)}
-        onMouseLeave={() => onHoverPath?.((prev) => prev === path ? null : prev)}
-        onClick={(e) => {
-          if (isDir) {
-            onSelectDir(path);
-            onToggleDir(path);
-          } else {
-            onOpenFile(path);
-          }
-        }}
-        title={path}
-      >
-        {isDir ? (
-          open ? <ChevronDown size={12} style={styles.chev} /> : <ChevronRight size={12} style={styles.chev} />
-        ) : (
-          <span style={styles.chev} />
-        )}
-        {isDir ? (
-          open ? <FolderOpen size={13} style={styles.icon} /> : <Folder size={13} style={styles.icon} />
-        ) : (
-          <File size={13} style={styles.icon} />
-        )}
-        {isRenaming ? (
-          <input
-            ref={renameRef}
-            value={renameDraft}
-            onChange={(e) => onRenameDraftChange(e.target.value)}
-            onKeyDown={onRenameKey}
-            onBlur={onRenameBlur}
-            onClick={(e) => e.stopPropagation()}
-            style={styles.renameInput}
-          />
-        ) : (
-          <span style={styles.name}>{name}</span>
-        )}
-      </button>
-      {isDir && open && entries && entries.map((entry) => (
-        <TreeNode
-          key={entry.path}
-          path={entry.path}
-          name={entry.name}
-          isDir={entry.isDir}
-          depth={depth + 1}
-          tree={tree}
-          onToggleDir={onToggleDir}
-          onOpenFile={onOpenFile}
-          activeFilePath={activeFilePath}
-          selectedDir={selectedDir}
-          onSelectDir={onSelectDir}
-          renaming={renaming}
-          renameDraft={renameDraft}
-          renameRef={renameRef}
-          onRenameDraftChange={onRenameDraftChange}
-          onRenameKey={onRenameKey}
-          onRenameBlur={onRenameBlur}
-          draggingPaths={draggingPaths}
-          dropTargetPath={dropTargetPath}
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDrop={onDrop}
-          onContextMenu={onContextMenu}
-          hoveredPath={hoveredPath}
-          onHoverPath={onHoverPath}
-        />
-      ))}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // styles
@@ -796,11 +582,6 @@ const styles = {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
-  headerDropTarget: {
-    background: 'var(--accent-soft)',
-    outline: '1px dashed var(--border-focus)',
-    outlineOffset: -1,
-  },
   headerActions: {
     display: 'flex',
     gap: 2,
@@ -816,19 +597,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-
-  renameInput: {
-    flex: 1,
-    minWidth: 0,
-    background: 'var(--bg-input)',
-    border: '1px solid var(--border-focus)',
-    borderRadius: 3,
-    color: 'var(--text-primary)',
-    fontSize: 12,
-    padding: '2px 5px',
-    outline: 'none',
-    fontFamily: 'inherit',
   },
 
   draftRow: {
@@ -928,10 +696,7 @@ const styles = {
   tree: {
     flex: 1,
     overflow: 'auto',
-    padding: '4px 0',
-  },
-  treeDropTarget: {
-    background: 'var(--accent-soft)',
+    padding: '4px',
   },
   loading: {
     padding: 8,
@@ -944,55 +709,6 @@ const styles = {
     color: 'var(--danger-text)',
     background: 'rgba(224, 108, 117, 0.08)',
     borderBottom: '1px solid var(--border)',
-  },
-  row: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-primary)',
-    minHeight: 'var(--control-compact)',
-    fontSize: 'var(--text-sm)',
-    padding: '0 var(--space-2)',
-    textAlign: 'left',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  },
-  rowActive: {
-    background: 'var(--active-row-bg)',
-    color: 'var(--text-on-accent)',
-  },
-  rowSelected: {
-    background: 'var(--accent-soft)',
-  },
-  rowDragging: {
-    opacity: 0.5,
-  },
-  rowDropTarget: {
-    background: 'var(--accent-soft)',
-    outline: '1px dashed var(--border-focus)',
-    outlineOffset: -1,
-  },
-  rowHover: {
-    background: 'var(--bg-tertiary)',
-  },
-  chev: {
-    width: 12,
-    height: 12,
-    flexShrink: 0,
-    color: 'var(--text-muted)',
-  },
-  icon: {
-    flexShrink: 0,
-    color: 'var(--text-secondary)',
-  },
-  name: {
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
   },
 
   // ---- context menu ---------------------------------------------------

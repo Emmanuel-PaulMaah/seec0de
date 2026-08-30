@@ -2,8 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   PanelLeft, PanelLeftClose, Terminal as TermIcon,
   Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap, House, CircleHelp,
-  Bell, Clock3,
+  Bell, Clock3, Code2,
 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Tooltip } from './motion/tooltip';
+import { ThemeToggle } from './motion/theme-toggle';
 import UpdatePill from './UpdatePill';
 import { Avatar } from './ProfileForm';
 
@@ -11,8 +14,7 @@ import { Avatar } from './ProfileForm';
 // centre, and the update pill + settings gear on the right. Stays as a
 // drag region by default; interactive elements opt out via WebkitAppRegion.
 //
-// The live-preview toggle lives on the panel itself (collapse / expand
-// rail beside the editor) — there's no duplicate eye button up here.
+// beUI-inspired: glass surfaces, refined spacing, premium brand treatment.
 
 export default function TitleBar({
   terminalVisible = false,
@@ -30,13 +32,17 @@ export default function TitleBar({
   onContinueReminder,
   mode = 'workspace',
   onModeChange,
+  colorMode = 'dark',
+  onToggleColorMode,
 }) {
   return (
     <div style={styles.titleBar}>
-      {/* Left side: workspace panel toggles */}
+      {/* Left side: brand + workspace panel toggles */}
       <div style={styles.side}>
-        <span style={styles.logo}>⟨/⟩</span>
-        <span style={styles.title}>seec0de beta</span>
+        <div style={styles.brand}>
+          <span style={styles.brandIcon}><Code2 size={13} /></span>
+          <span style={styles.brandName}>seec0de</span>
+        </div>
         {onToggleTerminal && (
           <ToolBtn
             onClick={onToggleTerminal}
@@ -49,45 +55,56 @@ export default function TitleBar({
         )}
       </div>
 
-      {/* Centre: brand */}
+      {/* Centre: mode switcher with beUI spring indicator */}
       <div style={styles.center}>
         {onModeChange && (
           <div data-tour="mode-switch" style={styles.modeSwitch} aria-label="Application mode">
-            <button
-              type="button"
-              className="ui-segmented-button"
-              style={{ ...styles.modeBtn, ...(mode === 'home' ? styles.modeBtnActive : {}) }}
-              aria-pressed={mode === 'home'}
-              onClick={() => onModeChange('home')}
-            >
-              <House size={11} />
-              Home
-            </button>
-            <button
-              type="button"
-              className="ui-segmented-button"
-              style={{ ...styles.modeBtn, ...(mode === 'workspace' ? styles.modeBtnActive : {}) }}
-              aria-pressed={mode === 'workspace'}
-              onClick={() => onModeChange('workspace')}
-            >
-              Workspace
-            </button>
-            <button
-              type="button"
-              className="ui-segmented-button"
-              style={{ ...styles.modeBtn, ...(mode === 'learn' ? styles.modeBtnActive : {}) }}
-              aria-pressed={mode === 'learn'}
-              onClick={() => onModeChange('learn')}
-            >
-              <GraduationCap size={11} />
-              Learn
-            </button>
+            {['home', 'workspace', 'learn'].map((id) => {
+              const labels = { home: 'Home', workspace: 'Workspace', learn: 'Learn' };
+              const icons = { home: <House size={11} />, workspace: null, learn: <GraduationCap size={11} /> };
+              const active = mode === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className="ui-segmented-button"
+                  style={{ ...styles.modeBtn, position: 'relative' }}
+                  aria-pressed={active}
+                  onClick={() => onModeChange(id)}
+                >
+                  {active && (
+                    <motion.span
+                      layoutId="mode-indicator"
+                      layout="position"
+                      style={styles.modeIndicator}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span style={{ position: 'relative', zIndex: 1, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {icons[id]}
+                    {labels[id]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Right side: update pill + settings + profile */}
+      {/* Right side: color mode switch + update pill + settings + profile */}
       <div style={{ ...styles.side, justifyContent: 'flex-end' }}>
+        {onToggleColorMode && (
+          <span style={{ WebkitAppRegion: 'no-drag', display: 'inline-flex' }}>
+            <ThemeToggle
+              variant="circle-blur"
+              start="bottom-right"
+              colorMode={colorMode}
+              onColorModeChange={onToggleColorMode}
+              className="h-7 w-7 rounded-full border border-[var(--border)] bg-[var(--bg-tertiary)] p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              iconClassName="h-3.5 w-3.5"
+            />
+          </span>
+        )}
         {onStartTour && (
           <ToolBtn
             onClick={onStartTour}
@@ -216,19 +233,22 @@ function formatReminderDate(value) {
 }
 
 function ToolBtn({ onClick, active = false, title, ariaLabel, children }) {
-  return (
-    <button
+  const btn = (
+    <motion.button
       type="button"
       className="ui-icon-button"
       onClick={onClick}
-      title={title}
       aria-label={ariaLabel}
       aria-pressed={active}
+      whileTap={{ scale: 0.92 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
       style={{ ...styles.toggleBtn, ...(active ? styles.toggleBtnActive : {}) }}
     >
       {children}
-    </button>
+    </motion.button>
   );
+  if (!title) return btn;
+  return <Tooltip content={title}>{btn}</Tooltip>;
 }
 
 // ProfileMenu — the signed-in identity chip + dropdown. Shows the active
@@ -306,14 +326,10 @@ const styles = {
     zIndex: 20,
     height: 'var(--panel-header-height)',
     background: 'var(--bg-secondary)',
-    borderBottom: 'none',
-    backgroundImage: 'linear-gradient(to right, transparent, var(--border) 15%, var(--border) 85%, transparent)',
-    backgroundSize: '100% 1px',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'bottom',
+    borderBottom: '1px solid var(--border)',
     display: 'flex',
     alignItems: 'center',
-    padding: '0 var(--space-2)',
+    padding: '0 var(--space-3)',
     WebkitAppRegion: 'drag',
     userSelect: 'none',
     flexShrink: 0,
@@ -323,7 +339,7 @@ const styles = {
     flex: '1 1 0',
     display: 'flex',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
   },
   center: {
     display: 'flex',
@@ -331,16 +347,30 @@ const styles = {
     gap: 'var(--space-2)',
     color: 'var(--text-secondary)',
   },
-  logo: {
-    fontSize: 'var(--text-sm)',
-    color: 'var(--text-secondary)',
-    fontFamily: 'var(--font-mono)',
+  brand: {
+    WebkitAppRegion: 'no-drag',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '2px 8px 2px 4px',
+    borderRadius: 'var(--radius-sm)',
+    marginRight: 4,
   },
-  title: {
-    fontSize: 'var(--text-sm)',
-    color: 'var(--text-secondary)',
-    letterSpacing: 0.5,
-    fontWeight: 500,
+  brandIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 22,
+    height: 22,
+    borderRadius: 'var(--radius-sm)',
+    background: 'var(--accent)',
+    color: 'var(--text-on-accent)',
+  },
+  brandName: {
+    fontSize: 12,
+    color: 'var(--text-primary)',
+    fontWeight: 700,
+    letterSpacing: '-0.02em',
   },
   toggleBtn: {
     WebkitAppRegion: 'no-drag',
@@ -394,11 +424,13 @@ const styles = {
     flexDirection: 'column',
     overflow: 'hidden',
     border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-card)',
-    background: 'var(--bg-elevated)',
+    borderRadius: 'var(--radius-lg)',
+    background: 'var(--glass-bg-heavy)',
+    backdropFilter: 'blur(var(--glass-blur-heavy))',
+    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
     boxShadow: 'var(--shadow-lg)',
     WebkitAppRegion: 'no-drag',
-    animation: 'seec0de-pop-in var(--motion-base) var(--ease-out)',
+    animation: 'seec0de-pop-in var(--motion-base) var(--ease-spring)',
   },
   reminderHeader: { padding: '12px 14px', borderBottom: '1px solid var(--border)' },
   reminderHeading: { display: 'block', color: 'var(--text-primary)', fontSize: 12.5 },
@@ -420,19 +452,19 @@ const styles = {
     alignItems: 'center',
     gap: 2,
     marginLeft: 'var(--space-1)',
-    padding: 2,
+    padding: 3,
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-group)',
+    borderRadius: 'var(--radius-full)',
   },
   modeBtn: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 4,
     minHeight: 24,
-    padding: '0 var(--space-2)',
+    padding: '0 var(--space-3)',
     border: 'none',
-    borderRadius: 'var(--radius-control)',
+    borderRadius: 'var(--radius-full)',
     background: 'transparent',
     color: 'var(--text-muted)',
     fontSize: 'var(--text-sm)',
@@ -443,6 +475,14 @@ const styles = {
     background: 'var(--bg-elevated)',
     color: 'var(--text-primary)',
     boxShadow: 'var(--shadow-sm)',
+  },
+  modeIndicator: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: 'var(--radius-full)',
+    background: 'var(--bg-elevated)',
+    boxShadow: 'var(--shadow-sm)',
+    zIndex: 0,
   },
 
   profileWrap: {
@@ -459,7 +499,7 @@ const styles = {
     minHeight: 'var(--control-compact)',
     background: 'transparent',
     border: '1px solid var(--border)',
-    borderRadius: 999,
+    borderRadius: 'var(--radius-full)',
     color: 'var(--text-secondary)',
     padding: '2px var(--space-2) 2px 2px',
     maxWidth: 160,
@@ -479,13 +519,15 @@ const styles = {
     right: 0,
     width: 216,
     zIndex: 1000,
-    background: 'var(--bg-elevated)',
+    background: 'var(--glass-bg-heavy)',
+    backdropFilter: 'blur(var(--glass-blur-heavy))',
+    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
     border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-card)',
+    borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow-lg)',
     padding: 6,
     WebkitAppRegion: 'no-drag',
-    animation: 'seec0de-pop-in var(--motion-base) var(--ease-out)',
+    animation: 'seec0de-pop-in var(--motion-base) var(--ease-spring)',
   },
   menuHeader: {
     display: 'flex',

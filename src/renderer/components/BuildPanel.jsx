@@ -10,6 +10,7 @@ import {
 } from '../data/buildProjects';
 import { hasApiKey, subscribeHasApiKey, generateBuildProjectWithAI } from '../engine/aiService';
 import { LANGUAGES } from '../engine/languages';
+import { PromptInput } from './agents/prompt-input';
 import { renderInline } from './InlineCode';
 import { insertIntoEditor } from '../engine/editorBridge';
 
@@ -210,60 +211,32 @@ export default function BuildPanel({
         </p>
 
         {/* Build with AI — always-visible prompt box */}
-        <div className="ai-prompt-card" style={styles.aiPromptCard}>
-          <div style={styles.aiPromptHeader}>
-            <span style={styles.aiPromptIcon}><Wand2 size={14} /></span>
-            <span style={styles.aiPromptTitle}>Build with AI</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 26, height: 26, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, background: 'var(--accent-soft)', color: 'var(--accent)', flexShrink: 0 }}><Wand2 size={14} /></span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Build with AI</span>
           </div>
-          <div style={styles.aiPromptBody}>
-            <textarea
-              style={styles.aiInput}
-              rows={2}
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAiBuild(); }
-              }}
-              placeholder="Describe what you want to build…"
-              aria-label="Describe the project to build"
-            />
-            <div style={styles.aiPromptFooter}>
-              <div style={styles.aiLangSelect}>
-                <span style={styles.aiLangLabel}>Language</span>
-                <select
-                  className="ai-lang-dropdown"
-                  style={styles.aiLangDropdown}
-                  value={aiStack}
-                  onChange={(e) => setAiStack(e.target.value)}
-                  aria-label="Select language for AI build"
-                >
-                  {AI_STACKS.map((s) => (
-                    <option key={s.id} value={s.id}>{s.label}</option>
-                  ))}
-                </select>
-                <ChevronDown size={11} style={styles.aiLangChevron} />
-              </div>
-              <button
-                type="button"
-                className="ui-primary-button"
-                style={{ ...styles.aiSendBtn, ...(aiLoading || !aiPrompt.trim() ? styles.aiSendBtnDisabled : {}) }}
-                onClick={handleAiBuild}
-                disabled={aiLoading || !aiPrompt.trim()}
-              >
-                {aiLoading
-                  ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /></>
-                  : <><ArrowRight size={13} /></>}
-              </button>
-            </div>
-          </div>
+          <PromptInput
+            value={aiPrompt}
+            onValueChange={setAiPrompt}
+            onSubmit={() => handleAiBuild()}
+            loading={aiLoading}
+            onStop={aiLoading ? () => setAiLoading(false) : undefined}
+            placeholder="Describe what you want to build…"
+            aria-label="Describe the project to build"
+            models={AI_STACKS.map((s) => ({ value: s.id, label: s.label }))}
+            model={aiStack}
+            onModelChange={setAiStack}
+            className="border-[var(--border-strong)] bg-[var(--bg-tertiary)]"
+          />
           {aiError && (
-            <div style={styles.aiError} role="alert">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-strong)', borderRadius: 6, fontSize: 11, color: 'var(--danger-text)' }} role="alert">
               <AlertCircle size={11} style={{ flexShrink: 0 }} />
-              <span style={{ marginLeft: 5 }}>{aiError}</span>
+              <span>{aiError}</span>
             </div>
           )}
           {!aiReady && !aiError && (
-            <button style={styles.subtleLink} onClick={onOpenSettings}>
+            <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 11.5, textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: 'var(--border-strong)', textUnderlineOffset: 3 }} onClick={onOpenSettings}>
               Add a free Gemini key in Settings for AI builds →
             </button>
           )}

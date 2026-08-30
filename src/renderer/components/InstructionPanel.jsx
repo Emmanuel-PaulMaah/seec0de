@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { hasApiKey, subscribeHasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
+import { PromptInput } from './agents/prompt-input';
 import FileExplorer from './FileExplorer';
 import BuildPanel from './BuildPanel';
 
@@ -242,31 +243,15 @@ export default function InstructionPanel({
                 ))}
               </div>
 
-              <textarea
-                style={{ ...styles.textarea, ...(textareaFocused ? styles.textareaFocus : {}) }}
+              <PromptInput
                 value={instruction}
-                onChange={(e) => onInstructionChange(e.target.value)}
-                onFocus={() => setTextareaFocused(true)}
-                onBlur={() => setTextareaFocused(false)}
-                placeholder={'e.g. "read a CSV of student grades and print the top 5 averages"'}
+                onValueChange={onInstructionChange}
+                onSubmit={handleGenerateClick}
+                loading={aiLoading}
+                placeholder='e.g. "read a CSV of student grades and print the top 5 averages"'
                 aria-label="Instruction for the program"
+                className="border-[var(--border)] bg-[var(--bg-input)]"
               />
-
-              <div style={styles.actions}>
-                <button
-                  className="ui-primary-button"
-                  style={{
-                    ...styles.generateBtn,
-                    ...(aiLoading ? styles.disabledBtn : {}),
-                  }}
-                  onClick={handleGenerateClick}
-                  disabled={aiLoading}
-                >
-                  {aiLoading
-                    ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 6 }}>Thinking…</span></>
-                    : <><Wand2 size={13} /><span style={{ marginLeft: 6 }}>Generate</span></>}
-                </button>
-              </div>
 
               {aiError ? (
                 <div style={styles.errorCard} role="alert">

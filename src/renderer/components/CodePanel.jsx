@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
-import { Lock, Pencil, Loader, X, Play, Lightbulb, Check } from 'lucide-react';
+import { Lock, Pencil, Loader, X, Play, Lightbulb, Check, ChevronRight } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import SandboxTerminal from './SandboxTerminal';
+import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
 import { registerEditor, unregisterEditor, setFocusTarget } from '../engine/editorBridge';
@@ -143,7 +144,7 @@ function defineSeec0deThemes(monaco) {
     }
   } catch { /* CDN loader may not expose htmlDefaults */ }
 
-  monaco.editor.defineTheme('seec0de-green', {
+  monaco.editor.defineTheme('beui-dark', {
     base: 'vs-dark',
     inherit: true,
     rules: [
@@ -154,19 +155,19 @@ function defineSeec0deThemes(monaco) {
       { token: 'type', foreground: '9CC9FF' },
     ],
     colors: {
-      'editor.background': '#0B0D0C',
-      'editor.foreground': '#F2F0E9',
-      'editorLineNumber.foreground': '#61645E',
-      'editorLineNumber.activeForeground': '#C7C5BD',
+      'editor.background': '#0c0c0c',
+      'editor.foreground': '#f0f0f0',
+      'editorLineNumber.foreground': '#606060',
+      'editorLineNumber.activeForeground': '#a0a0a0',
       'editor.selectionBackground': '#35451F',
       'editor.inactiveSelectionBackground': '#29351B',
       'editorCursor.foreground': '#C8FF4D',
-      'editorIndentGuide.background1': '#232620',
-      'editorIndentGuide.activeBackground1': '#353A30',
+      'editorIndentGuide.background1': 'rgba(255, 255, 255, 0.06)',
+      'editorIndentGuide.activeBackground1': 'rgba(255, 255, 255, 0.10)',
     },
   });
 
-  monaco.editor.defineTheme('seec0de-light', {
+  monaco.editor.defineTheme('beui-light', {
     base: 'vs',
     inherit: true,
     rules: [
@@ -177,15 +178,15 @@ function defineSeec0deThemes(monaco) {
       { token: 'type', foreground: '0891B2' },
     ],
     colors: {
-      'editor.background': '#FFFFFF',
-      'editor.foreground': '#1A1D23',
-      'editorLineNumber.foreground': '#B0B5BF',
-      'editorLineNumber.activeForeground': '#525866',
+      'editor.background': '#ffffff',
+      'editor.foreground': '#18181b',
+      'editorLineNumber.foreground': '#a1a1aa',
+      'editorLineNumber.activeForeground': '#71717a',
       'editor.selectionBackground': 'rgba(99, 102, 241, 0.15)',
       'editor.inactiveSelectionBackground': 'rgba(99, 102, 241, 0.08)',
       'editorCursor.foreground': '#6366F1',
-      'editorIndentGuide.background1': '#E2E4E8',
-      'editorIndentGuide.activeBackground1': '#D0D3D8',
+      'editorIndentGuide.background1': 'rgba(0, 0, 0, 0.06)',
+      'editorIndentGuide.activeBackground1': 'rgba(0, 0, 0, 0.10)',
     },
   });
 }
@@ -203,7 +204,9 @@ function defineSeec0deThemes(monaco) {
 export default function CodePanel({
   generatedCode,
   selectedLanguages,
-  appTheme = 'seec0de-dark',
+  colorMode = 'dark',
+  editorStickyScroll = true,
+  editorBreadcrumbs = false,
   onCodeChange,
   onSelectionExplain,
   aiLoading,
@@ -415,7 +418,8 @@ export default function CodePanel({
     wordBasedSuggestions: 'off',
     autoClosingBrackets: 'always',
     autoClosingQuotes: 'always',
-  }), [isReadOnly, fontSize]);
+    stickyScroll: { enabled: editorStickyScroll },
+  }), [isReadOnly, fontSize, editorStickyScroll]);
 
   // ---- run button: figure out language + source for the runner ----------
   let runLanguage = null;
@@ -481,34 +485,30 @@ export default function CodePanel({
     <div style={styles.panel}>
       <div style={styles.tabs}>
         <div style={styles.tabList}>
-          {generatedTabs.map((tab) => {
-            const isActive = !showingFile && generatedDisplayTab === tab;
-            const isPseudo = tab === 'pseudocode';
-            return (
-              <button
-                key={`gen:${tab}`}
-                className="ui-tab"
-                style={{
-                  ...styles.tab,
-                  ...(isActive ? styles.activeTab : {}),
-                  ...(isPseudo && isActive ? styles.activeAlgorithmTab : {}),
-                }}
-                onClick={() => handleActivateGenerated(tab)}
-                title={isPseudo ? 'The algorithm — language-agnostic' : `Same algorithm, written in ${LANGUAGE_LABELS[tab] || tab}`}
-              >
-                {isPseudo && (
-                  <Lightbulb
-                    size={12}
-                    style={{
-                      marginRight: 6,
-                      color: isActive ? 'var(--algorithm)' : 'var(--text-muted)',
-                    }}
-                  />
-                )}
-                <span>{isPseudo ? 'Pseudocode' : (LANGUAGE_LABELS[tab] || tab)}</span>
-              </button>
-            );
-          })}
+          <Tabs
+            value={showingFile ? '' : generatedDisplayTab}
+            onValueChange={(tab) => tab && handleActivateGenerated(tab)}
+            variant="underline"
+          >
+            <TabsList>
+              {generatedTabs.map((tab) => {
+                const isPseudo = tab === 'pseudocode';
+                return (
+                  <TabsTrigger
+                    key={`gen:${tab}`}
+                    value={tab}
+                    indicatorClassName={isPseudo ? 'bg-[var(--algorithm)]' : ''}
+                    title={isPseudo ? 'The algorithm — language-agnostic' : `Same algorithm, written in ${LANGUAGE_LABELS[tab] || tab}`}
+                  >
+                    {isPseudo && (
+                      <Lightbulb size={12} style={{ marginRight: 4 }} />
+                    )}
+                    {isPseudo ? 'Pseudocode' : (LANGUAGE_LABELS[tab] || tab)}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
 
           {openFiles.length > 0 && <span style={styles.tabDivider} />}
 
@@ -631,6 +631,18 @@ export default function CodePanel({
         </div>
       )}
 
+      {editorBreadcrumbs && !lessonMode && !showEmptyState && !(lessonMode && lessonLanguage === 'git') && (
+        <EditorBreadcrumbs
+          showingFile={showingFile}
+          activePath={activePath}
+          generatedDisplayTab={generatedDisplayTab}
+          folderOpen={folderOpen}
+          editorRef={editorRef}
+          monacoLang={monacoLang}
+          value={value}
+        />
+      )}
+
       <div style={styles.editorWrap}>
         {showEmptyState ? (
           <div style={styles.emptyWorkspace}>
@@ -660,7 +672,7 @@ export default function CodePanel({
             height="100%"
             language={monacoLang}
             value={value}
-            theme={appTheme === 'seec0de-green' ? 'seec0de-green' : appTheme === 'seec0de-light' ? 'seec0de-light' : 'hc-black'}
+            theme={colorMode === 'light' ? 'beui-light' : 'beui-dark'}
             beforeMount={defineSeec0deThemes}
             onMount={handleEditorMount}
             onFocus={() => setFocusTarget('editor')}
@@ -695,6 +707,209 @@ export default function CodePanel({
     </div>
   );
 }
+
+// Lightweight breadcrumbs bar: standalone Monaco does not ship VS Code's
+// breadcrumbs widget, so we render our own file-path + symbol trail.
+function EditorBreadcrumbs({ showingFile, activePath, generatedDisplayTab, folderOpen, editorRef, monacoLang, value }) {
+  const [caretSymbols, setCaretSymbols] = useState([]); // { label, line }
+
+  // Track cursor position and recompute enclosing symbols from plain text.
+  // editorRef is a mutable ref set by handleEditorMount, so we poll until it
+  // is available rather than relying on it being ready at effect start.
+  useEffect(() => {
+    let d1 = null;
+    let d2 = null;
+    let timer = null;
+    let cancelled = false;
+
+    const attach = () => {
+      const editor = editorRef.current;
+      if (!editor) {
+        if (!cancelled) timer = setTimeout(attach, 80);
+        return;
+      }
+      const update = () => {
+        const pos = editor.getPosition();
+        if (!pos) { setCaretSymbols([]); return; }
+        setCaretSymbols(findEnclosingSymbols(value || '', pos.lineNumber, monacoLang));
+      };
+      update();
+      d1 = editor.onDidChangeCursorPosition(update);
+      d2 = editor.onDidChangeModelContent(update);
+    };
+
+    attach();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      if (d1) d1.dispose();
+      if (d2) d2.dispose();
+    };
+  }, [value, monacoLang]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const segments = useMemo(() => {
+    if (showingFile && activePath) {
+      const parts = activePath.split(/[/\\]/).filter(Boolean);
+      const fileName = parts.pop() || activePath;
+      const dirs = parts.slice(-3);
+      const out = [];
+      for (const d of dirs) out.push({ label: d, line: null });
+      out.push({ label: fileName, line: null });
+      for (const s of caretSymbols) out.push({ label: s.label, line: s.line });
+      return out;
+    }
+    const label = generatedDisplayTab === 'pseudocode'
+      ? 'Pseudocode'
+      : (LANGUAGE_LABELS[generatedDisplayTab] || generatedDisplayTab);
+    if (caretSymbols.length) return [{ label, line: null }, ...caretSymbols.map((s) => ({ label: s.label, line: s.line }))];
+    return [{ label, line: null }];
+  }, [showingFile, activePath, generatedDisplayTab, caretSymbols]);
+
+  const jumpToLine = useCallback((lineNum) => {
+    if (!lineNum) return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.revealLineInCenter(lineNum, 0);
+    editor.setPosition({ lineNumber: lineNum, column: 1 });
+    editor.focus();
+  }, []);
+
+  if (segments.length === 0) return null;
+
+  return (
+    <nav style={breadcrumbStyles.bar} aria-label="Breadcrumbs">
+      {segments.map((seg, idx) => {
+        const isSymbol = seg.line !== null;
+        const isLast = idx === segments.length - 1;
+        return (
+          <React.Fragment key={`${idx}:${seg.label}`}>
+            {idx > 0 && <ChevronRight size={12} style={breadcrumbStyles.sep} />}
+            <button
+              type="button"
+              style={{
+                ...breadcrumbStyles.item,
+                ...(isLast ? breadcrumbStyles.itemActive : {}),
+                ...(isSymbol ? breadcrumbStyles.itemClickable : {}),
+              }}
+              title={isSymbol ? `Jump to ${seg.label} (line ${seg.line})` : seg.label}
+              onClick={isSymbol ? () => jumpToLine(seg.line) : undefined}
+              tabIndex={isSymbol ? 0 : -1}
+              onMouseDown={(e) => { if (!isSymbol) e.preventDefault(); }}
+            >
+              {seg.label}
+            </button>
+          </React.Fragment>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Scan source lines up to cursorLine and collect enclosing block headers.
+// Language-aware by regex; deliberately simple and synchronous — no parser.
+function findEnclosingSymbols(source, cursorLine, monacoLang) {
+  const lines = source.split('\n');
+  const upTo = Math.min(cursorLine - 1, lines.length - 1);
+  const stack = [];
+
+  const patterns = (() => {
+    if (monacoLang === 'python') {
+      return [
+        { re: /^\s*class\s+(\w+)/, label: (m) => `class ${m[1]}` },
+        { re: /^\s*(?:async\s+)?def\s+(\w+)\s*\(/, label: (m) => `${m[1]}()` },
+      ];
+    }
+    if (monacoLang === 'javascript' || monacoLang === 'typescript') {
+      return [
+        { re: /^\s*class\s+(\w+)/, label: (m) => `class ${m[1]}` },
+        { re: /^\s*(?:async\s+)?function\s+(\w+)\s*\(/, label: (m) => `${m[1]}()` },
+        { re: /^\s*(?:export\s+)?(?:async\s+)?(?:function\s*\*?\s*(\w+)|const\s+(\w+)\s*=\s*(?:async\s+)?(?:\(|[^=]*=>))/, label: (m) => `${m[1] || m[2]}()` },
+        { re: /^\s*(?:get|set)?\s*(\w+)\s*\([^)]*\)\s*\{/, label: (m) => `${m[1]}()` },
+      ];
+    }
+    if (monacoLang === 'java' || monacoLang === 'csharp' || monacoLang === 'cpp' || monacoLang === 'c' || monacoLang === 'go' || monacoLang === 'rust') {
+      return [
+        { re: /^\s*(?:public|private|protected)?\s*(?:static\s+)?class\s+(\w+)/, label: (m) => `class ${m[1]}` },
+        { re: /^\s*(?:public|private|protected)?\s*(?:static\s+)?[\w<>\[\]]+\s+(\w+)\s*\([^)]*\)\s*(?:\{|;|throws)/, label: (m) => `${m[1]}()` },
+      ];
+    }
+    // plaintext / pseudocode and others: no symbols
+    return [];
+  })();
+
+  if (patterns.length === 0) return [];
+
+  // Track indent-aware nesting. Works well for Python (indent) and reasonably
+  // for brace languages when the cursor is below an opening brace line.
+  const indents = [];
+  for (let i = 0; i <= upTo; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*')) continue;
+    // Pop stack where indent dedented (for indent-sensitive scan) or when we
+    // passed a closing brace that closed a tracked block (simple).
+    const indent = line.length - line.trimStart().length;
+    while (indents.length && indent <= indents[indents.length - 1]) {
+      indents.pop();
+      stack.pop();
+    }
+
+    for (const p of patterns) {
+      const m = line.match(p.re);
+      if (m) {
+        stack.push({ label: p.label(m), line: i + 1 });
+        indents.push(indent);
+        break;
+      }
+    }
+  }
+  // Return at most last 3 enclosing symbols to keep the trail compact.
+  return stack.slice(-3);
+}
+
+const breadcrumbStyles = {
+  bar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 2,
+    minHeight: 22,
+    padding: '2px var(--space-3)',
+    background: 'var(--bg-secondary)',
+    borderBottom: '1px solid var(--border)',
+    fontSize: 11,
+    color: 'var(--text-muted)',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+  },
+  item: {
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    color: 'var(--text-muted)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    maxWidth: 160,
+    fontWeight: 400,
+    fontSize: 11,
+    lineHeight: '18px',
+  },
+  itemClickable: {
+    cursor: 'pointer',
+    borderRadius: 3,
+    color: 'var(--accent)',
+  },
+  itemActive: {
+    color: 'var(--text-secondary)',
+    fontWeight: 500,
+  },
+  sep: {
+    flexShrink: 0,
+    color: 'var(--text-muted)',
+    opacity: 0.7,
+  },
+};
 
 const styles = {
   panel: {

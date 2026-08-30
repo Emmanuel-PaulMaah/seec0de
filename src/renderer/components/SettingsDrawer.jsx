@@ -20,6 +20,7 @@ import {
   clearProfilePin,
 } from '../engine/settings';
 import { ProfileFields } from './ProfileForm';
+import { Drawer } from './motion/drawer';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
 
 // SettingsDrawer — right-side overlay containing every persistent
@@ -27,7 +28,7 @@ import { useUpdateStatus } from '../hooks/useUpdateStatus';
 // `AboutSettings` blocks that used to live in the left panel.
 //
 // Sections (top → bottom):
-//   1. Appearance             — app theme
+//   1. Appearance             — editor preferences
 //   2. Sounds                 — lesson pass/fail sounds
 //   3. Learn Mode             — learner-controlled guidance level
 //   4. Practice reminders     — pulse bar, time, desktop notifications
@@ -84,13 +85,7 @@ export default function SettingsDrawer({
     }
   }, [open]);
 
-  // Esc closes the drawer.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  // Esc is handled by the beUI Drawer component.
 
   const patch = (p) => {
     const next = updateSettings(p);
@@ -161,57 +156,43 @@ export default function SettingsDrawer({
     patch({ practiceNotificationsEnabled: permission === 'granted' });
   };
 
-  if (!open) return null;
-
   return (
-    <div style={styles.scrim} onClick={onClose} role="presentation">
-      <aside
-        style={styles.drawer}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header style={styles.header}>
-          <h2 id="settings-title" style={styles.title}>Settings</h2>
-          <button
-            style={styles.iconBtn}
-            onClick={onClose}
-            title="Close (Esc)"
-            aria-label="Close settings"
-          >
-            <X size={16} />
-          </button>
-        </header>
+    <Drawer
+      open={open}
+      onOpenChange={(v) => { if (!v) onClose?.(); }}
+      side="right"
+      ariaLabel="Settings"
+      className="w-[380px]! bg-[var(--glass-bg-heavy)]! backdrop-blur-[var(--glass-blur-heavy)]!"
+    >
+      <header style={styles.header}>
+        <h2 id="settings-title" style={styles.title}>Settings</h2>
+        <button
+          style={styles.iconBtn}
+          onClick={onClose}
+          title="Close (Esc)"
+          aria-label="Close settings"
+        >
+          <X size={16} />
+        </button>
+      </header>
 
-        <div style={styles.scroll}>
+      <div style={styles.scroll}>
           {/* ---- 1. Appearance ---------------------------------------- */}
           <Section id="appearance" icon={<Eye size={13} />} title="Appearance" open={expandedSection === 'appearance'} onToggle={toggleSection}>
-            <Field label="App theme" hint="Choose the palette used across your workspace. Saved to this profile.">
-              <div style={styles.themeGrid}>
-                <ThemeChoice
-                  name="seec0de-dark"
-                  description="High-contrast black and blue"
-                  colors={['#000000', '#2f6fed', '#e6e6e6']}
-                  selected={settings.theme === 'seec0de-dark' || (!settings.theme || settings.theme === '')}
-                  onClick={() => patch({ theme: 'seec0de-dark' })}
-                />
-                <ThemeChoice
-                  name="seec0de-green"
-                  description="Layered charcoal and lime"
-                  colors={['#0f1110', '#c8ff4d', '#f2f0e9']}
-                  selected={settings.theme === 'seec0de-green'}
-                  onClick={() => patch({ theme: 'seec0de-green' })}
-                />
-                <ThemeChoice
-                  name="seec0de-light"
-                  description="Clean white with indigo"
-                  colors={['#f8f9fa', '#6366f1', '#1a1d23']}
-                  selected={settings.theme === 'seec0de-light'}
-                  onClick={() => patch({ theme: 'seec0de-light' })}
-                />
-              </div>
-            </Field>
+            <ToggleRow
+              icon={<Layers size={13} />}
+              label="Sticky scroll"
+              hint="Pin the enclosing function/scope header at the top of the editor as you scroll."
+              checked={settings.editorStickyScroll !== false}
+              onChange={(checked) => patch({ editorStickyScroll: checked })}
+            />
+            <ToggleRow
+              icon={<FolderTree size={13} />}
+              label="Breadcrumbs"
+              hint="Show a clickable position bar above the editor (file › symbol › scope)."
+              checked={!!settings.editorBreadcrumbs}
+              onChange={(checked) => patch({ editorBreadcrumbs: checked })}
+            />
           </Section>
 
           {/* ---- 2. Sounds ---------------------------------------- */}
@@ -402,8 +383,7 @@ export default function SettingsDrawer({
             Settings live on this device only. Nothing is sent to a server.
           </p>
         </div>
-      </aside>
-    </div>
+    </Drawer>
   );
 }
 
@@ -776,26 +756,6 @@ function Pill({ selected, onClick, children }) {
   );
 }
 
-function ThemeChoice({ name, description, colors, selected, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      style={{ ...styles.themeChoice, ...(selected ? styles.themeChoiceSelected : {}) }}
-    >
-      <span style={styles.themeSwatches} aria-hidden="true">
-        {colors.map((color) => <span key={color} style={{ ...styles.themeSwatch, background: color }} />)}
-      </span>
-      <span style={styles.themeChoiceText}>
-        <span style={styles.themeChoiceName}>{name}</span>
-        <span style={styles.themeChoiceDescription}>{description}</span>
-      </span>
-      {selected && <Check size={13} style={styles.themeCheck} />}
-    </button>
-  );
-}
-
 function ToggleRow({ icon, label, hint, checked, onChange }) {
   return (
     <button
@@ -1142,24 +1102,14 @@ function formatLastChecked(iso) {
 // ---------------------------------------------------------------------------
 // styles
 
-const DRAWER_W = 380;
-
 const styles = {
-  scrim: {
-    position: 'fixed', inset: 0, zIndex: 900,
-    background: 'var(--scrim)',
-    backdropFilter: 'blur(4px)',
-    WebkitBackdropFilter: 'blur(4px)',
-    display: 'flex', justifyContent: 'flex-end',
-    animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
-  },
   profileScrim: {
     position: 'fixed', inset: 0, zIndex: 900,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 24,
     background: 'var(--scrim)',
-    backdropFilter: 'blur(4px)',
-    WebkitBackdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
     animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
   },
   profileCard: {
@@ -1169,11 +1119,13 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    background: 'var(--bg-elevated)',
+    background: 'var(--glass-bg-heavy)',
+    backdropFilter: 'blur(var(--glass-blur-heavy))',
+    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
     border: '1px solid var(--border-strong)',
-    borderRadius: 12,
+    borderRadius: 'var(--radius-xl)',
     boxShadow: 'var(--shadow-lg)',
-    animation: 'seec0de-pop-in var(--motion-slow) var(--ease-out)',
+    animation: 'seec0de-pop-in var(--motion-slow) var(--ease-spring)',
   },
   profileCardSubtitle: {
     marginTop: 3,
@@ -1186,16 +1138,6 @@ const styles = {
     gap: 16,
     overflowY: 'auto',
     padding: 18,
-  },
-  drawer: {
-    width: DRAWER_W,
-    maxWidth: '100vw',
-    height: '100%',
-    background: 'var(--bg-elevated)',
-    borderLeft: '1px solid var(--border-strong)',
-    boxShadow: 'var(--shadow-lg)',
-    display: 'flex', flexDirection: 'column',
-    animation: 'seec0de-slide-in-right var(--motion-slow) var(--ease-out)',
   },
   header: {
     flexShrink: 0,
@@ -1229,12 +1171,12 @@ const styles = {
     color: 'var(--text-muted)',
     cursor: 'pointer',
     textAlign: 'left',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-sm)',
     transition: 'background var(--motion-base) var(--ease-out), border-left-color var(--motion-base) var(--ease-out), padding-left var(--motion-base) var(--ease-out)',
   },
   sectionIcon: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 22, height: 22, borderRadius: 6,
+    width: 22, height: 22, borderRadius: 'var(--radius-sm)',
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
     flexShrink: 0,
@@ -1320,52 +1262,19 @@ const styles = {
   langGrid: {
     display: 'flex', flexWrap: 'wrap', gap: 6,
   },
-  themeGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
-  },
-  themeChoice: {
-    position: 'relative',
-    display: 'flex', flexDirection: 'column', gap: 8,
-    minWidth: 0,
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    color: 'var(--text-secondary)',
-    padding: 10,
-    textAlign: 'left',
-  },
-  themeChoiceSelected: {
-    background: 'var(--accent-soft)',
-    borderColor: 'var(--accent)',
-  },
-  themeSwatches: { display: 'flex', gap: 4 },
-  themeSwatch: {
-    width: 18, height: 18, borderRadius: 999,
-    border: '1px solid var(--border-strong)',
-  },
-  themeChoiceText: { display: 'flex', flexDirection: 'column', gap: 2 },
-  themeChoiceName: {
-    color: 'var(--text-primary)', fontSize: 11.5, fontWeight: 600,
-  },
-  themeChoiceDescription: {
-    color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.35,
-  },
-  themeCheck: {
-    position: 'absolute', top: 10, right: 10, color: 'var(--accent)',
-  },
   guidanceControl: {
     display: 'flex',
     gap: 2,
     padding: 2,
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-full)',
     background: 'var(--bg-tertiary)',
   },
   guidanceBtn: {
     flex: 1,
     padding: '4px 3px',
     border: 'none',
-    borderRadius: 4,
+    borderRadius: 'var(--radius-full)',
     background: 'transparent',
     color: 'var(--text-muted)',
     fontSize: 9.5,
@@ -1379,7 +1288,7 @@ const styles = {
     display: 'inline-flex', alignItems: 'center',
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border)',
-    borderRadius: 999,
+    borderRadius: 'var(--radius-full)',
     color: 'var(--text-secondary)',
     fontSize: 12,
     padding: '5px 12px',
@@ -1398,12 +1307,12 @@ const styles = {
     flex: 1, minWidth: 0,
     background: 'var(--bg-input)',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-primary)',
     fontSize: 12.5,
     padding: '8px 10px',
     outline: 'none',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
   },
   timeInput: { width: 132, flex: 'none', colorScheme: 'dark' },
 
@@ -1412,14 +1321,14 @@ const styles = {
     width: 32, height: 32,
     background: 'transparent',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-secondary)',
   },
   primaryBtn: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     background: 'var(--accent)',
     border: '1px solid var(--accent)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-on-accent)',
     fontSize: 12.5,
     fontWeight: 600,
@@ -1429,7 +1338,7 @@ const styles = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     background: 'transparent',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-secondary)',
     fontSize: 12.5,
     padding: '7px 12px',
@@ -1438,7 +1347,7 @@ const styles = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     background: 'transparent',
     border: '1px solid rgba(239, 68, 68, 0.4)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--danger-text-soft)',
     fontSize: 12.5,
     padding: '7px 12px',
@@ -1448,7 +1357,7 @@ const styles = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     background: 'var(--danger)',
     border: '1px solid var(--danger)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-on-accent)',
     fontSize: 12.5,
     fontWeight: 600,
@@ -1462,7 +1371,7 @@ const styles = {
     fontSize: 12, color: 'var(--text-secondary)',
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border)',
-    borderRadius: 6, padding: '6px 10px',
+    borderRadius: 'var(--radius-md)', padding: '6px 10px',
   },
   pinEditor: { display: 'flex', flexDirection: 'column', gap: 8 },
   errorText: { fontSize: 11.5, color: 'var(--danger-text-soft)', lineHeight: 1.5, margin: 0 },
@@ -1470,7 +1379,7 @@ const styles = {
     display: 'flex', flexDirection: 'column', gap: 8,
     background: 'var(--danger-soft)',
     border: '1px solid rgba(239, 68, 68, 0.25)',
-    borderRadius: 8,
+    borderRadius: 'var(--radius-md)',
     padding: '10px 12px',
   },
   deleteWarn: { fontSize: 12, color: 'var(--danger-text-soft)', lineHeight: 1.5, margin: 0 },
@@ -1487,7 +1396,7 @@ const styles = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     background: 'transparent',
     border: '1px solid var(--border)',
-    borderRadius: 8,
+    borderRadius: 'var(--radius-md)',
     padding: '10px 12px',
     color: 'var(--text-primary)',
     textAlign: 'left',
@@ -1509,7 +1418,7 @@ const styles = {
   switch: {
     flexShrink: 0,
     width: 30, height: 18,
-    borderRadius: 999,
+    borderRadius: 'var(--radius-full)',
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border-strong)',
     position: 'relative',
@@ -1522,7 +1431,7 @@ const styles = {
   knob: {
     position: 'absolute',
     top: 1, left: 1,
-    width: 14, height: 14, borderRadius: 999,
+    width: 14, height: 14, borderRadius: 'var(--radius-full)',
     background: 'var(--text-primary)',
     transition: 'transform var(--motion-base) var(--ease-out)',
   },
@@ -1536,7 +1445,7 @@ const styles = {
   kvLabel: {},
   kvValue: {
     color: 'var(--text-secondary)',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
   },
   statusLine: {
     display: 'flex', alignItems: 'center',
@@ -1546,11 +1455,11 @@ const styles = {
   errorBox: {
     background: 'var(--danger-soft)',
     border: '1px solid rgba(239, 68, 68, 0.25)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     padding: '6px 8px',
     fontSize: 11,
     color: 'var(--danger-text-soft)',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
     wordBreak: 'break-word',
     marginTop: 6,
   },
@@ -1585,7 +1494,7 @@ const toolchainStyles = {
     gap: 4,
     padding: '10px 12px',
     border: '1px solid var(--border)',
-    borderRadius: 8,
+    borderRadius: 'var(--radius-md)',
     background: 'var(--bg-tertiary)',
   },
   head: {
@@ -1609,7 +1518,7 @@ const toolchainStyles = {
   version: {
     fontSize: 10.5,
     color: 'var(--text-muted)',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
     maxWidth: 180,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -1627,9 +1536,9 @@ const toolchainStyles = {
     padding: '6px 8px',
     background: 'var(--bg-input)',
     border: '1px solid var(--border-strong)',
-    borderRadius: 4,
+    borderRadius: 'var(--radius-sm)',
     color: 'var(--text-primary)',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 11,
     wordBreak: 'break-all',
     whiteSpace: 'pre-wrap',
@@ -1647,7 +1556,7 @@ const toolchainStyles = {
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: 'var(--accent)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-on-accent)',
     fontSize: 11.5,
     fontWeight: 600,
@@ -1662,7 +1571,7 @@ const toolchainStyles = {
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: 'var(--border-strong)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-md)',
     color: 'var(--text-secondary)',
     fontSize: 11.5,
     padding: '5px 10px',
@@ -1699,9 +1608,9 @@ const toolchainStyles = {
     padding: '5px 7px',
     background: 'var(--bg-input)',
     border: '1px solid var(--border-strong)',
-    borderRadius: 4,
+    borderRadius: 'var(--radius-sm)',
     color: 'var(--text-primary)',
-    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontFamily: 'var(--font-mono)',
     fontSize: 10.5,
     lineHeight: 1.45,
     wordBreak: 'break-all',
@@ -1715,6 +1624,6 @@ const toolchainStyles = {
     padding: '6px 8px',
     background: 'var(--bg-input)',
     border: '1px dashed var(--border-strong)',
-    borderRadius: 4,
+    borderRadius: 'var(--radius-sm)',
   },
 };

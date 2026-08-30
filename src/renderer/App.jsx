@@ -187,9 +187,9 @@ export default function App() {
   );
 
   useEffect(() => {
-    const theme = settings.theme || 'seec0de-dark';
-    document.documentElement.dataset.theme = theme;
-  }, [settings.theme]);
+    const mode = settings.colorMode || 'dark';
+    document.documentElement.dataset.theme = mode === 'light' ? 'light' : '';
+  }, [settings.colorMode]);
 
   useEffect(() => {
     const timer = setInterval(() => setReminderClock(Date.now()), 30000);
@@ -2164,6 +2164,8 @@ const beginExplanationResize = useCallback((event) => {
         onContinueReminder={handleContinueLearningReminder}
         mode={showHome ? 'home' : learnMode ? 'learn' : 'workspace'}
         onModeChange={handleModeChange}
+        colorMode={settings.colorMode || 'dark'}
+        onToggleColorMode={(mode) => setSettings(updateSettings({ colorMode: mode || ((settings.colorMode || 'dark') === 'dark' ? 'light' : 'dark') }))}
       />
 
       <LearningPulseBar
@@ -2324,7 +2326,9 @@ const beginExplanationResize = useCallback((event) => {
             <CodePanel
               generatedCode={generatedCode}
               selectedLanguages={effectiveLanguages}
-              appTheme={settings.theme}
+              colorMode={settings.colorMode || 'dark'}
+              editorStickyScroll={settings.editorStickyScroll !== false}
+              editorBreadcrumbs={!!settings.editorBreadcrumbs}
               onCodeChange={handleCodeChange}
               onSelectionExplain={learnMode ? undefined : handleSelectionExplain}
               aiLoading={aiLoading}

@@ -22,6 +22,9 @@ module.exports = (env, argv) => {
     },
   resolve: {
     extensions: ['.js', '.jsx', '.json'],
+    alias: {
+      '@': path.resolve(__dirname, 'src/renderer'),
+    },
   },
   module: {
     rules: [
@@ -31,13 +34,13 @@ module.exports = (env, argv) => {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env', '@babel/preset-react'],
+            presets: ['@babel/preset-env', ['@babel/preset-react', { runtime: 'automatic' }]],
           },
         },
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
+        use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
       {
         test: /\.ttf$/,
