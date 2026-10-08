@@ -16,6 +16,17 @@ Section conventions:
 
 ## [Unreleased]
 
+### Fixed
+- **Rename in the file explorer works.** The context-menu Rename now shows an inline name field, and F2 renames the active file.
+- **Ctrl+B toggles the left sidebar** (Generate/Files + Build). The non-functional "Show file explorer by default" setting was removed.
+- **Saved concept notes show up for every language** (previously only Python), listed by lesson title instead of internal id.
+- **PIN unlock auto-submits** on the 4th digit.
+- **Adding a profile can be cancelled** without creating one.
+- **A file that fails to open is read-only**, so the error message can't be saved over the real file.
+- **Saving an empty API-key field no longer deletes your key.** Use the new "Remove key" action instead.
+- **The Git sandbox terminal keeps your work** instead of resetting when it becomes visible.
+- **Privacy footnote in Settings is accurate**: with a Gemini key, prompts and code are sent to Google.
+
 ## [4.3.1] - 2026-08-22
 
 ### Added
