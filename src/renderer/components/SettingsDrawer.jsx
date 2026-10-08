@@ -28,6 +28,7 @@ import {
 import { ProfileFields } from './ProfileForm';
 import { Drawer } from './motion/drawer';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
+import { useConfirm } from './ui/dialog';
 
 // SettingsDrawer — right-side overlay containing every persistent
 // preference in one place. Replaces the inline `ApiKeySettings` and
@@ -60,6 +61,7 @@ export default function SettingsDrawer({
   open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal,
 }) {
   const [settings, setSettings] = useState(loadSettings());
+  const confirm = useConfirm();
   const [apiKey, setApiKey]     = useState('');
   const [hasKey, setHasKey]     = useState(false);
   const [showKey, setShowKey]   = useState(false);
@@ -145,7 +147,13 @@ export default function SettingsDrawer({
   };
 
   const handleRemoveKey = async () => {
-    if (!window.confirm('Remove your Gemini API key? AI features will switch to offline mode.')) return;
+    const ok = await confirm({
+      title: 'Remove your Gemini API key?',
+      description: 'AI generation and explanations will switch to offline mode until you add a key again.',
+      confirmLabel: 'Remove Key',
+      danger: true,
+    });
+    if (!ok) return;
     await setSettingsApiKey('');
     const exists = await window.seecode.ai.hasKey();
     setHasKey(exists);
