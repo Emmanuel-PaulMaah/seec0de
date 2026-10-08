@@ -425,9 +425,36 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="option"]:focus-visible,
+[role="treeitem"]:focus-visible,
+[role="switch"]:focus-visible {
+  outline: 2px solid var(--border-focus) !important;
+  outline-offset: 2px;
+}
+
+/* Text fields get the ring too. !important beats the inline `outline: none`
+ * many components still set. Monaco draws its own focus state, composite
+ * fields (.ui-focus-within) ring their container instead, and .ui-focus-none
+ * is for an input that is the only focus target of an open popover. */
 input:focus-visible,
-textarea:focus-visible {
-  outline: none;
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--border-focus) !important;
+  outline-offset: -1px;
+}
+
+.monaco-editor textarea:focus-visible,
+input.ui-focus-none:focus-visible,
+.ui-focus-within input:focus-visible,
+.ui-focus-within textarea:focus-visible {
+  outline: none !important;
+}
+
+.ui-focus-within:has(input:focus-visible, textarea:focus-visible) {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -1px;
 }
 
 /* ── Glass surfaces ──────────────────────────────────────────────────── */
