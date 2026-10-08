@@ -356,7 +356,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
               <span style={{ color: 'var(--text-secondary, #888)', fontSize: 12 }}>
                 {entry.cwd || cwd}
               </span>
-              <span style={{ color: 'var(--accent, #7c6aef)', marginRight: 4 }}>{'$'}</span>
+              <span style={{ color: 'var(--accent)', marginRight: 4 }}>{'$'}</span>
               <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>
                 {entry.command}
               </span>
@@ -370,7 +370,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
                     : 'rgba(239,68,68,0.15)',
                   color: entry.status === 'ok'
                     ? 'var(--success, #48c78e)'
-                    : 'var(--error, #ef4444)',
+                    : 'var(--danger)',
                   marginLeft: 4,
                   flexShrink: 0,
                 }}
@@ -423,7 +423,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
                   lineHeight: 1.5,
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all',
-                  color: 'var(--error, #ef4444)',
+                  color: 'var(--danger)',
                   overflowX: 'auto',
                 }}
               >
@@ -455,7 +455,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
           flexShrink: 0,
         }}
       >
-        <span style={{ color: 'var(--accent, #7c6aef)', fontWeight: 600 }}>{'$'}</span>
+        <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{'$'}</span>
         <input
           ref={inputRef}
           type="text"
@@ -486,11 +486,11 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
           style={{
             background: running || !input.trim()
               ? 'var(--bg-input, rgba(0,0,0,0.15))'
-              : 'var(--accent, #7c6aef)',
+              : 'var(--accent)',
             border: 'none',
             borderRadius: 4,
             padding: '5px 10px',
-            color: '#fff',
+            color: 'var(--text-on-accent)',
             cursor: running || !input.trim() ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',

@@ -104,7 +104,7 @@ export default function ProfileGate({
                 <div style={styles.avatarWrap}>
                   <Avatar profile={p} size={88} />
                   {profileHasPin(p.id) && (
-                    <span style={styles.lockBadge}><Lock size={11} color="#fff" /></span>
+                    <span style={styles.lockBadge}><Lock size={11} color="var(--text-primary)" /></span>
                   )}
                 </div>
                 <span style={styles.tileName}>{p.username || 'Unnamed'}</span>

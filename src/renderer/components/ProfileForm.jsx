@@ -123,7 +123,7 @@ setError(err.message || "Couldn't use that image — try a different one.");
       >
         <Avatar profile={{ avatar: value, username }} size={size} />
         <span style={styles.avatarOverlay}>
-          <Camera size={16} color="#fff" />
+          <Camera size={16} color="var(--text-on-accent)" />
         </span>
       </button>
 
