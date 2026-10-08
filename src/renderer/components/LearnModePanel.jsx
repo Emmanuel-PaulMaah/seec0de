@@ -3,6 +3,7 @@ import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight
 import LessonsPanel, { formatLanguage } from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
 import { isCourseActivity } from '../data/exerciseCatalog';
+import lessonsData from '../data/lessons';
 import { renderInline as renderActivityInline } from './InlineCode';
 
 const PHASES = [
@@ -366,10 +367,17 @@ function ActivityGuide({
 // saved self-explanation notes for the selected language.
 function ConceptNotesSummary({ notes, language }) {
   const [expanded, setExpanded] = React.useState(false);
-  const noteEntries = Object.entries(notes).filter(([id]) => {
-    const prefix = language.slice(0, 2).toLowerCase();
-    return id.startsWith(prefix + '-');
-  });
+  // Notes are keyed by lesson id; id prefixes don't map cleanly to language
+  // names (js-, ts-, node-…), so match against the language's real lessons.
+  const lessonTitles = React.useMemo(() => {
+    const titles = new Map();
+    for (const track of lessonsData.tracks) {
+      if (track.language !== language) continue;
+      for (const lesson of track.lessons) titles.set(lesson.id, lesson.title);
+    }
+    return titles;
+  }, [language]);
+  const noteEntries = Object.entries(notes).filter(([id]) => lessonTitles.has(id));
   if (noteEntries.length === 0) return null;
 
   return (
@@ -387,7 +395,7 @@ function ConceptNotesSummary({ notes, language }) {
         <div style={styles.notesList}>
           {noteEntries.map(([id, text]) => (
             <div key={id} style={styles.noteItem}>
-              <div style={styles.noteId}>{id}</div>
+              <div style={styles.noteId}>{lessonTitles.get(id)}</div>
               <div style={styles.noteText}>{text}</div>
             </div>
           ))}
