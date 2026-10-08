@@ -4,6 +4,7 @@ import { MotionConfig } from 'motion/react';
 // Self-hosted so the UI font resolves offline — no CDN, no fallback to Segoe UI.
 import '@fontsource-variable/inter';
 import App from './App';
+import { ConfirmProvider } from './components/ui/dialog';
 import './styles/global.css';
 
 const root = createRoot(document.getElementById('root'));
@@ -12,6 +13,8 @@ const root = createRoot(document.getElementById('root'));
 // global.css).
 root.render(
   <MotionConfig reducedMotion="user">
-    <App />
+    <ConfirmProvider>
+      <App />
+    </ConfirmProvider>
   </MotionConfig>
 );

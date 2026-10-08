@@ -463,6 +463,102 @@ input.ui-focus-none:focus-visible,
   outline-offset: -1px;
 }
 
+/* ============================================================================
+ * PRIMITIVES — components/ui (Button, IconButton, Input, Textarea, Dialog).
+ * Tokens only: no raw px colours, sizes or radii below this line.
+ * ========================================================================== */
+
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  height: var(--control-standard);
+  padding: 0 var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.ui-btn--sm { height: var(--control-compact); padding: 0 var(--space-2); gap: var(--space-1); font-size: var(--text-xs); }
+.ui-btn--lg { height: var(--control-primary); padding: 0 var(--space-4); font-size: var(--text-md); }
+
+.ui-btn--icon { padding: 0; width: var(--control-standard); }
+.ui-btn--icon.ui-btn--sm { width: var(--control-compact); }
+.ui-btn--icon.ui-btn--lg { width: var(--control-primary); }
+
+.ui-btn--primary { background: var(--accent); color: var(--text-on-accent); }
+.ui-btn--primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+.ui-btn--secondary { background: var(--bg-elevated); color: var(--text-primary); border-color: var(--border-strong); }
+.ui-btn--secondary:hover:not(:disabled) { background: var(--bg-surface); }
+
+.ui-btn--ghost { background: transparent; color: var(--text-secondary); }
+.ui-btn--ghost:hover:not(:disabled) { background: var(--bg-surface); color: var(--text-primary); }
+
+.ui-btn--danger { background: var(--danger-soft); color: var(--danger-text); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+.ui-btn--danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 18%, transparent); }
+
+.ui-field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.ui-field__label { font-size: var(--text-sm); font-weight: 500; color: var(--text-primary); }
+.ui-field__hint,
+.ui-field__error { margin: 0; font-size: var(--text-xs); line-height: 1.4; }
+.ui-field__hint { color: var(--text-muted); }
+.ui-field__error { color: var(--danger-text); }
+
+.ui-input {
+  width: 100%;
+  height: var(--control-standard);
+  padding: 0 var(--space-3);
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  font-size: var(--text-md);
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+.ui-input::placeholder { color: var(--text-muted); }
+.ui-input[aria-invalid="true"] { border-color: var(--danger); }
+textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(--space-3); line-height: 1.5; resize: vertical; }
+
+.ui-dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: var(--scrim);
+  overscroll-behavior: contain;
+  animation: ui-fade-in var(--motion-base) var(--ease-out);
+}
+
+.ui-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: min(100%, 440px);
+  max-height: calc(100vh - 2 * var(--space-6));
+  overflow: auto;
+  padding: var(--space-6);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  outline: none;
+}
+.ui-dialog__title { margin: 0; font-size: var(--text-lg); font-weight: 600; color: var(--text-primary); text-wrap: balance; }
+.ui-dialog__body { margin: 0; font-size: var(--text-md); line-height: 1.5; color: var(--text-secondary); text-wrap: pretty; }
+.ui-dialog__actions { display: flex; justify-content: flex-end; gap: var(--space-2); }
+
+@keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
 /* ── Glass surfaces ──────────────────────────────────────────────────── */
 
 .glass {
