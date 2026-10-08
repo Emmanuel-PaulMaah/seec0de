@@ -7,7 +7,7 @@
 
 @theme {
   --color-background: var(--bg-primary);
-  --color-foreground: var(--text-primary);
+  --color-foreground: var(--text-primary);
   --color-card: var(--bg-elevated);
   --color-card-foreground: var(--text-primary);
   --color-popover: var(--bg-elevated);
@@ -23,6 +23,7 @@
   --color-destructive: var(--danger);
   --color-destructive-foreground: var(--text-on-accent);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--border);
   --color-ring: var(--border-focus);
   --radius-sm: var(--radius-sm);
@@ -46,8 +47,6 @@
  * ------------------------------------------------------------------------- */
 
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
@@ -57,7 +56,7 @@
 
 :root {
   /* ── Typography ──────────────────────────────────────────────────────── */
-  --font-ui: "Inter", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: "Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
 
   --text-xs: 11px;
@@ -123,6 +122,11 @@
   --bg-input:       #141414;
   --bg-surface:     #1e1e1e;
 
+  /* The "step up" surface for hover. Dark has room to brighten; light has to
+   * darken, because there --bg-elevated and --bg-secondary are both #ffffff
+   * and a hover that swaps between them is invisible. */
+  --bg-hover:       var(--bg-elevated);
+
   /* ── Borders ─────────────────────────────────────────────────────────── */
   --border:         rgba(255, 255, 255, 0.06);
   --border-strong:  rgba(255, 255, 255, 0.10);
@@ -158,6 +162,11 @@
   --number-highlight:   #a8d8a0;
   --type-highlight:     #9cc9ff;
   --keyword-soft:       rgba(200, 182, 255, 0.10);
+
+  /* Bulletin "Did You Know" icon. Its own token because light mode maps
+   * --keyword-highlight to the same indigo as --accent, which would make the
+   * two bulletin cards share one colour. */
+  --bulletin-keyword-tone: var(--keyword-highlight);
 
   /* ── Semantic text ───────────────────────────────────────────────────── */
   --danger-text:     #f08c8c;
@@ -202,6 +211,7 @@
   --bg-elevated:    #ffffff;
   --bg-input:       #f0f0f2;
   --bg-surface:     #e8e8ec;
+  --bg-hover:       var(--bg-tertiary);
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
   --border:         rgba(0, 0, 0, 0.06);
@@ -211,7 +221,11 @@
   /* ── Text ────────────────────────────────────────────────────────────── */
   --text-primary:   #18181b;
   --text-secondary: #71717a;
-  --text-muted:     #a1a1aa;
+  /* Was #a1a1aa — only 2.4:1 on white, so the small muted labels (card meta,
+   * bulletin descriptions, lesson previews) read as smudges. This is ~3.6:1
+   * and roughly matches dark's --text-muted, while staying a clear step
+   * below --text-secondary (4.8:1) so the three-level ramp survives. */
+  --text-muted:     #82828c;
 
   /* ── Accent ──────────────────────────────────────────────────────────── */
   --accent:         #6366f1;
@@ -238,6 +252,9 @@
   --number-highlight:   #0d9488;
   --type-highlight:     #0891b2;
   --keyword-soft:       rgba(99, 102, 241, 0.06);
+
+  /* Warm tone so this card stays distinct from the indigo accent in light. */
+  --bulletin-keyword-tone: var(--string-highlight);
 
   /* ── Semantic text ───────────────────────────────────────────────────── */
   --danger-text:     #dc2626;
@@ -359,7 +376,7 @@ kbd {
 
 .ui-icon-button:hover:not(:disabled),
 .ui-toolbar-button:hover:not(:disabled) {
-  background: var(--bg-elevated) !important;
+  background: var(--bg-hover) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-strong) !important;
 }
@@ -402,12 +419,15 @@ kbd {
 }
 
 button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
 }
 
 /* ── Glass surfaces ──────────────────────────────────────────────────── */
@@ -449,7 +469,13 @@ a:focus-visible,
 .workspace-editor-shell {
   display: flex;
   flex: 1;
-  min-width: 0;
+  /* Floor the editor so the fixed-width panels around it (guide,
+   * instruction, preview, explanation) can never squeeze it to zero —
+   * when their combined widths exceed the window, the editor used to
+   * collapse entirely and the preview looked like it was sitting "on
+   * top of" the code. With a floor, the workspace overflows instead and
+   * scrolls horizontally (see .app-workspace overflow rules). */
+  min-width: 220px;
   min-height: 0;
   overflow: hidden;
 }
@@ -462,25 +488,9 @@ a:focus-visible,
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-@keyframes run-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(200, 255, 77, 0.4); }
-  70%  { box-shadow: 0 0 0 6px rgba(200, 255, 77, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(200, 255, 77, 0); }
-}
-
-@keyframes community-dot-pulse {
-  0%, 100% { box-shadow: 0 0 8px var(--accent); opacity: 1; }
-  50%      { box-shadow: 0 0 16px var(--accent); opacity: 0.7; }
-}
-
 @keyframes explanation-slide-in {
   from { opacity: 0; transform: translateX(8px); }
   to   { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes grid-reveal {
-  from { opacity: 0; }
-  to   { opacity: 0.12; }
 }
 
 @keyframes seec0de-fade-in {
@@ -521,44 +531,267 @@ a:focus-visible,
   padding-left: 10px;
 }
 
-.home-launch-card:hover {
-  border-color: var(--accent) !important;
-  background: var(--accent-soft) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(200, 255, 77, 0.08);
-  transition: transform var(--motion-base) var(--ease-spring),
-              box-shadow var(--motion-base) var(--ease-out),
-              border-color var(--motion-base) var(--ease-out),
+/* ── Home screen ─────────────────────────────────────────────────────── */
+
+.home-screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: block;
+  overflow-x: clip;
+  overflow-y: auto;
+  isolation: isolate;
+  background: var(--bg-primary);
+}
+
+.home-content {
+  width: min(880px, calc(100% - 64px));
+  margin: 0 auto;
+  padding: clamp(48px, 9vh, 96px) 0 clamp(72px, 12vh, 132px);
+}
+
+.home-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.home-heading {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: var(--text-primary);
+  font-size: clamp(34px, 5.4vw, 68px);
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+/* ── Home entry buttons ──────────────────────────────────────────────── */
+
+/* Layout only — the buttons themselves are beUI `expanding-arrow-button`
+ * instances, styled through className so the source stays unforked. */
+.home-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 36px;
+}
+
+/* Width reserved at each CTA's trailing edge for the arrow trail. The trail
+ * draws in a fixed dark ink, so it gets its own lane instead of crossing the
+ * label; shrinking it on narrower windows buys the label back the room. */
+.home-cta {
+  --arrow-trail-lane: 120px;
+}
+
+@media (max-width: 1100px) {
+  .home-cta {
+    --arrow-trail-lane: 84px;
+  }
+}
+
+.home-future {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.home-future-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.home-wordmark {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: -1;
+  transform: translateX(-50%) translateY(30%);
+  color: var(--text-primary);
+  opacity: 0.05;
+  font-size: clamp(120px, 23vw, 360px);
+  font-weight: 700;
+  line-height: 0.78;
+  letter-spacing: -0.095em;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Bulletin ────────────────────────────────────────────────────────── */
+
+.bulletin-section {
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.bulletin-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+}
+
+/* Solid accent square rather than a dot — it reads as a section rule and
+ * matches the squared-off icon tiles inside the cards. */
+.bulletin-mark {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.bulletin-title {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+
+.bulletin-date {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.bulletin-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.bulletin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* The whole card is the link, so the hover state belongs on the card and the
+ * external glyph is a passive hint instead of a second hit area. */
+.bulletin-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 15px 17px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  background: var(--bg-secondary);
+  text-decoration: none;
+  transition: border-color var(--motion-base) var(--ease-out),
               background var(--motion-base) var(--ease-out);
 }
 
-.learn-home-card:hover {
-  border-color: var(--accent) !important;
-  background: var(--accent-soft) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(200, 255, 77, 0.08);
-  transition: transform var(--motion-base) var(--ease-spring),
-              box-shadow var(--motion-base) var(--ease-out),
-              border-color var(--motion-base) var(--ease-out),
-              background var(--motion-base) var(--ease-out);
+/* Per-card tone. `--keyword` is not a token — the old markup tinted the second
+ * icon with it, which silently resolved to nothing. */
+.bulletin-card-accent  { --bulletin-tone: var(--accent); }
+.bulletin-card-keyword { --bulletin-tone: var(--bulletin-keyword-tone); }
+
+.bulletin-card:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-hover);
+}
+
+.bulletin-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bulletin-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulletin-card-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--bg-tertiary);
+  color: var(--bulletin-tone);
+}
+
+.bulletin-card-label {
+  color: var(--text-muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.bulletin-card-go {
+  margin-left: auto;
+  color: var(--text-muted);
+  transition: color var(--motion-base) var(--ease-out),
+              transform var(--motion-base) var(--ease-out);
+}
+
+.bulletin-card:hover .bulletin-card-go {
+  color: var(--text-primary);
+  transform: translate(1px, -1px);
+}
+
+.bulletin-card-title {
+  margin-top: 4px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.bulletin-card-desc {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Clamped so the two cards stay level however long the extract runs. */
+.bulletin-card-text {
+  display: -webkit-box;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .learn-card {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
   color: var(--text-primary);
   text-align: left;
-  transition: transform var(--motion-base) var(--ease-spring),
-              box-shadow var(--motion-base) var(--ease-out),
-              border-color var(--motion-base) var(--ease-out),
-              background var(--motion-base) var(--ease-out);
+  transition: border-color var(--motion-fast) var(--ease-out),
+              background var(--motion-fast) var(--ease-out);
 }
 
 .learn-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(200, 255, 77, 0.06);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
 }
 
 .learn-chip {
@@ -577,54 +810,34 @@ a:focus-visible,
 }
 
 .learn-chip:hover {
-  border-color: var(--accent);
+  border-color: var(--border-strong);
   color: var(--text-primary);
-  background: var(--accent-soft);
+  background: var(--bg-elevated);
 }
 
 .learn-chip-active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.learn-section-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 20px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
+  border-color: var(--border-strong);
   color: var(--text-primary);
-  text-align: left;
-  transition: all var(--motion-base) var(--ease-spring);
-}
-
-.learn-section-btn:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(200, 255, 77, 0.06);
+  background: var(--bg-elevated);
 }
 
 .learn-lesson-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 13px 16px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
   text-align: left;
-  transition: all var(--motion-fast) var(--ease-out);
+  transition: border-color var(--motion-fast) var(--ease-out),
+              background var(--motion-fast) var(--ease-out);
 }
 
 .learn-lesson-row:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
 }
 
 .learn-progress-track {
@@ -636,10 +849,120 @@ a:focus-visible,
 }
 
 .learn-progress-fill {
+  display: block;
   height: 100%;
   border-radius: 2px;
   background: var(--accent);
   transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Learn option cards ────────────────────────────────────────────────
+ * Shared shape for every "choose one" card in the Learn area: a head row
+ * (optional tone glyph · name · go arrow), then one meta line. Name-led,
+ * one accent-free hierarchy level, no repeated eyebrow or icon tile.
+ * ------------------------------------------------------------------- */
+
+.learn-opt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 16px 18px;
+}
+
+.learn-opt-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.learn-opt-icon {
+  flex-shrink: 0;
+  color: var(--opt-tone, var(--text-secondary));
+}
+
+.learn-opt-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.learn-opt-go {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color var(--motion-base) var(--ease-out),
+              transform var(--motion-base) var(--ease-out);
+}
+
+.learn-opt-card:hover .learn-opt-go {
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.learn-opt-meta {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.learn-opt-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.learn-opt-progress .learn-progress-track {
+  flex: 1;
+  min-width: 0;
+}
+
+.learn-opt-count {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+/* ── Course wall ──────────────────────────────────────────────────────
+ * All of a language's courses at once — no pagination chrome. auto-fit
+ * collapses the empty tracks, so a language with one course gets one
+ * centred folder instead of a lone card stranded at the left edge.
+ * ------------------------------------------------------------------- */
+
+.learn-course-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(288px, 1fr));
+  justify-items: center;
+  gap: 20px;
+}
+
+/* ── Project folder tint ──────────────────────────────────────────────
+ * `--folder-tone` is set inline by ProjectFolder (defaults to the accent,
+ * reproducing the registry's lime). These marker classes sit at a higher
+ * specificity than the utility classes on the same element, so they win
+ * without needing !important or a fork of the registry source.
+ * ------------------------------------------------------------------- */
+
+.pf-back {
+  border-color: color-mix(in srgb, var(--folder-tone) 22%, transparent);
+  background: color-mix(in srgb, var(--folder-tone) 9%, transparent);
+}
+
+.pf-front {
+  border-color: color-mix(in srgb, var(--folder-tone) 30%, transparent);
+  background: color-mix(in srgb, var(--folder-tone) 12%, transparent);
+}
+
+.pf-preview {
+  border-color: color-mix(in srgb, var(--folder-tone) 18%, transparent);
+  background: color-mix(in srgb, var(--folder-tone) 6%, transparent);
+}
+
+.pf-preview:hover {
+  border-color: color-mix(in srgb, var(--folder-tone) 34%, transparent);
+  background: color-mix(in srgb, var(--folder-tone) 12%, transparent);
 }
 
 /* ── AI prompt card ──────────────────────────────────────────────────── */
@@ -662,8 +985,14 @@ a:focus-visible,
 
 @media (max-width: 720px) {
   .home-content {
-    width: calc(100% - 32px) !important;
-    padding-bottom: 90px !important;
+    width: calc(100% - 32px);
+    padding-top: 40px;
+    padding-bottom: 90px;
+  }
+
+  .home-entry-grid,
+  .bulletin-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .learn-home-content {
@@ -671,7 +1000,6 @@ a:focus-visible,
     padding-top: 36px !important;
   }
 
-  .home-launch-grid,
   .learn-home-card-grid,
   .learn-home-course-grid {
     grid-template-columns: 1fr !important;

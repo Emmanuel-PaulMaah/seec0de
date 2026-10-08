@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, ExternalLink, Loader, Code2 } from 'lucide-react';
+import { Code2, ExternalLink, Lightbulb } from 'lucide-react';
+import { Loader } from './motion/loader';
 
 // BulletinSection — daily digest sourced from Wikipedia's Computer
 // Programming portal.
 //
 // Sections:
-//   1. Featured Article  — random pick from Portal:Computer programming/Selected articles
-//   2. Did You Know      — random pick from the same curated list
-//   4. Word of the Day   — Wiktionary's word of the day
+//   1. Featured Article — random pick from Portal:Computer programming/Selected articles
+//   2. Did You Know     — a second random pick from the same curated list
 //
 // All data fetched once on mount. Falls back silently if any fetch fails.
 
@@ -15,6 +15,7 @@ const TODAY = new Date();
 const YYYY = TODAY.getFullYear();
 const MM = String(TODAY.getMonth() + 1).padStart(2, '0');
 const DD = String(TODAY.getDate()).padStart(2, '0');
+const ISO_DATE = `${YYYY}-${MM}-${DD}`;
 
 // ---- Curated list from Portal:Computer_programming/Selected articles ----
 // Each entry is a Wikipedia article title that has been hand-picked as
@@ -101,22 +102,39 @@ async function fetchArticleSummary(title) {
   }
 }
 
-// ---- Card wrapper ------------------------------------------------------
+// ---- Card --------------------------------------------------------------
+//
+// The anchor wraps the whole card, so the entire surface is the target and the
+// external-link glyph is a passive hint rather than a second hit area. Tone is a
+// modifier class (see global.css) so no colour lives in the component.
 
-function BulletinCard({ icon, label, color, children, link }) {
+function BulletinCard({ tone, icon, label, article }) {
+  if (!article) return null;
+
   return (
-    <div style={styles.card}>
-      <div style={styles.cardHeader}>
-        <span style={{ ...styles.cardIcon, color, background: `${color}18` }}>{icon}</span>
-        <span style={{ ...styles.cardLabel, color }}>{label}</span>
-        {link && (
-          <a href={link} target="_blank" rel="noreferrer" style={styles.cardLink} title="Read on Wikipedia">
-            <ExternalLink size={10} />
-          </a>
-        )}
-      </div>
-      <div style={styles.cardBody}>{children}</div>
-    </div>
+    <a
+      className={`bulletin-card bulletin-card-${tone}`}
+      href={article.url}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span className="bulletin-card-top">
+        <span className="bulletin-card-icon" aria-hidden="true">{icon}</span>
+        <span className="bulletin-card-label">{label}</span>
+        <ExternalLink className="bulletin-card-go" size={12} aria-hidden="true" />
+      </span>
+
+      <span className="bulletin-card-title">
+        {article.title}
+        <span className="sr-only"> — opens on Wikipedia in a new tab</span>
+      </span>
+
+      {article.description ? (
+        <span className="bulletin-card-desc">{article.description}</span>
+      ) : null}
+
+      <span className="bulletin-card-text">{article.extract}</span>
+    </a>
   );
 }
 
@@ -155,162 +173,36 @@ export default function BulletinSection() {
   if (!loading && !hasContent) return null;
 
   return (
-    <section style={styles.section}>
-      <div style={styles.sectionHeader}>
-        <span style={styles.sectionDot} />
-        <span style={styles.sectionTitle}>Today's Bulletin</span>
-        <span style={styles.sectionDate}>
+    <section className="bulletin-section" aria-labelledby="bulletin-heading">
+      <header className="bulletin-header">
+        <span className="bulletin-mark" aria-hidden="true" />
+        <h2 className="bulletin-title" id="bulletin-heading">Today's Bulletin</h2>
+        <time className="bulletin-date" dateTime={ISO_DATE}>
           {TODAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </span>
-      </div>
+        </time>
+      </header>
 
       {loading ? (
-        <div style={styles.loadingRow}>
-          <Loader size={13} style={{ animation: 'spin 1s linear infinite' }} />
+        <div className="bulletin-loading">
+          <Loader size={13} variant="dots" />
           <span>Loading today's digest…</span>
         </div>
       ) : (
-        <div style={styles.grid}>
-          {featured && (
-            <BulletinCard
-              icon={<Code2 size={13} />}
-              label="Featured Article"
-              color="var(--accent)"
-              link={featured.url}
-            >
-              <p style={styles.cardTitle}>{featured.title}</p>
-              {featured.description && (
-                <p style={styles.cardDesc}>{featured.description}</p>
-              )}
-              <p style={styles.cardText}>{featured.extract}</p>
-            </BulletinCard>
-          )}
-
-          {didYouKnow && (
-            <BulletinCard
-              icon={<Lightbulb size={13} />}
-              label="Did You Know"
-              color="var(--keyword)"
-              link={didYouKnow.url}
-            >
-              <p style={styles.cardTitle}>{didYouKnow.title}</p>
-              {didYouKnow.description && (
-                <p style={styles.cardDesc}>{didYouKnow.description}</p>
-              )}
-              <p style={styles.cardText}>{didYouKnow.extract}</p>
-            </BulletinCard>
-          )}
+        <div className="bulletin-grid">
+          <BulletinCard
+            tone="accent"
+            icon={<Code2 size={12} />}
+            label="Featured Article"
+            article={featured}
+          />
+          <BulletinCard
+            tone="keyword"
+            icon={<Lightbulb size={12} />}
+            label="Did You Know"
+            article={didYouKnow}
+          />
         </div>
       )}
     </section>
   );
 }
-
-// ---- Styles ------------------------------------------------------------
-
-const styles = {
-  section: {
-    marginTop: 28,
-  },
-  sectionHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionDot: {
-    width: 5,
-    height: 5,
-    borderRadius: '50%',
-    background: 'var(--accent)',
-    boxShadow: '0 0 10px var(--accent)',
-    flexShrink: 0,
-  },
-  sectionTitle: {
-    color: 'var(--text-muted)',
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-  },
-  sectionDate: {
-    color: 'var(--text-muted)',
-    fontSize: 10,
-    opacity: 0.6,
-    marginLeft: 'auto',
-  },
-  loadingRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '14px 0',
-    color: 'var(--text-muted)',
-    fontSize: 11,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: 10,
-  },
-  card: {
-    padding: 14,
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    background: 'color-mix(in srgb, var(--bg-elevated) 85%, transparent)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  cardHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 7,
-  },
-  cardIcon: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 22,
-    height: 22,
-    borderRadius: 5,
-    flexShrink: 0,
-  },
-  cardLabel: {
-    fontSize: 9.5,
-    fontWeight: 700,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  cardLink: {
-    marginLeft: 'auto',
-    color: 'var(--text-muted)',
-    display: 'inline-flex',
-    alignItems: 'center',
-    textDecoration: 'none',
-    opacity: 0.6,
-    transition: 'opacity 0.15s',
-  },
-  cardBody: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
-  },
-  cardTitle: {
-    margin: 0,
-    color: 'var(--text-primary)',
-    fontSize: 12.5,
-    fontWeight: 600,
-  },
-  cardDesc: {
-    margin: 0,
-    color: 'var(--text-muted)',
-    fontSize: 10,
-    fontStyle: 'italic',
-  },
-  cardText: {
-    margin: 0,
-    color: 'var(--text-secondary)',
-    fontSize: 11,
-    lineHeight: 1.55,
-  },
-};

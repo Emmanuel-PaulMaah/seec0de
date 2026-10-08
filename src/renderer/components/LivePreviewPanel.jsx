@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Eye, Terminal as TermIcon, RefreshCw,
-  ChevronLeft, ChevronRight, Trash2, Code2, FileCode2,
+  ChevronLeft, ChevronRight, Trash2,
   AlertTriangle, Wrench, X as CloseIcon, Sparkles,
   ExternalLink,
 } from 'lucide-react';
@@ -424,30 +424,12 @@ function PlaceholderView({ language, runnable, runLoading }) {
   const isPseudo = language === 'plaintext';
   return (
     <div style={styles.placeholder}>
-      {isPseudo ? <Code2 size={28} color="var(--text-muted)" /> : <FileCode2 size={28} color="var(--text-muted)" />}
-      <h3 style={styles.placeholderTitle}>
-        {isPseudo
-          ? 'Pseudocode is the lesson'
-          : runnable
-            ? (runLoading ? `Running ${languageLabel(language)}…` : `Ready to run ${languageLabel(language)}`)
-            : 'Live preview not available'}
-      </h3>
       <p style={styles.placeholderText}>
-        {isPseudo && (<>
-          Switch to a <b>language tab</b>
-        </>)}
-        {!isPseudo && runnable && (<>
-          Press <b>Run</b> in the editor toolbar above.
-        </>)}
-        {!isPseudo && !runnable && language === 'css' && (<>
-          CSS needs a document to style. Open an <b>HTML file</b> that
-          links to this stylesheet and you'll see your styles applied
-          live. The file itself is fully editable here.
-        </>)}
-        {!isPseudo && !runnable && language !== 'css' && (<>
-          Live preview supports HTML and JavaScript out of the box.
-          Other languages (Java, Go, Rust, C#…) can still be edited but don't render here.
-        </>)}
+        {isPseudo
+          ? 'Switch to a language tab to preview.'
+          : runnable
+            ? (runLoading ? `Running ${languageLabel(language)}…` : `Click Run to see output.`)
+            : 'Preview not available for this language.'}
       </p>
     </div>
   );
@@ -544,10 +526,9 @@ function ConsoleView({ entries, inputEnabled, onInput }) {
     <div style={styles.consoleColumn}>
       {entries.length === 0 ? (
         <div style={styles.consoleEmpty}>
-          <TermIcon size={20} color="var(--text-muted)" />
-          <span style={styles.consoleEmptyTitle}>Console is quiet.</span>
+          <span style={styles.consoleEmptyTitle}>No output yet.</span>
           <span style={styles.consoleEmptyHint}>
-            Click <b>Run</b> in the editor toolbar to execute your code and see output here.
+            Click Run to execute your code.
           </span>
         </div>
       ) : (

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-  FolderOpen, Play, CheckCircle2, Circle, Lock, ChevronDown, ChevronUp,
-  X, Lightbulb, Code2, Eye, EyeOff, Loader, Wand2, AlertCircle, ArrowRight,
-  Filter, Check, Folder, Terminal, Undo2,
+  FolderOpen, Play, CheckCircle2, Circle, Lock,
+  X, Lightbulb, Code2, Eye, EyeOff, Wand2, AlertCircle, ArrowRight,
+  Check, Folder, Terminal, Undo2, ArrowLeft, Search, LibraryBig, FolderKanban,
+  Sparkles,
 } from 'lucide-react';
+import { Loader } from './motion/loader';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   listBuildProjects, listGeneratedProjects, findBuildProject,
   sanitizeGeneratedProject, registerGeneratedProject, deleteGeneratedProject,
@@ -13,6 +16,11 @@ import { LANGUAGES } from '../engine/languages';
 import { PromptInput } from './agents/prompt-input';
 import { renderInline } from './InlineCode';
 import { insertIntoEditor } from '../engine/editorBridge';
+import { Button } from './motion/button/base';
+import { BouncyAccordion } from './motion/bouncy-accordion';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from './motion/select';
 
 // Stack choices for the "Build with AI" dropdown — Auto lets the AI pick.
 const AI_STACKS = [
@@ -54,16 +62,11 @@ export default function BuildPanel({
 }) {
   const [query, setQuery] = useState('');
   const [pickerTick, setPickerTick] = useState(0);
-  // Which picker surface is visible: 'my' (My Creations) or 'sample'.
-  const [pickerTab, setPickerTab] = useState('sample');
+  // Project discovery lives in separate rooms so the AI composer, personal
+  // projects, and sample library do not compete in one long scroll.
+  const [pickerPage, setPickerPage] = useState('home');
   // Stack filter for the Sample Projects list ('all' = every language).
   const [langFilter, setLangFilter] = useState('all');
-  // The "Build with AI" box is collapsed behind a toggle by default so the
-  // picker stays light — expand it only when you actually want to describe
-  // an idea.
-  // Sample Projects language filter — a compact icon button that opens a
-  // dropdown menu of languages (replaces the old row of filter pills).
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
   // Accordion: which sample project's card is expanded (one at a time).
   const [expandedProjectId, setExpandedProjectId] = useState(null);
   // Start-build dialog: the project awaiting the learner's answers to
@@ -125,6 +128,7 @@ export default function BuildPanel({
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState(null);
   const [aiReady, setAiReady] = useState(() => hasApiKey());
+  const reduce = useReducedMotion();
   useEffect(() => {
     const unsub = subscribeHasApiKey(setAiReady);
     return () => { unsub(); };
@@ -147,7 +151,7 @@ export default function BuildPanel({
       // anything into the folder.
       openStartDialog(project);
     } catch (err) {
-      setAiError(err?.message || 'Something went wrong — try again.');
+      setAiError(err?.message || 'Could not create this project — try again.');
     } finally {
       setAiLoading(false);
     }
@@ -161,16 +165,17 @@ export default function BuildPanel({
   // ---- no folder yet ------------------------------------------------
   if (!rootPath) {
     return (
-      <div style={styles.pane}>
-        <div style={styles.paneHeading}>Build a project</div>
-        <p style={styles.muted}>
-          The Build Panel turns your folder into a guided project. Open or
-          create a folder first — that folder becomes your project.
-        </p>
-        <button type="button" className="ui-toolbar-button" style={styles.folderBtn} onClick={onPickFolder}>
-          <FolderOpen size={13} />
-          <span style={{ marginLeft: 6 }}>Open a folder</span>
-        </button>
+      <div style={styles.pane} className="justify-center">
+        <div className="px-2 py-6 text-center">
+          <FolderOpen className="mx-auto size-6 text-primary" />
+          <h2 className="mt-4 text-base font-semibold tracking-[-0.02em] text-foreground">Choose your workshop</h2>
+          <p className="mx-auto mt-2 max-w-[30ch] text-xs leading-5 text-muted-foreground">
+            Open the folder where you want to build. Your steps and code will stay together there.
+          </p>
+          <Button onClick={onPickFolder} ripple className="mt-5 rounded-lg">
+            <FolderOpen className="size-3.5" /> Open a folder
+          </Button>
+        </div>
       </div>
     );
   }
@@ -202,241 +207,196 @@ export default function BuildPanel({
       seenMy.add(project.id);
       myProjects.push({ project, entry: null });
     }
-    return (
-      <div style={styles.pane}>
-        <div style={styles.paneHeading}>Build a project</div>
-        <p style={styles.muted}>
-          Type any idea and AI designs the steps for you — or start from a
-          sample project below.
-        </p>
 
-        {/* Build with AI — always-visible prompt box */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 26, height: 26, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 7, background: 'var(--accent-soft)', color: 'var(--accent)', flexShrink: 0 }}><Wand2 size={14} /></span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>Build with AI</span>
-          </div>
-          <PromptInput
-            value={aiPrompt}
-            onValueChange={setAiPrompt}
-            onSubmit={() => handleAiBuild()}
-            loading={aiLoading}
-            onStop={aiLoading ? () => setAiLoading(false) : undefined}
-            placeholder="Describe what you want to build…"
-            aria-label="Describe the project to build"
-            models={AI_STACKS.map((s) => ({ value: s.id, label: s.label }))}
-            model={aiStack}
-            onModelChange={setAiStack}
-            className="border-[var(--border-strong)] bg-[var(--bg-tertiary)]"
-          />
-          {aiError && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-strong)', borderRadius: 6, fontSize: 11, color: 'var(--danger-text)' }} role="alert">
-              <AlertCircle size={11} style={{ flexShrink: 0 }} />
-              <span>{aiError}</span>
-            </div>
-          )}
-          {!aiReady && !aiError && (
-            <button style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: 11.5, textAlign: 'left', padding: 0, textDecoration: 'underline', textDecorationColor: 'var(--border-strong)', textUnderlineOffset: 3 }} onClick={onOpenSettings}>
-              Add a free Gemini key in Settings for AI builds →
-            </button>
-          )}
-        </div>
-
-        {/* My Creations / Sample Projects — pill tabs: click one to see it */}
-        <div style={styles.pillRow} role="tablist" aria-label="Project picker">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pickerTab === 'my'}
-            style={{ ...styles.pill, ...(pickerTab === 'my' ? styles.pillActive : {}) }}
-            onClick={() => setPickerTab('my')}
-          >
-            My Creations
-            {myProjects.length > 0 && <span style={styles.pillCount}>{myProjects.length}</span>}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pickerTab === 'sample'}
-            style={{ ...styles.pill, ...(pickerTab === 'sample' ? styles.pillActive : {}) }}
-            onClick={() => setPickerTab('sample')}
-          >
-            Sample Projects
-            <span style={styles.pillCount}>{projects.length}</span>
-          </button>
-        </div>
-
-        {pickerTab === 'my' ? (
-          myProjects.length > 0 ? (
-            <div style={styles.projectList}>
-              {myProjects.map(({ project, entry }) => (
-                <div
-                  key={`my:${project.id}:${pickerTick}`}
-                  style={{ ...styles.projectCard, ...styles.projectCardClickable }}
-                  onClick={() => onResumeBuild?.(project.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter') onResumeBuild?.(project.id); }}
-                >
-                  <div style={styles.projectTopline}>
-                    <span style={styles.projectTitle}>{project.title}</span>
-                    <span style={styles.langChip}>{labelFor(project.language)}</span>
-                  </div>
-                  {project.generated && (
-                    <div style={styles.generatedRow}>
-                      <span style={styles.generatedChip}>AI-generated</span>
-                      <button
-                        type="button"
-                        className="ui-icon-button"
-                        style={styles.deleteBtn}
-                        onClick={(e) => { e.stopPropagation(); handleDeleteGenerated(project.id); }}
-                        title="Delete this generated project"
-                        aria-label="Delete generated project"
-                      >
-                        <X size={11} />
-                      </button>
-                    </div>
-                  )}
-                  <p style={styles.projectSummary}>{project.summary}</p>
-                  <div style={styles.cardActions}>
-                    <span style={styles.stepCount}>
-                      {entry && entry.stepIndex > 0
-                        ? (entry.stepIndex >= entry.stepCount
-                            ? `${entry.stepCount}/${entry.stepCount} steps done`
-                            : `step ${entry.stepIndex + 1} of ${entry.stepCount}`)
-                        : `${project.steps.length} steps`}
-                    </span>
-                    <button
-                      type="button"
-                      className="ui-primary-button"
-                      style={styles.startBtn}
-                      onClick={(e) => { e.stopPropagation(); onResumeBuild?.(project.id); }}
-                    >
-                      <Play size={11} />
-                      <span style={{ marginLeft: 5 }}>{entry && entry.stepIndex > 0 ? 'Resume' : 'Start'}</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={styles.muted}>
-              Nothing here yet. start a sample project or build one with AI and
-              it will show up here.
+    const sampleItems = projects.map((project) => ({
+      id: project.id,
+      icon: <Code2 className="size-4" />,
+      title: (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate">{project.title}</span>
+          <span className="shrink-0 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+            {labelFor(project.language)}
+          </span>
+        </span>
+      ),
+      description: (
+        <div className="space-y-4">
+          <p className="text-xs leading-5 text-muted-foreground">{project.summary}</p>
+          {(project.concepts || []).length > 0 ? (
+            <p className="text-[10px] leading-5 text-muted-foreground">
+              {(project.concepts || []).join(' · ')}
             </p>
-          )
-        ) : (
-          <>
-            {/* Language filter + search — the filter icon opens a dropdown */}
-            <div style={styles.filterRow}>
-              <div style={styles.langMenuWrap}>
-                <button
-                  type="button"
-                  style={styles.filterBtn}
-                  onClick={() => setLangMenuOpen((v) => !v)}
-                  aria-haspopup="listbox"
-                  aria-expanded={langMenuOpen}
-                  title="Filter by language"
-                  aria-label="Filter by language"
-                >
-                  <Filter size={12} style={{ flexShrink: 0 }} />
-                  {langFilter !== 'all' && (
-                    <span style={styles.filterChip}>{labelFor(langFilter)}</span>
-                  )}
-                  <ChevronDown size={11} style={styles.filterChevron} />
-                </button>
-                {langMenuOpen && (
-                  <div style={styles.langMenu} role="listbox" aria-label="Languages">
-                    {sampleLanguages.map((lang) => {
-                      const active = langFilter === lang;
-                      return (
-                        <button
-                          key={lang}
-                          type="button"
-                          role="option"
-                          aria-selected={active}
-                          style={{ ...styles.langMenuItem, ...(active ? styles.langMenuItemActive : {}) }}
-                          onClick={() => { setLangFilter(lang); setLangMenuOpen(false); }}
-                        >
-                          <span style={styles.langMenuLabel}>
-                            {lang === 'all' ? 'All languages' : labelFor(lang)}
-                          </span>
-                          {active && <Check size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
-                        </button>
-                      );
-                    })}
+          ) : null}
+          <div className="flex items-center justify-between border-t border-border pt-3">
+            <span className="text-[11px] text-muted-foreground">{project.steps.length} guided steps</span>
+            <Button size="sm" ripple onClick={() => openStartDialog(project)} className="rounded-md">
+              <Play className="size-3" />
+              Build it
+            </Button>
+          </div>
+        </div>
+      ),
+    }));
+
+    const pageMotion = reduce
+      ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+      : {
+          initial: { opacity: 0, x: 18, filter: 'blur(5px)' },
+          animate: { opacity: 1, x: 0, filter: 'blur(0px)' },
+          exit: { opacity: 0, x: -12, filter: 'blur(4px)' },
+        };
+
+    return (
+      <div style={styles.pane} className="relative">
+        <AnimatePresence mode="wait" initial={false}>
+          {pickerPage === 'home' ? (
+            <motion.section key="build-home" {...pageMotion} transition={{ duration: reduce ? 0 : 0.22 }}>
+              <div className="relative py-1">
+                <div className="relative z-10 mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                      <Sparkles className="size-3" /> Project studio
+                    </div>
+                    <h2 className="text-xl font-semibold tracking-[-0.025em] text-foreground">What are we building?</h2>
+                    <p className="mt-1 max-w-[200px] text-sm leading-5 text-muted-foreground">
+                      Describe the outcome. AI will shape it into small, verifiable steps.
+                    </p>
                   </div>
-                )}
+                  <Wand2 className="mt-1 size-4 shrink-0 text-primary" />
+                </div>
+                <div className="relative z-10">
+                  <PromptInput
+                    value={aiPrompt}
+                    onValueChange={setAiPrompt}
+                    onSubmit={handleAiBuild}
+                    loading={aiLoading}
+                    placeholder="A habit tracker with weekly insights…"
+                    aria-label="Describe the project to build"
+                    models={AI_STACKS.map((stack) => ({ value: stack.id, label: stack.label }))}
+                    model={aiStack}
+                    onModelChange={setAiStack}
+                    className="rounded-[15px] border-border bg-card shadow-none"
+                  />
+                </div>
               </div>
 
-              <input
-                style={styles.filterInput}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={'Type to find a project — e.g. "quiz" or "study log"'}
-                aria-label="Filter build projects"
-              />
-            </div>
-            {langMenuOpen && (
-              <div style={styles.menuOverlay} onClick={() => setLangMenuOpen(false)} />
-            )}
+              {aiError ? (
+                <div className="mt-3 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-xs leading-5 text-[var(--danger-text)]" role="alert">
+                  <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+                  <span>{aiError}</span>
+                </div>
+              ) : !aiReady ? (
+                <button className="mt-3 text-left text-[11px] text-muted-foreground underline decoration-border-strong underline-offset-4 hover:text-foreground" onClick={onOpenSettings}>
+                  Add a free Gemini key in Settings to use AI for projects
+                </button>
+              ) : null}
 
-            {projects.length === 0 && (
-              <p style={styles.muted}>No project matches — try “quiz” or “study log”.</p>
-            )}
-
-            {/* Sample projects — a list of names; click one to expand its card */}
-            <div style={styles.projectList}>
-              {projects.map((project) => {
-                const expanded = expandedProjectId === project.id;
-                return (
-                  <div
-                    key={`${project.id}:${pickerTick}`}
-                    style={{ ...styles.projectRow, ...(expanded ? styles.projectRowExpanded : {}) }}
-                  >
-                    <button
-                      type="button"
-                      style={styles.projectRowHead}
-                      onClick={() => setExpandedProjectId(expanded ? null : project.id)}
-                      aria-expanded={expanded}
-                    >
-                      <span style={styles.projectRowTitle}>{project.title}</span>
-                      <span style={styles.langChip}>{labelFor(project.language)}</span>
-                      {expanded
-                        ? <ChevronUp size={13} style={styles.accordionChevron} />
-                        : <ChevronDown size={13} style={styles.accordionChevron} />}
-                    </button>
-                    {expanded && (
-                      <div style={styles.projectRowBody}>
-                        <p style={styles.projectSummary}>{project.summary}</p>
-                        <div style={styles.conceptRow}>
-                          {(project.concepts || []).map((c) => (
-                            <span key={c} style={styles.conceptChip}>{c}</span>
-                          ))}
+              <div className="mt-2">
+                <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Continue from somewhere</div>
+                <div className="divide-y divide-border border-y border-border">
+                  <Button variant="ghost" size="lg" onClick={() => setPickerPage('my')} className="group h-auto w-full justify-start gap-3 rounded-none px-0 py-1.5 text-left hover:bg-transparent">
+                    <FolderKanban className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-foreground">My projects</span>
+                      <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Resume your AI-created builds</span>
+                    </span>
+                    <span className="font-mono text-[10px] text-muted-foreground">{myProjects.length}</span>
+                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  </Button>
+                  <Button variant="ghost" size="lg" onClick={() => setPickerPage('samples')} className="group h-auto w-full justify-start gap-3 rounded-none px-0 py-1.5 text-left hover:bg-transparent">
+                    <LibraryBig className="size-4 shrink-0 text-[var(--algorithm)]" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-foreground">Sample library</span>
+                      <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Practice with a guided blueprint</span>
+                    </span>
+                    <span className="font-mono text-[10px] text-muted-foreground">{listBuildProjects().filter((project) => !project.generated).length}</span>
+                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  </Button>
+                </div>
+              </div>
+            </motion.section>
+          ) : pickerPage === 'my' ? (
+            <motion.section key="my-projects" {...pageMotion} transition={{ duration: reduce ? 0 : 0.22 }} className="space-y-4">
+              <PickerPageHeader title="My projects" subtitle="Projects designed for you" onBack={() => setPickerPage('home')} />
+              {myProjects.length > 0 ? (
+                <div className="divide-y divide-border border-y border-border">
+                  {myProjects.map(({ project, entry }) => (
+                    <div key={`my:${project.id}:${pickerTick}`} className="group px-1 py-5">
+                      <div className="flex items-start gap-4">
+                        <Wand2 className="mt-0.5 size-4 shrink-0 text-primary" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="truncate text-sm font-semibold text-foreground">{project.title}</h3>
+                            <span className="shrink-0 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">{labelFor(project.language)}</span>
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-muted-foreground">{project.summary}</p>
                         </div>
-                        <div style={styles.cardActions}>
-                          <span style={styles.stepCount}>{project.steps.length} steps</span>
-                          <button
-                            type="button"
-                            className="ui-primary-button"
-                            style={styles.startBtn}
-                            onClick={() => openStartDialog(project)}
-                          >
-                            <Play size={11} />
-                            <span style={{ marginLeft: 5 }}>Build it</span>
-                          </button>
-                        </div>
+                        <button type="button" className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-[var(--danger-text)]" onClick={() => handleDeleteGenerated(project.id)} aria-label={`Delete ${project.title}`}>
+                          <X className="size-3" />
+                        </button>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                        <span className="text-[10px] text-muted-foreground">
+                          {entry?.stepIndex > 0 ? `Step ${Math.min(entry.stepIndex + 1, entry.stepCount)} of ${entry.stepCount}` : `${project.steps.length} steps`}
+                        </span>
+                        <Button size="sm" onClick={() => onResumeBuild?.(project.id)} className="rounded-md">
+                          <Play className="size-3" /> {entry?.stepIndex > 0 ? 'Resume' : 'Start'}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyProjects onBrowse={() => setPickerPage('samples')} />
+              )}
+            </motion.section>
+          ) : (
+            <motion.section key="samples" {...pageMotion} transition={{ duration: reduce ? 0 : 0.22 }} className="space-y-4">
+              <PickerPageHeader title="Sample library" subtitle="Choose a blueprint, then make it yours" onBack={() => setPickerPage('home')} />
+              <div className="flex items-center gap-2">
+                <label className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search projects" aria-label="Search sample projects" className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-xs text-foreground outline-none transition focus:border-border-strong focus:ring-2 focus:ring-foreground/5" />
+                </label>
+                <Select value={langFilter} onValueChange={setLangFilter} className="shrink-0">
+                  <SelectTrigger className="h-10 w-[112px] rounded-lg border-border bg-card px-3 text-xs">
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent className="w-40">
+                    {sampleLanguages.map((language) => (
+                      <SelectItem key={language} value={language}>
+                        {language === 'all' ? 'All languages' : labelFor(language)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {sampleItems.length > 0 ? (
+                <BouncyAccordion
+                  key={pickerTick}
+                  items={sampleItems}
+                  value={expandedProjectId}
+                  onValueChange={setExpandedProjectId}
+                  classNames={{
+                    item: 'border-x-0 border-b-0 border-t border-border bg-transparent',
+                    trigger: 'min-h-[58px] gap-3 px-2',
+                    icon: 'size-5 bg-transparent',
+                    title: 'text-xs',
+                    content: 'border-t border-border/70',
+                    description: 'px-0 pt-4',
+                  }}
+                />
+              ) : (
+                <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                  <Search className="mx-auto size-5 text-muted-foreground" />
+                  <p className="mt-3 text-xs font-medium text-foreground">No matching blueprint</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Try a broader name or another language.</p>
+                </div>
+              )}
+            </motion.section>
+          )}
+        </AnimatePresence>
 
-          </>
-        )}
-
-        {/* Start-build questions dialog — visible on either tab */}
         {pendingStart && (
           <StartBuildDialog
             form={pendingStart}
@@ -469,36 +429,41 @@ export default function BuildPanel({
   const complete = currentIndex === -1;
 
   return (
-    <div style={styles.pane}>
-      {/* progress header */}
-      <div style={styles.buildHeader}>
-        <div style={styles.buildHeaderText}>
-          <div style={styles.buildTitle}>{project.title}</div>
-          <div style={styles.buildMeta}>
-            {complete ? 'Project complete' : `Step ${doneCount + 1} of ${steps.length}`}
+    <div style={styles.pane} className="relative">
+      <div className="border-b border-border px-1 pb-5">
+        <div className="flex items-start gap-4">
+          {complete
+            ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+            : <Code2 className="mt-0.5 size-4 shrink-0 text-primary" />}
+          <div className="min-w-0 flex-1">
+            <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {complete ? 'Build complete' : `Now building · ${doneCount + 1}/${steps.length}`}
+            </div>
+            <h2 className="mt-1 truncate text-base font-semibold tracking-[-0.02em] text-foreground">{project.title}</h2>
           </div>
+          <Button variant="ghost" size="icon" onClick={onExitBuild} title="Exit build (files stay)" aria-label="Exit build" className="shrink-0 rounded-md">
+            <X className="size-4" />
+          </Button>
         </div>
-        <button type="button" className="ui-icon-button" style={styles.headerBtn} onClick={onExitBuild} title="Exit build (files stay)">
-          <X size={13} />
-        </button>
-      </div>
-
-      <div style={styles.progressTrack}>
-        <div style={{ ...styles.progressFill, width: `${(doneCount / steps.length) * 100}%` }} />
+        <div className="mt-4 flex gap-1" aria-label={`${doneCount} of ${steps.length} steps complete`}>
+          {steps.map((step, index) => (
+            <span
+              key={step.id}
+              className={`h-1 flex-1 rounded-full transition-colors ${index < doneCount ? 'bg-primary' : index === currentIndex ? 'bg-primary/40' : 'bg-muted'}`}
+            />
+          ))}
+        </div>
       </div>
 
       {complete && (
-        <div style={styles.completeBox}>
-          <CheckCircle2 size={16} style={{ color: 'var(--success)', flexShrink: 0 }} />
+        <div className="flex gap-4 border-l-2 border-[var(--success)] bg-[var(--success-soft)] px-4 py-5">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--success)]" />
           <div>
-            <div style={styles.completeTitle}>Project complete</div>
-            <p style={styles.muted}>
-              {steps.length} steps verified. Your files are in the open folder —
-              open them, run them, change them.
+            <div className="text-sm font-semibold text-foreground">You built the whole thing.</div>
+            <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+              {steps.length} steps verified. The files are yours—run them, change them, break them, improve them.
             </p>
-            <button type="button" className="ui-toolbar-button" style={styles.folderBtn} onClick={onExitBuild}>
-              Build another project
-            </button>
+            <Button variant="outline" size="sm" onClick={onExitBuild} className="mt-3 rounded-md">Build something else</Button>
           </div>
         </div>
       )}
@@ -530,6 +495,35 @@ export default function BuildPanel({
   );
 }
 
+function PickerPageHeader({ title, subtitle, onBack }) {
+  return (
+    <div className="flex items-center gap-3">
+      <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to project studio" className="shrink-0 rounded-md">
+        <ArrowLeft className="size-4" />
+      </Button>
+      <div className="min-w-0">
+        <h2 className="truncate text-base font-semibold tracking-[-0.02em] text-foreground">{title}</h2>
+        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyProjects({ onBrowse }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
+      <FolderKanban className="mx-auto size-5 text-muted-foreground" />
+      <h3 className="mt-3 text-sm font-semibold text-foreground">Your shelf is ready</h3>
+      <p className="mx-auto mt-1 max-w-[28ch] text-[11px] leading-5 text-muted-foreground">
+        Create a project with AI, or adapt a sample blueprint to make your first one.
+      </p>
+      <Button variant="outline" size="sm" onClick={onBrowse} className="mt-4 rounded-md">
+        <LibraryBig className="size-3" /> Browse samples
+      </Button>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // StartBuildDialog — the "a few questions" before a build begins: the project
 // name, where the files go (open folder or a new subfolder named after the
@@ -551,7 +545,7 @@ function StartBuildDialog({ form, onChange, onCancel, onConfirm }) {
 
   const submit = () => {
     if (form.location === 'subfolder' && invalidName) {
-      onChange({ error: 'That name can’t be a folder — avoid / \\ : * ? " < > | characters.' });
+      onChange({ error: "That name can't be a folder — remove characters like / \\ : * ? \" < > |." });
       return;
     }
     onConfirm();
@@ -723,7 +717,7 @@ function StepCard({ step, index, isDone, isCurrent, check, projectDir = '', buil
           <div style={styles.setupHead}>
             <Terminal size={11} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span style={{ marginLeft: 6 }}>{buildSetup.label}</span>
-            {buildSetup.running && <Loader size={11} style={{ marginLeft: 'auto', animation: 'spin 1s linear infinite' }} />}
+            {buildSetup.running && <Loader size={11} variant="dots" style={{ marginLeft: 'auto' }} />}
             {!buildSetup.running && <CheckCircle2 size={11} style={{ marginLeft: 'auto', color: 'var(--success)' }} />}
           </div>
           {buildSetup.lines.map((line, i) => (
@@ -939,10 +933,10 @@ const styles = {
     minWidth: 0,
     background: 'var(--bg-input)',
     border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-group)',
+    borderRadius: 'var(--radius-lg)',
     color: 'var(--text-primary)',
     fontSize: 'var(--text-sm)',
-    padding: '10px 12px',
+    padding: '11px 14px',
     outline: 'none',
     transition: 'border-color var(--motion-fast) var(--ease-out)',
   },
@@ -951,7 +945,7 @@ const styles = {
     flexDirection: 'column',
     gap: 0,
     border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-card)',
+    borderRadius: 'var(--radius-lg)',
     background: 'var(--bg-tertiary)',
     overflow: 'hidden',
     transition: 'border-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out)',
@@ -1393,16 +1387,17 @@ const styles = {
   stepList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 12,
+    gap: 8,
   },
   stepCard: {
     display: 'flex',
     flexDirection: 'column',
     gap: 12,
-    padding: '14px 16px',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-card)',
+    padding: '14px 4px',
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '1px solid var(--border)',
+    borderRadius: 0,
   },
   stepCardLocked: {
     flexDirection: 'row',
@@ -1425,7 +1420,11 @@ const styles = {
     marginLeft: 2,
   },
   stepCardCurrent: {
-    borderColor: 'var(--accent)',
+    padding: '16px',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 8,
+    boxShadow: 'var(--shadow-sm)',
   },
   stepHead: {
     display: 'flex',
@@ -1482,7 +1481,7 @@ const styles = {
     fontSize: 11,
     fontWeight: 500,
     padding: '5px 11px',
-    borderRadius: 6,
+    borderRadius: 8,
     cursor: 'pointer',
   },
   expandBlock: {
@@ -1526,10 +1525,10 @@ const styles = {
   },
   codeBlock: {
     margin: 0,
-    padding: 11,
+    padding: 12,
     background: 'var(--bg-input)',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 10,
     color: 'var(--text-primary)',
     fontFamily: 'var(--font-mono)',
     fontSize: 11,
@@ -1561,7 +1560,7 @@ const styles = {
     flexDirection: 'column',
     gap: 6,
     padding: '10px 12px',
-    borderRadius: 6,
+    borderRadius: 10,
     fontSize: 11,
   },
   checkBoxPass: {
@@ -1703,10 +1702,10 @@ const styles = {
     width: '100%',
     background: 'var(--bg-input)',
     border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-group)',
+    borderRadius: 'var(--radius-lg)',
     color: 'var(--text-primary)',
     fontSize: 'var(--text-sm)',
-    padding: '9px 12px',
+    padding: '10px 14px',
     outline: 'none',
     transition: 'border-color var(--motion-fast) var(--ease-out)',
   },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  ChevronLeft, Lightbulb, RotateCcw, Eye, EyeOff, CheckCircle2,
+  Lightbulb, RotateCcw, Eye, EyeOff, CheckCircle2,
   XCircle, ArrowRight, Info, ListTree, Wrench, Code2, X, Play,
   MessageSquareText,
 } from 'lucide-react';
@@ -85,20 +85,11 @@ export default function ActiveLessonCard({
 
   return (
     <div style={{ ...styles.card, ...(teachingOnly ? styles.cardTeaching : {}) }}>
-      {/* Header */}
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onClear} title={lesson.kind === 'exercise' ? 'Back to exercises' : lesson.kind === 'project-checkpoint' ? 'Back to project' : 'Back to all lessons'}>
-          <ChevronLeft size={12} />
-          <span style={{ marginLeft: 2 }}>{lesson.kind === 'exercise' ? 'Exercises' : lesson.kind === 'project-checkpoint' ? 'Project' : 'Lessons'}</span>
-        </button>
-        <div style={styles.headerMeta}>
-          {lesson.concept && <span style={styles.conceptChip}>{lesson.concept}</span>}
-        </div>
-      </div>
-
+      {/* Back button, lesson title, and concept chip all live in the Learn
+          guide panel header (single source of truth) — the card renders only
+          content: summary, teaching, task, and status. */}
       {showTeaching && (
         <>
-          <h3 style={styles.title}>{lesson.title}</h3>
           {lesson.summary && <p style={styles.summary}>{lesson.summary}</p>}
 
           {/* Teaching blocks */}
@@ -424,7 +415,7 @@ function ProjectStepBlock({ lesson, check, projectDir, examplesShown, onToggleEx
 function renderBlock(block, key, language) {
   if (!block || !block.type) return null;
   if (block.type === 'p') {
-    return <p key={key} style={styles.p}>{renderInline(block.text || '')}</p>;
+    return <p key={key} style={styles.p}>{renderInline(block.text || '', { interactive: false })}</p>;
   }
   if (block.type === 'code') {
     return <TeachingCodeBlock key={key} code={block.text || ''} language={language} />;
@@ -433,7 +424,7 @@ function renderBlock(block, key, language) {
     return (
       <div key={key} style={styles.note}>
         <Info size={11} style={{ flexShrink: 0, marginTop: 2, color: 'var(--text-muted)' }} />
-        <span>{renderInline(block.text || '')}</span>
+        <span>{renderInline(block.text || '', { interactive: false })}</span>
       </div>
     );
   }
@@ -443,7 +434,6 @@ function renderBlock(block, key, language) {
 function TeachingCodeBlock({ code, language = 'javascript' }) {
   const [selectedLine, setSelectedLine] = useState(null);
   const [traceShown, setTraceShown] = useState(false);
-
   const lines = useMemo(() => String(code || '').split('\n'), [code]);
   const explanations = useMemo(() => explainCode(code, language).lineByLine, [code, language]);
   const trace = useMemo(() => traceCode(code, language), [code, language]);
@@ -547,10 +537,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
-    background: 'var(--bg-elevated)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 8,
-    padding: 12,
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 0,
+    padding: 0,
   },
   cardTeaching: {
     width: '100%',
@@ -558,43 +548,6 @@ const styles = {
     border: 'none',
     borderRadius: 0,
     padding: 0,
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  backBtn: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-muted)',
-    fontSize: 11,
-    padding: '2px 4px',
-    cursor: 'pointer',
-    borderRadius: 4,
-  },
-  headerMeta: {
-    display: 'flex',
-    gap: 4,
-  },
-  conceptChip: {
-    background: 'var(--algorithm-soft)',
-    color: 'var(--text-primary)',
-    fontSize: 10.5,
-    fontWeight: 600,
-    padding: '2px 8px',
-    borderRadius: 999,
-    letterSpacing: 0.3,
-    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: 'var(--text-primary)',
-    margin: '2px 0 0',
   },
   summary: {
     fontSize: 12,

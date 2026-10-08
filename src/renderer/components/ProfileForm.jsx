@@ -12,14 +12,14 @@ import { LANGUAGE_LIST } from '../engine/languages';
 export function resizeImageToDataUrl(file, size = 256, quality = 0.82) {
   return new Promise((resolve, reject) => {
     if (!file || !/^image\//.test(file.type)) {
-      reject(new Error('Please choose an image file.'));
+      reject(new Error("That's not an image file — pick a photo."));
       return;
     }
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read that image.'));
+    reader.onerror = () => reject(new Error('Could not read that file — try a different image.'));
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error('That image could not be loaded.'));
+      img.onerror = () => reject(new Error("That image couldn't be opened — try a different one."));
       img.onload = () => {
         // Cover-crop to a centered square, then draw at `size`.
         const side = Math.min(img.width, img.height);
@@ -105,7 +105,7 @@ export function AvatarPicker({ value, username, size = 84, onChange }) {
       const dataUrl = await resizeImageToDataUrl(file);
       onChange?.(dataUrl);
     } catch (err) {
-      setError(err.message || 'Could not use that image.');
+setError(err.message || "Couldn't use that image — try a different one.");
     } finally {
       setBusy(false);
     }

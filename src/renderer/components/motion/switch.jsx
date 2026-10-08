@@ -5,12 +5,12 @@ import { animate, motion, MotionConfig, useReducedMotion } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Heavy, deliberate thumb — high mass keeps the travel weighty without wobble.
+// Deliberate thumb — snappy travel with minimal overshoot.
 const THUMB_SPRING = {
   type: "spring",
   stiffness: 800,
-  damping: 80,
-  mass: 4
+  damping: 100,
+  mass: 2
 };
 
 export function Switch({

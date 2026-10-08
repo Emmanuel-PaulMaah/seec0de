@@ -1,37 +1,38 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Terminal as TermIcon, Trash2, ChevronDown, ChevronUp, Loader, Play } from 'lucide-react';
+import { Terminal as TermIcon, Trash2, ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { Loader } from './motion/loader';
 import { createGitSandbox } from '../engine/gitSandbox';
 
 const explanationMap = {
-  'git init': 'Initialize a new empty Git repository in the current directory.',
-  'git status': 'Show the working tree status—staged, unstaged, and untracked files.',
-  'git add': 'Add file contents to the staging area for the next commit.',
-  'git commit': 'Record changes to the repository by creating a new commit.',
-  'git log': 'Show commit logs (history) for the current branch.',
-  'git diff': 'Show differences between commits, working tree, or staging area.',
-  'git branch': 'List, create, or delete branches.',
-  'git checkout': 'Switch branches or restore working tree files.',
-  'git switch': 'Switch to a branch (modern alternative to checkout for switching).',
-  'git merge': 'Join two or more development histories together.',
-  'git clone': 'Clone a remote repository into a new local directory.',
-  'git push': 'Update remote references with local commits.',
-  'git pull': 'Fetch from and integrate with a remote repository.',
-  'git fetch': 'Download objects and refs from a remote repository.',
-  'git remote': 'Manage the set of repositories whose branches you track.',
-  'git reset': 'Reset current HEAD to a specified state (undo commits or unstage).',
-  'git restore': 'Restore working tree files to a previous state.',
-  'git stash': 'Stash the changes in a dirty working directory away temporarily.',
-  'git tag': 'Create, list, delete, or verify a tag object.',
-  'git help': 'Display help information for a Git command.',
-  touch: 'Create an empty file or update file timestamps.',
-  echo: 'Output text to the terminal or redirect it to a file.',
-  cat: 'Concatenate and display file contents.',
-  ls: 'List directory contents.',
-  pwd: 'Print the current working directory.',
-  cd: 'Change the current working directory.',
-  clear: 'Clear the terminal screen.',
-  cls: 'Clear the terminal screen (Windows alias).',
-  help: 'Display available commands and usage information.',
+  'git init': 'Creates a new empty Git repository in this folder.',
+  'git status': 'Shows which files have changed, are staged, or are untracked.',
+  'git add': "Stages files so they'll be included in the next commit.",
+  'git commit': 'Saves a snapshot of your staged changes.',
+  'git log': 'Shows the history of commits on this branch.',
+  'git diff': 'Shows what changed between commits or in your working files.',
+  'git branch': 'Lists, creates, or deletes branches.',
+  'git checkout': 'Switches branches or restores files to a previous state.',
+  'git switch': 'Switches to a different branch.',
+  'git merge': 'Combines changes from another branch into the current one.',
+  'git clone': 'Copies a remote repository to your computer.',
+  'git push': 'Uploads your local commits to the remote repository.',
+  'git pull': 'Downloads and applies changes from the remote repository.',
+  'git fetch': 'Downloads changes from the remote without applying them yet.',
+  'git remote': 'Manages the list of remote repositories you track.',
+  'git reset': 'Undoes commits or unstages files by moving the pointer back.',
+  'git restore': 'Reverts files in your working directory to a previous state.',
+  'git stash': 'Temporarily saves uncommitted changes so you can switch branches.',
+  'git tag': 'Creates, lists, or deletes a named marker on a commit.',
+  'git help': 'Shows help for a Git command.',
+  touch: "Creates an empty file or updates a file's timestamp.",
+  echo: 'Prints text to the screen or writes it to a file.',
+  cat: 'Displays the contents of a file.',
+  ls: 'Lists the files and folders in the current directory.',
+  pwd: 'Shows the full path of the current directory.',
+  cd: 'Moves to a different directory.',
+  clear: 'Clears the terminal screen.',
+  cls: 'Clears the terminal screen (Windows).',
+  help: 'Lists available commands and what they do.',
 };
 
 function explainCommand(cmd) {
@@ -444,7 +445,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
         ))}
         {running && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.6 }}>
-            <Loader size={12} className="spin" />
+            <Loader size={12} variant="spinner" />
             <span style={{ fontSize: 12 }}>Running...</span>
           </div>
         )}
@@ -475,7 +476,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
             setHistoryIdx(-1);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Enter a git or shell command..."
+          placeholder="          Type a git or shell command..."
           disabled={running}
           style={{
             flex: 1,
@@ -509,7 +510,7 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
             opacity: running || !input.trim() ? 0.4 : 1,
           }}
         >
-          {running ? <Loader size={13} className="spin" /> : <Play size={13} />}
+          {running ? <Loader size={13} variant="spinner" /> : <Play size={13} />}
         </button>
       </form>
     </div>

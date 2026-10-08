@@ -61,7 +61,7 @@ export function Tabs({
 
 const listClasses = {
   pill: "inline-flex items-center gap-1 rounded-full bg-card p-1",
-  underline: "inline-flex items-center gap-1 border-b border-border",
+  underline: "flex items-center gap-1 border-b border-border w-full",
   segment: "inline-flex items-center gap-0 rounded-lg bg-card p-0.5",
 };
 
@@ -91,10 +91,11 @@ export function TabsTrigger({
       <button
         type="button"
         role="tab"
+        data-state={active ? "active" : "inactive"}
         aria-selected={active}
         onClick={() => setValue(value)}
         className={cn(
-          "relative isolate px-3 pb-2.5 pt-1 -mb-px text-sm font-medium transition-colors min-h-[44px] inline-flex items-center",
+          "relative isolate flex-1 px-3 pb-2.5 pt-1 -mb-px text-sm font-medium transition-colors min-h-[44px] inline-flex items-center justify-center",
           active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           className
         )}>

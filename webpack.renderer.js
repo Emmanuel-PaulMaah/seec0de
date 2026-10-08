@@ -43,7 +43,8 @@ module.exports = (env, argv) => {
         use: ['style-loader', 'css-loader', 'postcss-loader'],
       },
       {
-        test: /\.ttf$/,
+        // Self-hosted webfonts (Inter Variable, JetBrains Mono, etc.)
+        test: /\.(woff2?|eot|ttf|otf)$/i,
         type: 'asset/resource',
       },
     ],

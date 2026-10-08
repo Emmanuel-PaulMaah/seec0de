@@ -1679,7 +1679,7 @@ function titleFromPrompt(prompt) {
  */
 export function sanitizeGeneratedProject(raw, prompt) {
   if (!raw || typeof raw !== 'object') {
-    throw new Error('Gemini returned an empty response — try again.');
+    throw new Error('The AI came back empty — try again.');
   }
 
   const id = `gen_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
@@ -1709,7 +1709,7 @@ export function sanitizeGeneratedProject(raw, prompt) {
     .map((s, i) => sanitizeStep(s, id, i, scaffoldFiles));
 
   if (steps.length === 0) {
-    throw new Error("Gemini didn't produce any steps — try again with a clearer request.");
+    throw new Error("The AI couldn't create any steps — try describing your project differently.");
   }
 
   const title = asString(raw.title) || titleFromPrompt(prompt);

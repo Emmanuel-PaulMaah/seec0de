@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   Circle,
-  Code2,
   GraduationCap,
   Hammer,
   Sparkles,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import lessonsData from '../data/lessons/index.js';
 import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
+import { ProjectFolder } from './motion/project-folder';
 import projects, { projectCheckpoint } from '../data/projects';
 import { renderInline } from './InlineCode';
 
@@ -31,11 +31,22 @@ function languageLabel(language) {
   return LANGUAGE_LABELS[language] || language;
 }
 
-const ICON_COLORS = {
-  courses: { bg: 'var(--accent-soft)', color: 'var(--accent)' },
-  exercises: { bg: 'var(--algorithm-soft)', color: 'var(--algorithm)' },
-  projects: { bg: 'var(--string-highlight)', color: 'var(--text-primary)' },
+// One tone per section, carried by the card's glyph. Projects matches the
+// --string-highlight used for its checkpoint phase labels.
+const SECTION_TONES = {
+  courses: 'var(--accent)',
+  exercises: 'var(--algorithm)',
+  projects: 'var(--string-highlight)',
 };
+
+// Course folders cycle through the palette so a wall of them reads as a set of
+// distinct courses instead of N identical accent-tinted folders.
+const COURSE_TONES = [
+  'var(--accent)',
+  'var(--algorithm)',
+  'var(--string-highlight)',
+  'var(--function-highlight)',
+];
 
 export default function LearnHomeScreen({
   selectedLanguage,
@@ -133,7 +144,7 @@ export default function LearnHomeScreen({
   const renderLanguageGrid = () => (
     <>
       <p style={{ maxWidth: 540, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
-        Start with one language. Your courses, exercises, and saved progress stay together.
+        Your lessons, exercises, and progress are saved here.
       </p>
       <div className="learn-home-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 28 }}>
         {languages.map((language) => {
@@ -142,21 +153,20 @@ export default function LearnHomeScreen({
           const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
           const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
           return (
-            <button key={language} type="button" className="learn-card" style={{ display: 'grid', gridTemplateColumns: '40px 1fr auto', alignItems: 'center', gap: 14, padding: '16px 18px' }} onClick={() => chooseLanguage(language)}>
-              <span style={{ width: 40, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', borderRadius: 9, background: 'var(--accent-soft)', color: 'var(--accent)', flexShrink: 0 }}>
-                <Code2 size={18} />
+            <button key={language} type="button" className="learn-card learn-opt-card" onClick={() => chooseLanguage(language)}>
+              <span className="learn-opt-head">
+                <span className="learn-opt-name">{languageLabel(language)}</span>
+                <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />
               </span>
-              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>Language</span>
-                <strong style={{ color: 'var(--text-primary)', fontSize: 14 }}>{languageLabel(language)}</strong>
-                <span style={{ color: 'var(--text-muted)', fontSize: 10.5 }}>{matchingTracks.length} courses · {lessons.length} lessons · {done} complete</span>
+              <span className="learn-opt-meta">
+                {matchingTracks.length} {matchingTracks.length === 1 ? 'course' : 'courses'} · {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
               </span>
-              <ArrowRight size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-              {lessons.length > 0 && (
-                <div style={{ gridColumn: '1 / -1' }} className="learn-progress-track">
-                  <div className="learn-progress-fill" style={{ width: `${pct}%` }} />
-                </div>
-              )}
+              <span className="learn-opt-progress">
+                <span className="learn-progress-track">
+                  <span className="learn-progress-fill" style={{ width: `${pct}%` }} />
+                </span>
+                <span className="learn-opt-count">{done}/{lessons.length}</span>
+              </span>
             </button>
           );
         })}
@@ -167,26 +177,27 @@ export default function LearnHomeScreen({
   const renderSectionPicker = () => (
     <>
       <p style={{ maxWidth: 540, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
-        Choose guided lessons, focused practice, or build a complete project through tested checkpoints.
+        Pick how you want to learn — guided lessons, hands-on practice, or a full project.
       </p>
       <div className="learn-home-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 28 }}>
         {[
-          { section: 'courses', label: 'Courses', eyebrow: 'Guided path', desc: 'Structured lessons that introduce and combine the language foundations.', Icon: BookOpen, ...ICON_COLORS.courses },
-          { section: 'exercises', label: 'Exercises', eyebrow: 'Focused practice', desc: 'Debugging drills, output-first builds, refactoring, and mini-projects.', Icon: Wrench, ...ICON_COLORS.exercises },
-          { section: 'projects', label: 'Projects', eyebrow: 'Applied learning', desc: 'Plan, build, debug, and modify useful programs with verified milestones.', Icon: Hammer, ...ICON_COLORS.projects },
-        ].map(({ section, label, eyebrow, desc, Icon, bg, color }) => (
-          <button key={section} type="button" className="learn-section-btn" onClick={() => chooseSection(section)}>
-            <span style={{ width: 36, height: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)', borderRadius: 9, background: bg, color }}>
-              <Icon size={17} />
+          { section: 'courses', label: 'Courses', desc: 'Step-by-step lessons that teach you the basics.', Icon: BookOpen },
+          { section: 'exercises', label: 'Exercises', desc: 'Short challenges to build specific skills.', Icon: Wrench },
+          { section: 'projects', label: 'Projects', desc: 'Build something real, step by step, with checkpoints.', Icon: Hammer },
+        ].map(({ section, label, desc, Icon }) => (
+          <button
+            key={section}
+            type="button"
+            className="learn-card learn-opt-card"
+            style={{ '--opt-tone': SECTION_TONES[section] }}
+            onClick={() => chooseSection(section)}
+          >
+            <span className="learn-opt-head">
+              <Icon size={15} className="learn-opt-icon" aria-hidden="true" />
+              <span className="learn-opt-name">{label}</span>
+              <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />
             </span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>{eyebrow}</span>
-              <strong style={{ color: 'var(--text-primary)', fontSize: 14 }}>{label}</strong>
-              <span style={{ color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{desc}</span>
-            </div>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 700 }}>
-              Open {label.toLowerCase()} <ArrowRight size={12} />
-            </span>
+            <span className="learn-opt-meta">{desc}</span>
           </button>
         ))}
       </div>
@@ -196,29 +207,39 @@ export default function LearnHomeScreen({
   const renderCourseGrid = () => (
     <>
       <p style={{ maxWidth: 540, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
-        Open a course to see its lessons and continue your progress.
+        Pick a course to see its lessons and pick up where you left off.
       </p>
-      <div className="learn-home-course-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 11, marginTop: 28 }}>
-        {languageTracks.map((track) => {
+      <div className="learn-course-wall" style={{ marginTop: 32 }}>
+        {languageTracks.map((track, trackIndex) => {
           const lessons = track.lessons || [];
-          const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
-          const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
-          return (
-            <button key={track.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 148, padding: 17 }} onClick={() => setActiveTrackId(track.id)}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 10.5, fontWeight: 700 }}>
-                <BookOpen size={14} /> {done}/{lessons.length}
-              </span>
-              <strong style={{ marginTop: 12, color: 'var(--text-primary)', fontSize: 14 }}>{track.name}</strong>
-              <span style={{ marginTop: 4, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{track.description}</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 14, color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 700 }}>
-                Open course <ArrowRight size={12} />
-              </span>
-              {lessons.length > 0 && (
-                <div style={{ width: '100%', marginTop: 8 }} className="learn-progress-track">
-                  <div className="learn-progress-fill" style={{ width: `${pct}%` }} />
+          const previews = lessons.map((l) => ({
+            id: l.id,
+            content: (
+              <div style={{ padding: '12px 10px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
+                    {completedLessons.includes(l.id) ? '✓ Done' : `Lesson ${lessons.indexOf(l) + 1}`}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>{l.title}</div>
+                  {l.summary && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.4 }}>{l.summary}</div>}
                 </div>
-              )}
-            </button>
+              </div>
+            ),
+          }));
+          return (
+            <ProjectFolder
+              key={track.id}
+              tone={COURSE_TONES[trackIndex % COURSE_TONES.length]}
+              title={track.name}
+              description={track.description}
+              previews={previews}
+              count={lessons.length}
+              itemLabel="lesson"
+              onPreviewClick={(preview) => {
+                const lesson = lessons.find((l) => l.id === preview.id);
+                if (lesson) onSelectLesson({ ...lesson, language: track.language });
+              }}
+            />
           );
         })}
       </div>
@@ -253,18 +274,18 @@ export default function LearnHomeScreen({
   const renderChallengeTypeGrid = () => (
     <>
       <p style={{ maxWidth: 540, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
-        Choose how you want to practise. Each challenge type contains deterministic exercises that run offline.
+        Pick a type of exercise. All exercises run offline — no internet needed.
       </p>
       <div className="learn-home-course-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 11, marginTop: 28 }}>
         {challengeTypes.map((type) => (
-          <button key={type.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 148, padding: 17 }} onClick={() => setActiveChallengeTypeId(type.id)}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--algorithm)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.7 }}>
-              <Wrench size={13} /> {type.count} {type.count === 1 ? 'challenge' : 'challenges'}
+          <button key={type.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 0, padding: '13px 14px' }} onClick={() => setActiveChallengeTypeId(type.id)}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.7 }}>
+              <Wrench size={12} /> {type.count} {type.count === 1 ? 'challenge' : 'challenges'}
             </span>
-            <strong style={{ marginTop: 12, color: 'var(--text-primary)', fontSize: 14 }}>{type.title}</strong>
-            <span style={{ marginTop: 4, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{type.description}</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 14, color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 700 }}>
-              Open challenges <ArrowRight size={12} />
+            <strong style={{ marginTop: 8, color: 'var(--text-primary)', fontSize: 13 }}>{type.title}</strong>
+            <span style={{ marginTop: 3, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{type.description}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 10, color: 'var(--text-secondary)', fontSize: 10, fontWeight: 700 }}>
+              Open challenges <ArrowRight size={11} />
             </span>
           </button>
         ))}
@@ -281,23 +302,23 @@ export default function LearnHomeScreen({
         {visibleExercises.map((exercise) => {
           const complete = completedLessons.includes(exercise.id);
           return (
-            <button key={exercise.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 174, padding: 17 }} onClick={() => onSelectExercise(exercise)}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--algorithm)', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.7 }}>
-                {complete
-                  ? <CheckCircle2 size={13} style={{ color: 'var(--success)' }} />
-                  : exercise.exerciseType === 'code-along'
-                    ? <Sparkles size={13} />
-                    : <Wrench size={13} />}
-                {activeChallengeType.title}
-              </span>
-              <strong style={{ marginTop: 12, color: 'var(--text-primary)', fontSize: 14 }}>{exercise.concept}</strong>
-              <span style={{ marginTop: 4, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{renderInline(exercise.task)}</span>
-              <span style={{ marginTop: 8, color: 'var(--text-muted)', fontSize: 9.5 }}>
-                {exercise.sourceLessonId ? `From ${exercise.sourceLessonTitle}` : exercise.summary}
-              </span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 14, color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 700 }}>
-                {complete ? 'Practise again' : 'Start exercise'} <ArrowRight size={12} />
-              </span>
+          <button key={exercise.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 0, padding: '13px 14px' }} onClick={() => onSelectExercise(exercise)}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.7 }}>
+              {complete
+                ? <CheckCircle2 size={12} style={{ color: 'var(--success)' }} />
+                : exercise.exerciseType === 'code-along'
+                  ? <Sparkles size={12} />
+                  : <Wrench size={12} />}
+              {activeChallengeType.title}
+            </span>
+            <strong style={{ marginTop: 8, color: 'var(--text-primary)', fontSize: 13 }}>{exercise.concept}</strong>
+            <span style={{ marginTop: 3, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{renderInline(exercise.task)}</span>
+            <span style={{ marginTop: 6, color: 'var(--text-muted)', fontSize: 9.5 }}>
+              {exercise.sourceLessonId ? `From ${exercise.sourceLessonTitle}` : exercise.summary}
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 10, color: 'var(--text-secondary)', fontSize: 10, fontWeight: 700 }}>
+              {complete ? 'Practise again' : 'Start exercise'} <ArrowRight size={11} />
+            </span>
             </button>
           );
         })}
@@ -308,22 +329,22 @@ export default function LearnHomeScreen({
   const renderProjectGrid = () => (
     <>
       <p style={{ maxWidth: 620, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
-        Each project ends with a transfer task. Checkpoints are complete only after your code passes and you explain one decision.
+        Each project has checkpoints. You finish a checkpoint when your code works and you explain why.
       </p>
       <div className="learn-home-course-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 11, marginTop: 28 }}>
         {languageProjects.map((project) => {
           const done = project.checkpoints.filter((cp) => completedProjectCheckpoints.includes(cp.id)).length;
           const pct = project.checkpoints.length > 0 ? Math.round((done / project.checkpoints.length) * 100) : 0;
           return (
-            <button key={project.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 148, padding: 17 }} onClick={() => onSelectProject(project.id)}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--string-highlight)', fontSize: 10.5, fontWeight: 700 }}>
-                <Hammer size={13} /> {done}/{project.checkpoints.length} checkpoints
-              </span>
-              <strong style={{ marginTop: 12, color: 'var(--text-primary)', fontSize: 14 }}>{project.title}</strong>
-              <span style={{ marginTop: 4, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{project.summary}</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 14, color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 700 }}>
-                {done === project.checkpoints.length ? 'Build again' : 'Open project'} <ArrowRight size={12} />
-              </span>
+          <button key={project.id} type="button" className="learn-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minHeight: 0, padding: '13px 14px' }} onClick={() => onSelectProject(project.id)}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)', fontSize: 10, fontWeight: 700 }}>
+              <Hammer size={12} /> {done}/{project.checkpoints.length} checkpoints
+            </span>
+            <strong style={{ marginTop: 8, color: 'var(--text-primary)', fontSize: 13 }}>{project.title}</strong>
+            <span style={{ marginTop: 3, color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.45 }}>{project.summary}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 'auto', paddingTop: 10, color: 'var(--text-secondary)', fontSize: 10, fontWeight: 700 }}>
+              {done === project.checkpoints.length ? 'Build again' : 'Open project'} <ArrowRight size={11} />
+            </span>
               <div style={{ width: '100%', marginTop: 8 }} className="learn-progress-track">
                 <div className="learn-progress-fill" style={{ width: `${pct}%` }} />
               </div>
@@ -362,9 +383,7 @@ export default function LearnHomeScreen({
   /* ── Main render ── */
 
   return (
-    <main style={{ position: 'relative', flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--bg-primary)', isolation: 'isolate' }} aria-labelledby="learn-home-heading">
-      <div style={{ position: 'fixed', inset: 0, zIndex: -3, opacity: 0.18, backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)', backgroundSize: '64px 64px', maskImage: 'linear-gradient(to bottom, black, transparent 82%)' }} aria-hidden="true" />
-
+    <main style={{ position: 'relative', flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--bg-primary)' }} aria-labelledby="learn-home-heading">
       <section className="learn-home-content" style={{ width: 'min(960px, calc(100% - 64px))', margin: '0 auto', padding: 'clamp(48px, 8vh, 84px) 0 120px' }}>
         {(selectedLanguage || selectedSection || activeTrack || activeProject || activeChallengeType) && (
           <button type="button" className="learn-chip" onClick={goBack} style={{ marginBottom: 24 }}>
@@ -404,9 +423,6 @@ export default function LearnHomeScreen({
         {selectedLanguage && selectedSection === 'projects' && activeProject && renderCheckpointList()}
       </section>
 
-      <div style={{ position: 'fixed', left: '50%', bottom: '-0.18em', zIndex: -1, transform: 'translateX(-50%)', color: 'var(--text-primary)', opacity: 0.04, fontSize: 'clamp(130px, 24vw, 360px)', fontWeight: 700, letterSpacing: '-0.09em', lineHeight: 0.78, userSelect: 'none', WebkitTextStroke: '1px rgba(242, 240, 233, 0.06)' }} aria-hidden="true">
-        learn
-      </div>
     </main>
   );
 }

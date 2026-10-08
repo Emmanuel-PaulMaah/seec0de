@@ -1,14 +1,17 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import {
-  Loader, Settings as SettingsIcon, Wand2,
+  Settings as SettingsIcon, Wand2,
   ChevronLeft, ChevronRight, MessageSquareCode, Shuffle,
-  AlertCircle, X,
+  AlertCircle, X, FolderOpen, Hammer,
 } from 'lucide-react';
 import { hasApiKey, subscribeHasApiKey } from '../engine/aiService';
 import { pickSuggestions } from '../engine/codeGenerator';
 import { PromptInput } from './agents/prompt-input';
 import FileExplorer from './FileExplorer';
 import BuildPanel from './BuildPanel';
+import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
+import { Button } from './motion/button/base';
+import { Loader as BeuiLoader } from './motion/loader';
 
 // ... (LANGUAGE_LABELS and labelFor unchanged)
 
@@ -77,7 +80,6 @@ export default function InstructionPanel({
 
   // ---- suggestions -----------------------------------------------------
   const [seed, setSeed] = useState(0);
-  const [textareaFocused, setTextareaFocused] = useState(false);
   const suggestions = useMemo(() => pickSuggestions(4), [seed]);
 
   // Suggestion chips are hand-tuned prompts that map onto a built-in
@@ -115,10 +117,9 @@ export default function InstructionPanel({
   // ---- expanded panel --------------------------------------------------
   return (
     <div style={styles.panel}>
-      {/* Header — gentle context label, with collapse control */}
       <div style={styles.header}>
         <div style={styles.headerText}>
-          <div style={styles.headerLabel}>Build</div>
+          <span style={styles.headerLabel}>Build</span>
         </div>
         {onToggleCollapsed && (
           <button
@@ -134,31 +135,20 @@ export default function InstructionPanel({
         )}
       </div>
 
-      {/* Generate / Build mode switch */}
-      <div style={styles.modeSwitch} role="tablist" aria-label="Panel mode">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === 'generate'}
-          style={{ ...styles.modeBtn, ...(mode === 'generate' ? styles.modeBtnActive : {}) }}
-          onClick={() => setMode('generate')}
-        >
-          {/* With a folder open the Generate surface is the file explorer,
-              so the tab reads “Files”; without one it’s the AI prompt flow. */}
-          {rootPath ? 'Files' : 'Generate'}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === 'build'}
-          style={{ ...styles.modeBtn, ...(mode === 'build' ? styles.modeBtnActive : {}) }}
-          onClick={() => setMode('build')}
-        >
-          Build
-        </button>
-      </div>
+      <Tabs value={mode} onValueChange={setMode} variant="underline" className="border-b border-border bg-[var(--bg-secondary)]">
+        <TabsList className="w-full border-b-0 bg-transparent">
+          <TabsTrigger value="generate" className="min-h-[var(--panel-header-height)] gap-1.5 px-[var(--space-3)] py-0 text-[var(--text-sm)] data-[state=active]:bg-[var(--bg-primary)]" indicatorClassName="h-0.5 bg-foreground">
+            {rootPath ? <FolderOpen className="size-3.5" aria-hidden="true" /> : <Wand2 className="size-3.5" aria-hidden="true" />}
+            {rootPath ? 'Files' : 'Generate'}
+          </TabsTrigger>
+          <TabsTrigger value="build" className="min-h-[var(--panel-header-height)] gap-1.5 px-[var(--space-3)] py-0 text-[var(--text-sm)] data-[state=active]:bg-[var(--bg-primary)]" indicatorClassName="h-0.5 bg-foreground">
+            <Hammer className="size-3.5" aria-hidden="true" />
+            Build
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      <div style={styles.inner}>
+      <div style={{ ...styles.inner, ...(mode !== 'build' && rootPath ? styles.innerFlush : null) }}>
         {mode === 'build' ? (
           <BuildPanel
             rootPath={rootPath}
@@ -187,60 +177,45 @@ export default function InstructionPanel({
           />
         ) : (
           <div style={styles.scrollContent}>
-          <div style={styles.buildStack}>
+            <div className="flex flex-1 flex-col gap-[var(--space-5)]">
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                  <Wand2 className="size-3" /> Code generator
+                </div>
+                <h2 className="text-lg font-semibold tracking-[-0.025em] text-foreground">Turn an idea into working code.</h2>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">Describe the behavior in your own words. You’ll get pseudocode and code you can compare.</p>
+              </div>
 
-              <p style={styles.headerHint}>
-                Describe what you want in plain English.
-              </p>
-
-              {/* Read-out: which languages will be generated */}
-              <button className="ui-toolbar-button" style={styles.langStrip} onClick={onOpenSettings} title="Manage languages in Settings">
-                <span style={styles.langStripChip}>Pseudocode</span>
-                {practicalLanguage && (
-                  <>
-                    <span style={styles.langStripPlus}>+</span>
-                    <span style={{ ...styles.langStripChip, ...styles.langStripChipPractical }}>
-                      {labelFor(practicalLanguage)}
-                    </span>
-                  </>
-                )}
-                {comparisonLanguages.map((id) => (
-                  <React.Fragment key={id}>
-                    <span style={styles.langStripPlus}>+</span>
-                    <span style={styles.langStripChip}>{labelFor(id)}</span>
-                  </React.Fragment>
-                ))}
-                <span style={styles.langStripGear} aria-hidden="true">
-                  <SettingsIcon size={11} />
+              <button className="group flex w-full items-center gap-3 border-y border-border px-1 py-3 text-left" onClick={onOpenSettings} title="Manage languages in Settings">
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Output</span>
+                <span className="h-3 w-px bg-border" />
+                <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">
+                  Pseudocode{practicalLanguage ? ` · ${labelFor(practicalLanguage)}` : ''}{comparisonLanguages.map((id) => ` · ${labelFor(id)}`).join('')}
                 </span>
+                <SettingsIcon className="size-3 text-muted-foreground transition-transform group-hover:rotate-45" />
               </button>
 
-              <div style={styles.suggestionsHead}>
-                <span style={styles.suggestionsLabel}>Try one of these</span>
-                <button
-                  type="button"
-                  className="ui-icon-button"
-                  style={styles.shuffleBtn}
-                  onClick={() => setSeed((s) => s + 1)}
-                  title="Shuffle suggestions"
-                  aria-label="Shuffle suggestions"
-                >
-                  <Shuffle size={11} />
-                </button>
-              </div>
-              <div style={styles.suggestions}>
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Quick starts</span>
+                  <Button variant="ghost" size="icon" onClick={() => setSeed((value) => value + 1)} title="Shuffle suggestions" aria-label="Shuffle suggestions" className="size-7 rounded-md">
+                    <Shuffle className="size-3" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                 {suggestions.map((s) => (
-                  <button
+                  <Button
                     key={s.label}
-                    type="button"
-                    className="ui-toolbar-button"
-                    style={styles.suggestionChip}
+                    variant="outline"
+                    size="sm"
+                    className="h-auto min-h-10 justify-start rounded-md border-border bg-transparent px-3 py-2.5 text-left text-[11px] leading-4 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     onClick={() => handleSuggestion(s.instruction)}
                     title={s.instruction}
                   >
                     {s.label}
-                  </button>
+                  </Button>
                 ))}
+                </div>
               </div>
 
               <PromptInput
@@ -248,9 +223,10 @@ export default function InstructionPanel({
                 onValueChange={onInstructionChange}
                 onSubmit={handleGenerateClick}
                 loading={aiLoading}
-                placeholder='e.g. "read a CSV of student grades and print the top 5 averages"'
+                leadingAction={aiLoading ? <BeuiLoader variant="scramble" size={16} label="Generating code" className="text-muted-foreground" /> : null}
+                placeholder="Read a CSV of student grades and print the top 5 averages…"
                 aria-label="Instruction for the program"
-                className="border-[var(--border)] bg-[var(--bg-input)]"
+                className="rounded-lg border-border bg-card shadow-none"
               />
 
               {aiError ? (
@@ -284,12 +260,12 @@ export default function InstructionPanel({
               ) : (
                 !aiReady && (
                   <button style={styles.subtleLink} onClick={onOpenSettings}>
-                    Add a free Gemini key in Settings for smarter AI generation →
+                    Add a free Gemini key in Settings to unlock AI features →
                   </button>
                 )
               )}
+            </div>
           </div>
-        </div>
         )}
       </div>
     </div>
@@ -326,16 +302,19 @@ const styles = {
     flexShrink: 0,
     display: 'flex',
     flexDirection: 'column',
-    background: 'var(--bg-secondary)',
+    background: 'var(--bg-primary)',
     borderRight: '1px solid var(--border)',
   },
   inner: {
-    padding: 'var(--space-4)',
+    padding: 'var(--space-6)',
     display: 'flex',
     flexDirection: 'column',
-    gap: 'var(--space-4)',
+    gap: 'var(--space-5)',
     flex: 1,
     overflow: 'hidden',
+  },
+  innerFlush: {
+    padding: 0,
   },
 
   header: {

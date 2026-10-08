@@ -265,7 +265,7 @@ export function SelectContent({
       role="listbox"
       aria-labelledby={ctx.triggerId}
       aria-hidden={!open}
-      inert={!open}
+      inert={!open ? "" : undefined}
       initial={false}
       animate={
         ctx.reduce

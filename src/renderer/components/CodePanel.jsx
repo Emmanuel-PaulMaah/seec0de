@@ -1,9 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
-import { Lock, Pencil, Loader, X, Play, Lightbulb, Check, ChevronRight } from 'lucide-react';
+import { Lock, Pencil, X, Play, Lightbulb, Check, ChevronRight, Search } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import SandboxTerminal from './SandboxTerminal';
 import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
+import { MorphingFileTabs } from './motion/morphing-file-tabs';
+import { StatefulButton } from './motion/button/stateful';
+import { Loader as BeuiLoader } from './motion/loader';
 import { LANGUAGES } from '../engine/languages';
 import { fileInfo, basename } from '../engine/fileLanguage';
 import { registerEditor, unregisterEditor, setFocusTarget } from '../engine/editorBridge';
@@ -219,6 +222,8 @@ export default function CodePanel({
   // runner props
   onRunCode,
   runLoading = false,
+  runAttempt = 0,
+  runOutcome = null,
   // generator-tab state lifted to App so the live-preview panel can read
   // the same active tab without duplicating it.
   activeGeneratedTab = 'pseudocode',
@@ -250,6 +255,8 @@ export default function CodePanel({
   const [btnPos, setBtnPos] = useState(null);
   const editorRef = useRef(null);
   const [lastSandboxCommand, setLastSandboxCommand] = useState('');
+  const selectionCleanupRef = useRef(null);
+  const canExplainRef = useRef(false);
 
   // ---- editor font size -------------------------------------------------
   // Lives in CodePanel so the +/− controls sit next to the editor they
@@ -263,7 +270,14 @@ export default function CodePanel({
   const bumpFontSize = useCallback((delta) => {
     setFontSize((prev) => clampFontSize(prev + delta));
   }, []);
+
   const resetFontSize = useCallback(() => setFontSize(FONT_SIZE_DEFAULT), []);
+
+  // Keep canExplainRef in sync so event listeners always read the current
+  // lesson/pseudocode state without needing to re-attach.
+  useEffect(() => {
+    canExplainRef.current = !lessonMode && !isPseudocode;
+  }, [lessonMode, isPseudocode]);
 
   // ---- which view are we showing? ---------------------------------------
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
@@ -306,7 +320,7 @@ export default function CodePanel({
   // On CodePanel unmount, drop the bridge reference so insertIntoEditor
   // stops hitting a disposed editor. (Tab switches remount the Editor child,
   // which re-registers via onMount.)
-  useEffect(() => () => unregisterEditor(), []);
+  useEffect(() => () => { unregisterEditor(); selectionCleanupRef.current?.(); }, []);
 
   const handleEditorMount = useCallback((editor) => {
     editorRef.current = editor;
@@ -326,25 +340,51 @@ export default function CodePanel({
       },
     });
 
-    editor.onDidChangeCursorSelection((e) => {
-      if (lessonMode) {
+    // Buffer selection updates in refs during drag to avoid re-rendering
+    // on every mouse-move. Commit to React state only on mouseup.
+    const pendingSelection = { text: null, pos: null };
+    let dragging = false;
+
+    editor.onMouseDown(() => { dragging = true; });
+
+    const onMouseUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (lessonMode) { clearSelection(); return; }
+      if (pendingSelection.text) {
+        setSelection(pendingSelection.text);
+        setBtnPos(pendingSelection.pos);
+      } else {
         clearSelection();
-        return;
       }
+      pendingSelection.text = null;
+      pendingSelection.pos = null;
+    };
+    document.addEventListener('mouseup', onMouseUp);
+    selectionCleanupRef.current?.();
+    selectionCleanupRef.current = () => document.removeEventListener('mouseup', onMouseUp);
+
+    // In lesson mode and for pseudocode, skip selection tracking entirely —
+    // only real code files and runnable language tabs get the highlight+explain.
+    canExplainRef.current = !lessonMode && !isPseudocode;
+
+    editor.onDidChangeCursorSelection((e) => {
+      if (!canExplainRef.current) return;
       const model = editor.getModel();
       if (!model) return;
       const selectedText = model.getValueInRange(e.selection);
       if (selectedText.trim()) {
-        setSelection(selectedText);
+        pendingSelection.text = selectedText;
         const coords = editor.getScrolledVisiblePosition(e.selection.getEndPosition());
-        if (coords) setBtnPos({ top: coords.top + 30, left: coords.left + 40 });
+        if (coords) pendingSelection.pos = { top: coords.top + 30, left: coords.left + 40 };
       } else {
-        clearSelection();
+        pendingSelection.text = null;
+        pendingSelection.pos = null;
       }
     });
 
     editor.onMouseDown((e) => {
-      if (isPseudocode) return;
+      if (!canExplainRef.current) return;
       const pos = e.target.position;
       if (!pos) return;
       const model = editor.getModel();
@@ -355,16 +395,13 @@ export default function CodePanel({
       const lang = LANGUAGES[tooltipLanguage];
       if (!lang || !lang.glossary[word.word]) return;
 
-      const coords = editor.getScrolledVisiblePosition(pos);
-      if (!coords) return;
-
       const entry = lang.glossary[word.word];
       setTooltip({
         keyword: word.word,
         language: LANGUAGE_LABELS[tooltipLanguage] || tooltipLanguage,
         definition: entry.definition,
         example: entry.example,
-        position: { top: coords.top + 24, left: coords.left + 20 },
+        position: { top: e.event.pos.y + 12, left: e.event.pos.x + 12 },
       });
     });
   }, [isPseudocode, lessonMode, tooltipLanguage, clearSelection, showingFile, fileTab, editable, onFileContentChange, onCodeChange, generatedDisplayTab]);
@@ -438,6 +475,36 @@ export default function CodePanel({
     ? lessonMode
     : !!onRunCode && !!runLanguage && (RUNNABLE.has(runLanguage) || (lessonMode && !RUNNABLE.has(runLanguage))) && (value || '').trim().length > 0;
   const isSourceCheck = isGitLesson || (lessonMode && !!runLanguage && !RUNNABLE.has(runLanguage));
+  const [runButtonState, setRunButtonState] = useState(runLoading ? 'loading' : 'idle');
+  const runWasLoading = useRef(runLoading);
+  const previousRunAttempt = useRef(runAttempt);
+  const runFeedbackTimer = useRef(null);
+
+  useEffect(() => {
+    clearTimeout(runFeedbackTimer.current);
+    const attemptChanged = previousRunAttempt.current !== runAttempt;
+    previousRunAttempt.current = runAttempt;
+
+    if (runLoading) {
+      runWasLoading.current = true;
+      setRunButtonState('loading');
+      return undefined;
+    }
+
+    if (!runWasLoading.current && !attemptChanged) return undefined;
+    runWasLoading.current = false;
+
+    const succeeded = runOutcome === 0 || runOutcome === 'pass';
+    const failed = runOutcome === 'fail' || (typeof runOutcome === 'number' && runOutcome !== 0);
+    const nextState = succeeded ? 'success' : failed ? 'error' : 'idle';
+    setRunButtonState(nextState);
+
+    if (nextState !== 'idle') {
+      runFeedbackTimer.current = setTimeout(() => setRunButtonState('idle'), 1600);
+    }
+
+    return () => clearTimeout(runFeedbackTimer.current);
+  }, [runAttempt, runLoading, runOutcome]);
 
   const handleRun = useCallback(() => {
     if (!canRun) return;
@@ -512,36 +579,30 @@ export default function CodePanel({
 
           {openFiles.length > 0 && <span style={styles.tabDivider} />}
 
-          {openFiles.map((f) => {
-            const isActive = showingFile && activePath === f.path;
-            return (
-              <div
-                key={`file:${f.path}`}
-                style={{ ...styles.fileTab, ...(isActive ? styles.activeTab : {}) }}
-              >
-                <button
-                  className="ui-tab"
-                  style={styles.fileTabName}
-                  onClick={() => handleActivateFile(f.path)}
-                  title={f.path}
-                >
-                  {basename(f.path)}{f.dirty ? ' •' : ''}
-                </button>
-                <button
-                  className="ui-icon-button"
-                  style={styles.fileTabClose}
-                  onClick={(e) => { e.stopPropagation(); onCloseFile?.(f.path); }}
-                  title="Close file"
-                  aria-label={`Close ${basename(f.path)}`}
-                >
-                  <X size={11} />
-                </button>
-              </div>
-            );
-          })}
+          <MorphingFileTabs
+            files={openFiles}
+            activePath={showingFile ? activePath : null}
+            onSelect={handleActivateFile}
+            onClose={onCloseFile}
+            style={{ flex: 1, minWidth: 0 }}
+          />
         </div>
 
         <div style={styles.tabActions}>
+          <button
+            type="button"
+            className="ui-toolbar-button"
+            style={styles.iconBtn}
+            onClick={() => {
+              const editor = editorRef.current;
+              if (!editor) return;
+              editor.getAction('actions.find')?.run();
+            }}
+            title="Find in file (Ctrl+F)"
+            aria-label="Find in file"
+          >
+            <Search size={14} />
+          </button>
           {/* Font-size scaler — A−, current size (click to reset), A+.
               Keyboard: Ctrl/⌘ + / − to step, Ctrl/⌘ 0 to reset. */}
           <div style={styles.fontGroup} role="group" aria-label="Editor font size">
@@ -585,17 +646,20 @@ export default function CodePanel({
             </button>
           </div>
           {canRun && (
-            <button
+            <StatefulButton
+              state={runButtonState}
+              size="sm"
+              icon={lessonMode ? <Check size={12} /> : <Play size={12} />}
+              loadingText={isSourceCheck ? 'Checking' : 'Running'}
+              successText={isSourceCheck ? 'Passed' : 'Ran'}
+              errorText={isSourceCheck ? 'Check failed' : 'Run failed'}
               className="ui-toolbar-button ui-primary-button"
-              style={{ ...styles.runBtn, ...(runLoading ? styles.runBtnDisabled : {}), animation: !runLoading ? 'run-pulse 1.2s ease-out 1' : 'none' }}
+              style={styles.runBtn}
               onClick={handleRun}
-              disabled={runLoading}
               title={isGitLesson ? 'Check your Git commands' : isSourceCheck ? 'Check your code' : `Run with ${runLanguage}`}
             >
-              {runLoading
-                ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
-                : lessonMode ? <Check size={12} /> : <Play size={12} />}
-            </button>
+              {isSourceCheck ? 'Check' : 'Run'}
+            </StatefulButton>
           )}
 
           {!showingFile && !folderOpen && !lessonMode && (
@@ -610,15 +674,6 @@ export default function CodePanel({
           )}
         </div>
       </div>
-
-      {/* Auto-save indicator — only when a file is open. */}
-      {showingFile && (
-        <div style={styles.autoSaveBar}>
-          {fileTab.dirty
-            ? <><Loader size={10} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 4 }}>Saving…</span></>
-            : <><Check size={10} style={{ color: 'var(--success)' }} /><span style={{ marginLeft: 4 }}>Saved</span></>}
-        </div>
-      )}
 
       {/* Pseudocode-only banner: makes the lesson explicit. */}
       {isPseudocode && (generatedCode.pseudocode || '').trim().length > 0 && (
@@ -646,12 +701,8 @@ export default function CodePanel({
       <div style={styles.editorWrap}>
         {showEmptyState ? (
           <div style={styles.emptyWorkspace}>
-            <h3 style={styles.emptyTitle}>This folder is your workspace</h3>
             <p style={styles.emptyText}>
-              Open a file from the explorer on the left, or type an instruction and hit <strong>Generate</strong>
-            </p>
-            <p style={styles.emptyHint}>
-              Highlight any code in a file to get a line-by-line explanation.
+              Open a file or generate code to get started.
             </p>
           </div>
         ) : lessonMode && lessonLanguage === 'git' ? (
@@ -690,7 +741,7 @@ export default function CodePanel({
               title={aiLoading ? 'Thinking…' : 'Explain selected code'}
             >
               {aiLoading
-                ? <><Loader size={12} style={{ animation: 'spin 1s linear infinite' }} /><span style={{ marginLeft: 4 }}>Thinking…</span></>
+                ? <BeuiLoader variant="scramble" size={16} label="Explaining selected code" className="text-muted-foreground" />
                 : <span>Explain</span>}
             </button>
           </div>
@@ -925,7 +976,6 @@ const styles = {
     alignItems: 'center',
     minHeight: 'var(--panel-header-height)',
     background: 'var(--bg-secondary)',
-    borderBottom: '1px solid var(--border)',
   },
   tabList: {
     display: 'flex',
@@ -953,7 +1003,6 @@ const styles = {
     color: 'var(--text-primary)',
     borderBottomColor: 'var(--text-primary)',
     background: 'var(--bg-primary)',
-    boxShadow: '0 2px 8px rgba(47, 111, 237, 0.15)',
   },
   // Pseudocode tab keeps its dedicated algorithm accent — that mark is
   // pedagogical (it tells the learner "this tab is the lesson, not just
@@ -1036,16 +1085,6 @@ const styles = {
     color: 'var(--text-primary)',
   },
 
-  autoSaveBar: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-    padding: '3px var(--space-3)',
-    background: 'var(--bg-secondary)',
-    borderBottom: '1px solid var(--border)',
-    fontSize: 'var(--text-xs)',
-    color: 'var(--text-muted)',
-  },
   algoBanner: {
     display: 'flex',
     alignItems: 'center',
@@ -1134,11 +1173,6 @@ const styles = {
     margin: 0,
     whiteSpace: 'nowrap',
   },
-  runBtnDisabled: {
-    opacity: 0.6,
-    cursor: 'not-allowed',
-  },
-
   fontGroup: {
     display: 'inline-flex',
     alignItems: 'center',

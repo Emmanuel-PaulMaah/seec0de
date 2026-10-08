@@ -502,6 +502,7 @@ export default function App() {
   useEffect(() => { registerTerminal(terminalApi); }, []);
   const runOwnerRef = useRef(0);
   const [runLoading, setRunLoading] = useState(false);
+  const [runAttempt, setRunAttempt] = useState(0);
   // Each run produces a fresh object (never mutated); LivePreviewPanel
   // pushes it into its Console tab via reference identity check.
   const [runnerOutput, setRunnerOutput] = useState(null);
@@ -710,7 +711,7 @@ export default function App() {
       ));
     } catch (err) {
       setOpenFiles((prev) => prev.map((f) =>
-        f.path === filePath ? { ...f, content: `// Failed to read file: ${err.message}`, loading: false } : f
+        f.path === filePath ? { ...f, content: `// Couldn't open this file — ${err.message || 'it may have been moved or deleted.'}`, loading: false } : f
       ));
     }
   }, []);
@@ -741,7 +742,7 @@ export default function App() {
         f.path === activePath ? { ...f, dirty: false } : f
       ));
     } catch (err) {
-      setExplanation({ summary: `Save failed: ${err.message}`, lineByLine: [] });
+      setExplanation({ summary: `Couldn't save your changes — ${err.message || 'try again.'}`, lineByLine: [] });
     }
   }, [activePath, openFiles]);
 
@@ -793,7 +794,7 @@ export default function App() {
             // Surface a quiet error in the explanation panel — don't
             // wipe their content, just tell them something's wrong.
             setExplanation({
-              summary: `Auto-save failed for ${file.path}: ${err.message}. Your changes are still in memory; try Ctrl+S.`,
+              summary: `Couldn't auto-save ${file.path}. Your work is safe in the editor — press Ctrl+S to save manually.`,
               lineByLine: [],
             });
           })
@@ -918,14 +919,14 @@ export default function App() {
     if (!isTemplate) {
       if (!keyPresent) {
         setAiError({
-          message: 'Add a free Gemini key in Settings to generate code for novel prompts. The built-in templates only cover a handful of starter exercises — try one of the suggestion chips above.',
+          message: 'Add a free Gemini key in Settings to use AI for custom prompts. Or try one of the suggestion chips above!',
           kind: 'no-key',
         });
         return;
       }
       if (!online) {
         setAiError({
-          message: "You're offline. Reconnect and click Generate again — the built-in templates only cover a handful of starter exercises.",
+          message: "You're offline — reconnect to the internet and try again. Or try one of the suggestion chips above!",
           kind: 'offline',
         });
         return;
@@ -936,7 +937,7 @@ export default function App() {
       const result = generateCode(text, languagesForGen);
       await applyResult(result);
     } catch (err) {
-      setExplanation({ summary: `Couldn't generate: ${err.message}`, lineByLine: [] });
+      setExplanation({ summary: `Couldn't generate code — ${err.message || 'try again.'}`, lineByLine: [] });
     }
   }, [instruction, selectedLanguages, aiLoading, rootPath, settings.practicalLanguage, writeScratchFromResult]);
 
@@ -1486,6 +1487,7 @@ export default function App() {
     const runProfileId = settings.activeProfileId;
     const isGitLesson = activeLesson?.language === 'git';
     setRunLoading(true);
+    setRunAttempt((attempt) => attempt + 1);
     setRunnerStream([]);
     setRunnerInputReady(false);
     if (!previewVisible && !isGitLesson) setPreviewVisible(true);
@@ -2179,6 +2181,8 @@ const beginExplanationResize = useCallback((event) => {
         <HomeScreen
           username={settings.username}
           hasActiveLesson={!!activeLesson}
+          activeLessonTitle={activeLesson?.title}
+          activeLessonLanguage={activeLesson?.language}
           postcardCount={(settings.codePostcards || []).length}
           onOpenWorkspace={() => handleModeChange('workspace')}
           onOpenLearnMode={() => handleModeChange('learn')}
@@ -2339,6 +2343,8 @@ const beginExplanationResize = useCallback((event) => {
               onFileContentChange={handleFileContentChange}
               onRunCode={handleRunCode}
               runLoading={runLoading}
+              runAttempt={runAttempt}
+              runOutcome={inLessonMode ? lessonStatus : runnerOutput?.exitCode}
               activeGeneratedTab={activeGeneratedTab}
               onActivateGeneratedTab={setActiveGeneratedTab}
               folderOpen={!learnMode && !!rootPath}
@@ -2514,36 +2520,36 @@ function describeAiError(err) {
   const raw = err?.message ? String(err.message) : String(err ?? '');
   if (/no api key/i.test(raw)) {
     return {
-      message: 'No Gemini key found. Add one in Settings to enable AI generation for novel prompts.',
+      message: 'No Gemini key found. Add one in Settings to use AI for custom prompts.',
       kind: 'no-key',
     };
   }
   if (/api key not valid|invalid.*api key|api key.*invalid|permission denied|forbidden|unauthor/i.test(raw)) {
     return {
-      message: 'Gemini rejected your API key. Open Settings and paste a fresh key — you can grab a free one at aistudio.google.com/apikey.',
+      message: "That API key didn't work. Open Settings and paste a fresh one — you can get a free key at aistudio.google.com/apikey.",
       kind: 'invalid-key',
     };
   }
   if (err?.isOverloaded || /overload|capacity|quota|rate.?limit|429|503/i.test(raw)) {
     return {
-      message: "Gemini is overloaded right now. Wait a few seconds and click Generate again.",
+      message: "The AI is busy right now. Wait a few seconds and try again.",
       kind: 'overloaded',
     };
   }
   if (/network|enotfound|econnrefused|econnreset|fetch|timeout|getaddrinfo|offline/i.test(raw)) {
     return {
-      message: "Couldn't reach Gemini. Check your internet connection and try again.",
+      message: "Can't reach the AI right now — check your internet connection and try again.",
       kind: 'network',
     };
   }
   if (/json|parse|unexpected response|no response/i.test(raw)) {
     return {
-      message: 'Gemini returned an unexpected response. Click Generate again to retry.',
+      message: 'The AI sent back something unexpected. Try clicking Generate again.',
       kind: 'parse',
     };
   }
   return {
-    message: `Generate failed: ${raw || 'unknown error'}`,
+    message: `Couldn't generate code — ${raw || 'something went wrong.'} Try again.`,
     kind: 'generic',
   };
 }
@@ -2676,7 +2682,11 @@ const styles = {
   workspace: {
     display: 'flex',
     flex: 1,
-    overflow: 'hidden',
+    /* Horizontal scroll instead of clipping when fixed-width panels + the
+     * floored editor exceed the window width (editor min-width lives in
+     * global.css .workspace-editor-shell). */
+    overflowX: 'auto',
+    overflowY: 'hidden',
     minHeight: 0,
   },
   explorerShell: {

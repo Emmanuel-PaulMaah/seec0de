@@ -210,9 +210,7 @@ function StepProfile({ mode, value, onChange, usernameError, canContinue, onNext
         {mode === 'new-profile' ? 'Add a profile.' : 'Create your profile.'}
       </h1>
       <p style={styles.subtitle}>
-        seec0de saves your progress to a profile on <em style={styles.em}>this device</em>.
-        No email, no password, nothing leaves your machine. Pick a name (add a photo
-        &amp; bio if you like) and you're in.
+        Saved on <em style={styles.em}>this device</em> — no account needed. Pick a name to get started.
       </p>
 
       <ProfileFields
@@ -245,8 +243,7 @@ function StepExperience({ value, onChange, onBack, onNext }) {
     <>
       <h2 id="onboarding-title" style={styles.title}>Have you written code before?</h2>
       <p style={styles.subtitle}>
-        This tunes how chatty the explanations are — we can start from the ground up
-        or keep things terse. You can change your mind any time.
+        Sets how detailed explanations are. You can change this later.
       </p>
 
       <fieldset style={styles.choiceGroup}>
@@ -255,13 +252,13 @@ function StepExperience({ value, onChange, onBack, onNext }) {
           selected={value === 'none'}
           onClick={() => onChange('none')}
           title="Not yet"
-          desc="Start from zero. We'll explain things from the ground up."
+          desc="Explain everything from scratch."
         />
         <ChoiceCard
           selected={value === 'some'}
           onClick={() => onChange('some')}
           title="A little"
-          desc="You know the basics. Explanations will be terser and more idiomatic."
+          desc="Keep explanations short and direct."
         />
       </fieldset>
 
@@ -287,10 +284,7 @@ function StepLanguage({ value, onChange, onBack, onNext }) {
     <>
       <h2 style={styles.title}>Which language will you build in?</h2>
       <p style={styles.subtitle}>
-        Pick the one you actually want to write programs in. seec0de will run, save,
-        and explain code in this language by default. You'll always see the
-        algorithm in <strong style={styles.strong}>pseudocode first</strong>, and a
-        second language alongside for comparison.
+        Used to run and save your work. You'll see plain English first, plus a comparison language.
       </p>
 
       <div style={styles.langGrid}>
@@ -307,7 +301,7 @@ function StepLanguage({ value, onChange, onBack, onNext }) {
       </div>
 
       <p style={styles.helperLine}>
-        You can switch your language any time from the gear icon in the top bar.
+        Change it anytime from the gear icon.
       </p>
 
       <div style={styles.actions}>
@@ -327,11 +321,9 @@ function StepApiKey({ value, onChange, onBack, onFinish, onSkip }) {
   const ready = value.trim().length > 8;
   return (
     <>
-      <h2 style={styles.title}>Optional — paste a Gemini API key.</h2>
+      <h2 style={styles.title}>Add an AI key (optional).</h2>
       <p style={styles.subtitle}>
-        seec0de works fully offline with built-in templates, but the
-        <em style={styles.em}> AI Generate</em> and <em style={styles.em}> AI Explain</em> features
-        need a free Google AI Studio key. Skip this if you'd rather add it later.
+        Everything works offline. A free Google AI key adds smarter code generation and error explanations.
       </p>
 
       <div style={styles.keyRow}>
@@ -509,16 +501,16 @@ const styles = {
     textAlign: 'left',
     background: 'var(--bg-secondary)',
     border: '1px solid var(--border)',
-    borderRadius: 8,
-    padding: '12px 14px',
+    borderRadius: 'var(--radius-sm)',
+    padding: '10px 13px',
     color: 'var(--text-primary)',
-    display: 'flex', flexDirection: 'column', gap: 4,
-    transition: 'border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out)',
+    display: 'flex', flexDirection: 'column', gap: 3,
+    transition: 'border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
-  choiceCompact: { padding: '10px 12px' },
+  choiceCompact: { padding: '8px 11px' },
   choiceSelected: {
-    borderColor: 'var(--accent)',
-    background: 'var(--accent-soft)',
+    borderColor: 'var(--border-strong)',
+    background: 'var(--bg-elevated)',
   },
   choiceTitleRow: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Terminal as TermIcon, Trash2, ChevronDown, ChevronUp, Loader, Play } from 'lucide-react';
+import { Terminal as TermIcon, Trash2, ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { Loader } from './motion/loader';
 import { explain } from '../engine/commandExplainer';
 import { explainTerminalWithAI } from '../engine/aiService';
 import { setFocusTarget } from '../engine/editorBridge';
@@ -250,7 +251,7 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
       <div style={styles.scroll} ref={scrollRef}>
         {entries.length === 0 && (
           <div style={styles.empty}>
-            Run commands, see explanations
+            Type a command below. Each one gets a plain-English explanation.
             <br />Try: <code style={styles.kbd}>git status</code>, <code style={styles.kbd}>npm install</code>, <code style={styles.kbd}>dir</code>, <code style={styles.kbd}>Get-Process</code>.
           </div>
         )}
@@ -272,7 +273,7 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
           disabled={running}
         />
         <button type="submit" className="ui-primary-button" style={styles.runBtn} disabled={running || !input.trim()}>
-          {running ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> : <Play size={11} />}
+          {running ? <Loader size={11} variant="spinner" /> : <Play size={11} />}
           <span style={{ marginLeft: 4 }}>Run</span>
         </button>
       </form>
@@ -306,7 +307,7 @@ function Entry({ entry }) {
       )}
       {status === 'running' && !stdout && !stderr && (
         <div style={styles.runningHint}>
-          <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} /> running…
+          <Loader size={11} variant="spinner" /> running…
         </div>
       )}
     </div>

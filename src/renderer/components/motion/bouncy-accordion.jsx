@@ -64,9 +64,6 @@ function useControllableAccordionValue({
 function BouncyAccordionRow({
   item,
   open,
-  startsGroup,
-  endsGroup,
-  separatedFromPrevious,
   contentId,
   triggerId,
   reduce,
@@ -98,18 +95,9 @@ function BouncyAccordionRow({
     <motion.div
       layout="position"
       initial={false}
-      style={{ marginTop: separatedFromPrevious ? 12 : 0 }}
       transition={reduce ? { duration: 0 } : ROW_TRANSITION}>
-      <motion.div
+      <div
         data-state={open ? "open" : "closed"}
-        initial={false}
-        animate={{
-          borderTopLeftRadius: startsGroup ? 28 : 0,
-          borderTopRightRadius: startsGroup ? 28 : 0,
-          borderBottomLeftRadius: endsGroup ? 28 : 0,
-          borderBottomRightRadius: endsGroup ? 28 : 0,
-        }}
-        transition={reduce ? { duration: 0 } : ROW_TRANSITION}
         className={cn(
           "overflow-hidden bg-card text-card-foreground",
           item.disabled && "opacity-50",
@@ -162,7 +150,7 @@ function BouncyAccordionRow({
           role="region"
           aria-labelledby={triggerId}
           aria-hidden={!open}
-          inert={!open}
+          inert={!open ? "" : undefined}
           initial={false}
           style={{ height: open && item.description ? contentHeight : 0 }}
           transition={
@@ -186,7 +174,7 @@ function BouncyAccordionRow({
             </div>
           </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }
@@ -207,8 +195,6 @@ export function BouncyAccordion({
     defaultValue,
     onValueChange,
   });
-  const activeIndex = items.findIndex((item) => item.id === activeValue);
-
   const toggleItem = useCallback((id) => {
     if (activeValue === id) {
       if (collapsible) {
@@ -222,13 +208,8 @@ export function BouncyAccordion({
 
   return (
     <div className={cn("w-full", className, classNames?.root)}>
-      {items.map((item, index) => {
+      {items.map((item) => {
         const open = activeValue === item.id;
-        const previousIsOpen = activeIndex === index - 1;
-        const nextIsOpen = activeIndex === index + 1;
-        const startsGroup = open || index === 0 || previousIsOpen;
-        const endsGroup = open || index === items.length - 1 || nextIsOpen;
-        const separatedFromPrevious = index > 0 && (open || previousIsOpen);
         const contentId = `${baseId}-${item.id}-content`;
         const triggerId = `${baseId}-${item.id}-trigger`;
 
@@ -237,9 +218,6 @@ export function BouncyAccordion({
             key={item.id}
             item={item}
             open={open}
-            startsGroup={startsGroup}
-            endsGroup={endsGroup}
-            separatedFromPrevious={separatedFromPrevious}
             contentId={contentId}
             triggerId={triggerId}
             reduce={reduce}

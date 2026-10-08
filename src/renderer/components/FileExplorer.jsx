@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, forwardRef } from 'react';
-import { Folder, FolderOpen, File, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2, Copy, Scissors, Clipboard } from 'lucide-react';
+import { Folder, FolderOpen, File, Plus, RefreshCw, FolderPlus, X, Check, Pencil, Trash2, Copy, Scissors, Clipboard, FileCode, FileText } from 'lucide-react';
 import { basename, dirname, joinPath } from '../engine/fileLanguage';
 import { FileTree, FileTreeFolder, FileTreeFile } from './motion/file-tree';
+import { MorphingSearch } from './motion/morphing-search';
 
 // Migrated to beUI FileTree — declarative tree with spring animations,
 // keyboard navigation, and a shared-layout hover pill. Context menu,
@@ -10,17 +11,9 @@ import { FileTree, FileTreeFolder, FileTreeFile } from './motion/file-tree';
 const NEW_FILE   = 'file';
 const NEW_FOLDER = 'folder';
 
-// Map file extensions to lucide icons with color
+// Map file extensions to lucide icons
 function iconForFile(name) {
-  const ext = (name.split('.').pop() || '').toLowerCase();
-  const colorMap = {
-    js: 'text-yellow-400', jsx: 'text-sky-400', ts: 'text-blue-400', tsx: 'text-sky-400',
-    py: 'text-green-400', rb: 'text-red-400', go: 'text-cyan-400', rs: 'text-orange-400',
-    css: 'text-violet-400', html: 'text-orange-300', json: 'text-amber-400',
-    md: 'text-muted-foreground', txt: 'text-muted-foreground',
-  };
-  const cls = colorMap[ext] || 'text-muted-foreground';
-  return <File size={14} className={cls} />;
+  return <File size={14} style={{ color: 'var(--text-muted)' }} />;
 }
 
 export default function FileExplorer({
@@ -42,6 +35,32 @@ export default function FileExplorer({
   const [renameDraft, setRenameDraft] = useState('');
   const renameRef = useRef(null);
   const draftRef = useRef(null);
+
+  const searchItems = useMemo(() => {
+    const items = [];
+    const iconMap = {
+      js: FileCode, jsx: FileCode, ts: FileCode, tsx: FileCode,
+      py: FileCode, rb: FileCode, go: FileCode, rs: FileCode,
+      css: FileText, html: FileText, json: FileText,
+      md: FileText, txt: FileText,
+    };
+    for (const [dirPath, node] of Object.entries(tree)) {
+      if (!node?.entries) continue;
+      for (const entry of node.entries) {
+        if (entry.isDir) continue;
+        const ext = (entry.name.split('.').pop() || '').toLowerCase();
+        items.push({
+          id: entry.path,
+          title: entry.name,
+          description: dirPath === rootPath ? '' : basename(dirPath),
+          keywords: [ext, basename(dirPath)],
+          icon: iconMap[ext] || File,
+          onSelect: () => onOpenFile?.(entry.path),
+        });
+      }
+    }
+    return items;
+  }, [tree, rootPath, onOpenFile]);
 
   // ---- context menu ---------------------------------------------------
   const [contextMenu, setContextMenu] = useState(null);
@@ -76,7 +95,7 @@ export default function FileExplorer({
         [dirPath]: { entries, open: prev[dirPath]?.open ?? true },
       }));
     } catch (err) {
-      setError(`Couldn't read ${dirPath}: ${err.message}`);
+      setError(`Couldn't open this folder — ${err.message || 'it may have been moved or deleted.'}`);
     }
   }, []);
 
@@ -175,7 +194,7 @@ export default function FileExplorer({
     const name = draftName.trim();
     if (!name) { cancelCreate(); return; }
     if (/[\\\/]/.test(name)) {
-      setError('Name cannot contain "/" or "\\". Select a folder, then create the item there.');
+      setError("File names can't have / or \\ — pick a folder first, then create inside it.");
       return;
     }
     try {
@@ -194,7 +213,7 @@ export default function FileExplorer({
       cancelCreate();
       if (creating === NEW_FILE) onOpenFile?.(target);
     } catch (err) {
-      setError(err.message || 'Failed to create.');
+      setError(err.message || 'Could not create this file.');
     }
   }, [rootPath, selectedDir, creating, draftName, loadDir, cancelCreate, onOpenFile]);
 
@@ -232,7 +251,7 @@ export default function FileExplorer({
       return;
     }
     if (/[\\\/]/.test(nextName)) {
-      setError('Name cannot contain "/" or "\\".');
+      setError("File names can't have / or \\ characters.");
       return;
     }
     try {
@@ -251,7 +270,7 @@ export default function FileExplorer({
       }
       cancelRename();
     } catch (err) {
-      setError(err.message || 'Failed to rename.');
+      setError(err.message || 'Could not rename this file.');
     }
   }, [renaming, renameDraft, cancelRename, loadDir, activeFilePath, onOpenFile, selectedDir]);
 
@@ -280,7 +299,7 @@ export default function FileExplorer({
       await Promise.all(Array.from(parentsToReload).map((dir) => loadDir(dir)));
       setDeleting(null);
     } catch (err) {
-      setError(err.message || 'Failed to delete.');
+      setError(err.message || 'Could not delete this file.');
     }
   }, [deleting, loadDir, onDeleteFile]);
 
@@ -303,6 +322,24 @@ export default function FileExplorer({
     const parentPath = slash >= 0 ? path.slice(0, slash) : rootPath;
     setContextMenu({ x: e.clientX, y: e.clientY, path, name, isDir, parentPath });
   }, [rootPath]);
+
+  // Set of all known directory paths from loaded entries. Used by the
+  // FileTree onValueChange handler to distinguish folders from files —
+  // without this, clicking a folder that is *rendered* (because its
+  // parent was loaded) but whose own entries haven't been loaded yet
+  // would fall through to onOpenFile, which tries to readDir as a file
+  // and shows an error in CodePanel.
+  const knownDirs = useMemo(() => {
+    const dirs = new Set();
+    for (const node of Object.values(tree)) {
+      if (node?.entries) {
+        for (const entry of node.entries) {
+          if (entry.isDir) dirs.add(entry.path);
+        }
+      }
+    }
+    return dirs;
+  }, [tree]);
 
   // ---- build declarative tree for beUI FileTree ----------------------
   const fileTreeChildren = useMemo(() => {
@@ -368,6 +405,15 @@ export default function FileExplorer({
           {basename(rootPath) || rootPath}
         </span>
         <div style={styles.headerActions}>
+          {searchItems.length > 0 && (
+            <MorphingSearch
+              items={searchItems}
+              placeholder="Search files…"
+              shortcut="f"
+              iconOnly
+              emptyMessage="No matching files."
+            />
+          )}
           <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
             <Plus size={12} />
           </button>
@@ -443,9 +489,12 @@ export default function FileExplorer({
           <FileTree
             value={activeFilePath || null}
             onValueChange={(path) => {
-              // Only open files, not directories (dirs toggle via expand)
-              const node = tree[path];
-              if (!node) onOpenFile?.(path);
+              // Only open files, not directories (dirs toggle via expand).
+              // knownDirs covers every directory we've seen in *any* loaded
+              // parent's entries — including folders that are rendered but
+              // haven't had loadDir called for them yet.
+              if (knownDirs.has(path)) return;
+              onOpenFile?.(path);
             }}
             expandedIds={expandedIds}
             onExpandedChange={handleExpandedChange}
@@ -585,6 +634,10 @@ const styles = {
   headerActions: {
     display: 'flex',
     gap: 2,
+  },
+  searchRow: {
+    padding: '4px 8px 2px',
+    borderBottom: '1px solid var(--border)',
   },
   iconBtn: {
     background: 'transparent',

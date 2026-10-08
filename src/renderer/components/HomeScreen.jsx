@@ -1,14 +1,30 @@
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, Code2, GraduationCap, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import BulletinSection from './BulletinSection';
+import { ExpandingArrowButton } from './motion/expanding-arrow-button';
+import { TextReveal } from './motion/text-reveal';
+import { ChromaticName } from './motion/chromatic-text-reveal';
+
+// Language ids come from the lesson data; only a handful ever appear here.
+const LANGUAGE_LABELS = {
+  python: 'Python',
+  javascript: 'JavaScript',
+  typescript: 'TypeScript',
+  css: 'CSS',
+  html: 'HTML',
+  git: 'Git & GitHub',
+  c: 'C',
+  cpp: 'C++',
+  java: 'Java',
+};
 
 export default function HomeScreen({
   username,
   hasActiveLesson,
-  postcardCount = 0,
+  activeLessonTitle,
+  activeLessonLanguage,
   onOpenWorkspace,
   onOpenLearnMode,
-  onOpenPostcards,
   hideWordmark,
 }) {
   const headingRef = useRef(null);
@@ -17,195 +33,90 @@ export default function HomeScreen({
     headingRef.current?.focus();
   }, []);
 
+  const lessonMeta = LANGUAGE_LABELS[activeLessonLanguage] || 'Guided lesson';
+
+  // The shell is a flat solid surface; only the accent tile animates. The tile
+  // is the expanding-arrow CTA's whole idea, so it carries the brand colour on
+  // the primary and stays neutral on the secondary.
+  const ctaShell =
+    'home-cta w-full min-w-0 rounded-[18px] border border-[color:var(--border-strong)] ' +
+    'bg-[var(--bg-secondary)] text-[color:var(--text-primary)] ' +
+    'focus-visible:ring-[color:var(--accent)] focus-visible:ring-offset-[var(--bg-primary)]';
+
+  // min-w-0 so long lesson titles ellipsize instead of clipping at the edge.
+  const ctaLabel = 'min-w-0 truncate text-[15px]';
+
   return (
-    <main className="home-screen" style={styles.screen}>
-      <div style={styles.grid} aria-hidden="true" />
-      <div style={styles.glowOrb} aria-hidden="true" />
-      <section className="home-content" style={styles.content} aria-labelledby="home-heading">
-        <div style={styles.kicker}><Sparkles size={12} /> Your coding home</div>
-        <h1 ref={headingRef} tabIndex={-1} id="home-heading" style={styles.heading}>
-          {username ? `Welcome back, ${username}.` : 'Welcome to seec0de.'}
-        </h1>
-        <p style={styles.intro}>
-          Learn with a guide or open the full workspace. Your drafts and progress stay where you left them.
-        </p>
+    <main className="home-screen">
+      <section className="home-content" aria-labelledby="home-heading">
+        <div className="home-kicker"><Sparkles size={12} /> Your coding home</div>
+        {username ? (
+          <h1 ref={headingRef} tabIndex={-1} id="home-heading" className="home-heading">
+            {'Welcome back,'.split(' ').map((word, i, arr) => (
+              <span key={`w-${i}`} className="inline-block whitespace-pre beui-text-reveal-word" style={{
+                '--ty': '20px', '--blur': '6px',
+                opacity: 0, transform: 'translateY(20px)', filter: 'blur(6px)',
+                animation: `beui-text-reveal-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.08}s forwards`,
+              }}>{word}{i < arr.length - 1 ? '\u00A0' : '\u00A0'}</span>
+            ))}
+            {'\u00A0'}
+            <ChromaticName duration={2} delay={0.5}>{username}</ChromaticName>
+            <span className="inline-block whitespace-pre beui-text-reveal-word" style={{
+              '--ty': '20px', '--blur': '6px',
+              opacity: 0, transform: 'translateY(20px)', filter: 'blur(6px)',
+              animation: 'beui-text-reveal-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards',
+            }}>.</span>
+          </h1>
+        ) : (
+          <TextReveal
+            as="h1"
+            ref={headingRef}
+            tabIndex={-1}
+            id="home-heading"
+            text="Welcome to seec0de."
+            stagger={0.06}
+            blur={6}
+            yOffset={20}
+            className="home-heading"
+          />
+        )}
+        <div className="home-entry-grid">
+          <ExpandingArrowButton
+            onClick={onOpenLearnMode}
+            className={ctaShell}
+            accentClassName="bg-[var(--accent)] text-[color:var(--text-on-accent)]"
+            activeLabelClassName="text-[color:var(--text-on-accent)]"
+            labelClassName={ctaLabel}
+            aria-label={
+              hasActiveLesson
+                ? `Continue ${lessonMeta} lesson: ${activeLessonTitle || 'your lesson'}`
+                : 'Browse courses'
+            }
+          >
+            {hasActiveLesson ? 'Continue lesson' : 'Browse courses'}
+          </ExpandingArrowButton>
 
-        <div className="home-launch-grid" style={styles.launchGrid}>
-          <button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenLearnMode}>
-            <span style={styles.cardIcon}><GraduationCap size={18} /></span>
-            <span style={styles.cardCopy}>
-              <span style={styles.cardEyebrow}>Guided path</span>
-              <strong style={styles.cardTitle}>{hasActiveLesson ? 'Continue learning' : 'Start learning'}</strong>
-              <span style={styles.cardText}>Lessons, activities, feedback, and saved progress.</span>
-            </span>
-            <ArrowRight size={16} style={styles.arrow} />
-          </button>
-
-          <button type="button" className="home-launch-card" style={styles.launchCard} onClick={onOpenWorkspace}>
-            <span style={styles.cardIcon}><Code2 size={18} /></span>
-            <span style={styles.cardCopy}>
-              <span style={styles.cardEyebrow}>Build freely</span>
-              <strong style={styles.cardTitle}>Open Workspace</strong>
-              <span style={styles.cardText}>Files, editor, terminal, runner, and explanations.</span>
-            </span>
-            <ArrowRight size={16} style={styles.arrow} />
-          </button>
+          <ExpandingArrowButton
+            onClick={onOpenWorkspace}
+            className={ctaShell}
+            accentClassName="bg-neutral-300 text-neutral-950"
+            activeLabelClassName="text-neutral-950"
+            labelClassName={ctaLabel}
+            aria-label="Open the workspace editor"
+          >
+            Open workspace
+          </ExpandingArrowButton>
         </div>
 
         <BulletinSection />
 
-        <div style={styles.futureLine}>
-          <span style={styles.futureDot} />
+        <div className="home-future">
+          <span className="home-future-dot" />
           Community features coming soon
         </div>
       </section>
 
-      {!hideWordmark && <div className="home-wordmark" style={styles.wordmark} aria-hidden="true">seec0de</div>}
+      {!hideWordmark && <div className="home-wordmark" aria-hidden="true">seec0de</div>}
     </main>
   );
 }
-
-const styles = {
-  screen: {
-    position: 'relative',
-    flex: 1,
-    minHeight: 0,
-    overflowY: 'auto',
-    overflowX: 'clip',
-    display: 'flex',
-    alignItems: 'center',
-    background: 'var(--bg-primary)',
-    isolation: 'isolate',
-  },
-  grid: {
-    position: 'absolute',
-    inset: 0,
-    zIndex: -3,
-    opacity: 0,
-    backgroundImage: 'linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)',
-    backgroundSize: '64px 64px',
-    maskImage: 'linear-gradient(to bottom, black, transparent 76%)',
-    animation: 'grid-reveal 1.2s ease-out 0.3s forwards',
-  },
-  glowOrb: {
-    position: 'absolute',
-    top: '-20%',
-    left: '30%',
-    width: '40%',
-    height: '50%',
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(200, 255, 77, 0.04) 0%, transparent 70%)',
-    filter: 'blur(80px)',
-    zIndex: -2,
-    pointerEvents: 'none',
-  },
-  content: {
-    width: 'min(880px, calc(100% - 64px))',
-    margin: '0 auto',
-    padding: 'clamp(42px, 8vh, 80px) 0 clamp(110px, 17vh, 170px)',
-  },
-  kicker: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 7,
-    color: 'var(--accent)',
-    fontSize: 10.5,
-    fontWeight: 700,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-  },
-  heading: {
-    maxWidth: 720,
-    margin: '14px 0 0',
-    color: 'var(--text-primary)',
-    fontSize: 'clamp(34px, 5.4vw, 68px)',
-    fontWeight: 700,
-    letterSpacing: '-0.055em',
-    lineHeight: 0.98,
-  },
-  intro: {
-    maxWidth: 570,
-    margin: '18px 0 0',
-    color: 'var(--text-secondary)',
-    fontSize: 13,
-    lineHeight: 1.65,
-  },
-  launchGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: 12,
-    marginTop: 30,
-  },
-  launchCard: {
-    display: 'grid',
-    gridTemplateColumns: '38px 1fr auto',
-    alignItems: 'center',
-    gap: 12,
-    minWidth: 0,
-    padding: 16,
-    border: '1px solid var(--border-strong)',
-    borderRadius: 'var(--radius-lg)',
-    background: 'var(--bg-elevated)',
-    color: 'var(--text-primary)',
-    textAlign: 'left',
-  },
-  cardIcon: {
-    width: 38,
-    height: 38,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    background: 'var(--accent-soft)',
-    color: 'var(--accent)',
-  },
-  cardCopy: {
-    minWidth: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 3,
-  },
-  cardEyebrow: {
-    color: 'var(--text-muted)',
-    fontSize: 9.5,
-    fontWeight: 700,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  cardTitle: { color: 'var(--text-primary)', fontSize: 13.5 },
-  cardText: { color: 'var(--text-muted)', fontSize: 10.5, lineHeight: 1.4 },
-  arrow: { color: 'var(--text-muted)' },
-  futureLine: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 18,
-    color: 'var(--text-muted)',
-    fontSize: 10.5,
-  },
-  futureDot: {
-    width: 5,
-    height: 5,
-    borderRadius: '50%',
-    background: 'var(--accent)',
-    boxShadow: '0 0 12px var(--accent)',
-    animation: 'community-dot-pulse 2.5s ease-in-out infinite',
-  },
-  wordmark: {
-    position: 'absolute',
-    left: '50%',
-    bottom: 0,
-    zIndex: -1,
-    transform: 'translateX(-50%) translateY(30%)',
-    color: 'var(--text-primary)',
-    opacity: 0.055,
-    fontSize: 'clamp(120px, 23vw, 360px)',
-    fontWeight: 700,
-    letterSpacing: '-0.095em',
-    lineHeight: 0.78,
-    whiteSpace: 'nowrap',
-    userSelect: 'none',
-    WebkitTextStroke: '1px rgba(242, 240, 233, 0.08)',
-  },
-};

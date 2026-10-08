@@ -10,7 +10,7 @@ const STEPS = [
   {
     selector: '[data-workspace-panel="guide"]',
     title: 'Describe what you want to build',
-    body: 'Write an instruction here and Generate turns it into pseudocode and working code in your chosen languages or open your local folders.',
+    body: 'Generate turns a plain-English prompt into pseudocode and code in your languages. Open a folder to browse your files, or switch to Build for a guided project — sample or AI-made — checked step by step.',
   },
   {
     selector: '[data-workspace-panel="editor"]',

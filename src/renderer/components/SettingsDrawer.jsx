@@ -1,11 +1,17 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import {
-  X, Check, Eye, EyeOff, RefreshCw, Loader, CheckCircle2,
+  X, Check, Eye, EyeOff, RefreshCw, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
   Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
   Volume2, VolumeX,
 } from 'lucide-react';
+import { Loader } from './motion/loader';
+import { motion, useReducedMotion } from 'motion/react';
+import { EASE_OUT } from '../lib/ease';
+import { Switch } from './motion/switch';
+import { OTPInput } from './motion/otp-input';
+import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
 import {
   RUNNABLE_LANGUAGES,
   TOOLCHAIN_GUIDES,
@@ -177,207 +183,116 @@ export default function SettingsDrawer({
       </header>
 
       <div style={styles.scroll}>
-          {/* ---- 1. Appearance ---------------------------------------- */}
-          <Section id="appearance" icon={<Eye size={13} />} title="Appearance" open={expandedSection === 'appearance'} onToggle={toggleSection}>
-            <ToggleRow
-              icon={<Layers size={13} />}
-              label="Sticky scroll"
-              hint="Pin the enclosing function/scope header at the top of the editor as you scroll."
-              checked={settings.editorStickyScroll !== false}
-              onChange={(checked) => patch({ editorStickyScroll: checked })}
-            />
-            <ToggleRow
-              icon={<FolderTree size={13} />}
-              label="Breadcrumbs"
-              hint="Show a clickable position bar above the editor (file › symbol › scope)."
-              checked={!!settings.editorBreadcrumbs}
-              onChange={(checked) => patch({ editorBreadcrumbs: checked })}
-            />
-          </Section>
+          {(() => {
+            const SECTION_IDS = [
+              'appearance', 'sounds', 'learnMode', 'practiceReminders',
+              'languages', 'ai', 'workspace', 'keyboardShortcuts',
+              'toolchains', 'about', 'onboarding',
+            ];
+            return SECTION_IDS.map((id, index) => {
+              const isOpen = expandedSection === id;
+              const isFirst = index === 0;
+              const isLast = index === SECTION_IDS.length - 1;
+              const isPreviousOpen = index > 0 && expandedSection === SECTION_IDS[index - 1];
+              const props = { id, onToggle: toggleSection, open: isOpen, isFirst, isLast, isPreviousOpen };
 
-          {/* ---- 2. Sounds ---------------------------------------- */}
-          <Section id="sounds" icon={<Volume2 size={13} />} title="Sounds" open={expandedSection === 'sounds'} onToggle={toggleSection}>
-            <ToggleRow
-              icon={settings.soundsEnabled !== false
-                ? <Volume2 size={13} />
-                : <VolumeX size={13} />}
-              label="Lesson sounds"
-              hint="Play a chime when you pass a lesson and a tone when a run fails."
-              checked={settings.soundsEnabled !== false}
-              onChange={(checked) => patch({ soundsEnabled: checked })}
-            />
-          </Section>
-
-          {/* ---- 3. Learn ---------------------------------------- */}
-          <Section id="learnMode" icon={<GraduationCap size={13} />} title="Learn" open={expandedSection === 'learnMode'} onToggle={toggleSection}>
-            <Field label="Guidance level" hint="Choose how much teaching Learn shows. You can change this at any time.">
-              <GuidanceTabs
-                value={['supported', 'guided', 'independent'].includes(settings.guidanceLevel)
-                  ? settings.guidanceLevel
-                  : 'supported'}
-                onChange={(guidanceLevel) => patch({ guidanceLevel, guidanceSuccessStreak: 0 })}
-              />
-            </Field>
-          </Section>
-
-          <Section id="practiceReminders" icon={<Bell size={13} />} title="Practice reminders" open={expandedSection === 'practiceReminders'} onToggle={toggleSection}>
-            <ToggleRow
-              icon={<Bell size={13} />}
-              label="Learning Pulse reminders"
-              hint="Show a quiet practice bar when completed learning work is ready to revisit."
-              checked={settings.practiceRemindersEnabled}
-              onChange={(checked) => patch({ practiceRemindersEnabled: checked })}
-            />
-            <Field label="Reminder time" hint="New reminders and postponed practice will appear at this local time.">
-              <input
-                type="time"
-                value={settings.practiceReminderTime || '18:00'}
-                onChange={(event) => patch({ practiceReminderTime: event.target.value || '18:00' })}
-                disabled={!settings.practiceRemindersEnabled}
-                style={{ ...styles.input, ...styles.timeInput, ...(!settings.practiceRemindersEnabled ? styles.disabled : {}) }}
-              />
-            </Field>
-            <Field label="Desktop notifications" hint={notificationPermissionHint(notificationPermission)}>
-              <button
-                type="button"
-                style={{ ...styles.ghostBtn, alignSelf: 'flex-start', ...((notificationPermission === 'unsupported' || notificationPermission === 'denied') ? styles.disabled : {}) }}
-                disabled={notificationPermission === 'unsupported' || notificationPermission === 'denied'}
-                onClick={handleDesktopNotifications}
-              >
-                {notificationPermission === 'granted' && settings.practiceNotificationsEnabled
-                  ? 'Turn off desktop notifications'
-                  : notificationPermission === 'granted'
-                    ? 'Turn on desktop notifications'
-                    : notificationPermission === 'denied'
-                      ? 'Permission blocked'
-                      : notificationPermission === 'unsupported'
-                        ? 'Not supported'
-                        : 'Allow notifications'}
-              </button>
-            </Field>
-          </Section>
-
-          {/* ---- 3. Languages ----------------------------------------- */}
-          <Section id="languages" icon={<Layers size={13} />} title="Languages" open={expandedSection === 'languages'} onToggle={toggleSection}>
-            <Field label="Practical language" hint="The language you build in. Powers Run, default file extension, and the first language tab.">
-              <div style={styles.langGrid}>
-                {RUNNABLE_LANGUAGES.map((lang) => (
-                  <Pill
-                    key={lang.id}
-                    selected={settings.practicalLanguage === lang.id}
-                    onClick={() => setPracticalLanguage(lang.id)}
-                  >
-                    {lang.label}
-                  </Pill>
-                ))}
-              </div>
-            </Field>
-
-            <Field
-              label="Comparison languages"
-              hint="Shown beside your practical language so you can see the same algorithm in different syntax. Pick up to 3."
-            >
-              <div style={styles.langGrid}>
-                {RUNNABLE_LANGUAGES
-                  .filter((l) => l.id !== settings.practicalLanguage)
-                  .map((lang) => (
-                    <Pill
-                      key={lang.id}
-                      selected={settings.comparisonLanguages.includes(lang.id)}
-                      onClick={() => toggleComparison(lang.id)}
-                    >
-                      {lang.label}
-                    </Pill>
-                  ))}
-              </div>
-            </Field>
-          </Section>
-
-          {/* ---- 3. AI ------------------------------------------------- */}
-          <Section id="ai" icon={<Sparkles size={13} />} title="AI" open={expandedSection === 'ai'} onToggle={toggleSection}>
-            <Field
-              label="Gemini API key"
-              hint="Free key from Google AI Studio. Required for AI Generate & AI Explain. Stored locally; never sent anywhere except Google."
-            >
-              <div style={styles.keyRow}>
-                <input
-                  type={showKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  onFocus={handleKeyFocus}
-                  placeholder="AIza…"
-                  style={styles.input}
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <button
-                  style={styles.iconBtn}
-                  onClick={() => setShowKey((v) => !v)}
-                  title={showKey ? 'Hide key' : 'Show key'}
-                  aria-label={showKey ? 'Hide API key' : 'Show API key'}
-                >
-                  {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-                <button
-                  style={{ ...styles.primaryBtn, minWidth: 64 }}
-                  onClick={handleSaveKey}
-                >
-                  {keySaved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save'}
-                </button>
-              </div>
-              <a
-                style={styles.link}
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Get a free key →
-              </a>
-            </Field>
-          </Section>
-
-          {/* ---- 4. Workspace ----------------------------------------- */}
-          <Section id="workspace" icon={<FolderTree size={13} />} title="Workspace" open={expandedSection === 'workspace'} onToggle={toggleSection}>
-            <ToggleRow
-              icon={<FolderTree size={13} />}
-              label="Show file explorer by default"
-              hint="Off for new accounts. Turn on once you start saving files."
-              checked={settings.showFileExplorer}
-              onChange={(checked) => patch({ showFileExplorer: checked })}
-            />
-            <ToggleRow
-              icon={<TermIcon size={13} />}
-              label="Show terminal by default"
-              hint="Toggle the bottom terminal at any time with Ctrl + `."
-              checked={settings.showTerminal}
-              onChange={(checked) => patch({ showTerminal: checked })}
-            />
-          </Section>
-
-          {/* ---- 5. Keyboard shortcuts --------------------------------- */}
-          <Section id="keyboardShortcuts" icon={<Keyboard size={13} />} title="Keyboard shortcuts" open={expandedSection === 'keyboardShortcuts'} onToggle={toggleSection}>
-            <ShortcutList />
-          </Section>
-
-          {/* ---- 6. Toolchains ----------------------------------------- */}
-          <Section id="toolchains" icon={<Cpu size={13} />} title="Toolchains" open={expandedSection === 'toolchains'} onToggle={toggleSection}>
-            <ToolchainPanel onRunInTerminal={onRunInTerminal} />
-          </Section>
-
-          {/* ---- 7. About & Updates ----------------------------------- */}
-          <Section id="about" icon={<Info size={13} />} title="About & Updates" open={expandedSection === 'about'} onToggle={toggleSection}>
-            <UpdatePanel update={update} />
-          </Section>
-
-          {/* ---- 8. Onboarding ---------------------------------------- */}
-          <Section id="onboarding" title="Onboarding" open={expandedSection === 'onboarding'} onToggle={toggleSection}>
-            <button style={styles.ghostBtn} onClick={handleRerun}>
-              Rerun onboarding
-            </button>
-            <p style={styles.hint}>
-              Re-asks the experience and language questions. Your other settings stay.
-            </p>
-          </Section>
+              if (id === 'appearance') return (
+                <Section key={id} {...props} icon={<Eye size={13} />} title="Appearance">
+                  <ToggleRow icon={<Layers size={13} />} label="Sticky scroll" hint="Keep the function name visible at the top of the editor while you scroll." checked={settings.editorStickyScroll !== false} onChange={(checked) => patch({ editorStickyScroll: checked })} />
+                  <ToggleRow icon={<FolderTree size={13} />} label="Breadcrumbs" hint="Show a clickable bar above the editor showing where you are in the file." checked={!!settings.editorBreadcrumbs} onChange={(checked) => patch({ editorBreadcrumbs: checked })} />
+                </Section>
+              );
+              if (id === 'sounds') return (
+                <Section key={id} {...props} icon={<Volume2 size={13} />} title="Sounds">
+                  <ToggleRow icon={settings.soundsEnabled !== false ? <Volume2 size={13} /> : <VolumeX size={13} />} label="Lesson sounds" hint="Play a sound when you pass a lesson or when code fails to run." checked={settings.soundsEnabled !== false} onChange={(checked) => patch({ soundsEnabled: checked })} />
+                </Section>
+              );
+              if (id === 'learnMode') return (
+                <Section key={id} {...props} icon={<GraduationCap size={13} />} title="Learn">
+                  <Field label="Guidance level" hint="Choose how much help the Learn mode shows. Change this anytime.">
+                    <GuidanceTabs value={['supported', 'guided', 'independent'].includes(settings.guidanceLevel) ? settings.guidanceLevel : 'supported'} onChange={(guidanceLevel) => patch({ guidanceLevel, guidanceSuccessStreak: 0 })} />
+                  </Field>
+                </Section>
+              );
+              if (id === 'practiceReminders') return (
+                <Section key={id} {...props} icon={<Bell size={13} />} title="Practice reminders">
+                  <ToggleRow icon={<Bell size={13} />} label="Learning Pulse reminders" hint="Show a quiet practice bar when completed learning work is ready to revisit." checked={settings.practiceRemindersEnabled} onChange={(checked) => patch({ practiceRemindersEnabled: checked })} />
+                  <Field label="Reminder time" hint="New reminders and postponed practice will appear at this local time.">
+                    <input type="time" value={settings.practiceReminderTime || '18:00'} onChange={(event) => patch({ practiceReminderTime: event.target.value || '18:00' })} disabled={!settings.practiceRemindersEnabled} style={{ ...styles.input, ...styles.timeInput, ...(!settings.practiceRemindersEnabled ? styles.disabled : {}) }} />
+                  </Field>
+                  <Field label="Desktop notifications" hint={notificationPermissionHint(notificationPermission)}>
+                    <button type="button" style={{ ...styles.ghostBtn, alignSelf: 'flex-start', ...((notificationPermission === 'unsupported' || notificationPermission === 'denied') ? styles.disabled : {}) }} disabled={notificationPermission === 'unsupported' || notificationPermission === 'denied'} onClick={handleDesktopNotifications}>
+                      {notificationPermission === 'granted' && settings.practiceNotificationsEnabled ? 'Turn off desktop notifications' : notificationPermission === 'granted' ? 'Turn on desktop notifications' : notificationPermission === 'denied' ? 'Permission blocked' : notificationPermission === 'unsupported' ? 'Not supported' : 'Allow notifications'}
+                    </button>
+                  </Field>
+                </Section>
+              );
+              if (id === 'languages') return (
+                <Section key={id} {...props} icon={<Layers size={13} />} title="Languages">
+                  <Field label="Practical language" hint="The language you code in. Controls Run, file type, and the first tab.">
+                    <Tabs value={settings.practicalLanguage} onValueChange={setPracticalLanguage} variant="pill">
+                      <TabsList>
+                        {RUNNABLE_LANGUAGES.map((lang) => (
+                          <TabsTrigger key={lang.id} value={lang.id}>{lang.label}</TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  </Field>
+                  <Field label="Comparison languages" hint="Show the same code in a second language so you can compare. Pick up to 3.">
+                    <div style={styles.langGrid}>
+                      {RUNNABLE_LANGUAGES.filter((l) => l.id !== settings.practicalLanguage).map((lang) => (
+                        <Pill key={lang.id} selected={settings.comparisonLanguages.includes(lang.id)} onClick={() => toggleComparison(lang.id)}>{lang.label}</Pill>
+                      ))}
+                    </div>
+                  </Field>
+                </Section>
+              );
+              if (id === 'ai') return (
+                <Section key={id} {...props} icon={<Sparkles size={13} />} title="AI">
+                  <Field label="Gemini API key" hint="A free key from Google AI Studio. Needed for AI code generation and error explanations. Stored on this device only.">
+                    <div style={styles.keyRow}>
+                      <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={(e) => setApiKey(e.target.value)} onFocus={handleKeyFocus} placeholder="AIza…" style={styles.input} autoComplete="off" spellCheck={false} />
+                      <button style={styles.iconBtn} onClick={() => setShowKey((v) => !v)} title={showKey ? 'Hide key' : 'Show key'} aria-label={showKey ? 'Hide API key' : 'Show API key'}>
+                        {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                      <button style={{ ...styles.primaryBtn, minWidth: 64 }} onClick={handleSaveKey}>
+                        {keySaved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save'}
+                      </button>
+                    </div>
+                    <a style={styles.link} href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Get a free key →</a>
+                  </Field>
+                </Section>
+              );
+              if (id === 'workspace') return (
+                <Section key={id} {...props} icon={<FolderTree size={13} />} title="Workspace">
+                  <ToggleRow icon={<FolderTree size={13} />} label="Show file explorer by default" hint="Turn on once you start working with files." checked={settings.showFileExplorer} onChange={(checked) => patch({ showFileExplorer: checked })} />
+                  <ToggleRow icon={<TermIcon size={13} />} label="Show terminal by default" hint="Toggle the bottom panel anytime with Ctrl + `." checked={settings.showTerminal} onChange={(checked) => patch({ showTerminal: checked })} />
+                </Section>
+              );
+              if (id === 'keyboardShortcuts') return (
+                <Section key={id} {...props} icon={<Keyboard size={13} />} title="Keyboard shortcuts">
+                  <ShortcutList />
+                </Section>
+              );
+              if (id === 'toolchains') return (
+                <Section key={id} {...props} icon={<Cpu size={13} />} title="Toolchains">
+                  <ToolchainPanel onRunInTerminal={onRunInTerminal} />
+                </Section>
+              );
+              if (id === 'about') return (
+                <Section key={id} {...props} icon={<Info size={13} />} title="About & Updates">
+                  <UpdatePanel update={update} />
+                </Section>
+              );
+              if (id === 'onboarding') return (
+                <Section key={id} {...props} title="Onboarding">
+                  <button style={styles.ghostBtn} onClick={handleRerun}>Rerun onboarding</button>
+                  <p style={styles.hint}>Goes through the setup steps again. Your other settings are kept.</p>
+                </Section>
+              );
+              return null;
+            });
+          })()}
 
           <p style={styles.footnote}>
             Settings live on this device only. Nothing is sent to a server.
@@ -428,7 +343,7 @@ export function ProfileManagerCard({
         <header style={styles.header}>
           <div>
             <h2 ref={titleRef} tabIndex={-1} id="manage-profile-title" style={styles.title}>Manage profile</h2>
-            <p style={styles.profileCardSubtitle}>Your identity and progress stay on this device.</p>
+            <p style={styles.profileCardSubtitle}>Everything is saved on this device only.</p>
           </div>
           <button style={styles.iconBtn} onClick={onClose} title="Close (Esc)" aria-label="Close profile manager">
             <X size={16} />
@@ -466,8 +381,12 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
   const [pin2, setPin2]           = useState('');
   const [pinBusy, setPinBusy]     = useState(false);
   const [pinError, setPinError]   = useState('');
+  const [pinStatus, setPinStatus] = useState('idle');
+  const pinSuccessTimer = useRef(null);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => () => clearTimeout(pinSuccessTimer.current), []);
 
   // Username validation (excludes the active profile so keeping your own
   // name isn't flagged as "taken").
@@ -494,26 +413,50 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
   };
 
   const openPinEditor = () => {
+    clearTimeout(pinSuccessTimer.current);
     setPin('');
     setPin2('');
     setPinError('');
+    setPinStatus('idle');
     setPinOpen(true);
   };
 
+  const closePinEditor = () => {
+    clearTimeout(pinSuccessTimer.current);
+    setPinOpen(false);
+    setPin('');
+    setPin2('');
+    setPinError('');
+    setPinStatus('idle');
+  };
+
+  const clearPinFeedback = () => {
+    setPinError('');
+    setPinStatus('idle');
+  };
+
   const handleSavePin = async () => {
-    const clean = pin.trim();
-    if (clean.length < 4) { setPinError('Use at least 4 digits.'); return; }
-    if (clean !== pin2.trim()) { setPinError("Those PINs don't match."); return; }
+    if (!/^\d{4}$/.test(pin) || !/^\d{4}$/.test(pin2)) {
+      setPinError('Enter all 4 digits.');
+      setPinStatus('error');
+      return;
+    }
+    if (pin !== pin2) {
+      setPinError("Those PINs don't match.");
+      setPinStatus('error');
+      return;
+    }
     setPinBusy(true);
+    setPinStatus('idle');
     try {
-      await setProfilePin(activeId, clean);
+      await setProfilePin(activeId, pin);
       setHasPin(true);
-      setPinOpen(false);
-      setPin('');
-      setPin2('');
       onSettingsChange?.(loadSettings());
+      setPinStatus('success');
+      pinSuccessTimer.current = setTimeout(closePinEditor, 750);
     } catch {
       setPinError("Couldn't set the PIN. Try again.");
+      setPinStatus('error');
     } finally {
       setPinBusy(false);
     }
@@ -545,7 +488,7 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
       {/* ---- PIN lock ---- */}
       <Field
         label="PIN lock"
-        hint="Optional. Asks for a PIN before opening this profile — a courtesy lock for shared machines, not real security. Anyone with disk access can still reset it."
+        hint="Optional. Adds a PIN before opening this profile. Good for shared computers, but not high security — anyone with file access can reset it."
       >
         {!pinOpen ? (
           <div style={styles.profileBtnRow}>
@@ -565,37 +508,39 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
           </div>
         ) : (
           <div style={styles.pinEditor}>
-            <input
-              type="password"
-              inputMode="numeric"
+            <OTPInput
+              length={4}
+              mask
               value={pin}
-              onChange={(e) => { setPin(e.target.value); setPinError(''); }}
-              placeholder="New PIN"
-              style={styles.input}
-              maxLength={12}
-              autoComplete="off"
+              onChange={(next) => { setPin(next); clearPinFeedback(); }}
+              label="New PIN"
+              aria-label="New four-digit PIN"
+              status={pinStatus}
+              disabled={pinBusy || pinStatus === 'success'}
+              autoFocus
             />
-            <input
-              type="password"
-              inputMode="numeric"
+            <OTPInput
+              length={4}
+              mask
               value={pin2}
-              onChange={(e) => { setPin2(e.target.value); setPinError(''); }}
-              placeholder="Confirm PIN"
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSavePin(); }}
-              style={styles.input}
-              maxLength={12}
-              autoComplete="off"
+              onChange={(next) => { setPin2(next); clearPinFeedback(); }}
+              label="Confirm PIN"
+              aria-label="Confirm four-digit PIN"
+              hint="Enter the same 4 digits again."
+              errorMessage={pinError}
+              successMessage="PIN saved"
+              status={pinStatus}
+              disabled={pinBusy || pinStatus === 'success'}
             />
-            {pinError && <p style={styles.errorText}>{pinError}</p>}
             <div style={styles.profileBtnRow}>
               <button
-                style={{ ...styles.primaryBtn, padding: '7px 14px', ...(pinBusy ? styles.disabled : {}) }}
+                style={{ ...styles.primaryBtn, padding: '7px 14px', ...(pinBusy || pinStatus === 'success' ? styles.disabled : {}) }}
                 onClick={handleSavePin}
-                disabled={pinBusy}
+                disabled={pinBusy || pinStatus === 'success'}
               >
-                {pinBusy ? 'Saving…' : 'Save PIN'}
+                {pinBusy ? 'Saving…' : pinStatus === 'success' ? 'Saved' : 'Save PIN'}
               </button>
-              <button style={styles.ghostBtn} onClick={() => setPinOpen(false)}>Cancel</button>
+              <button style={styles.ghostBtn} onClick={closePinEditor} disabled={pinBusy || pinStatus === 'success'}>Cancel</button>
             </div>
           </div>
         )}
@@ -626,33 +571,107 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
 // ---------------------------------------------------------------------------
 // reusable bits
 
-function Section({ id, icon, title, open, onToggle, children }) {
+const ROW_TRANSITION = { type: 'spring', duration: 0.45, bounce: 0.18 };
+const CONTENT_OPEN_TRANSITION = { type: 'spring', duration: 0.48, bounce: 0.15 };
+const CONTENT_CLOSE_TRANSITION = { type: 'spring', duration: 0.38, bounce: 0.12 };
+const CONTENT_FADE_TRANSITION = { duration: 0.18, ease: EASE_OUT };
+const CHEVRON_TRANSITION = { type: 'spring', duration: 0.35, bounce: 0.14 };
+
+function Section({ id, icon, title, open, onToggle, isFirst, isLast, isPreviousOpen, children }) {
   const bodyId = `settings-section-${id}`;
-  const [hovered, setHovered] = useState(false);
+  const reduce = useReducedMotion();
+  const contentRef = useRef(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const node = contentRef.current;
+    if (!node) return;
+    const update = () => setContentHeight(node.offsetHeight);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [children]);
+
+  const startsGroup = open || isFirst || isPreviousOpen;
+  const endsGroup = open || isLast;
+
   return (
-    <section style={styles.section}>
-      <button
-        type="button"
-        style={{
-          ...styles.sectionHeader,
-          ...(hovered ? { background: 'var(--bg-tertiary)', borderLeftColor: 'var(--accent)', paddingLeft: 10 } : {}),
+    <motion.div
+      layout="position"
+      initial={false}
+      style={{ marginTop: !isFirst && (open || isPreviousOpen) ? 12 : 0 }}
+      transition={reduce ? { duration: 0 } : ROW_TRANSITION}
+    >
+      <motion.div
+        data-state={open ? 'open' : 'closed'}
+        initial={false}
+        animate={{
+          borderTopLeftRadius: startsGroup ? 28 : 0,
+          borderTopRightRadius: startsGroup ? 28 : 0,
+          borderBottomLeftRadius: endsGroup ? 28 : 0,
+          borderBottomRightRadius: endsGroup ? 28 : 0,
         }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onClick={() => onToggle?.(id)}
-        aria-expanded={open}
-        aria-controls={bodyId}
+        transition={reduce ? { duration: 0 } : ROW_TRANSITION}
+        style={{
+          overflow: 'hidden',
+          background: 'var(--bg-primary)',
+        }}
       >
-        {icon && <span style={styles.sectionIcon}>{icon}</span>}
-        <span style={styles.sectionTitle}>{title}</span>
-        <span style={styles.sectionChevron}>
-          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </span>
-      </button>
-      {open && (
-        <div id={bodyId} style={styles.sectionBody}>{children}</div>
-      )}
-    </section>
+        <button
+          type="button"
+          id={`${bodyId}-trigger`}
+          style={styles.sectionHeader}
+          onClick={() => onToggle?.(id)}
+          aria-expanded={open}
+          aria-controls={bodyId}
+        >
+          {icon && <span style={styles.sectionIcon}>{icon}</span>}
+          <span style={styles.sectionTitle}>{title}</span>
+          <motion.span
+            aria-hidden
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={reduce ? { duration: 0 } : CHEVRON_TRANSITION}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-muted)',
+              flexShrink: 0,
+            }}
+          >
+            <ChevronDown size={14} />
+          </motion.span>
+        </button>
+
+        <motion.div
+          layout="size"
+          id={bodyId}
+          role="region"
+          aria-labelledby={`${bodyId}-trigger`}
+          aria-hidden={!open}
+          inert={!open}
+          initial={false}
+          style={{ height: open ? contentHeight : 0, overflow: 'hidden' }}
+          transition={
+            reduce
+              ? { duration: 0 }
+              : open
+                ? CONTENT_OPEN_TRANSITION
+                : CONTENT_CLOSE_TRANSITION
+          }
+        >
+          <motion.div
+            ref={contentRef}
+            animate={{ opacity: open ? 1 : 0 }}
+            transition={reduce ? { duration: 0 } : CONTENT_FADE_TRANSITION}
+            style={{ padding: '4px 12px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}
+          >
+            {children}
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -701,44 +720,25 @@ function getNotificationPermission() {
 }
 
 function notificationPermissionHint(permission) {
-  if (permission === 'granted') return 'Permission granted. Choose whether seec0de may notify you outside the app.';
-  if (permission === 'denied') return 'Notifications are blocked by the system. Re-enable them in your operating system settings.';
-  if (permission === 'unsupported') return 'Desktop notifications are not available on this system.';
-  return 'Optional. seec0de asks your operating system only after you choose Allow.';
+  if (permission === 'granted') return 'Allowed. Choose whether we can send you notifications.';
+  if (permission === 'denied') return 'Blocked. Turn them on in your system settings if you want reminders.';
+  if (permission === 'unsupported') return "Desktop notifications aren't available on this system.";
+  return "Optional. We'll ask your system only after you choose Allow.";
 }
 
 const GUIDANCE_LEVELS = ['supported', 'guided', 'independent'];
 
 function GuidanceTabs({ value, onChange }) {
-  const handleKeyDown = (event, index) => {
-    let nextIndex = null;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % GUIDANCE_LEVELS.length;
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + GUIDANCE_LEVELS.length) % GUIDANCE_LEVELS.length;
-    if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = GUIDANCE_LEVELS.length - 1;
-    if (nextIndex == null) return;
-    event.preventDefault();
-    onChange?.(GUIDANCE_LEVELS[nextIndex]);
-    event.currentTarget.parentElement?.querySelectorAll('[role="radio"]')[nextIndex]?.focus();
-  };
-
   return (
-    <div style={styles.guidanceControl} role="radiogroup" aria-label="Guidance level">
-      {GUIDANCE_LEVELS.map((level, index) => (
-        <button
-          key={level}
-          type="button"
-          role="radio"
-          style={{ ...styles.guidanceBtn, ...(value === level ? styles.guidanceBtnActive : {}) }}
-          aria-checked={value === level}
-          tabIndex={value === level ? 0 : -1}
-          onClick={() => onChange?.(level)}
-          onKeyDown={(event) => handleKeyDown(event, index)}
-        >
-          {level[0].toUpperCase() + level.slice(1)}
-        </button>
-      ))}
-    </div>
+    <Tabs value={value} onValueChange={onChange} variant="segment">
+      <TabsList>
+        {GUIDANCE_LEVELS.map((level) => (
+          <TabsTrigger key={level} value={level}>
+            {level[0].toUpperCase() + level.slice(1)}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -758,22 +758,15 @@ function Pill({ selected, onClick, children }) {
 
 function ToggleRow({ icon, label, hint, checked, onChange }) {
   return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      style={styles.toggleRow}
-      aria-pressed={checked}
-    >
+    <div style={styles.toggleRow}>
       <span style={styles.toggleRowText}>
         <span style={styles.toggleRowLabel}>
           {icon}<span style={{ marginLeft: 8 }}>{label}</span>
         </span>
         <span style={styles.toggleRowHint}>{hint}</span>
       </span>
-      <span style={{ ...styles.switch, ...(checked ? styles.switchOn : {}) }}>
-        <span style={{ ...styles.knob, ...(checked ? styles.knobOn : {}) }} />
-      </span>
-    </button>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </div>
   );
 }
 
@@ -796,7 +789,7 @@ function UpdatePanel({ update }) {
 
       <div style={{ ...styles.statusLine, color: TONE_COLOURS[label.tone] }}>
         {busy
-          ? <Loader size={11} style={{ animation: 'spin 1s linear infinite' }} />
+          ? <Loader size={11} variant="spinner" />
           : (status === 'downloaded' || status === 'not-available')
             ? <CheckCircle2 size={11} />
             : status === 'error'
@@ -911,8 +904,8 @@ function ToolchainPanel({ onRunInTerminal }) {
   return (
     <>
       <p style={styles.fieldHint}>
-        seec0de's <b>Run</b> button needs the right compiler or interpreter on PATH.
-        Use each guide to install, verify, fix PATH, then run a tiny smoke test.
+        The <b>Run</b> button needs a language tool installed on your computer.
+        Each guide shows how to install it and check it's working.
       </p>
 
       <div style={toolchainStyles.list}>
@@ -929,7 +922,7 @@ function ToolchainPanel({ onRunInTerminal }) {
               <div style={toolchainStyles.head}>
                 <span style={toolchainStyles.statusIcon}>
                   {isLoading
-                    ? <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />
+                    ? <Loader size={12} variant="spinner" />
                     : isInstalled
                       ? <CheckCircle2 size={12} style={{ color: TONE_COLOURS.success }} />
                       : <AlertCircle size={12} style={{ color: TONE_COLOURS.error }} />}
@@ -1157,22 +1150,17 @@ const styles = {
     padding: '4px 18px 24px',
   },
 
-  section: {
-    borderBottom: '1px solid var(--border)',
-  },
   sectionHeader: {
     display: 'flex', alignItems: 'center', gap: 8,
     width: '100%',
-    padding: '14px 2px',
+    padding: '14px 12px',
     margin: 0,
     background: 'transparent',
     border: 'none',
-    borderLeft: '2px solid transparent',
     color: 'var(--text-muted)',
     cursor: 'pointer',
     textAlign: 'left',
-    borderRadius: 'var(--radius-sm)',
-    transition: 'background var(--motion-base) var(--ease-out), border-left-color var(--motion-base) var(--ease-out), padding-left var(--motion-base) var(--ease-out)',
+    transition: 'background var(--motion-base) var(--ease-out)',
   },
   sectionIcon: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -1188,16 +1176,6 @@ const styles = {
     letterSpacing: 1.2,
     color: 'var(--text-secondary)',
     flex: 1,
-  },
-  sectionChevron: {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    color: 'var(--text-muted)',
-    flexShrink: 0,
-  },
-  sectionBody: {
-    display: 'flex', flexDirection: 'column', gap: 16,
-    paddingBottom: 18,
-    paddingTop: 2,
   },
 
   shortcutList: {
@@ -1262,28 +1240,6 @@ const styles = {
   langGrid: {
     display: 'flex', flexWrap: 'wrap', gap: 6,
   },
-  guidanceControl: {
-    display: 'flex',
-    gap: 2,
-    padding: 2,
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-full)',
-    background: 'var(--bg-tertiary)',
-  },
-  guidanceBtn: {
-    flex: 1,
-    padding: '4px 3px',
-    border: 'none',
-    borderRadius: 'var(--radius-full)',
-    background: 'transparent',
-    color: 'var(--text-muted)',
-    fontSize: 9.5,
-  },
-  guidanceBtnActive: {
-    background: 'var(--bg-elevated)',
-    color: 'var(--text-primary)',
-    fontWeight: 700,
-  },
   pill: {
     display: 'inline-flex', alignItems: 'center',
     background: 'var(--bg-tertiary)',
@@ -1296,7 +1252,7 @@ const styles = {
   },
   pillSelected: {
     background: 'var(--accent-soft)',
-    borderColor: 'var(--accent)',
+    border: '1px solid var(--accent)',
     color: 'var(--text-primary)',
   },
 
@@ -1374,7 +1330,6 @@ const styles = {
     borderRadius: 'var(--radius-md)', padding: '6px 10px',
   },
   pinEditor: { display: 'flex', flexDirection: 'column', gap: 8 },
-  errorText: { fontSize: 11.5, color: 'var(--danger-text-soft)', lineHeight: 1.5, margin: 0 },
   deleteConfirm: {
     display: 'flex', flexDirection: 'column', gap: 8,
     background: 'var(--danger-soft)',
@@ -1415,27 +1370,6 @@ const styles = {
     color: 'var(--text-muted)',
     lineHeight: 1.45,
   },
-  switch: {
-    flexShrink: 0,
-    width: 30, height: 18,
-    borderRadius: 'var(--radius-full)',
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    position: 'relative',
-    transition: 'background var(--motion-base) var(--ease-out), border-color var(--motion-base) var(--ease-out)',
-  },
-  switchOn: {
-    background: 'var(--accent)',
-    borderColor: 'var(--accent)',
-  },
-  knob: {
-    position: 'absolute',
-    top: 1, left: 1,
-    width: 14, height: 14, borderRadius: 'var(--radius-full)',
-    background: 'var(--text-primary)',
-    transition: 'transform var(--motion-base) var(--ease-out)',
-  },
-  knobOn: { transform: 'translateX(12px)' },
 
   kvRow: {
     display: 'flex', justifyContent: 'space-between',

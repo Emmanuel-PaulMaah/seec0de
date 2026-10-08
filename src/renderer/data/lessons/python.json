@@ -294,7 +294,7 @@
 },
 {
 "type": "code",
-"text": "first = 'sea'\nsecond = 'code'\nprint(first + second)\n# → seacode"
+"text": "first = 'see'\nsecond = 'code'\nprint(first + second)\n# → seecode"
 },
 {
 "type": "note",

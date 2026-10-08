@@ -168,7 +168,7 @@ async function runJavaScript(dir, source, filename, input) {
   // process.execPath is Electron itself in production. Prefer system node.
   const node = await firstAvailable(['node']);
   if (!node) {
-    return notInstalled('Node.js', 'Install from https://nodejs.org and reopen seec0de.');
+    return notInstalled('Node.js', 'Install Node.js from nodejs.org, then reopen seec0de.');
   }
   const result = await execProcess({ cmd: node, args: [file], cwd: dir, timeout: RUN_TIMEOUT_MS, input });
   return { ...result, command: `node ${path.basename(file)}`, tool: 'node' };
@@ -204,8 +204,8 @@ async function runReact(dir, source, filename, input) {
   } catch (err) {
     return mkResult({
       exitCode: -1,
-      error: 'JSX compile error',
-      stderr: `JSX compile error: ${err.message}\n`,
+      error: 'React code has a syntax error',
+      stderr: `React code has a syntax error: ${err.message}\n`,
     });
   }
 
@@ -233,7 +233,7 @@ global.waitFor = waitFor;
 
   const node = await firstAvailable(['node']);
   if (!node) {
-    return notInstalled('Node.js', 'Install from https://nodejs.org and reopen seec0de.');
+    return notInstalled('Node.js', 'Install Node.js from nodejs.org, then reopen seec0de.');
   }
   const result = await execProcess({ cmd: node, args: [outFile], cwd: dir, timeout: RUN_TIMEOUT_MS, input });
   return { ...result, command: `node ${path.basename(outFile)}`, tool: 'node (react)' };
@@ -293,7 +293,7 @@ async function runCFamily(dir, source, filename, isCpp, input) {
       ...compile,
       command: `${compileCmd} ${compileArgs.join(' ')}`,
       tool,
-      error: 'Compilation failed.',
+      error: 'Code didn\'t compile — check the errors below.',
     };
   }
 
@@ -315,7 +315,7 @@ async function runCFamily(dir, source, filename, isCpp, input) {
 
 async function run({ language, source, filename, input, projectDir }) {
   if (typeof source !== 'string' || !source.trim()) {
-    return mkResult({ error: 'No source code to run.', stderr: 'No source code to run.\n' });
+    return mkResult({ error: 'Nothing to run yet — add some code first.', stderr: 'Nothing to run yet — add some code first.\n' });
   }
   // In-place project runs (multi-file builds). Never for C/C++ (artifacts).
   const lang = (language || '').toLowerCase();
@@ -333,8 +333,8 @@ async function run({ language, source, filename, input, projectDir }) {
       case 'cpp':        return await runCFamily(dir, source, filename, true, input);
       default:
         return mkResult({
-          error: `Language "${language}" isn't runnable yet.`,
-          stderr: `Language "${language}" isn't runnable yet. Supported: JavaScript, TypeScript, Python, C, C++.\n`,
+          error: `Can't run ${language} yet — supported languages are JavaScript, TypeScript, Python, C, and C++.`,
+          stderr: `Can't run ${language} yet — supported languages are JavaScript, TypeScript, Python, C, and C++.\n`,
         });
     }
   } finally {
@@ -355,7 +355,7 @@ const activeRuns = new Map(); // id -> { child, timer }
 
 class CompilationError extends Error {
   constructor(result) {
-    super('Compilation failed.');
+    super('Code did not compile — check the errors below.');
     this.result = result;
   }
 }
@@ -508,7 +508,7 @@ try {
 `;
       await fs.writeFile(file, preamble + '\n' + source, 'utf8');
       const node = await firstAvailable(['node']);
-      if (!node) throw new Error('Node.js not found on PATH. Install from https://nodejs.org and reopen seec0de.');
+      if (!node) throw new Error('Node.js is not installed. Download it from nodejs.org, then reopen seec0de.');
       return {
         cmd: node, args: [file],
         command: `node ${filename || path.basename(file)}`, tool: 'node',
@@ -547,7 +547,7 @@ try {
 `;
       await fs.writeFile(file, preamble + '\n' + source, 'utf8');
       const tool = await firstAvailable(['tsx', 'ts-node']);
-      if (!tool) throw new Error('tsx / ts-node not found on PATH. Install with `npm i -g tsx` to run TypeScript here.');
+      if (!tool) throw new Error('TypeScript runner not found. Install it with: npm i -g tsx');
       return {
         cmd: tool, args: [file],
         command: `${tool} ${filename || path.basename(file)}`, tool,
@@ -562,7 +562,7 @@ try {
       try {
         compiled = transform(source, { transforms: ['jsx'] }).code;
       } catch (err) {
-        throw new Error(`JSX compile error: ${err.message}`);
+        throw new Error(`React code has a syntax error: ${err.message}`);
       }
       const preamble = `
 const { JSDOM } = require(${resolveDep('jsdom')});
@@ -585,7 +585,7 @@ global.waitFor = waitFor;
 `;
       await fs.writeFile(outFile, preamble + '\n' + compiled, 'utf8');
       const node = await firstAvailable(['node']);
-      if (!node) throw new Error('Node.js not found on PATH. Install from https://nodejs.org and reopen seec0de.');
+      if (!node) throw new Error('Node.js is not installed. Download it from nodejs.org, then reopen seec0de.');
       return {
         cmd: node, args: [outFile],
         command: `node ${filename || path.basename(outFile)}`, tool: 'node (react)',
@@ -616,7 +616,7 @@ builtins.input = _seec0de_input
 runpy.run_path(${JSON.stringify(path.basename(file))}, run_name="__main__")
 `, 'utf8');
       const tool = await firstAvailable(IS_WINDOWS ? ['py', 'python', 'python3'] : ['python3', 'python']);
-      if (!tool) throw new Error('Python not found on PATH. Install from https://www.python.org and reopen seec0de.');
+      if (!tool) throw new Error('Python is not installed. Download it from python.org, then reopen seec0de.');
       return {
         cmd: tool, args: ['-u', path.basename(wrapper)],
         command: `${tool} ${filename || path.basename(file)}`, tool,
@@ -634,8 +634,8 @@ runpy.run_path(${JSON.stringify(path.basename(file))}, run_name="__main__")
       const tool = await firstAvailable(candidates);
       if (!tool) {
         throw new Error(isCpp
-          ? 'A C++ compiler (g++, clang++, or cl) not found on PATH.'
-          : 'A C compiler (gcc, clang, or cl) not found on PATH.');
+          ? 'No C++ compiler found — install g++ or clang++ and reopen seec0de.'
+          : 'No C compiler found — install gcc or clang and reopen seec0de.');
       }
       let compileArgs;
       if (tool === 'cl') {
@@ -653,17 +653,17 @@ runpy.run_path(${JSON.stringify(path.basename(file))}, run_name="__main__")
       };
     }
     default:
-      throw new Error(`Language "${language}" isn't runnable yet. Supported: JavaScript, TypeScript, Python, C, C++.`);
+      throw new Error(`Can't run ${language} yet — supported languages are JavaScript, TypeScript, Python, C, and C++.`);
   }
 }
 
 async function startInteractiveRun(payload, sender) {
   const { language, source, filename, projectDir } = payload || {};
   if (typeof source !== 'string' || !source.trim()) {
-    throw new Error('No source code to run.');
+    throw new Error('Nothing to run yet — add some code first.');
   }
   if (activeRuns.size >= MAX_ACTIVE_RUNS) {
-    throw new Error(`Too many runs at once (max ${MAX_ACTIVE_RUNS}). Wait for one to finish.`);
+    throw new Error(`Too many programs running at once (max ${MAX_ACTIVE_RUNS}). Wait for one to finish first.`);
   }
 
   const lang = (language || '').toLowerCase();

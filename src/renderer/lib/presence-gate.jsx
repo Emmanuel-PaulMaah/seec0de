@@ -17,7 +17,7 @@ export function PresenceGate({
   return children({
     isPresent,
     gate: {
-      inert: !isPresent,
+      inert: !isPresent || undefined,
       style: { pointerEvents: isPresent ? "auto" : "none" },
     },
   });

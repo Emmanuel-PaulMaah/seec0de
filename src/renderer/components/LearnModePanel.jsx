@@ -87,28 +87,34 @@ export default function LearnModePanel({
   return (
     <aside style={{ ...styles.panel, ...(focused ? styles.panelFocused : {}) }} aria-label="Learn guide">
       <div style={styles.header}>
-        <div style={styles.eyebrow}><GraduationCap size={13} /> Learn</div>
-        <div style={styles.headingRow}>
-          <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>
-            {activeLesson
-              ? activeLesson.title
-              : catalogLanguage
-                ? formatLanguage(catalogLanguage)
-                : 'Choose a language'}
-          </h2>
-          {activeLesson && (
-            <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
-              <ChevronLeft size={11} /> {activeLesson.kind === 'exercise' ? 'Exercises' : activeLesson.kind === 'project-checkpoint' ? 'Projects' : 'Courses'}
-            </button>
-          )}
-        </div>
-        <div style={styles.subheading}>
-          {activeLesson
-            ? `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'} · progress saves automatically`
-            : catalogLanguage
-              ? 'Choose a course or explore the challenge space.'
-              : 'Start with the language you want to learn.'}
-        </div>
+        {activeLesson ? (
+          <>
+            <div style={styles.headerTopRow}>
+              <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
+                <ChevronLeft size={11} /> {activeLesson.kind === 'exercise' ? 'Exercises' : activeLesson.kind === 'project-checkpoint' ? 'Projects' : 'Courses'}
+              </button>
+              {activeLesson.concept && <span style={styles.conceptChip}>{activeLesson.concept}</span>}
+            </div>
+            <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>{activeLesson.title}</h2>
+            {attempts > 0 && (
+              <div style={styles.subheading}>
+                {attempts} {attempts === 1 ? 'attempt' : 'attempts'}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div style={styles.eyebrow}><GraduationCap size={13} /> Learn</div>
+            <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>
+              {catalogLanguage ? formatLanguage(catalogLanguage) : 'Choose a language'}
+            </h2>
+            <div style={styles.subheading}>
+              {catalogLanguage
+                ? 'Choose a course or explore the challenge space.'
+                : 'Start with the language you want to learn.'}
+            </div>
+          </>
+        )}
       </div>
 
       {activeLesson && !focused && (
@@ -119,14 +125,16 @@ export default function LearnModePanel({
               ? index <= 1
               : PHASES.findIndex((item) => item.id === activePhase) > index;
             return (
-              <div
-                key={id}
-                style={{ ...styles.phase, ...(selected ? styles.phaseSelected : {}), ...(complete ? styles.phaseComplete : {}) }}
-                aria-current={selected ? 'step' : undefined}
-              >
-                {complete && !selected ? <CheckCircle2 size={12} /> : <Icon size={12} />}
-                <span>0{index + 1} · {label}</span>
-              </div>
+              <React.Fragment key={id}>
+                {index > 0 && <div style={styles.phaseLine} aria-hidden="true" />}
+                <div
+                  style={{ ...styles.phase, ...(selected ? styles.phaseSelected : {}), ...(complete ? styles.phaseComplete : {}) }}
+                  aria-current={selected ? 'step' : undefined}
+                >
+                  {complete && !selected ? <CheckCircle2 size={13} /> : <Icon size={13} />}
+                  <span>{label}</span>
+                </div>
+              </React.Fragment>
             );
           })}
         </div>
@@ -140,7 +148,6 @@ export default function LearnModePanel({
                 activity={activeActivity}
                 index={activityIndex}
                 total={activities.length}
-                focused={focused}
                 onBack={phase === 'learn' && activityIndex > 0
                   ? () => onActivityChange?.(activities[activityIndex - 1].id)
                   : null}
@@ -224,7 +231,11 @@ export default function LearnModePanel({
         )}
       </div>
 
-      <div style={styles.status} role="status" aria-live="polite">
+      <div
+        style={{ ...styles.status, ...(announcement ? null : styles.statusIdle) }}
+        role="status"
+        aria-live="polite"
+      >
         {announcement}
       </div>
     </aside>
@@ -239,7 +250,6 @@ function ActivityGuide({
   onContinue,
   continueLabel = 'Continue',
   allowContinue = false,
-  focused = false,
 }) {
   const [answer, setAnswer] = React.useState(null);
   const [checkedSteps, setCheckedSteps] = React.useState([]);
@@ -254,6 +264,10 @@ function ActivityGuide({
   const isPrediction = activity.type === 'prediction';
   const isCodeAlong = activity.type === 'code-along';
   const isDrill = activity.type === 'drill';
+  // Inline code stays click-to-insert only on coding activities (code-along,
+  // drill, edit). Read-only activities (worked-example, prediction) get a
+  // static chip — pasting a token into the editor isn't part of those.
+  const inlineInteractive = WRITING_ACTIVITY_TYPES.has(activity.type);
   const answered = answer !== null;
   const answerCorrect = answered && answer === activity.answer;
   const steps = activity.steps || [];
@@ -271,12 +285,12 @@ function ActivityGuide({
 
   return (
     <section
-      style={{ ...styles.activityCard, ...(focused ? styles.activityCardFocused : {}) }}
+      style={styles.activityCard}
       aria-labelledby={`activity-${activity.id}`}
     >
       <div style={styles.activityMeta}>Activity {index + 1} of {total} · {activity.type.replace('-', ' ')}</div>
       <h3 ref={headingRef} tabIndex={-1} id={`activity-${activity.id}`} style={styles.activityTitle}>{activity.title}</h3>
-      {activity.instruction && <p style={styles.activityText}>{renderActivityInline(activity.instruction)}</p>}
+      {activity.instruction && <p style={styles.activityText}>{renderActivityInline(activity.instruction, { interactive: inlineInteractive })}</p>}
       {activity.example && <pre style={styles.activityCode}>{activity.example}</pre>}
 
       {isCodeAlong && steps.length > 0 && (
@@ -292,7 +306,7 @@ function ActivityGuide({
                 onClick={() => toggleStep(stepIndex)}
               >
                 {checked ? <CheckCircle2 size={13} /> : <Circle size={13} />}
-                <span><strong>{stepIndex + 1}.</strong> {renderActivityInline(step)}</span>
+                <span><strong>{stepIndex + 1}.</strong> {renderActivityInline(step, { interactive: inlineInteractive })}</span>
               </button>
             );
           })}
@@ -303,13 +317,13 @@ function ActivityGuide({
       {isDrill && (
         <div style={styles.drillPrompt}>
           <strong>Retrieval drill:</strong> write this from memory in the editor before opening a hint.
-          {activity.successCriteria && <span style={styles.drillCriteria}>Done when: {renderActivityInline(activity.successCriteria)}</span>}
+          {activity.successCriteria && <span style={styles.drillCriteria}>Done when: {renderActivityInline(activity.successCriteria, { interactive: inlineInteractive })}</span>}
         </div>
       )}
 
       {isPrediction && (
         <div style={styles.predictionGroup}>
-          <div style={styles.predictionQuestion}>{renderActivityInline(activity.question)}</div>
+          <div style={styles.predictionQuestion}>{renderActivityInline(activity.question, { interactive: inlineInteractive })}</div>
           {(activity.choices || []).map((choice) => (
             <button
               key={choice}
@@ -318,13 +332,13 @@ function ActivityGuide({
               aria-pressed={answer === choice}
               onClick={() => setAnswer(choice)}
             >
-              {renderActivityInline(choice)}
+              {renderActivityInline(choice, { interactive: inlineInteractive })}
             </button>
           ))}
           {answered && (
             <div style={{ ...styles.predictionFeedback, color: answerCorrect ? 'var(--success)' : 'var(--text-secondary)' }} role="status">
               {answerCorrect ? 'That prediction is right. ' : `The result is ${activity.answer}. `}
-              {renderActivityInline(activity.explanation)}
+              {renderActivityInline(activity.explanation, { interactive: inlineInteractive })}
             </div>
           )}
         </div>
@@ -395,8 +409,29 @@ const styles = {
   },
   panelFocused: { borderRight: 'none' },
   header: {
-    padding: '15px 16px 12px',
+    padding: '12px 14px 11px',
     borderBottom: '1px solid var(--border)',
+  },
+  headerTopRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 7,
+  },
+  conceptChip: {
+    background: 'var(--algorithm-soft)',
+    color: 'var(--text-primary)',
+    fontSize: 10,
+    fontWeight: 600,
+    padding: '2px 8px',
+    borderRadius: 999,
+    letterSpacing: 0.3,
+    fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '60%',
   },
   eyebrow: {
     display: 'flex',
@@ -409,61 +444,60 @@ const styles = {
     textTransform: 'uppercase',
   },
   heading: {
-    marginTop: 7,
+    margin: 0,
     color: 'var(--text-primary)',
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: 700,
-  },
-  headingRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    lineHeight: 1.3,
   },
   browseBtn: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 3,
-    marginTop: 7,
-    padding: '3px 6px',
-    border: '1px solid var(--border)',
+    padding: '3px 7px',
+    marginLeft: -7,
+    border: '1px solid transparent',
     borderRadius: 5,
     background: 'transparent',
     color: 'var(--text-muted)',
     fontSize: 10.5,
+    cursor: 'pointer',
   },
   subheading: {
-    marginTop: 4,
+    marginTop: 5,
     color: 'var(--text-muted)',
     fontSize: 11,
     lineHeight: 1.45,
   },
   phaseBar: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-    gap: 4,
-    padding: 8,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '9px 14px',
     borderBottom: '1px solid var(--border)',
   },
   phase: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 4,
-    minWidth: 0,
-    padding: '6px 4px',
-    borderRadius: 5,
+    padding: '2px 0',
     color: 'var(--text-muted)',
     fontSize: 10.5,
     whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
   phaseSelected: {
-    background: 'var(--accent-soft)',
     color: 'var(--text-primary)',
     fontWeight: 700,
   },
   phaseComplete: {
     color: 'var(--success)',
+  },
+  phaseLine: {
+    flex: 1,
+    height: 1,
+    minWidth: 10,
+    background: 'var(--border-strong)',
   },
   content: {
     flex: 1,
@@ -519,12 +553,8 @@ const styles = {
     fontSize: 10.5,
   },
   activityCard: {
-    padding: 12,
-    border: '1px solid var(--border-strong)',
-    borderRadius: 8,
-    background: 'var(--bg-elevated)',
-  },
-  activityCardFocused: {
+    display: 'flex',
+    flexDirection: 'column',
     padding: 0,
     border: 'none',
     borderRadius: 0,
@@ -724,11 +754,13 @@ const styles = {
     lineHeight: 1.5,
   },
   status: {
-    minHeight: 28,
-    padding: '7px 12px',
+    padding: '7px 14px',
     borderTop: '1px solid var(--border)',
     color: 'var(--text-muted)',
     fontSize: 10.5,
     lineHeight: 1.35,
+  },
+  statusIdle: {
+    display: 'none',
   },
 };

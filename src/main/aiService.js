@@ -120,19 +120,19 @@ function classifyNetworkError(err) {
   const msg = (err && err.message) || String(err);
 
   if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
-    return "Couldn't reach Gemini, DNS lookup failed. Check your internet connection, VPN, or DNS settings.";
+    return "Can't reach AI right now — looks like your internet is disconnected. Check your Wi-Fi or try turning it off and on.";
   }
   if (code === 'ECONNRESET' || /socket hang up/i.test(msg)) {
-    return "Connection to Gemini was reset. This usually means an antivirus, firewall, or corporate proxy is intercepting HTTPS traffic — try whitelisting seec0de or temporarily disabling HTTPS scanning.";
+    return "The connection dropped while talking to AI. If you're on a school or work network, it might be blocking the connection — try a different network.";
   }
   if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT') {
-    return 'Connection to Gemini timed out. Check your internet connection and try again.';
+    return "The AI took too long to respond. Your internet might be slow — try again in a moment.";
   }
   if (code === 'ECONNREFUSED') {
-    return 'Connection to Gemini was refused. A firewall or proxy may be blocking outbound HTTPS.';
+    return "Can't connect to AI right now — the service may be temporarily unavailable. Try again in a few seconds.";
   }
   if (code === 'EPROTO' || code === 'CERT_HAS_EXPIRED' || /tls|ssl|certificate/i.test(msg)) {
-    return 'TLS handshake with Gemini failed. Your system clock, a corporate root CA, or an HTTPS-inspecting AV may be the cause.';
+    return "Can't establish a secure connection. Check that your computer's clock is correct, or try a different network.";
   }
   return null;
 }
@@ -170,10 +170,10 @@ async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
           try {
             const json = JSON.parse(data);
             const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) return reject(new Error('No response from Gemini'));
+            if (!text) return reject(new Error('The AI came back empty — try again.'));
             resolve(text);
           } catch {
-            reject(new Error('Failed to parse Gemini response'));
+            reject(new Error('The AI returned something unexpected — try again.'));
           }
         } else {
           let msg;
@@ -190,13 +190,14 @@ async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
           const error = new Error(msg);
           error.isOverloaded = isOverloaded;
           error.statusCode = res.statusCode;
+          error.rawApiMessage = msg;
           reject(error);
         }
       });
     });
 
     req.setTimeout(REQUEST_TIMEOUT_MS, () => {
-      const err = new Error(`Gemini request timed out after ${REQUEST_TIMEOUT_MS / 1000}s`);
+      const err = new Error('The AI took too long to respond — try again.');
       err.code = 'ETIMEDOUT';
       req.destroy(err);
     });
@@ -219,7 +220,7 @@ async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
 
 async function callGemini(prompt, systemInstruction) {
   const apiKey = getApiKey();
-  if (!apiKey) throw new Error('No API key set. Add your Gemini API key in Settings.');
+  if (!apiKey) throw new Error('No Gemini API key found. Add one in Settings to use AI features.');
 
   const body = {
     // NOTE: `parts` must be an ARRAY per Gemini's schema. The old code
@@ -266,7 +267,7 @@ async function callGemini(prompt, systemInstruction) {
     }
   }
 
-  throw lastError || new Error('Gemini call failed');
+  throw lastError || new Error('Something went wrong with the AI. Try again in a moment.');
 }
 
 function registerAiServiceHandlers() {

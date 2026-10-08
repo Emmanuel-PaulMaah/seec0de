@@ -210,7 +210,7 @@ Remember: respond with ONLY valid JSON matching the required {title, plain, fixe
 
   const parsed = JSON.parse(cleaned);
   return {
-    title: String(parsed.title || 'Something went wrong').trim(),
+    title: String(parsed.title || 'Something went wrong with your code').trim(),
     plain: String(parsed.plain || '').trim(),
     fixes: Array.isArray(parsed.fixes) ? parsed.fixes.map((f) => String(f).trim()).filter(Boolean) : [],
   };

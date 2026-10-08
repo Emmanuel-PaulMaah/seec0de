@@ -42,17 +42,30 @@ export function InlineCode({ children }) {
   );
 }
 
+// Static variant — same syntax-coloured chip, but read-only: no eye icon,
+// no hover ring, no click-to-insert. Used on non-coding lesson content
+// (teaching text, read-only activities) where pasting into the editor
+// makes no sense.
+export function InlineCodeStatic({ children }) {
+  return <code style={{ ...styles.code, cursor: 'text' }}>{children}</code>;
+}
+
 // Splits `text` on backticked code spans and **bold** markers: `code` renders
 // as an InlineCode chip that inserts itself into the code panel on click,
-// **bold** as <strong>. React nodes only — never dangerouslySetInnerHTML, so
-// untrusted lesson/build JSON can't inject markup.
-export function renderInline(text) {
+// **bold** as <strong>. Pass { interactive: false } on read-only surfaces —
+// code still renders as a static chip, just without the eye/insert affordance.
+// React nodes only — never dangerouslySetInnerHTML, so untrusted lesson/build
+// JSON can't inject markup.
+export function renderInline(text, { interactive = true } = {}) {
   if (!text) return null;
   const tokens = String(text).split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
   return tokens.map((tok, i) => {
     if (!tok) return null;
     if (tok.startsWith('`') && tok.endsWith('`')) {
-      return <InlineCode key={i}>{tok.slice(1, -1)}</InlineCode>;
+      const code = tok.slice(1, -1);
+      return interactive
+        ? <InlineCode key={i}>{code}</InlineCode>
+        : <InlineCodeStatic key={i}>{code}</InlineCodeStatic>;
     }
     if (tok.startsWith('**') && tok.endsWith('**')) {
       return <strong key={i}>{tok.slice(2, -2)}</strong>;

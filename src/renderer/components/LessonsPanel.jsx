@@ -117,7 +117,7 @@ export default function LessonsPanel({
         <span style={styles.languageIcon}><Code2 size={20} /></span>
         <div>
           <h3 style={styles.languagePageTitle}>{formatLanguage(selectedLanguage)}</h3>
-          <p style={styles.languagePageCopy}>Choose a course now, or return later for focused challenges.</p>
+          <p style={styles.languagePageCopy}>Pick a course to start, or come back later for practice challenges.</p>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export default function LessonsPanel({
         <div style={styles.sectionHeadingRow}>
           <div>
             <h3 id="learn-courses-heading" style={styles.sectionTitle}>Courses</h3>
-            <p style={styles.sectionCopy}>Guided lessons that build one skill at a time.</p>
+            <p style={styles.sectionCopy}>Lessons that teach one skill at a time.</p>
           </div>
           <span style={styles.sectionCount}>{visibleTracks.length}</span>
         </div>
@@ -227,7 +227,7 @@ export default function LessonsPanel({
         <div style={styles.sectionHeadingRow}>
           <div>
             <h3 id="learn-challenges-heading" style={styles.sectionTitle}>Challenges</h3>
-            <p style={styles.sectionCopy}>Language-specific practice outside the course path.</p>
+            <p style={styles.sectionCopy}>Practice exercises for this language.</p>
           </div>
           <span style={styles.comingSoon}>Coming soon</span>
         </div>
@@ -235,7 +235,7 @@ export default function LessonsPanel({
           <Sparkles size={17} style={{ color: 'var(--algorithm)' }} />
           <div>
             <strong style={styles.challengeTitle}>Practice in new ways</strong>
-            <p style={styles.challengeCopy}>Debugging drills, output-first builds, refactoring tasks, and mini-projects will live here.</p>
+            <p style={styles.challengeCopy}>Debugging practice, build-from-output tasks, and mini-projects are on the way.</p>
           </div>
         </div>
       </section>
@@ -257,27 +257,26 @@ const styles = {
   languageCard: {
     display: 'flex',
     alignItems: 'center',
-    gap: 11,
+    gap: 10,
     width: '100%',
-    padding: '13px 12px',
-    background: 'var(--bg-tertiary)',
+    padding: '10px 12px',
+    background: 'var(--bg-secondary)',
     border: '1px solid var(--border)',
-    borderRadius: 8,
+    borderRadius: 'var(--radius-sm)',
     cursor: 'pointer',
     textAlign: 'left',
-    transition: 'all var(--motion-fast) var(--ease-out)',
+    transition: 'border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
   languageIcon: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 38,
-    height: 38,
+    width: 34,
+    height: 34,
     flexShrink: 0,
-    background: 'var(--bg-elevated)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 8,
-    color: 'var(--accent)',
+    background: 'var(--bg-tertiary)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--text-secondary)',
   },
   languageCardBody: {
     display: 'flex',
@@ -288,7 +287,7 @@ const styles = {
   },
   languageName: {
     color: 'var(--text-primary)',
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: 600,
   },
   languageMeta: {
@@ -457,14 +456,14 @@ const styles = {
   lessonItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
-    padding: '8px 10px',
-    background: 'var(--bg-tertiary)',
+    gap: 9,
+    padding: '7px 9px',
+    background: 'var(--bg-secondary)',
     border: '1px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 'var(--radius-sm)',
     cursor: 'pointer',
     textAlign: 'left',
-    transition: 'all var(--motion-fast) var(--ease-out)',
+    transition: 'border-color var(--motion-fast) var(--ease-out), background var(--motion-fast) var(--ease-out)',
   },
 
   lessonItemActive: {

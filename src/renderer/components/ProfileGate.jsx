@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Lock, ArrowLeft, X } from 'lucide-react';
 import { Avatar } from './ProfileForm';
+import { OTPInput } from './motion/otp-input';
 import { profileHasPin, verifyProfilePin } from '../engine/settings';
 
 // ProfileGate — the "sign in" surface. Two states:
@@ -31,19 +32,15 @@ export default function ProfileGate({
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
-  const pinRef = useRef(null);
 
   const unlockProfile = profiles.find((p) => p.id === unlockId) || null;
 
-  // Focus the PIN field when we enter unlock view.
+  // Reset PIN state when entering unlock view.
   useEffect(() => {
     if (unlockId) {
       setPin('');
       setError('');
-      const t = setTimeout(() => pinRef.current?.focus(), 40);
-      return () => clearTimeout(t);
     }
-    return undefined;
   }, [unlockId]);
 
   // Esc: back out of unlock, or close the gate when allowed.
@@ -66,7 +63,7 @@ export default function ProfileGate({
   }, [onEnter]);
 
   const submitPin = useCallback(async () => {
-    if (!unlockId || checking) return;
+    if (!unlockId || checking || pin.length < 4) return;
     setChecking(true);
     try {
       const ok = await verifyProfilePin(unlockId, pin);
@@ -75,7 +72,6 @@ export default function ProfileGate({
       } else {
         setError('That PIN is incorrect.');
         setPin('');
-        pinRef.current?.focus();
       }
     } finally {
       setChecking(false);
@@ -130,24 +126,23 @@ export default function ProfileGate({
           <h2 style={styles.unlockName}>{unlockProfile?.username || 'Profile'}</h2>
           <p style={styles.sub}>Enter your PIN to continue.</p>
 
-          <input
-            ref={pinRef}
-            type="password"
-            inputMode="numeric"
+          <OTPInput
+            length={4}
             value={pin}
-            onChange={(e) => { setPin(e.target.value); setError(''); }}
-            onKeyDown={(e) => { if (e.key === 'Enter') submitPin(); }}
-            placeholder="••••"
-            style={{ ...styles.pinInput, ...(error ? styles.pinInputError : {}) }}
-            maxLength={12}
-            autoComplete="off"
+            onChange={(val) => { setPin(val); setError(''); }}
+            onComplete={(val) => { setPin(val); setTimeout(() => submitPin(), 80); }}
+            mask
+            autoFocus
+            aria-label="Four-digit PIN"
+            status={error ? 'error' : 'idle'}
+            errorMessage={error}
           />
           {error && <p style={styles.errorText}>{error}</p>}
 
           <button
             style={{ ...styles.unlockBtn, ...(pin.length === 0 || checking ? styles.btnDisabled : {}) }}
             onClick={submitPin}
-            disabled={pin.length === 0 || checking}
+            disabled={pin.length < 4 || checking}
           >
             {checking ? 'Checking…' : 'Unlock'}
           </button>
