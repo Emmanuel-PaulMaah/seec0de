@@ -273,12 +273,6 @@ export default function CodePanel({
 
   const resetFontSize = useCallback(() => setFontSize(FONT_SIZE_DEFAULT), []);
 
-  // Keep canExplainRef in sync so event listeners always read the current
-  // lesson/pseudocode state without needing to re-attach.
-  useEffect(() => {
-    canExplainRef.current = !lessonMode && !isPseudocode;
-  }, [lessonMode, isPseudocode]);
-
   // ---- which view are we showing? ---------------------------------------
   const fileTab = activePath ? openFiles.find((f) => f.path === activePath) : null;
   const showingFile = !!fileTab;
@@ -289,6 +283,13 @@ export default function CodePanel({
     ? activeGeneratedTab
     : (lessonMode ? (lessonLanguage || 'javascript') : 'pseudocode');
   const isPseudocode = !showingFile && !folderOpen && !lessonMode && generatedDisplayTab === 'pseudocode';
+
+  // Keep canExplainRef in sync so event listeners always read the current
+  // lesson/pseudocode state without needing to re-attach.
+  useEffect(() => {
+    canExplainRef.current = !lessonMode && !isPseudocode;
+  }, [lessonMode, isPseudocode]);
+
   const showEmptyState = folderOpen && !showingFile;
 
   let value = '';
