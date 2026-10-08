@@ -54,7 +54,7 @@ function profileFromSettings(s, mode) {
 //                   profile (prefilled from initialSettings).
 //   'new-profile' — "Add profile" from the gate/settings: always creates a
 //                   fresh profile and signs into it.
-export default function OnboardingModal({ open, initialSettings, onComplete, mode = 'setup' }) {
+export default function OnboardingModal({ open, initialSettings, onComplete, onCancel, mode = 'setup' }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [profile, setProfile] = useState(() => profileFromSettings(initialSettings, mode));
   const [experienceLevel, setExperienceLevel] = useState(initialSettings?.experienceLevel || null);
@@ -107,13 +107,19 @@ export default function OnboardingModal({ open, initialSettings, onComplete, mod
     setStepIdx((i) => Math.max(i - 1, 0));
   }, []);
 
-  // Esc fully skips onboarding.
+  // Skip/Esc: in setup mode, finish with defaults. When adding a profile,
+  // cancel instead — backing out must not create a profile.
+  const skip = useCallback(() => {
+    if (mode === 'new-profile' && onCancel) onCancel();
+    else finish({ skipped: true });
+  }, [mode, onCancel, finish]);
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') finish({ skipped: true }); };
+    const onKey = (e) => { if (e.key === 'Escape') skip(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, finish]);
+  }, [open, skip]);
 
   if (!open) return null;
 
@@ -146,10 +152,10 @@ export default function OnboardingModal({ open, initialSettings, onComplete, mod
           </div>
           <button
             style={styles.skipBtn}
-            onClick={() => finish({ skipped: true })}
-            title="Skip onboarding (Esc)"
+            onClick={skip}
+            title={mode === 'new-profile' ? 'Cancel (Esc)' : 'Skip onboarding (Esc)'}
           >
-            Skip <X size={12} style={{ marginLeft: 4 }} />
+            {mode === 'new-profile' ? 'Cancel' : 'Skip'} <X size={12} style={{ marginLeft: 4 }} />
           </button>
         </div>
 

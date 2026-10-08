@@ -2410,6 +2410,7 @@ const beginExplanationResize = useCallback((event) => {
         open={showOnboarding}
         initialSettings={settings}
         onComplete={handleOnboardingComplete}
+        onCancel={() => { setShowOnboarding(false); setOnboardingMode('setup'); }}
         mode={onboardingMode}
       />
 
