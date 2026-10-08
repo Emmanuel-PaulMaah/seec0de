@@ -364,7 +364,6 @@ export default function FileExplorer({
             </FileTreeFolder>
           );
         }
-        const isRenaming = renaming?.path === entry.path;
         return (
           <FileTreeFile
             key={entry.path}
@@ -378,7 +377,7 @@ export default function FileExplorer({
     }
 
     return buildNodes(rootPath, 0);
-  }, [rootPath, tree, activeFilePath, renaming]);
+  }, [rootPath, tree, activeFilePath]);
 
   // ---- render ---------------------------------------------------------
 
@@ -398,8 +397,15 @@ export default function FileExplorer({
     );
   }
 
+  // F2 renames the active file while focus is inside the explorer.
+  const onPanelKeyDown = (e) => {
+    if (e.key !== 'F2' || creating || renaming || !activeFilePath?.startsWith(rootPath)) return;
+    e.preventDefault();
+    startRename(activeFilePath, basename(activeFilePath), false);
+  };
+
   return (
-    <div style={styles.panel}>
+    <div style={styles.panel} onKeyDown={onPanelKeyDown}>
       <div style={styles.header}>
         <span style={styles.headerLabel}>
           {basename(rootPath) || rootPath}
@@ -451,6 +457,33 @@ export default function FileExplorer({
             <Check size={11} />
           </button>
           <button style={styles.draftCancel} onMouseDown={(e) => e.preventDefault()} onClick={cancelCreate} title="Cancel (Esc)">
+            <X size={11} />
+          </button>
+          </div>
+        </div>
+      )}
+
+      {renaming && (
+        <div>
+          <div style={styles.draftTarget}>Renaming {renaming.name}</div>
+          <div style={styles.draftRow}>
+          {renaming.isDir
+            ? <Folder size={13} style={styles.draftIcon} />
+            : <File size={13} style={styles.draftIcon} />}
+          <input
+            ref={renameRef}
+            type="text"
+            value={renameDraft}
+            onChange={(e) => setRenameDraft(e.target.value)}
+            onKeyDown={onRenameKey}
+            onBlur={commitRename}
+            style={styles.draftInput}
+            aria-label={`New name for ${renaming.name}`}
+          />
+          <button style={styles.draftConfirm} onMouseDown={(e) => e.preventDefault()} onClick={commitRename} title="Rename (Enter)" aria-label="Confirm rename">
+            <Check size={11} />
+          </button>
+          <button style={styles.draftCancel} onMouseDown={(e) => e.preventDefault()} onClick={cancelRename} title="Cancel (Esc)" aria-label="Cancel rename">
             <X size={11} />
           </button>
           </div>
