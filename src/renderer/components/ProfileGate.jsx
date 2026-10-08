@@ -62,11 +62,13 @@ export default function ProfileGate({
     }
   }, [onEnter]);
 
-  const submitPin = useCallback(async () => {
-    if (!unlockId || checking || pin.length < 4) return;
+  // Takes the PIN explicitly so OTPInput's onComplete can submit the 4th
+  // digit before React has re-rendered with the new `pin` state.
+  const submitPin = useCallback(async (value = pin) => {
+    if (!unlockId || checking || value.length < 4) return;
     setChecking(true);
     try {
-      const ok = await verifyProfilePin(unlockId, pin);
+      const ok = await verifyProfilePin(unlockId, value);
       if (ok) {
         onEnter?.(unlockId);
       } else {
@@ -130,7 +132,7 @@ export default function ProfileGate({
             length={4}
             value={pin}
             onChange={(val) => { setPin(val); setError(''); }}
-            onComplete={(val) => { setPin(val); setTimeout(() => submitPin(), 80); }}
+            onComplete={(val) => { setPin(val); submitPin(val); }}
             mask
             autoFocus
             aria-label="Four-digit PIN"
@@ -140,8 +142,8 @@ export default function ProfileGate({
           {error && <p style={styles.errorText}>{error}</p>}
 
           <button
-            style={{ ...styles.unlockBtn, ...(pin.length === 0 || checking ? styles.btnDisabled : {}) }}
-            onClick={submitPin}
+            style={{ ...styles.unlockBtn, ...(pin.length < 4 || checking ? styles.btnDisabled : {}) }}
+            onClick={() => submitPin()}
             disabled={pin.length < 4 || checking}
           >
             {checking ? 'Checking…' : 'Unlock'}
