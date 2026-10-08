@@ -4,7 +4,6 @@ import InstructionPanel from './components/InstructionPanel';
 import LearnModePanel, { TEACHING_STEP_ID, WRITING_ACTIVITY_TYPES } from './components/LearnModePanel';
 import CodePanel from './components/CodePanel';
 import ExplanationSidebar from './components/ExplanationSidebar';
-import FileExplorer from './components/FileExplorer';
 import TerminalPanel from './components/TerminalPanel';
 import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
@@ -38,8 +37,6 @@ import confetti from 'canvas-confetti';
 // per-session keys take over so we don't fight their last action.
 const STORAGE_KEY_FOLDER             = 'seec0de.lastFolder';
 const STORAGE_KEY_TERMINAL_OPEN      = 'seec0de.terminalVisible';
-const STORAGE_KEY_EXPLORER_OPEN      = 'seec0de.explorerVisible';
-const STORAGE_KEY_EXPLORER_WIDTH     = 'seec0de.explorerWidth';
 const STORAGE_KEY_INSTRUCTION_WIDTH  = 'seec0de.instructionWidth';
 const STORAGE_KEY_LEARN_GUIDE_WIDTH  = 'seec0de.learnGuideWidth';
 const STORAGE_KEY_PREVIEW_OPEN       = 'seec0de.previewVisible';
@@ -443,16 +440,6 @@ export default function App() {
     activeGeneratedTab: 'pseudocode',
     activePath: null,
   });
-  const [explorerVisible, setExplorerVisible] = useState(() => initialPanelVisible(
-    STORAGE_KEY_EXPLORER_OPEN, loadSettings().showFileExplorer,
-  ));
-
-  const [explorerWidth, setExplorerWidth] = useState(() => {
-  const saved = Number(localStorage.getItem(STORAGE_KEY_EXPLORER_WIDTH));
-  if (Number.isFinite(saved)) return Math.max(180, Math.min(420, saved));
-  return 240;
-});
-
   // ---- panel visibility ------------------------------------------------
   const [terminalVisible, setTerminalVisible] = useState(() => initialPanelVisible(
     STORAGE_KEY_TERMINAL_OPEN, loadSettings().showTerminal,
@@ -530,14 +517,6 @@ export default function App() {
   }, [terminalVisible]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXPLORER_OPEN, explorerVisible ? '1' : '0');
-  }, [explorerVisible]);
-
-  useEffect(() => {
-  localStorage.setItem(STORAGE_KEY_EXPLORER_WIDTH, String(explorerWidth));
-}, [explorerWidth]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PREVIEW_OPEN, previewVisible ? '1' : '0');
   }, [previewVisible]);
 
@@ -613,7 +592,8 @@ export default function App() {
   }, [settings.activeProfileId, learnMode, activeLesson?.id]);
 
   // ---- keyboard shortcuts ---------------------------------------------
-  // Ctrl+` toggles Terminal, Ctrl+B toggles Explorer, and F6 cycles the
+  // Ctrl+` toggles Terminal, Ctrl+B toggles the left sidebar (Generate/Files
+  // + Build), and F6 cycles the
   // visible workspace panels. Text inputs keep ownership of Ctrl+B.
   useEffect(() => {
     const onKey = (e) => {
@@ -633,7 +613,7 @@ export default function App() {
 
       if (!showHome && !learnMode && !typing && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
-        setExplorerVisible((v) => !v);
+        setInstructionCollapsed((v) => !v);
         return;
       }
 
@@ -1855,32 +1835,6 @@ export default function App() {
     }, 60);
   }, []);
 
-  const beginExplorerResize = useCallback((event) => {
-  event.preventDefault();
-
-  const startX = event.clientX;
-  const startWidth = explorerWidth;
-
-  function handleMouseMove(moveEvent) {
-    const delta = moveEvent.clientX - startX;
-    const nextWidth = Math.max(180, Math.min(420, startWidth + delta));
-    setExplorerWidth(nextWidth);
-  }
-
-  function handleMouseUp() {
-    window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('mouseup', handleMouseUp);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }
-
-  document.body.style.cursor = 'col-resize';
-  document.body.style.userSelect = 'none';
-
-  window.addEventListener('mousemove', handleMouseMove);
-  window.addEventListener('mouseup', handleMouseUp);
-}, [explorerWidth]);
-
 const beginInstructionResize = useCallback((event) => {
   event.preventDefault();
 
@@ -2149,8 +2103,6 @@ const beginExplanationResize = useCallback((event) => {
   return (
     <div style={styles.container}>
       <TitleBar
-        explorerVisible={explorerVisible}
-        onToggleExplorer={showHome || learnMode ? undefined : () => setExplorerVisible((v) => !v)}
         terminalVisible={terminalVisible}
         onToggleTerminal={showHome || learnMode ? undefined : () => setTerminalVisible((v) => !v)}
         onStartTour={startWorkspaceTour}
@@ -2689,14 +2641,6 @@ const styles = {
     overflowY: 'hidden',
     minHeight: 0,
   },
-  explorerShell: {
-  flexShrink: 0,
-  display: 'flex',
-  minWidth: 180,
-  maxWidth: 420,
-  overflow: 'hidden',
-},
-
 instructionShell: {
   flexShrink: 0,
   display: 'flex',

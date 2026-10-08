@@ -265,7 +265,6 @@ export default function SettingsDrawer({
               );
               if (id === 'workspace') return (
                 <Section key={id} {...props} icon={<FolderTree size={13} />} title="Workspace">
-                  <ToggleRow icon={<FolderTree size={13} />} label="Show file explorer by default" hint="Turn on once you start working with files." checked={settings.showFileExplorer} onChange={(checked) => patch({ showFileExplorer: checked })} />
                   <ToggleRow icon={<TermIcon size={13} />} label="Show terminal by default" hint="Toggle the bottom panel anytime with Ctrl + `." checked={settings.showTerminal} onChange={(checked) => patch({ showTerminal: checked })} />
                 </Section>
               );
@@ -678,7 +677,7 @@ function Section({ id, icon, title, open, onToggle, isFirst, isLast, isPreviousO
 function ShortcutList() {
   const shortcuts = [
     ['Run active code', 'Ctrl', 'Enter'],
-    ['Toggle file explorer', 'Ctrl', 'B'],
+    ['Toggle sidebar (Files / Build)', 'Ctrl', 'B'],
     ['Toggle terminal', 'Ctrl', '`'],
     ['Save active file', 'Ctrl', 'S'],
     ['Zoom in', 'Ctrl', '='],
