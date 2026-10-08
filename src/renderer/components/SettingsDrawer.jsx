@@ -311,7 +311,7 @@ export default function SettingsDrawer({
           })()}
 
           <p style={styles.footnote}>
-            Settings live on this device only. Nothing is sent to a server.
+            Settings live on this device only. With a Gemini key added, your prompts and code are sent to Google to generate AI results.
           </p>
         </div>
     </Drawer>
