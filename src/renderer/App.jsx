@@ -691,7 +691,9 @@ export default function App() {
       ));
     } catch (err) {
       setOpenFiles((prev) => prev.map((f) =>
-        f.path === filePath ? { ...f, content: `// Couldn't open this file — ${err.message || 'it may have been moved or deleted.'}`, loading: false } : f
+        // readError makes the tab read-only so the message can never be
+        // edited and auto-saved over the real file.
+        f.path === filePath ? { ...f, content: `// Couldn't open this file — ${err.message || 'it may have been moved or deleted.'}`, loading: false, readError: true } : f
       ));
     }
   }, []);
@@ -708,7 +710,7 @@ export default function App() {
 
   const handleFileContentChange = useCallback((filePath, newContent) => {
     setOpenFiles((prev) => prev.map((f) =>
-      f.path === filePath ? { ...f, content: newContent, dirty: true } : f
+      f.path === filePath && !f.readError ? { ...f, content: newContent, dirty: true } : f
     ));
   }, []);
 

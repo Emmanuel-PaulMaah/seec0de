@@ -301,7 +301,7 @@ export default function CodePanel({
   if (showingFile) {
     value = fileTab.content || '';
     monacoLang = fileInfo(fileTab.path).monaco;
-    isReadOnly = false;
+    isReadOnly = !!fileTab.readError;
   } else if (isPseudocode) {
     value = generatedCode.pseudocode || '';
     monacoLang = 'plaintext';
