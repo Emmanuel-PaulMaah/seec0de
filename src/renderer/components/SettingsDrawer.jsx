@@ -130,12 +130,26 @@ export default function SettingsDrawer({
       setTimeout(() => setKeySaved(false), 1800);
       return;
     }
+    // An empty field is not a request to delete the key (focusing the field
+    // clears the mask). Removal goes through the explicit "Remove key" action.
+    if (!trimmed) {
+      setApiKey(hasKey ? KEY_MASK : '');
+      return;
+    }
     await setSettingsApiKey(trimmed);
     const exists = await window.seecode.ai.hasKey();
     setHasKey(exists);
     setApiKey(exists ? KEY_MASK : '');
     setKeySaved(true);
     setTimeout(() => setKeySaved(false), 1800);
+  };
+
+  const handleRemoveKey = async () => {
+    if (!window.confirm('Remove your Gemini API key? AI features will switch to offline mode.')) return;
+    await setSettingsApiKey('');
+    const exists = await window.seecode.ai.hasKey();
+    setHasKey(exists);
+    setApiKey(exists ? KEY_MASK : '');
   };
 
   // Clear the mask the first time the user focuses the field so they
@@ -260,6 +274,9 @@ export default function SettingsDrawer({
                       </button>
                     </div>
                     <a style={styles.link} href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Get a free key →</a>
+                    {hasKey && (
+                      <button type="button" style={styles.dangerLinkBtn} onClick={handleRemoveKey}>Remove key</button>
+                    )}
                   </Field>
                 </Section>
               );
@@ -1344,6 +1361,16 @@ const styles = {
     textDecoration: 'none',
     marginTop: 2,
     alignSelf: 'flex-start',
+  },
+  dangerLinkBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
+    color: 'var(--danger)',
+    fontSize: 'var(--text-xs)',
+    cursor: 'pointer',
   },
 
   toggleRow: {
