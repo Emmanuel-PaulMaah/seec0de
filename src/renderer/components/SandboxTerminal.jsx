@@ -81,17 +81,6 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
   }, [resetKey]);
 
   useEffect(() => {
-    if (visible) {
-      sandboxRef.current = createGitSandbox();
-      setCwd('~');
-      setEntries([]);
-      setInput('');
-      setHistoryIdx(-1);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [visible]);
-
-  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
