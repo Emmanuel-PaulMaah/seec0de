@@ -291,6 +291,10 @@
  * BASE STYLES
  * ========================================================================== */
 
+/* Native controls, autofill and scrollbars follow the active theme. */
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+
 html, body, #root {
   height: 100%;
   width: 100%;

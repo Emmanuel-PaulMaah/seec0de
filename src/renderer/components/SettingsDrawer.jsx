@@ -1286,7 +1286,7 @@ const styles = {
     outline: 'none',
     fontFamily: 'var(--font-mono)',
   },
-  timeInput: { width: 132, flex: 'none', colorScheme: 'dark' },
+  timeInput: { width: 132, flex: 'none' },
 
   iconBtn: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
