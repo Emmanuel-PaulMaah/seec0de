@@ -604,7 +604,7 @@ export default function CodePanel({
             <Search size={14} />
           </button>
           {/* Font-size scaler — A−, current size (click to reset), A+.
-              Keyboard: Ctrl/⌘ + / − to step, Ctrl/⌘ 0 to reset. */}
+              Ctrl/⌘ + / − / 0 zoom the whole app (App.jsx), not the editor. */}
           <div style={styles.fontGroup} role="group" aria-label="Editor font size">
             <button
               type="button"

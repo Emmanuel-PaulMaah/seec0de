@@ -60,7 +60,7 @@ The application will launch in its own Electron window with Webpack Hot Module R
 
 ### 8. Keyword Glossary & Typography
 - **Interactive Tooltips:** Click any syntax-highlighted keyword in the Monaco Editor to view a definition and short code snippet (covers 15–30 keywords per language, including `rust match`, `go defer`, `python with`, `typescript interface`).
-- **Font Controls:** On-screen `A-` / `A+` buttons and keyboard shortcuts (`Ctrl/Cmd +` / `-` / `0`) scale Monaco Editor typography smoothly between 10px and 28px.
+- **Font Controls:** On-screen `A-` / `A+` buttons scale Monaco Editor typography between 10px and 28px; `Ctrl/Cmd +` / `-` / `0` zoom the whole app.
 
 ### 9. User Profiles & Multi-File Workspace
 - **Profile Manager:** Manage multiple user profiles with independent settings, active learning tracks, and progress tracking.
