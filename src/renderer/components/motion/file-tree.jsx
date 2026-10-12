@@ -1,4 +1,3 @@
-"use client";;
 // beui.dev/components/motion/file-tree
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -135,6 +134,7 @@ export function FileTree({
   expandedIds,
   defaultExpandedIds = [],
   onExpandedChange,
+  onRowContextMenu,
   ariaLabel = "Files",
   indent = 18,
   className,
@@ -266,6 +266,13 @@ export function FileTree({
                 tabIndex={focusedRow === row.item.value ? 0 : -1}
                 onFocus={() => setFocusedId(row.item.value)}
                 onKeyDown={(event) => handleKeyDown(event, row)}
+                onContextMenu={onRowContextMenu
+                  ? (event) => onRowContextMenu(event, {
+                      value: row.item.value,
+                      name: row.item.name,
+                      isDir: isFolder,
+                    })
+                  : undefined}
                 onClick={() => {
                   if (row.item.disabled) return;
                   selectItem(row.item);

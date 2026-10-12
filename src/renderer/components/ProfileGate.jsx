@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Lock, ArrowLeft, X } from 'lucide-react';
 import { Avatar } from './ProfileForm';
 import { OTPInput } from './motion/otp-input';
 import { profileHasPin, verifyProfilePin } from '../engine/settings';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
 
 // ProfileGate — the "sign in" surface. Two states:
 //   1. Picker  ("Who's learning?")   — a grid of local profiles + "Add".
@@ -34,6 +35,11 @@ export default function ProfileGate({
   const [checking, setChecking] = useState(false);
 
   const unlockProfile = profiles.find((p) => p.id === unlockId) || null;
+
+  // Modal contract: Tab stays inside the gate, focus returns to the trigger
+  // when it unmounts (OTPInput's autoFocus wins inside the unlock view).
+  const rootRef = useRef(null);
+  useFocusTrap(rootRef, true);
 
   // Reset PIN state when entering unlock view.
   useEffect(() => {
@@ -81,7 +87,7 @@ export default function ProfileGate({
   }, [unlockId, pin, checking, onEnter]);
 
   return (
-    <div style={styles.scrim} role="dialog" aria-modal="true" aria-label="Choose profile">
+    <div ref={rootRef} style={styles.scrim} role="dialog" aria-modal="true" aria-label="Choose profile">
       {allowClose && (
         <button style={styles.closeBtn} onClick={onClose} title="Cancel (Esc)" aria-label="Cancel">
           <X size={18} />

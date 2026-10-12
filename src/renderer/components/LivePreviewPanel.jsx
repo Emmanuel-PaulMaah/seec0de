@@ -372,7 +372,7 @@ export default function LivePreviewPanel({
         {view === 'console' && (
           <div style={styles.consoleStack}>
             {(visibleTranslations.length > 0 || aiExplainLoading) && (
-              <div style={styles.errCardList}>
+              <div style={styles.errCardList} role="status" aria-live="polite">
                 {visibleTranslations.length > 1 && (
                   <div style={styles.errCardListHeader}>
                     <AlertTriangle size={11} color="var(--danger)" />
@@ -523,7 +523,7 @@ function ConsoleView({ entries, inputEnabled, onInput }) {
   };
 
   return (
-    <div style={styles.consoleColumn}>
+    <div style={styles.consoleColumn} role="log" aria-live="polite" aria-label="Program output">
       {entries.length === 0 ? (
         <div style={styles.consoleEmpty}>
           <span style={styles.consoleEmptyTitle}>No output yet.</span>

@@ -20,8 +20,7 @@ export function TextReveal({
   split = 'word',
   stagger = 0.09,
   delay = 0,
-  blur = 12,
-  yOffset = 20,
+  yOffset = 8,
   spring,
   once = true,
   whileInView = false,
@@ -63,11 +62,8 @@ export function TextReveal({
               className="inline-block whitespace-pre beui-text-reveal-word"
               style={{
                 '--ty': `${yOffset}px`,
-                '--blur': `${blur}px`,
                 opacity: 0,
-                transform: `translateY(${yOffset}px)`,
-                filter: `blur(${blur}px)`,
-                animation: `beui-text-reveal-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${d}s forwards`,
+                animation: `beui-text-reveal-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${d}s forwards`,
               }}
             >
               {unit}
@@ -108,13 +104,11 @@ if (typeof document !== 'undefined' && !document.getElementById('beui-text-revea
 @keyframes beui-text-reveal-in {
   from {
     opacity: 0;
-    transform: translateY(var(--ty, 20px));
-    filter: blur(var(--blur, 12px));
+    transform: translateY(var(--ty, 8px));
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -122,7 +116,6 @@ if (typeof document !== 'undefined' && !document.getElementById('beui-text-revea
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-    filter: none !important;
   }
 }`;
   document.head.appendChild(style);

@@ -66,6 +66,17 @@ function createWindow() {
     },
   });
 
+  // Any target="_blank" link in the renderer (e.g. "Get a free AI key" →
+  // Google AI Studio) must open in the user's real browser, never as an
+  // address-bar-less app window. Hand http(s) to the OS and deny the
+  // in-app popup.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://') || url.startsWith('http://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   if (!app.isPackaged) {
     mainWindow.loadURL('http://localhost:9000');
     mainWindow.webContents.openDevTools({ mode: 'detach' });

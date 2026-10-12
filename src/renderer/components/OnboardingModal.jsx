@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowRight, Check, X, Code2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowRight, Check, X, Code2, KeyRound, ClipboardPaste, ShieldCheck } from 'lucide-react';
 import {
   RUNNABLE_LANGUAGES,
   defaultComparisonFor,
@@ -11,6 +11,8 @@ import {
   getSettingsApiKey,
 } from '../engine/settings';
 import { ProfileFields } from './ProfileForm';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
+import { keyFromClipboard, looksLikeApiKey, validateApiKey } from '../engine/aiService';
 
 // Onboarding — runs once after install (and any time the user clicks
 // "Rerun onboarding" from the settings drawer). Two real questions plus a
@@ -28,9 +30,8 @@ import { ProfileFields } from './ProfileForm';
 //     it, and we'd rather get the user into the app than gate behind a
 //     web tab.
 //
-// Visual direction (ui-ux-pro-max → "AI-Native UI"): minimal chrome, full
-// scrim with backdrop blur, centered card, large typography, generous
-// whitespace, gentle pop-in animation, single primary CTA per step.
+// Visual direction: minimal chrome, opaque scrim, centered card, large
+// typography, generous whitespace, short fade-in, one primary CTA per step.
 
 const STEPS = ['profile', 'experience', 'language', 'apikey'];
 
@@ -121,6 +122,11 @@ export default function OnboardingModal({ open, initialSettings, onComplete, onC
     return () => window.removeEventListener('keydown', onKey);
   }, [open, skip]);
 
+  // Modal contract: Tab stays inside while open, focus returns to the trigger
+  // on close (a step field's autoFocus wins over the trap's first-focusable).
+  const rootRef = useRef(null);
+  useFocusTrap(rootRef, open);
+
   if (!open) return null;
 
   const step = STEPS[stepIdx];
@@ -137,7 +143,7 @@ export default function OnboardingModal({ open, initialSettings, onComplete, onC
   const canContinueProfile = trimmedName.length >= 2 && !usernameError;
 
   return (
-    <div style={styles.scrim} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <div ref={rootRef} style={styles.scrim} role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div style={styles.card}>
         {/* Top bar: progress dots + skip */}
         <div style={styles.topBar}>
@@ -324,13 +330,73 @@ function StepLanguage({ value, onChange, onBack, onNext }) {
 // Step 3 — optional Gemini API key
 
 function StepApiKey({ value, onChange, onBack, onFinish, onSkip }) {
-  const ready = value.trim().length > 8;
+  // null | 'checking' | 'valid' | { reason, message } — the key must prove
+  // itself against the API before Finish unlocks, so a wrong key is caught
+  // here instead of on the learner's first AI action.
+  const [status, setStatus] = useState(null);
+  const [clipboardKey, setClipboardKey] = useState(null);
+
+  // Coming back from AI Studio: the browser window leaves, ours regains
+  // focus — peek at the clipboard for a freshly copied key and offer a
+  // one-click fill. Clipboard permission denial just falls back to manual
+  // paste, so failures are silent.
+  useEffect(() => {
+    const onFocus = async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        setClipboardKey(keyFromClipboard(text));
+      } catch {
+        // ignore — the input still accepts Ctrl+V
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
+  // Well-formed keys are probed live (debounced); anything shorter or
+  // mis-shaped just waits — the format hint covers it.
+  useEffect(() => {
+    const trimmed = value.trim();
+    if (!trimmed || !looksLikeApiKey(trimmed)) {
+      setStatus(null);
+      return undefined;
+    }
+    setStatus('checking');
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const result = await validateApiKey(trimmed);
+      if (!cancelled) setStatus(result.ok ? 'valid' : result);
+    }, 600);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [value]);
+
+  const trimmed = value.trim();
+  const checking = status === 'checking';
+  const valid = status === 'valid';
+  const errorMessage = status && typeof status === 'object' ? status.message : null;
+  const formatBad = trimmed.length >= 12 && !looksLikeApiKey(trimmed);
+  const canSave = valid;
+
   return (
     <>
       <h2 style={styles.title}>Add an AI key (optional).</h2>
       <p style={styles.subtitle}>
-        Everything works offline. A free Google AI key adds smarter code generation and error explanations.
+        Everything works offline. A free AI key adds smarter code generation and error explanations.
       </p>
+
+      <a
+        style={styles.getKeyBtn}
+        href="https://aistudio.google.com/app/apikey"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <KeyRound size={14} /> Get a free key
+      </a>
+      <ol style={styles.getKeySteps}>
+        <li>Sign in with any Google account</li>
+        <li>Click <strong>Create API key</strong></li>
+        <li>Copy it, then come back here</li>
+      </ol>
 
       <div style={styles.keyRow}>
         <input
@@ -343,23 +409,34 @@ function StepApiKey({ value, onChange, onBack, onFinish, onSkip }) {
           spellCheck={false}
         />
       </div>
-      <a
-        style={styles.helperLink}
-        href="https://aistudio.google.com/app/apikey"
-        target="_blank"
-        rel="noreferrer"
-      >
-        Get a free key at aistudio.google.com →
-      </a>
+      {clipboardKey && clipboardKey !== trimmed && (
+        <button
+          type="button"
+          style={styles.pasteBtn}
+          onClick={() => { onChange(clipboardKey); setClipboardKey(null); }}
+        >
+          <ClipboardPaste size={12} /> Paste key from clipboard
+        </button>
+      )}
+      <div style={styles.keyStatus} aria-live="polite">
+        {checking && <span>Checking the key…</span>}
+        {!checking && valid && (
+          <span style={styles.keyValid}><ShieldCheck size={12} /> Key works</span>
+        )}
+        {!checking && errorMessage && <span style={styles.keyError}>{errorMessage}</span>}
+        {!checking && formatBad && (
+          <span style={styles.keyError}>Keys start with “AIza” — make sure you copied the whole key.</span>
+        )}
+      </div>
 
       <div style={styles.actions}>
         <button style={styles.ghostBtn} onClick={onBack}>Back</button>
         <div style={{ display: 'flex', gap: 8 }}>
           <button style={styles.ghostBtn} onClick={onSkip}>Skip for now</button>
           <button
-            style={{ ...styles.primaryBtn, ...(ready ? {} : styles.primaryBtnDisabled) }}
+            style={{ ...styles.primaryBtn, ...(canSave ? {} : styles.primaryBtnDisabled) }}
             onClick={onFinish}
-            disabled={!ready}
+            disabled={!canSave}
           >
             <Check size={14} style={{ marginRight: 6 }} /> Save & finish
           </button>
@@ -411,8 +488,6 @@ const styles = {
   scrim: {
     position: 'fixed', inset: 0, zIndex: 1000,
     background: 'var(--scrim)',
-    backdropFilter: 'blur(6px)',
-    WebkitBackdropFilter: 'blur(6px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 24,
     animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
@@ -547,6 +622,50 @@ const styles = {
     display: 'inline-block',
   },
 
+  getKeyBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '10px 16px',
+    borderRadius: 8,
+    background: 'var(--accent)',
+    color: 'var(--text-on-accent, #101010)',
+    fontSize: 13,
+    fontWeight: 600,
+    textDecoration: 'none',
+    marginBottom: 10,
+  },
+  getKeySteps: {
+    margin: '0 0 18px',
+    paddingLeft: 20,
+    color: 'var(--text-secondary)',
+    fontSize: 11.5,
+    lineHeight: 1.9,
+  },
+  pasteBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    border: '1px solid var(--border-strong)',
+    background: 'transparent',
+    color: 'var(--text-primary)',
+    borderRadius: 6,
+    padding: '5px 10px',
+    fontSize: 11.5,
+    cursor: 'pointer',
+    marginBottom: 8,
+  },
+  keyStatus: {
+    minHeight: 16,
+    marginBottom: 12,
+    fontSize: 11.5,
+    color: 'var(--text-secondary)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  keyValid: { display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--success)' },
+  keyError: { color: 'var(--danger-text, #e5484d)' },
   keyRow: { display: 'flex', gap: 8, marginBottom: 8 },
   keyInput: {
     flex: 1,

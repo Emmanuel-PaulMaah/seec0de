@@ -1,4 +1,3 @@
-"use client";;
 // beui.dev/components/motion/drawer
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";

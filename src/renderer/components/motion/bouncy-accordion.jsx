@@ -1,4 +1,3 @@
-"use client";;
 // beui.dev/components/motion/bouncy-accordion
 
 import { motion, useReducedMotion } from "motion/react";

@@ -104,7 +104,7 @@
   --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ── Glass (shared structure, colors vary by mode) ───────────────────── */
+  /* ── Glass (shared structure, colors vary by mode) ─────────────────── */
   --glass-blur:      16px;
   --glass-blur-heavy: 24px;
 }
@@ -178,7 +178,7 @@
   --active-row-bg:   rgba(200, 255, 77, 0.14);
   --terminal-bg:     #0e0e0e;
 
-  /* ── Glass ───────────────────────────────────────────────────────────── */
+  /* ── Glass ─────────────────────────────────────────────────────────── */
   --glass-bg:        rgba(18, 18, 18, 0.72);
   --glass-bg-heavy:  rgba(14, 14, 14, 0.85);
   --glass-border:    rgba(255, 255, 255, 0.08);
@@ -193,12 +193,6 @@
   --shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.15);
   --shadow-md:      0 4px 12px rgba(0, 0, 0, 0.30), 0 2px 4px rgba(0, 0, 0, 0.20);
   --shadow-lg:      0 12px 40px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-glow:    0 0 20px rgba(200, 255, 77, 0.08);
-
-  /* ── Gradients ───────────────────────────────────────────────────────── */
-  --gradient-accent:  linear-gradient(135deg, rgba(200, 255, 77, 0.14), rgba(200, 255, 77, 0.04));
-  --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
-  --gradient-border:  linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%);
 }
 
 /* ============================================================================
@@ -266,7 +260,7 @@
   --active-row-bg:   rgba(79, 70, 229, 0.08);
   --terminal-bg:     #1e1e2e;
 
-  /* ── Glass ───────────────────────────────────────────────────────────── */
+  /* ── Glass ─────────────────────────────────────────────────────────── */
   --glass-bg:        rgba(255, 255, 255, 0.72);
   --glass-bg-heavy:  rgba(255, 255, 255, 0.88);
   --glass-border:    rgba(0, 0, 0, 0.06);
@@ -281,12 +275,6 @@
   --shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-md:      0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-lg:      0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-glow:    0 0 20px rgba(99, 102, 241, 0.06);
-
-  /* ── Gradients ───────────────────────────────────────────────────────── */
-  --gradient-accent:  linear-gradient(135deg, rgba(99, 102, 241, 0.10), rgba(99, 102, 241, 0.02));
-  --gradient-surface: linear-gradient(180deg, rgba(0,0,0,0.02) 0%, transparent 100%);
-  --gradient-border:  linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.02) 100%);
 }
 
 /* ============================================================================
@@ -440,14 +428,16 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
-/* Text fields get the ring too. !important beats the inline `outline: none`
- * many components still set. Monaco draws its own focus state, composite
- * fields (.ui-focus-within) ring their container instead, and .ui-focus-none
- * is for an input that is the only focus target of an open popover. */
+/* Text fields get a faded version of the ring — full-strength accent reads
+ * as an alert around a plain text box. !important beats the inline
+ * `outline: none` many components still set. Monaco draws its own focus
+ * state, composite fields (.ui-focus-within) ring their container instead,
+ * and .ui-focus-none is for an input that owns focus by itself (an open
+ * popover's search, the terminal's command line). */
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--border-focus) !important;
+  outline: 2px solid color-mix(in srgb, var(--border-focus) 45%, transparent) !important;
   outline-offset: -1px;
 }
 
@@ -459,7 +449,7 @@ input.ui-focus-none:focus-visible,
 }
 
 .ui-focus-within:has(input:focus-visible, textarea:focus-visible) {
-  outline: 2px solid var(--border-focus);
+  outline: 2px solid color-mix(in srgb, var(--border-focus) 45%, transparent);
   outline-offset: -1px;
 }
 
@@ -559,40 +549,6 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 
 @keyframes ui-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* ── Glass surfaces ──────────────────────────────────────────────────── */
-
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-}
-
-.glass-heavy {
-  background: var(--glass-bg-heavy);
-  backdrop-filter: blur(var(--glass-blur-heavy));
-  -webkit-backdrop-filter: blur(var(--glass-blur-heavy));
-  border: 1px solid var(--glass-border);
-}
-
-/* ── Gradient border utility ─────────────────────────────────────────── */
-
-.gradient-border {
-  position: relative;
-  border: 1px solid transparent;
-  background-clip: padding-box;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: var(--gradient-border);
-  z-index: -1;
-  pointer-events: none;
-}
-
 /* ── Workspace layout ────────────────────────────────────────────────── */
 
 .workspace-editor-shell {
@@ -617,11 +573,6 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-@keyframes explanation-slide-in {
-  from { opacity: 0; transform: translateX(8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
 @keyframes seec0de-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -632,32 +583,9 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
   to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
 
-@keyframes seec0de-slide-in-right {
-  from { transform: translateX(24px); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
-}
-
 @keyframes shimmer {
   from { background-position: -200% 0; }
   to   { background-position: 200% 0; }
-}
-
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.4; }
-  50%      { opacity: 0.8; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%      { transform: translateY(-4px); }
-}
-
-/* ── Settings / Learn cards ──────────────────────────────────────────── */
-
-.settings-section-header:hover {
-  background: var(--bg-tertiary) !important;
-  border-left: 2px solid var(--accent);
-  padding-left: 10px;
 }
 
 /* ── Home screen ─────────────────────────────────────────────────────── */
@@ -1052,19 +980,6 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 9.5px;
-}
-
-/* ── Course wall ──────────────────────────────────────────────────────
- * All of a language's courses at once — no pagination chrome. auto-fit
- * collapses the empty tracks, so a language with one course gets one
- * centred folder instead of a lone card stranded at the left edge.
- * ------------------------------------------------------------------- */
-
-.learn-course-wall {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(288px, 1fr));
-  justify-items: center;
-  gap: 20px;
 }
 
 /* ── Project folder tint ──────────────────────────────────────────────

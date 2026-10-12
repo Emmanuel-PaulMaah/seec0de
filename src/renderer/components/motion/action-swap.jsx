@@ -1,4 +1,3 @@
-"use client";;
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { EASE_OUT, SPRING_PRESS, SPRING_SWAP } from "@/lib/ease";
@@ -13,8 +12,6 @@ const ROLL_EXIT_TRANSITION = {
   duration: 0.14,
   ease: EASE_OUT
 };
-const SWAP_BLUR = "blur(8px)";
-const ROLL_BLUR = "blur(3px)";
 
 // Cascade rolls the label one letter at a time, left to right. The leaving
 // and landing strings overlap as independent layers (no shared cells), so
@@ -23,49 +20,43 @@ const ROLL_BLUR = "blur(3px)";
 const CASCADE_STAGGER = 0.025;
 
 const CASCADE_LETTER_VARIANTS = {
-  initial: { opacity: 0, y: "105%", filter: ROLL_BLUR },
+  initial: { opacity: 0, y: "105%" },
   animate: (delay = 0) => ({
     opacity: 1,
     y: "0%",
-    filter: "blur(0px)",
     transition: { ...SPRING_SWAP, delay },
   }),
   exit: (delay = 0) => ({
     opacity: 0,
     y: "-105%",
-    filter: ROLL_BLUR,
     transition: { duration: 0.16, ease: EASE_OUT, delay: delay * 0.5 },
   }),
 };
 
 const TEXT_VARIANTS = {
   blur: {
-    initial: { opacity: 0, scale: 0.94, filter: SWAP_BLUR },
+    initial: { opacity: 0, scale: 0.94 },
     animate: {
       opacity: 1,
       scale: 1,
-      filter: "blur(0px)",
       transition: BLUR_TRANSITION,
     },
     exit: {
       opacity: 0,
       scale: 0.94,
-      filter: SWAP_BLUR,
       transition: BLUR_TRANSITION,
     },
   },
   roll: {
-    initial: { opacity: 0, y: "90%", filter: ROLL_BLUR },
+    initial: { opacity: 0, y: "90%" },
     animate: {
       opacity: 1,
       y: "0%",
-      filter: "blur(0px)",
       transition: ROLL_TRANSITION,
     },
     exit: {
       opacity: 0,
       y: "-90%",
-      filter: ROLL_BLUR,
       transition: ROLL_EXIT_TRANSITION,
     },
   },
@@ -73,32 +64,28 @@ const TEXT_VARIANTS = {
 
 const ICON_VARIANTS = {
   blur: {
-    initial: { opacity: 0, scale: 0.25, filter: SWAP_BLUR },
+    initial: { opacity: 0, scale: 0.25 },
     animate: {
       opacity: 1,
       scale: 1,
-      filter: "blur(0px)",
       transition: BLUR_TRANSITION,
     },
     exit: {
       opacity: 0,
       scale: 0.25,
-      filter: SWAP_BLUR,
       transition: BLUR_TRANSITION,
     },
   },
   roll: {
-    initial: { opacity: 0, y: 12, filter: ROLL_BLUR },
+    initial: { opacity: 0, y: 12 },
     animate: {
       opacity: 1,
       y: 0,
-      filter: "blur(0px)",
       transition: ROLL_TRANSITION,
     },
     exit: {
       opacity: 0,
       y: -12,
-      filter: ROLL_BLUR,
       transition: ROLL_EXIT_TRANSITION,
     },
   },
@@ -173,7 +160,7 @@ export function ActionSwapText({
                   key={i}
                   custom={i * CASCADE_STAGGER}
                   variants={CASCADE_LETTER_VARIANTS}
-                  className="inline-block whitespace-pre will-change-[opacity,filter,transform]">
+                  className="inline-block whitespace-pre will-change-[opacity,transform]">
                   {char}
                 </motion.span>
               ))}
@@ -186,11 +173,11 @@ export function ActionSwapText({
             key={`${animation}-${value}`}
             variants={TEXT_VARIANTS[coreAnimation]}
             initial={reduce ? false : "initial"}
-            animate={reduce ? { opacity: 1, filter: "blur(0px)", scale: 1, y: 0 } : "animate"}
+            animate={reduce ? { opacity: 1, scale: 1, y: 0 } : "animate"}
             exit={reduce ? undefined : "exit"}
             // Truncation lives on the layer that holds the text — the layer
             // moves as a whole, so clipping it never eats the roll.
-            className="absolute left-0 top-[0.08em] inline-block max-w-full truncate will-change-[opacity,filter,transform]">
+            className="absolute left-0 top-[0.08em] inline-block max-w-full truncate will-change-[opacity,transform]">
             {children}
           </motion.span>
         </AnimatePresence>
@@ -221,10 +208,9 @@ export function ActionSwapIcon({
           key={`${animation}-${value}`}
           aria-hidden
           variants={ICON_VARIANTS[coreAnimation]}
-          initial={reduce ? false : "initial"}
-          animate={reduce ? { opacity: 1, filter: "blur(0px)", scale: 1, y: 0 } : "animate"}
+          initial={reduce ? false : "initial"}            animate={reduce ? { opacity: 1, y: 0 } : "animate"}
           exit={reduce ? undefined : "exit"}
-          className="col-start-1 row-start-1 inline-flex items-center justify-center will-change-[opacity,filter,transform]">
+          className="col-start-1 row-start-1 inline-flex items-center justify-center will-change-[opacity,transform]">
           {children}
         </motion.span>
       </AnimatePresence>

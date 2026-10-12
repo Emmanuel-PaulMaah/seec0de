@@ -21,6 +21,8 @@ import { BouncyAccordion } from './motion/bouncy-accordion';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from './motion/select';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
+import { useConfirm } from './ui/dialog';
 
 // Stack choices for the "Build with AI" dropdown — Auto lets the AI pick.
 const AI_STACKS = [
@@ -98,6 +100,8 @@ export default function BuildPanel({
     .replace(/^-+|-+$/g, '')
     .slice(0, 40) || 'project';
 
+  const confirm = useConfirm();
+
   const openStartDialog = useCallback((project) => {
     if (!project) return;
     setPendingStart({
@@ -157,10 +161,22 @@ export default function BuildPanel({
     }
   }, [aiPrompt, aiStack, aiLoading, openStartDialog]);
 
-  const handleDeleteGenerated = useCallback((projectId) => {
+  const handleDeleteGenerated = useCallback(async (projectId) => {
+    // Destructive: removes the AI-generated project (its steps and files
+    // registered with the app) with no undo.
+    const project = listGeneratedProjects().find((p) => p.id === projectId);
+    const ok = await confirm({
+      title: 'Delete this project?',
+      description: project
+        ? `"${project.title}" will be removed from your projects. Files it wrote to disk stay where they are.`
+        : 'The project will be removed from your projects list.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     deleteGeneratedProject(projectId);
     setPickerTick((t) => t + 1);
-  }, []);
+  }, [confirm]);
 
   // ---- no folder yet ------------------------------------------------
   if (!rootPath) {
@@ -168,7 +184,7 @@ export default function BuildPanel({
       <div style={styles.pane} className="justify-center">
         <div className="px-2 py-6 text-center">
           <FolderOpen className="mx-auto size-6 text-primary" />
-          <h2 className="mt-4 text-base font-semibold tracking-[-0.02em] text-foreground">Choose your workshop</h2>
+          <h2 className="mt-4 text-base font-semibold tracking-[-0.02em] text-foreground">Choose a project</h2>
           <p className="mx-auto mt-2 max-w-[30ch] text-xs leading-5 text-muted-foreground">
             Open the folder where you want to build. Your steps and code will stay together there.
           </p>
@@ -231,7 +247,7 @@ export default function BuildPanel({
             <span className="text-[11px] text-muted-foreground">{project.steps.length} guided steps</span>
             <Button size="sm" ripple onClick={() => openStartDialog(project)} className="rounded-md">
               <Play className="size-3" />
-              Build it
+              Start
             </Button>
           </div>
         </div>
@@ -241,9 +257,9 @@ export default function BuildPanel({
     const pageMotion = reduce
       ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
       : {
-          initial: { opacity: 0, x: 18, filter: 'blur(5px)' },
-          animate: { opacity: 1, x: 0, filter: 'blur(0px)' },
-          exit: { opacity: 0, x: -12, filter: 'blur(4px)' },
+          initial: { opacity: 0, x: 18 },
+          animate: { opacity: 1, x: 0 },
+          exit: { opacity: 0, x: -12 },
         };
 
     return (
@@ -255,14 +271,12 @@ export default function BuildPanel({
                 <div className="relative z-10 mb-5 flex items-start justify-between gap-4">
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-                      <Sparkles className="size-3" /> Project studio
-                    </div>
+                      <Sparkles className="size-3" /> Projects</div>
                     <h2 className="text-xl font-semibold tracking-[-0.025em] text-foreground">What are we building?</h2>
-                    <p className="mt-1 max-w-[200px] text-sm leading-5 text-muted-foreground">
-                      Describe the outcome. AI will shape it into small, verifiable steps.
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                      Describe the outcome — AI turns it into guided steps.
                     </p>
                   </div>
-                  <Wand2 className="mt-1 size-4 shrink-0 text-primary" />
                 </div>
                 <div className="relative z-10">
                   <PromptInput
@@ -270,7 +284,7 @@ export default function BuildPanel({
                     onValueChange={setAiPrompt}
                     onSubmit={handleAiBuild}
                     loading={aiLoading}
-                    placeholder="A habit tracker with weekly insights…"
+                    placeholder="e.g. a habit tracker…"
                     aria-label="Describe the project to build"
                     models={AI_STACKS.map((stack) => ({ value: stack.id, label: stack.label }))}
                     model={aiStack}
@@ -287,32 +301,29 @@ export default function BuildPanel({
                 </div>
               ) : !aiReady ? (
                 <button className="mt-3 text-left text-[11px] text-muted-foreground underline decoration-border-strong underline-offset-4 hover:text-foreground" onClick={onOpenSettings}>
-                  Add a free Gemini key in Settings to use AI for projects
+                  Add a free AI key in Settings
                 </button>
               ) : null}
 
-              <div className="mt-2">
-                <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Continue from somewhere</div>
-                <div className="divide-y divide-border border-y border-border">
-                  <Button variant="ghost" size="lg" onClick={() => setPickerPage('my')} className="group h-auto w-full justify-start gap-3 rounded-none px-0 py-1.5 text-left hover:bg-transparent">
-                    <FolderKanban className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-foreground">My projects</span>
-                      <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Resume your AI-created builds</span>
-                    </span>
-                    <span className="font-mono text-[10px] text-muted-foreground">{myProjects.length}</span>
-                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                  </Button>
-                  <Button variant="ghost" size="lg" onClick={() => setPickerPage('samples')} className="group h-auto w-full justify-start gap-3 rounded-none px-0 py-1.5 text-left hover:bg-transparent">
-                    <LibraryBig className="size-4 shrink-0 text-[var(--algorithm)]" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-foreground">Sample library</span>
-                      <span className="mt-0.5 block text-xs font-normal text-muted-foreground">Practice with a guided blueprint</span>
-                    </span>
-                    <span className="font-mono text-[10px] text-muted-foreground">{listBuildProjects().filter((project) => !project.generated).length}</span>
-                    <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                  </Button>
-                </div>
+              <div className="mt-5 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or resume
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <PickerCard
+                  onClick={() => setPickerPage('my')}
+                  icon={<FolderKanban className="size-3.5" />}
+                  title="My projects"
+                  count={myProjects.length}
+                />
+                <PickerCard
+                  onClick={() => setPickerPage('samples')}
+                  icon={<LibraryBig className="size-3.5" />}
+                  title="Sample library"
+                  count={listBuildProjects().filter((project) => !project.generated).length}
+                  accent
+                />
               </div>
             </motion.section>
           ) : pickerPage === 'my' ? (
@@ -352,7 +363,7 @@ export default function BuildPanel({
             </motion.section>
           ) : (
             <motion.section key="samples" {...pageMotion} transition={{ duration: reduce ? 0 : 0.22 }} className="space-y-4">
-              <PickerPageHeader title="Sample library" subtitle="Choose a blueprint, then make it yours" onBack={() => setPickerPage('home')} />
+              <PickerPageHeader title="Sample library" subtitle="Choose a sample project, then make it yours" onBack={() => setPickerPage('home')} />
               <div className="flex items-center gap-2">
                 <label className="relative min-w-0 flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -389,7 +400,7 @@ export default function BuildPanel({
               ) : (
                 <div className="rounded-xl border border-dashed border-border p-6 text-center">
                   <Search className="mx-auto size-5 text-muted-foreground" />
-                  <p className="mt-3 text-xs font-medium text-foreground">No matching blueprint</p>
+                  <p className="mt-3 text-xs font-medium text-foreground">No matching project</p>
                   <p className="mt-1 text-[11px] text-muted-foreground">Try a broader name or another language.</p>
                 </div>
               )}
@@ -495,10 +506,33 @@ export default function BuildPanel({
   );
 }
 
+// Compact destination tile on the Projects home: icon tile + mono count
+// pill, title with a slide-in arrow on hover. Keeps the home screen
+// scannable where the old full-width list rows spelled everything out.
+function PickerCard({ onClick, icon, title, count, accent = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-border-strong hover:bg-muted/40">
+      <span className="flex items-center justify-between">
+        <span className={`grid size-7 place-items-center rounded-lg border border-border bg-background ${accent ? 'text-[var(--algorithm)]' : 'text-primary'}`}>
+          {icon}
+        </span>
+        <span className="rounded-full border border-border px-1.5 font-mono text-[10px] text-muted-foreground">{count}</span>
+      </span>
+      <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
+        {title}
+        <ArrowRight className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </span>
+    </button>
+  );
+}
+
 function PickerPageHeader({ title, subtitle, onBack }) {
   return (
     <div className="flex items-center gap-3">
-      <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to project studio" className="shrink-0 rounded-md">
+      <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to projects" className="shrink-0 rounded-md">
         <ArrowLeft className="size-4" />
       </Button>
       <div className="min-w-0">
@@ -513,9 +547,9 @@ function EmptyProjects({ onBrowse }) {
   return (
     <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
       <FolderKanban className="mx-auto size-5 text-muted-foreground" />
-      <h3 className="mt-3 text-sm font-semibold text-foreground">Your shelf is ready</h3>
+      <h3 className="mt-3 text-sm font-semibold text-foreground">Your projects are ready</h3>
       <p className="mx-auto mt-1 max-w-[28ch] text-[11px] leading-5 text-muted-foreground">
-        Create a project with AI, or adapt a sample blueprint to make your first one.
+        Create a project with AI, or adapt a sample to make your first one.
       </p>
       <Button variant="outline" size="sm" onClick={onBrowse} className="mt-4 rounded-md">
         <LibraryBig className="size-3" /> Browse samples
@@ -531,6 +565,16 @@ function EmptyProjects({ onBrowse }) {
 // state ({ name, location, writeScaffold, error }); onChange patches it.
 
 function StartBuildDialog({ form, onChange, onCancel, onConfirm }) {
+  // Modal contract: Esc cancels, Tab stays inside, focus returns to the
+  // Start button that opened the dialog when it closes.
+  const dialogRef = useRef(null);
+  useFocusTrap(dialogRef, true);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onCancel(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onCancel]);
+
   const slug = (text) => (text || '')
     .trim()
     .toLowerCase()
@@ -554,6 +598,7 @@ function StartBuildDialog({ form, onChange, onCancel, onConfirm }) {
   return (
     <div style={styles.dialogOverlay} onClick={onCancel}>
       <div
+        ref={dialogRef}
         style={styles.dialog}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -561,7 +606,7 @@ function StartBuildDialog({ form, onChange, onCancel, onConfirm }) {
         aria-label={`Start ${form.project?.title || 'project'}`}
       >
         <div style={styles.dialogHeader}>
-          <div style={styles.dialogTitle}>Start build — {form.project?.title}</div>
+          <div style={styles.dialogTitle}>Start project — {form.project?.title}</div>
           <button type="button" className="ui-icon-button" style={styles.headerBtn} onClick={onCancel} aria-label="Close">
             <X size={13} />
           </button>
@@ -634,7 +679,7 @@ function StartBuildDialog({ form, onChange, onCancel, onConfirm }) {
           </button>
           <button type="button" className="ui-primary-button" style={styles.dialogConfirm} onClick={submit}>
             <Play size={11} />
-            <span style={{ marginLeft: 5 }}>Start build</span>
+            <span style={{ marginLeft: 5 }}>Start project</span>
           </button>
         </div>
       </div>

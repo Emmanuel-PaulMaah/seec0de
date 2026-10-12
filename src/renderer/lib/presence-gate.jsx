@@ -1,4 +1,3 @@
-"use client";;
 import { useIsPresent } from "motion/react";
 
 /**

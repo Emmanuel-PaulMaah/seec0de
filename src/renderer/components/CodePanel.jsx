@@ -455,6 +455,9 @@ export default function CodePanel({
     },
     tabCompletion: 'on',
     wordBasedSuggestions: 'off',
+    // No faint glow around every matching word while a selection is live —
+    // it doubled with the Explain-selection affordance and read as noise.
+    selectionHighlight: false,
     autoClosingBrackets: 'always',
     autoClosingQuotes: 'always',
     stickyScroll: { enabled: editorStickyScroll },
@@ -670,6 +673,8 @@ export default function CodePanel({
               style={{ ...styles.lockBtn, ...(editable ? styles.lockBtnActive : {}) }}
               onClick={() => { setEditable((e) => !e); clearSelection(); setTooltip(null); }}
               title={editable ? 'Switch to read-only' : 'Switch to editable (paste your own code)'}
+              aria-label={editable ? 'Switch to read-only' : 'Switch to editable (paste your own code)'}
+              aria-pressed={editable}
             >
               {editable ? <Pencil size={12} /> : <Lock size={12} />}
             </button>
@@ -721,7 +726,11 @@ export default function CodePanel({
           />
         ) : (
           <Editor
-            key={showingFile ? `file:${activePath}` : `gen:${generatedDisplayTab}`}
+            // The key also encodes the mode (Learn vs Workspace) so a
+            // mode switch always mounts a fresh Monaco instance — stale
+            // editor content from the other mode can never linger when
+            // both modes happen to sit on the same tab language.
+            key={showingFile ? `file:${activePath}` : `gen:${lessonMode ? 'lesson' : 'workspace'}:${generatedDisplayTab}`}
             height="100%"
             language={monacoLang}
             value={value}
@@ -1113,7 +1122,14 @@ const styles = {
   },
 
   emptyWorkspace: {
-    flex: 1,
+    // editorWrap is position:relative but not a flex container, so this
+    // layer has to span it explicitly — otherwise the placeholder sits at
+    // the top instead of the middle of the panel.
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

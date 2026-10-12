@@ -1,4 +1,3 @@
-"use client";;
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Children, cloneElement, forwardRef, isValidElement, useId, useState } from "react";
 import { SPRING_LAYOUT } from "@/lib/ease";

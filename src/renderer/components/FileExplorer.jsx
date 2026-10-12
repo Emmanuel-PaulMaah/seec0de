@@ -304,15 +304,30 @@ export default function FileExplorer({
   }, [deleting, loadDir, onDeleteFile]);
 
   // ---- copy path ------------------------------------------------------
-  const copyPath = useCallback(async (path) => {
-    try { await navigator.clipboard.writeText(path); } catch { /* clipboard blocked */ }
+  const [copyNotice, setCopyNotice] = useState('');
+  const copyTimerRef = useRef(null);
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
+  const announceCopy = useCallback((message) => {
+    setCopyNotice(message);
+    clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopyNotice(''), 1500);
   }, []);
+
+  const copyPath = useCallback(async (path) => {
+    try {
+      await navigator.clipboard.writeText(path);
+      announceCopy('Path copied to clipboard.');
+    } catch { /* clipboard blocked */ }
+  }, [announceCopy]);
 
   const copyRelativePath = useCallback(async (path) => {
     if (!rootPath) return;
     const rel = path.startsWith(rootPath) ? path.slice(rootPath.length + 1) : path;
-    try { await navigator.clipboard.writeText(rel); } catch { /* clipboard blocked */ }
-  }, [rootPath]);
+    try {
+      await navigator.clipboard.writeText(rel);
+      announceCopy('Relative path copied to clipboard.');
+    } catch { /* clipboard blocked */ }
+  }, [rootPath, announceCopy]);
 
   // ---- context menu handler -------------------------------------------
   const openContextMenu = useCallback((e, path, name, isDir) => {
@@ -320,7 +335,12 @@ export default function FileExplorer({
     e.stopPropagation();
     const slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     const parentPath = slash >= 0 ? path.slice(0, slash) : rootPath;
-    setContextMenu({ x: e.clientX, y: e.clientY, path, name, isDir, parentPath });
+    // Keyboard-opened context menus (Shift+F10 / ContextMenu key) report
+    // 0,0 — anchor to the row under the event instead of the top-left corner.
+    const rect = e.currentTarget?.getBoundingClientRect?.();
+    const x = e.clientX || (rect ? rect.left + 16 : 0);
+    const y = e.clientY || (rect ? rect.top + rect.height / 2 : 0);
+    setContextMenu({ x, y, path, name, isDir, parentPath });
   }, [rootPath]);
 
   // Set of all known directory paths from loaded entries. Used by the
@@ -420,16 +440,16 @@ export default function FileExplorer({
               emptyMessage="No matching files."
             />
           )}
-          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`}>
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FILE)} title={`New file in ${basename(selectedDir) || 'project root'}`} aria-label={`New file in ${basename(selectedDir) || 'project root'}`}>
             <Plus size={12} />
           </button>
-          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title={`New folder in ${basename(selectedDir) || 'project root'}`}>
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => startCreate(NEW_FOLDER)} title={`New folder in ${basename(selectedDir) || 'project root'}`} aria-label={`New folder in ${basename(selectedDir) || 'project root'}`}>
             <FolderPlus size={12} />
           </button>
-          <button className="ui-icon-button" style={styles.iconBtn} onClick={handleRefresh} title="Refresh">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={handleRefresh} title="Refresh" aria-label="Refresh file tree">
             <RefreshCw size={12} />
           </button>
-          <button className="ui-icon-button" style={styles.iconBtn} onClick={onCloseFolder} title="Close folder">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={onCloseFolder} title="Close folder" aria-label="Close folder">
             <X size={12} />
           </button>
         </div>
@@ -453,10 +473,10 @@ export default function FileExplorer({
             style={styles.draftInput}
             aria-label={creating === NEW_FOLDER ? 'New folder name' : 'New file name'}
           />
-          <button style={styles.draftConfirm} onMouseDown={(e) => e.preventDefault()} onClick={commitCreate} title="Create (Enter)">
+          <button style={styles.draftConfirm} onMouseDown={(e) => e.preventDefault()} onClick={commitCreate} title="Create (Enter)" aria-label="Create">
             <Check size={11} />
           </button>
-          <button style={styles.draftCancel} onMouseDown={(e) => e.preventDefault()} onClick={cancelCreate} title="Cancel (Esc)">
+          <button style={styles.draftCancel} onMouseDown={(e) => e.preventDefault()} onClick={cancelCreate} title="Cancel (Esc)" aria-label="Cancel">
             <X size={11} />
           </button>
           </div>
@@ -504,6 +524,10 @@ export default function FileExplorer({
 
       {error && <div style={styles.error}>{error}</div>}
 
+      {/* Clipboard feedback: no visual toast exists for copy path, so announce
+          it to screen readers via a persistent (visually hidden) live region. */}
+      <div role="status" aria-live="polite" style={styles.srOnly}>{copyNotice}</div>
+
       {/* beUI FileTree — spring-animated, keyboard-navigable */}
       <div
         style={styles.tree}
@@ -531,6 +555,7 @@ export default function FileExplorer({
             }}
             expandedIds={expandedIds}
             onExpandedChange={handleExpandedChange}
+            onRowContextMenu={(e, item) => openContextMenu(e, item.value, item.name, item.isDir)}
             ariaLabel="Project files"
             classNames={{
               item: 'rounded-md',
@@ -582,6 +607,62 @@ const ContextMenu = forwardRef(function ContextMenu({
   onClose, onNewFile, onNewFolder, onRename, onDelete,
   onCopyPath, onCopyRelativePath,
 }, ref) {
+  const innerRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const setRefs = (node) => {
+    innerRef.current = node;
+    if (typeof ref === 'function') ref(node);
+    else if (ref) ref.current = node;
+  };
+
+  // Keyboard contract: the menu opens with focus on its first item, Arrow
+  // keys / Home / End rove between items, Esc closes, and focus returns to
+  // whatever opened the menu (the tree row, when keyboard-invoked).
+  useEffect(() => {
+    const container = innerRef.current;
+    if (!container) return undefined;
+    const previouslyFocused = document.activeElement;
+    const buttons = () => Array.from(container.querySelectorAll('button'));
+    buttons()[0]?.focus();
+    const onKey = (e) => {
+      const list = buttons();
+      if (list.length === 0) return;
+      const idx = list.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        list[(idx + 1) % list.length]?.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        list[(idx <= 0 ? list.length - 1 : idx - 1)]?.focus();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        list[0]?.focus();
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        list[list.length - 1]?.focus();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onCloseRef.current?.();
+      } else if (e.key === 'Tab') {
+        // Standard menu behaviour: Tab dismisses and moves on.
+        onCloseRef.current?.();
+      }
+    };
+    container.addEventListener('keydown', onKey);
+    return () => {
+      container.removeEventListener('keydown', onKey);
+      const active = document.activeElement;
+      const stranded = !active || active === document.body || container.contains(active);
+      if (previouslyFocused instanceof HTMLElement
+        && document.contains(previouslyFocused)
+        && stranded) {
+        previouslyFocused.focus();
+      }
+    };
+  }, []);
+
   const items = [];
   if (isDir) {
     items.push({ label: 'New File…', icon: <File size={12} />, action: () => onNewFile(menuPath) });
@@ -604,15 +685,16 @@ const ContextMenu = forwardRef(function ContextMenu({
   const finalY = y + menuHeight > window.innerHeight ? y - menuHeight : y;
 
   return (
-    <div ref={ref} style={{ ...styles.contextMenu, left: finalX, top: finalY }}>
+    <div ref={setRefs} role="menu" style={{ ...styles.contextMenu, left: finalX, top: finalY }}>
       {items.map((item, i) => {
         if (item.type === 'separator') {
-          return <div key={`sep-${i}`} style={styles.contextSeparator} />;
+          return <div key={`sep-${i}`} role="separator" style={styles.contextSeparator} />;
         }
         return (
           <button
             key={item.label}
             type="button"
+            role="menuitem"
             style={styles.contextItem}
             onClick={(e) => { e.stopPropagation(); item.action(); }}
           >
@@ -788,13 +870,24 @@ const styles = {
     padding: 8,
     fontSize: 11,
     color: 'var(--text-muted)',
-  },
-  error: {
+  },  error: {
     padding: 8,
     fontSize: 11,
     color: 'var(--danger-text)',
     background: 'rgba(224, 108, 117, 0.08)',
     borderBottom: '1px solid var(--border)',
+  },
+  srOnly: {
+    // Visually hidden but kept in the a11y tree as a live region.
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: 'hidden',
+    clipPath: 'inset(50%)',
+    whiteSpace: 'nowrap',
+    border: 0,
   },
 
   // ---- context menu ---------------------------------------------------

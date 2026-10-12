@@ -8,6 +8,9 @@ import {
 import { Loader } from './motion/loader';
 import { BouncyAccordion } from './motion/bouncy-accordion';
 import { ScrollProgress } from './motion/scroll-progress';
+import { useConfirm } from './ui/dialog';
+import SpeakButton from './SpeakButton';
+import { splitSentences, useSpeech } from '../lib/hooks/useSpeech';
 
 // ExplanationSidebar — the right-most column. Shows the result of the
 // "Explain" action (offline glossary or AI). Collapsible since v2.4 so
@@ -28,6 +31,7 @@ export default function ExplanationSidebar({
   onClear,
 }) {  // Index of the currently-open accordion item (-1 = all collapsed).
   const [openIndex, setOpenIndex] = useState(-1);
+  const confirm = useConfirm();
 
   // Whenever a fresh explanation arrives, collapse everything so the
   // learner starts from a clean slate instead of inheriting whatever
@@ -56,16 +60,32 @@ export default function ExplanationSidebar({
 
   // ---- expanded panel --------------------------------------------------
   return (
-    <div style={styles.sidebar}>
+    // role=status: the panel is the async output of "Explain", so the loading
+    // → explanation transition is announced when it lands.
+    <div style={styles.sidebar} role="status" aria-live="polite">
       <div style={styles.headerRow}>
         <div style={styles.headerLabel}>Explanation</div>
+
+        {explanation?.summary && (
+          <SpeakButton text={explanation.summary} title="Read explanation aloud" />
+        )}
 
         {explanation && (
           <button
             type="button"
             className="ui-icon-button"
             style={styles.collapseBtn}
-            onClick={onClear}
+            onClick={async () => {
+              // Destructive: throws away the current explanation (re-requesting
+              // it costs an AI call or a re-lookup).
+              const ok = await confirm({
+                title: 'Clear this explanation?',
+                description: 'The current breakdown will be removed. You can select the code and ask for an explanation again.',
+                confirmLabel: 'Clear',
+                danger: true,
+              });
+              if (ok) onClear?.();
+            }}
             title="Clear explanation"
             aria-label="Clear explanation"
           >
@@ -101,7 +121,7 @@ export default function ExplanationSidebar({
 
         {!loading && explanation && (
           <div style={styles.section}>
-            <div style={styles.summary}>{explanation.summary}</div>
+            <SpeakableSummary summary={explanation.summary} />
 
             {explanation.lineByLine?.length > 0 && (
               <BouncyAccordion
@@ -134,6 +154,27 @@ export default function ExplanationSidebar({
           </div>
         )}
       </ScrollProgress>
+    </div>
+  );
+}
+
+// Renders the summary sentence-by-sentence so the sentence currently being
+// read aloud can be highlighted. Highlight state comes from the shared
+// speech store — any SpeakButton with this exact text drives it.
+function SpeakableSummary({ summary }) {
+  const speech = useSpeech();
+  const sentences = splitSentences(summary);
+  const readingThis = speech.speaking && speech.activeText === summary;
+  return (
+    <div style={styles.summary}>
+      {sentences.map((sentence, index) => (
+        <span
+          key={index}
+          style={readingThis && speech.activeSentence === index ? styles.speakingSentence : undefined}
+        >
+          {sentence}{' '}
+        </span>
+      ))}
     </div>
   );
 }
@@ -227,6 +268,10 @@ const styles = {
     color: 'var(--text-primary)',
     borderLeft: '3px solid var(--border-strong)',
     paddingLeft: 'var(--space-3)',
+  },
+  speakingSentence: {
+    background: 'color-mix(in srgb, var(--accent) 18%, transparent)',
+    borderRadius: 3,
   },
 
   lineCode: {

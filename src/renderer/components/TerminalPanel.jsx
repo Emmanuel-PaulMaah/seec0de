@@ -4,6 +4,29 @@ import { Loader } from './motion/loader';
 import { explain } from '../engine/commandExplainer';
 import { explainTerminalWithAI } from '../engine/aiService';
 import { setFocusTarget } from '../engine/editorBridge';
+import {
+  PROMPT,
+  RUNNING_PLACEHOLDER,
+  TERMINAL_HISTORY_KEY,
+  readHistory,
+  writeHistory,
+  shortenPath,
+  terminalStyles as styles,
+  TerminalEntry,
+} from './terminalChrome';
+
+// Tool installs (winget, npm -g, pacman) run for minutes; the default 30s
+// exec timeout would SIGKILL them mid-install. Any command that looks like
+// one gets a 10-minute budget, and callers (Settings → Toolchains Install)
+// can pass an explicit timeoutMs that wins over the heuristic.
+const INSTALL_TIMEOUT_MS = 10 * 60_000;
+const INSTALL_COMMAND_RE = /\b(winget\s+install|npm(?:\.cmd)?\s+(?:install|i)\s+-g|pacman\s+-S|xcode-select\s+--install)\b/i;
+
+function pickTimeoutMs(command, options) {
+  const explicit = Number(options?.timeoutMs);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+  return INSTALL_COMMAND_RE.test(command) ? INSTALL_TIMEOUT_MS : undefined;
+}
 
 // A bottom-of-screen "explained terminal" — each command becomes a card with
 // the input line, a one-line explanation, and the output. Not a full PTY.
@@ -17,18 +40,12 @@ import { setFocusTarget } from '../engine/editorBridge';
 //                  components (e.g. the "Run" button in CodePanel) can push
 //                  synthetic entries into the history.
 
-const PROMPT_HISTORY_KEY = 'seec0de.terminalHistory';
-const PROMPT_HISTORY_MAX = 50;
-
 export default function TerminalPanel({ visible, onToggle, projectRoot = null, apiRef }) {
   const [cwd, setCwd] = useState('');
   const [entries, setEntries] = useState([]);     // [{ id, command, explanation, status, stdout, stderr, exitCode, durationMs }]
   const [input, setInput] = useState('');
   const [running, setRunning] = useState(false);
-  const [history, setHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(PROMPT_HISTORY_KEY) || '[]'); }
-    catch { return []; }
-  });
+  const [history, setHistory] = useState(() => readHistory(TERMINAL_HISTORY_KEY));
   const [historyIdx, setHistoryIdx] = useState(-1);
 
   const inputRef = useRef(null);
@@ -65,14 +82,14 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
 
   const pushHistory = useCallback((cmd) => {
     setHistory((prev) => {
-      const next = [cmd, ...prev.filter((c) => c !== cmd)].slice(0, PROMPT_HISTORY_MAX);
-      try { localStorage.setItem(PROMPT_HISTORY_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      const next = [cmd, ...prev.filter((c) => c !== cmd)].slice(0, 50);
+      writeHistory(TERMINAL_HISTORY_KEY, next);
       return next;
     });
     setHistoryIdx(-1);
   }, []);
 
-  const runCommand = useCallback(async (raw) => {
+  const runCommand = useCallback(async (raw, options) => {
     const command = raw.trim();
     if (!command || running) return;
 
@@ -128,7 +145,11 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
     }
     setRunning(true);
     try {
-      const result = await window.seecode.terminal.exec({ command, cwd });
+      const result = await window.seecode.terminal.exec({
+        command,
+        cwd,
+        timeoutMs: pickTimeoutMs(command, options),
+      });
       // AI fallback for errors: if the command failed and had no offline explanation.
       if (result.exitCode !== 0 && result.stderr && !explanation) {
         const aiErrorExplanation = await explainTerminalWithAI(result.stderr, 'error');
@@ -239,268 +260,52 @@ export default function TerminalPanel({ visible, onToggle, projectRoot = null, a
           <span style={styles.cwd} title={cwd}>{shortenPath(cwd)}</span>
         </div>
         <div style={styles.headerActions}>
-          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => setEntries([])} title="Clear (Ctrl+L)">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={() => setEntries([])} title="Clear (Ctrl+L)" aria-label="Clear terminal">
             <Trash2 size={12} />
           </button>
-          <button className="ui-icon-button" style={styles.iconBtn} onClick={onToggle} title="Hide terminal">
+          <button className="ui-icon-button" style={styles.iconBtn} onClick={onToggle} title="Hide terminal" aria-label="Hide terminal">
             <ChevronDown size={12} />
           </button>
         </div>
       </div>
 
-      <div style={styles.scroll} ref={scrollRef}>
+      <div style={styles.scroll} ref={scrollRef} role="log" aria-live="polite" aria-label="Terminal output">
         {entries.length === 0 && (
           <div style={styles.empty}>
-            Type a command below. Each one gets a plain-English explanation.
-            <br />Try: <code style={styles.kbd}>git status</code>, <code style={styles.kbd}>npm install</code>, <code style={styles.kbd}>dir</code>, <code style={styles.kbd}>Get-Process</code>.
+            Try <code style={styles.kbd}>git status</code>, <code style={styles.kbd}>npm install</code> or <code style={styles.kbd}>dir</code>.
           </div>
         )}
-        {entries.map((e) => <Entry key={e.id} entry={e} />)}
+        {entries.map((e) => <TerminalEntry key={e.id} entry={e} />)}
       </div>
 
       <form style={styles.inputRow} onSubmit={handleSubmit}>
-        <span style={styles.prompt}>›</span>
+        <span style={styles.prompt}>{PROMPT}</span>
         <input
           ref={inputRef}
+          className="ui-focus-none"
           style={styles.input}
           value={input}
           onChange={(ev) => setInput(ev.target.value)}
           onKeyDown={handleKey}
           onFocus={() => setFocusTarget('terminal')}
-          placeholder={running ? 'Running…' : 'Type a command and press Enter'}
+          placeholder={running ? RUNNING_PLACEHOLDER : 'Type a command…'}
           spellCheck={false}
           autoComplete="off"
           disabled={running}
         />
-        <button type="submit" className="ui-primary-button" style={styles.runBtn} disabled={running || !input.trim()}>
+        <button
+          type="submit"
+          className="ui-primary-button"
+          style={styles.runBtn}
+          disabled={running || !input.trim()}
+          title="Run command (Enter)"
+          aria-label="Run command"
+        >
           {running ? <Loader size={11} variant="spinner" /> : <Play size={11} />}
-          <span style={{ marginLeft: 4 }}>Run</span>
         </button>
       </form>
     </div>
   );
 }
 
-function Entry({ entry }) {
-  const { command, explanation, status, stdout, stderr, exitCode, durationMs, cwd } = entry;
-  const failed = exitCode !== null && exitCode !== 0;
-  return (
-    <div style={styles.entry}>
-      <div style={styles.entryHeader}>
-        <span style={styles.entryCwd}>{shortenPath(cwd)}</span>
-        <span style={styles.entryPrompt}>›</span>
-        <span style={styles.entryCmd}>{command}</span>
-        {status === 'done' && (
-          <span style={{ ...styles.entryStatus, color: failed ? '#e06c75' : '#6a9955' }}>
-            {failed ? `exit ${exitCode}` : 'ok'} · {durationMs}ms
-          </span>
-        )}
-      </div>
-      {explanation && (
-        <div style={styles.explanation}>{explanation}</div>
-      )}
-      {(stdout || stderr) && (
-        <pre style={{ ...styles.output, ...(failed && !stdout ? styles.outputErr : {}) }}>
-          {stdout}
-          {stderr && <span style={styles.outputErr}>{stderr}</span>}
-        </pre>
-      )}
-      {status === 'running' && !stdout && !stderr && (
-        <div style={styles.runningHint}>
-          <Loader size={11} variant="spinner" /> running…
-        </div>
-      )}
-    </div>
-  );
-}
 
-function shortenPath(p) {
-  if (!p) return '';
-  if (p.length <= 50) return p;
-  return '…' + p.slice(p.length - 49);
-}
-
-const styles = {
-  collapsedBar: {
-    height: 'var(--control-standard)',
-    display: 'flex',
-    alignItems: 'center',
-    background: 'var(--bg-secondary)',
-    borderTop: '1px solid var(--border)',
-    color: 'var(--text-secondary)',
-    fontSize: 'var(--text-sm)',
-    fontWeight: 500,
-    padding: '0 var(--space-3)',
-    border: 'none',
-    width: '100%',
-    textAlign: 'left',
-  },
-  panel: {
-    height: 280,
-    minHeight: 200,
-    display: 'flex',
-    flexDirection: 'column',
-    background: 'var(--bg-input)',
-    borderTop: '1px solid var(--border)',
-    fontFamily: 'var(--font-mono)',
-  },
-  header: {
-    height: 'var(--panel-header-height)',
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 var(--space-2) 0 var(--space-3)',
-    background: 'var(--bg-secondary)',
-    borderBottom: '1px solid var(--border)',
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    color: 'var(--text-secondary)',
-    fontSize: 'var(--text-sm)',
-  },
-  headerLabel: {
-    letterSpacing: 0.2,
-    fontWeight: 600,
-  },
-  cwd: {
-    color: 'var(--text-muted)',
-    fontSize: 'var(--text-xs)',
-    marginLeft: 8,
-    fontFamily: 'var(--font-mono)',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    maxWidth: 360,
-  },
-  headerActions: { display: 'flex', gap: 2 },
-  iconBtn: {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-secondary)',
-    width: 'var(--control-compact)',
-    height: 'var(--control-compact)',
-    padding: 0,
-    justifyContent: 'center',
-    borderRadius: 'var(--radius-control)',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  scroll: {
-    flex: 1,
-    overflow: 'auto',
-    padding: '6px 0',
-  },
-  empty: {
-    padding: '14px 16px',
-    color: 'var(--text-muted)',
-    fontSize: 'var(--text-sm)',
-    fontFamily: 'var(--font-ui)',
-    lineHeight: 1.6,
-  },
-  kbd: {
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border)',
-    borderRadius: 3,
-    padding: '1px 5px',
-    fontSize: 11,
-    color: 'var(--text-primary)',
-  },
-  entry: {
-    padding: 'var(--space-2) var(--space-3)',
-    borderBottom: '1px solid rgba(255,255,255,0.03)',
-  },
-  entryHeader: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: 6,
-    fontSize: 'var(--text-sm)',
-    flexWrap: 'wrap',
-  },
-  entryCwd: {
-    color: 'var(--text-muted)',
-    fontSize: 10,
-  },
-  entryPrompt: {
-    color: 'var(--accent)',
-    fontWeight: 700,
-  },
-  entryCmd: {
-    color: 'var(--text-primary)',
-    fontWeight: 500,
-    flex: 1,
-    wordBreak: 'break-all',
-  },
-  entryStatus: {
-    fontSize: 10,
-    fontFamily: 'var(--font-ui)',
-  },
-  explanation: {
-    fontSize: 'var(--text-xs)',
-    color: 'var(--info-text)',
-    fontStyle: 'italic',
-    margin: '3px 0 4px 14px',
-    fontFamily: 'var(--font-ui)',
-    lineHeight: 1.4,
-  },
-  output: {
-    margin: '4px 0 0 14px',
-    fontSize: 'var(--text-sm)',
-    color: 'var(--text-primary)',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
-    lineHeight: 1.4,
-  },
-  outputErr: {
-    color: 'var(--danger-text)',
-  },
-  runningHint: {
-    margin: '4px 0 0 14px',
-    fontSize: 11,
-    color: 'var(--text-muted)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  },
-  inputRow: {
-    flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 40,
-    padding: 'var(--space-1) var(--space-2)',
-    borderTop: '1px solid var(--border)',
-    background: 'var(--bg-secondary)',
-  },
-  prompt: {
-    color: 'var(--accent)',
-    fontWeight: 700,
-    fontSize: 14,
-    paddingLeft: 4,
-  },
-  input: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-primary)',
-    fontSize: 'var(--text-md)',
-    fontFamily: 'inherit',
-    outline: 'none',
-  },
-  runBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    minHeight: 'var(--control-compact)',
-    background: 'var(--accent)',
-    border: '1px solid var(--accent)',
-    borderRadius: 'var(--radius-group)',
-    color: 'var(--text-on-accent)',
-    fontSize: 'var(--text-sm)',
-    padding: '0 var(--space-3)',
-    fontFamily: 'var(--font-ui)',
-    fontWeight: 600,
-    whiteSpace: 'nowrap',
-  }
-};

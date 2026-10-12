@@ -14,7 +14,7 @@ import { Avatar } from './ProfileForm';
 // centre, and the update pill + settings gear on the right. Stays as a
 // drag region by default; interactive elements opt out via WebkitAppRegion.
 //
-// beUI-inspired: glass surfaces, refined spacing, premium brand treatment.
+// Opaque surfaces, compact spacing, brand accent on the active profile only.
 
 export default function TitleBar({
   terminalVisible = false,
@@ -96,7 +96,7 @@ export default function TitleBar({
         {onToggleColorMode && (
           <span style={{ WebkitAppRegion: 'no-drag', display: 'inline-flex' }}>
             <ThemeToggle
-              variant="circle-blur"
+              variant="circle"
               start="bottom-right"
               colorMode={colorMode}
               onColorModeChange={onToggleColorMode}
@@ -147,14 +147,24 @@ export default function TitleBar({
 function ReminderMenu({ reminders, now, onDismiss, onSnooze, onContinue }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const menuRef = useRef(null);
+  const triggerRef = useRef(null);
   const dueCount = reminders.filter((reminder) => new Date(reminder.dueAt).getTime() <= now).length;
 
   useEffect(() => {
     if (!open) return undefined;
+    // Dialog contract: focus moves in on open and Esc hands it back to the
+    // bell that opened the panel.
+    menuRef.current?.querySelector('button')?.focus();
     const onDocMouseDown = (event) => {
       if (wrapRef.current && !wrapRef.current.contains(event.target)) setOpen(false);
     };
-    const onKeyDown = (event) => { if (event.key === 'Escape') setOpen(false); };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', onDocMouseDown);
     window.addEventListener('keydown', onKeyDown);
     return () => {
@@ -167,6 +177,7 @@ function ReminderMenu({ reminders, now, onDismiss, onSnooze, onContinue }) {
     <div ref={wrapRef} style={styles.reminderWrap}>
       <button
         type="button"
+        ref={triggerRef}
         className="ui-icon-button"
         onClick={() => setOpen((value) => !value)}
         title="Learning Pulse reminders"
@@ -184,7 +195,7 @@ function ReminderMenu({ reminders, now, onDismiss, onSnooze, onContinue }) {
       </button>
 
       {open && (
-        <section style={styles.reminderMenu} role="dialog" aria-label="Learning Pulse reminders">
+        <section ref={menuRef} style={styles.reminderMenu} role="dialog" aria-label="Learning Pulse reminders">
           <header style={styles.reminderHeader}>
             <div>
               <strong style={styles.reminderHeading}>Learning Pulse</strong>
@@ -258,14 +269,41 @@ function ToolBtn({ onClick, active = false, title, ariaLabel, children }) {
 function ProfileMenu({ profile, onSwitchProfile, onAddProfile, onManageProfile }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const menuRef = useRef(null);
+  const triggerRef = useRef(null);
 
-  // Close on outside click / Esc while open.
+  // Close on outside click / Esc while open. Menu keyboard contract: focus
+  // lands on the first item when it opens, Arrow keys rove between items,
+  // and Esc hands focus back to the chip that opened it.
   useEffect(() => {
     if (!open) return undefined;
+    menuRef.current?.querySelector('[role="menuitem"]')?.focus();
     const onDocMouseDown = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
     };
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      // Tab leaves the menu (standard menu behaviour) — continue from the
+      // trigger so focus doesn't fall back to <body>.
+      if (e.key === 'Tab') {
+        setOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const items = Array.from(menuRef.current?.querySelectorAll('[role="menuitem"]') || []);
+      if (items.length === 0) return;
+      e.preventDefault();
+      const idx = items.indexOf(document.activeElement);
+      const next = e.key === 'ArrowDown'
+        ? (idx + 1) % items.length
+        : (idx <= 0 ? items.length - 1 : idx - 1);
+      items[next].focus();
+    };
     document.addEventListener('mousedown', onDocMouseDown);
     window.addEventListener('keydown', onKey);
     return () => {
@@ -280,6 +318,7 @@ function ProfileMenu({ profile, onSwitchProfile, onAddProfile, onManageProfile }
     <div ref={wrapRef} style={styles.profileWrap}>
       <button
         type="button"
+        ref={triggerRef}
         className="ui-toolbar-button"
         onClick={() => setOpen((v) => !v)}
         style={styles.profileChip}
@@ -293,7 +332,7 @@ function ProfileMenu({ profile, onSwitchProfile, onAddProfile, onManageProfile }
       </button>
 
       {open && (
-        <div style={styles.menu} role="menu">
+        <div ref={menuRef} style={styles.menu} role="menu">
           <div style={styles.menuHeader}>
             <Avatar profile={profile} size={34} />
             <div style={styles.menuHeaderText}>
@@ -425,9 +464,7 @@ const styles = {
     overflow: 'hidden',
     border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-lg)',
-    background: 'var(--glass-bg-heavy)',
-    backdropFilter: 'blur(var(--glass-blur-heavy))',
-    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
+    background: 'var(--bg-elevated)',
     boxShadow: 'var(--shadow-lg)',
     WebkitAppRegion: 'no-drag',
     animation: 'seec0de-pop-in var(--motion-base) var(--ease-spring)',
@@ -519,9 +556,7 @@ const styles = {
     right: 0,
     width: 216,
     zIndex: 1000,
-    background: 'var(--glass-bg-heavy)',
-    backdropFilter: 'blur(var(--glass-blur-heavy))',
-    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
+    background: 'var(--bg-elevated)',
     border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow-lg)',

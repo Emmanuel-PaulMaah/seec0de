@@ -1,4 +1,3 @@
-"use client";;
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { forwardRef, useCallback, useRef, useState } from "react";
 import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";

@@ -64,6 +64,8 @@ contextBridge.exposeInMainWorld('seecode', {
     setKey: (key) => ipcRenderer.invoke('ai:set-key', key),
     hasKey: ()    => ipcRenderer.invoke('ai:has-key'),
     call:   (payload) => ipcRenderer.invoke('ai:call', payload),
+    // Probe a candidate key against the API without storing it.
+    validateKey: (key) => ipcRenderer.invoke('ai:validate-key', key),
   },
   updates: {
     // One-shot: fetch the current updater status.

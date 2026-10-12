@@ -13,8 +13,6 @@ import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
 import { Button } from './motion/button/base';
 import { Loader as BeuiLoader } from './motion/loader';
 
-// ... (LANGUAGE_LABELS and labelFor unchanged)
-
 export default function InstructionPanel({
   instruction,
   onInstructionChange,
@@ -179,43 +177,13 @@ export default function InstructionPanel({
           <div style={styles.scrollContent}>
             <div className="flex flex-1 flex-col gap-[var(--space-5)]">
               <div>
-                <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-                  <Wand2 className="size-3" /> Code generator
+                <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                  <Wand2 className="size-3" /> Generate
                 </div>
-                <h2 className="text-lg font-semibold tracking-[-0.025em] text-foreground">Turn an idea into working code.</h2>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">Describe the behavior in your own words. You’ll get pseudocode and code you can compare.</p>
-              </div>
-
-              <button className="group flex w-full items-center gap-3 border-y border-border px-1 py-3 text-left" onClick={onOpenSettings} title="Manage languages in Settings">
-                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Output</span>
-                <span className="h-3 w-px bg-border" />
-                <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">
-                  Pseudocode{practicalLanguage ? ` · ${labelFor(practicalLanguage)}` : ''}{comparisonLanguages.map((id) => ` · ${labelFor(id)}`).join('')}
-                </span>
-                <SettingsIcon className="size-3 text-muted-foreground transition-transform group-hover:rotate-45" />
-              </button>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Quick starts</span>
-                  <Button variant="ghost" size="icon" onClick={() => setSeed((value) => value + 1)} title="Shuffle suggestions" aria-label="Shuffle suggestions" className="size-7 rounded-md">
-                    <Shuffle className="size-3" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                {suggestions.map((s) => (
-                  <Button
-                    key={s.label}
-                    variant="outline"
-                    size="sm"
-                    className="h-auto min-h-10 justify-start rounded-md border-border bg-transparent px-3 py-2.5 text-left text-[11px] leading-4 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                    onClick={() => handleSuggestion(s.instruction)}
-                    title={s.instruction}
-                  >
-                    {s.label}
-                  </Button>
-                ))}
-                </div>
+                <h2 className="text-xl font-semibold tracking-[-0.025em] text-foreground">What should we code?</h2>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                  Describe the idea — AI writes the pseudocode and code.
+                </p>
               </div>
 
               <PromptInput
@@ -224,46 +192,75 @@ export default function InstructionPanel({
                 onSubmit={handleGenerateClick}
                 loading={aiLoading}
                 leadingAction={aiLoading ? <BeuiLoader variant="scramble" size={16} label="Generating code" className="text-muted-foreground" /> : null}
-                placeholder="Read a CSV of student grades and print the top 5 averages…"
+                placeholder="e.g. a grade calculator…"
                 aria-label="Instruction for the program"
-                className="rounded-lg border-border bg-card shadow-none"
+                className="rounded-[15px] border-border bg-card shadow-none"
               />
 
               {aiError ? (
-                <div style={styles.errorCard} role="alert">
-                  <div style={styles.errorRow}>
-                    <AlertCircle size={13} style={styles.errorIcon} />
-                    <div style={styles.errorMessage}>{aiError.message}</div>
-                    <button
-                      type="button"
-                      className="ui-icon-button"
-                      style={styles.errorClose}
-                      onClick={onClearAiError}
-                      title="Dismiss"
-                      aria-label="Dismiss error"
-                    >
-                      <X size={11} />
-                    </button>
+                <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-xs leading-5 text-[var(--danger-text)]" role="alert">
+                  <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p>{aiError.message}</p>
+                    {(aiError.kind === 'no-key' || aiError.kind === 'invalid-key') && (
+                      <button
+                        type="button"
+                        className="mt-2 block text-[11px] underline decoration-border-strong underline-offset-4 hover:text-foreground"
+                        onClick={() => { onClearAiError?.(); onOpenSettings?.(); }}
+                      >
+                        Open Settings
+                      </button>
+                    )}
                   </div>
-                  {(aiError.kind === 'no-key' || aiError.kind === 'invalid-key') && (
-                    <button
-                      type="button"
-                      className="ui-toolbar-button"
-                      style={styles.errorAction}
-                      onClick={() => { onClearAiError?.(); onOpenSettings?.(); }}
-                    >
-                      <SettingsIcon size={11} />
-                      <span style={{ marginLeft: 6 }}>Open Settings</span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                !aiReady && (
-                  <button style={styles.subtleLink} onClick={onOpenSettings}>
-                    Add a free Gemini key in Settings to unlock AI features →
+                  <button
+                    type="button"
+                    className="-m-1 shrink-0 p-1 text-muted-foreground hover:text-foreground"
+                    onClick={onClearAiError}
+                    title="Dismiss"
+                    aria-label="Dismiss error"
+                  >
+                    <X className="size-3" />
                   </button>
-                )
-              )}
+                </div>
+              ) : !aiReady ? (
+                <button className="self-start text-[11px] text-muted-foreground underline decoration-border-strong underline-offset-4 hover:text-foreground" onClick={onOpenSettings}>
+                  Add a free AI key in Settings
+                </button>
+              ) : null}
+
+              <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or try
+                <Button variant="ghost" size="icon" onClick={() => setSeed((value) => value + 1)} title="Shuffle suggestions" aria-label="Shuffle suggestions" className="size-6 rounded-md">
+                  <Shuffle className="size-3" />
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    onClick={() => handleSuggestion(s.instruction)}
+                    title={s.instruction}
+                    className="rounded-xl border border-border bg-card px-3 py-2.5 text-left text-[11px] leading-4 text-muted-foreground transition-colors hover:border-border-strong hover:bg-muted/40"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="group mt-auto flex items-center gap-2 border-t border-border pt-3 text-left text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={onOpenSettings}
+                title="Manage output languages in Settings"
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  Pseudocode{practicalLanguage ? ` · ${labelFor(practicalLanguage)}` : ''}{comparisonLanguages.map((id) => ` · ${labelFor(id)}`).join('')}
+                </span>
+                <SettingsIcon className="size-3 shrink-0 transition-transform group-hover:rotate-45" />
+              </button>
             </div>
           </div>
         )}
@@ -510,73 +507,6 @@ const styles = {
     color: 'var(--text-muted)',
     opacity: 0.7,
     cursor: 'not-allowed',
-  },
-
-  subtleLink: {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    textAlign: 'left',
-    padding: 0,
-    textDecoration: 'underline',
-    textDecorationColor: 'var(--border-strong)',
-    textUnderlineOffset: 3,
-  },
-
-  // Inline error card surfaced under the Generate button whenever the
-  // AI call fails (invalid key, overload, network) OR when we have no
-  // way to satisfy a novel prompt (no key + no template match). Kept
-  // monochrome to fit the rest of the panel; the AlertCircle icon is
-  // the only colour cue.
-  errorCard: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-    background: 'var(--bg-tertiary)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 6,
-    padding: '10px 12px',
-  },
-  errorRow: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  errorIcon: {
-    color: 'var(--danger-text)',
-    flexShrink: 0,
-    marginTop: 1,
-  },
-  errorMessage: {
-    flex: 1,
-    color: 'var(--text-primary)',
-    fontSize: 11.5,
-    lineHeight: 1.5,
-  },
-  errorClose: {
-    background: 'transparent',
-    border: 'none',
-    color: 'var(--text-muted)',
-    padding: 2,
-    borderRadius: 4,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  errorAction: {
-    alignSelf: 'flex-start',
-    display: 'inline-flex',
-    alignItems: 'center',
-    background: 'var(--bg-elevated)',
-    border: '1px solid var(--border-strong)',
-    color: 'var(--text-primary)',
-    fontSize: 11.5,
-    fontWeight: 500,
-    padding: '5px 10px',
-    borderRadius: 6,
-    cursor: 'pointer',
   },
 
   modeSwitch: {

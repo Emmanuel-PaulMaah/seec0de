@@ -2,6 +2,19 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Terminal as TermIcon, Trash2, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import { Loader } from './motion/loader';
 import { createGitSandbox } from '../engine/gitSandbox';
+import { useConfirm } from './ui/dialog';
+import {
+  PROMPT,
+  RUNNING_PLACEHOLDER,
+  SANDBOX_HISTORY_KEY,
+  readHistory,
+  writeHistory,
+  shortenPath,
+  terminalStyles as styles,
+  TerminalEntry,
+} from './terminalChrome';
+
+const LEGACY_SANDBOX_HISTORY_KEY = 'sandbox_history';
 
 const explanationMap = {
   'git init': 'Creates a new empty Git repository in this folder.',
@@ -47,17 +60,18 @@ function explainCommand(cmd) {
 let entryIdCounter = 0;
 
 export default function SandboxTerminal({ visible, onToggle, onCommandRun, resetKey }) {
+  const confirm = useConfirm();
   const [cwd, setCwd] = useState('~');
   const [entries, setEntries] = useState([]);
   const [input, setInput] = useState('');
   const [running, setRunning] = useState(false);
-  const [history, setHistory] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('sandbox_history') || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [history, setHistory] = useState(() =>
+    readHistory(SANDBOX_HISTORY_KEY, {
+      legacyKey: LEGACY_SANDBOX_HISTORY_KEY,
+      // The legacy list was appended to (oldest first); the shared convention
+      // is newest first.
+      legacyReversed: true,
+    }));
   const [historyIdx, setHistoryIdx] = useState(-1);
 
   const sandboxRef = useRef(null);
@@ -216,12 +230,9 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
     }
 
     setHistory(prev => {
-      const next = [...prev, trimmed];
-      const limited = next.slice(-200);
-      try {
-        localStorage.setItem('sandbox_history', JSON.stringify(limited));
-      } catch {}
-      return limited;
+      const next = [trimmed, ...prev].slice(0, 50);
+      writeHistory(SANDBOX_HISTORY_KEY, next);
+      return next;
     });
     setHistoryIdx(-1);
     setInput('');
@@ -235,23 +246,18 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
     }
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (history.length === 0) return;
-      const nextIdx = historyIdx === -1 ? history.length - 1 : Math.max(0, historyIdx - 1);
-      setHistoryIdx(nextIdx);
-      setInput(history[nextIdx] || '');
+      const next = Math.min(historyIdx + 1, history.length - 1);
+      if (history[next] !== undefined) {
+        setHistoryIdx(next);
+        setInput(history[next]);
+      }
       return;
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (historyIdx === -1) return;
-      const nextIdx = historyIdx + 1;
-      if (nextIdx >= history.length) {
-        setHistoryIdx(-1);
-        setInput('');
-      } else {
-        setHistoryIdx(nextIdx);
-        setInput(history[nextIdx] || '');
-      }
+      const next = historyIdx - 1;
+      if (next < 0) { setHistoryIdx(-1); setInput(''); }
+      else { setHistoryIdx(next); setInput(history[next]); }
       return;
     }
     if (e.key === 'l' && e.ctrlKey) {
@@ -266,176 +272,70 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
   return (
     <div
       ref={containerRef}
-      style={{
-        height: 260,
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--bg-secondary)',
-        borderTop: '1px solid var(--border)',
-        fontFamily: 'var(--font-mono, "SF Mono", Menlo, Consolas, monospace)',
-        fontSize: 13,
-        color: 'var(--text-primary)',
-        overflow: 'hidden',
-      }}
+      data-workspace-panel="sandbox-terminal"
+      tabIndex={-1}
+      aria-label="Git sandbox terminal"
+      style={styles.panel}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '6px 12px',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--bg-secondary)',
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <TermIcon size={14} style={{ opacity: 0.6 }} />
-          <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.8 }}>
-            Sandbox Terminal
-          </span>
-          <span style={{ fontSize: 11, opacity: 0.5 }}>
-            {cwd}
-          </span>
+      <div style={styles.header}>
+        <div style={styles.headerLeft}>
+          <TermIcon size={12} />
+          <span style={styles.headerLabel}>Git sandbox</span>
+          <span style={styles.cwd} title={cwd}>{shortenPath(cwd)}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={styles.headerActions}>
           <button
-            onClick={() => {
+            className="ui-icon-button"
+            style={styles.iconBtn}
+            onClick={async () => {
+              // Destructive: drops the command history AND resets the sandbox
+              // git repo back to a fresh one.
+              const ok = await confirm({
+                title: 'Clear & reset the sandbox?',
+                description: 'Command history and output will be erased and the practice Git repository will be recreated from scratch.',
+                confirmLabel: 'Clear & reset',
+                danger: true,
+              });
+              if (!ok) return;
               setEntries([]);
               sandboxRef.current = createGitSandbox();
               setCwd('~');
             }}
-            title="Clear & Reset"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary, #888)',
-              cursor: 'pointer',
-              padding: 4,
-              display: 'flex',
-              alignItems: 'center',
-            }}
+            title="Clear & reset"
+            aria-label="Clear and reset sandbox terminal"
           >
-            <Trash2 size={13} />
+            <Trash2 size={12} />
           </button>
           <button
+            className="ui-icon-button"
+            style={styles.iconBtn}
             onClick={onToggle}
-            title="Toggle terminal"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary, #888)',
-              cursor: 'pointer',
-              padding: 4,
-              display: 'flex',
-              alignItems: 'center',
-            }}
+            title="Hide terminal"
+            aria-label="Hide sandbox terminal"
           >
-            <ChevronDown size={14} />
+            <ChevronDown size={12} />
           </button>
         </div>
       </div>
 
       <div
         ref={scrollRef}
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '8px 12px',
-          background: 'var(--bg-secondary)',
-        }}
+        style={styles.scroll}
+        role="log"
+        aria-live="polite"
+        aria-label="Sandbox terminal output"
       >
         {entries.length === 0 && !running && (
-          <div style={{ opacity: 0.4, fontSize: 12, paddingTop: 4 }}>
-            Type a command to begin. Try <code>git init</code> or <code>help</code>.
+          <div style={styles.empty}>
+            Try <code style={styles.kbd}>git init</code>, <code style={styles.kbd}>git status</code> or <code style={styles.kbd}>help</code>.
           </div>
         )}
         {entries.map((entry) => (
-          <div key={entry.id} style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ color: 'var(--text-secondary, #888)', fontSize: 12 }}>
-                {entry.cwd || cwd}
-              </span>
-              <span style={{ color: 'var(--accent)', marginRight: 4 }}>{'$'}</span>
-              <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>
-                {entry.command}
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  padding: '1px 6px',
-                  borderRadius: 4,
-                  background: entry.status === 'ok'
-                    ? 'rgba(72,199,142,0.15)'
-                    : 'rgba(239,68,68,0.15)',
-                  color: entry.status === 'ok'
-                    ? 'var(--success, #48c78e)'
-                    : 'var(--danger)',
-                  marginLeft: 4,
-                  flexShrink: 0,
-                }}
-              >
-                {entry.exitCode}
-                {entry.duration != null && entry.duration > 0
-                  ? ` ${entry.duration}ms`
-                  : ''}
-              </span>
-            </div>
-            {entry.explanation && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-secondary, #888)',
-                  fontStyle: 'italic',
-                  marginTop: 2,
-                  paddingLeft: 22,
-                }}
-              >
-                {entry.explanation}
-              </div>
-            )}
-            {entry.stdout && (
-              <pre
-                style={{
-                  margin: '4px 0 0 22px',
-                  padding: '6px 8px',
-                  background: 'var(--bg-input, rgba(0,0,0,0.15))',
-                  borderRadius: 4,
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  color: 'var(--text-primary)',
-                  overflowX: 'auto',
-                }}
-              >
-                {entry.stdout}
-              </pre>
-            )}
-            {entry.stderr && (
-              <pre
-                style={{
-                  margin: '4px 0 0 22px',
-                  padding: '6px 8px',
-                  background: 'rgba(239,68,68,0.08)',
-                  borderRadius: 4,
-                  fontSize: 12,
-                  lineHeight: 1.5,
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                  color: 'var(--danger)',
-                  overflowX: 'auto',
-                }}
-              >
-                {entry.stderr}
-              </pre>
-            )}
-          </div>
+          <TerminalEntry key={entry.id} entry={entry} />
         ))}
         {running && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: 0.6 }}>
-            <Loader size={12} variant="spinner" />
-            <span style={{ fontSize: 12 }}>Running...</span>
+          <div style={styles.runningHint}>
+            <Loader size={11} variant="spinner" />
           </div>
         )}
       </div>
@@ -445,61 +345,39 @@ export default function SandboxTerminal({ visible, onToggle, onCommandRun, reset
           e.preventDefault();
           if (!running) runCommand(input);
         }}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px',
-          borderTop: '1px solid var(--border)',
-          background: 'var(--bg-secondary)',
-          flexShrink: 0,
-        }}
+        style={styles.inputRow}
       >
-        <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{'$'}</span>
+        <span style={styles.prompt}>{PROMPT}</span>
         <input
           ref={inputRef}
           type="text"
+          className="ui-focus-none"
           value={input}
           onChange={(e) => {
             setInput(e.target.value);
             setHistoryIdx(-1);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="          Type a git or shell command..."
+          placeholder={running
+            ? RUNNING_PLACEHOLDER
+            : 'Type a command…'}
           disabled={running}
-          style={{
-            flex: 1,
-            background: 'var(--bg-input, rgba(0,0,0,0.15))',
-            border: '1px solid var(--border)',
-            borderRadius: 4,
-            padding: '5px 8px',
-            fontSize: 13,
-            fontFamily: 'inherit',
-            color: 'var(--text-primary)',
-            outline: 'none',
-            opacity: running ? 0.5 : 1,
-          }}
+          spellCheck={false}
+          autoComplete="off"
+          style={{ ...styles.input, ...(running ? styles.inputDisabled : {}) }}
         />
         <button
           type="submit"
+          className="ui-primary-button"
           disabled={running || !input.trim()}
+          aria-label="Run command"
+          title="Run command (Enter)"
           style={{
-            background: running || !input.trim()
-              ? 'var(--bg-input, rgba(0,0,0,0.15))'
-              : 'var(--accent)',
-            border: 'none',
-            borderRadius: 4,
-            padding: '5px 10px',
-            color: 'var(--text-on-accent)',
-            cursor: running || !input.trim() ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            fontSize: 12,
-            opacity: running || !input.trim() ? 0.4 : 1,
+            ...styles.runBtn,
+            ...(running || !input.trim() ? styles.runBtnDisabled : {}),
           }}
         >
-          {running ? <Loader size={13} variant="spinner" /> : <Play size={13} />}
+          {running ? <Loader size={11} variant="spinner" /> : <Play size={11} />}
         </button>
       </form>
     </div>

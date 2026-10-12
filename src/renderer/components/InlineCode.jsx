@@ -89,7 +89,8 @@ const styles = {
     color: 'var(--keyword-highlight)',
     whiteSpace: 'nowrap',
     cursor: 'pointer',
-    outline: 'none',
+    // No inline outline: none — the chip is role="button", so the global
+    // [role="button"]:focus-visible ring in global.css must be able to win.
     transition: 'background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out)',
   },
   icon: {

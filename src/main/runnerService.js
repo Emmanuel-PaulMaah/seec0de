@@ -67,11 +67,34 @@ function whichTool(name) {
     child.stdout.on('data', (b) => { out += b.toString('utf8'); });
     child.on('close', (code) => {
       if (code !== 0) return resolve(null);
-      const first = out.split(/\r?\n/).map((s) => s.trim()).find(Boolean);
-      resolve(first || null);
+      const lines = out.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      if (!lines.length) return resolve(null);
+      // On Windows, npm-installed tools (tsx, ts-node) are .cmd shims that
+      // Node refuses to spawn directly since the CVE-2024-27980 fix
+      // (spawn throws ENOENT even though `where` finds them). Remember
+      // which names are shims so spawnTool routes them through cmd.exe.
+      if (IS_WINDOWS && lines.some((p) => /\.(cmd|bat)$/i.test(p))) {
+        windowsShims.add(name);
+      }
+      resolve(lines[0]);
     });
     child.on('error', () => resolve(null));
   });
+}
+
+// Windows can't exec npm's .cmd/.bat shims directly (see whichTool). Such
+// tools are routed through ComSpec: the command and each argument are
+// passed as separate argv entries so libuv quotes only the ones containing
+// spaces — hand-joining a single /c string mangles inner quotes (verified:
+// a joined command turned "C:\path with space\main.ts" into a broken
+// cwd-relative path). Everything else spawns exactly as before.
+const windowsShims = new Set();
+
+function spawnTool(cmd, args, opts) {
+  if (IS_WINDOWS && windowsShims.has(cmd)) {
+    return spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', cmd, ...args], opts);
+  }
+  return spawn(cmd, args, opts);
 }
 
 async function firstAvailable(names) {
@@ -90,7 +113,7 @@ function execProcess({ cmd, args, cwd, timeout, input }) {
     let stderr = '';
     let truncated = false;
 
-    const child = spawn(cmd, args, {
+    const child = spawnTool(cmd, args, {
       cwd,
       windowsHide: true,
       env: getSafeEnv(),
@@ -399,7 +422,7 @@ function execProcessLive({ cmd, args, cwd, timeout, sender, id, command, tool })
     let stderr = '';
     let truncated = false;
 
-    const child = spawn(cmd, args, {
+    const child = spawnTool(cmd, args, {
       cwd,
       windowsHide: true,
       env: getSafeEnv(),
@@ -712,7 +735,7 @@ async function probeVersion(tool) {
   // `cl` (MSVC) doesn't support --version and writes its banner to stderr.
   // We try a couple of common flags and capture whichever returns first.
   const tryFlag = (flag) => new Promise((resolve) => {
-    const child = spawn(tool, [flag], { windowsHide: true });
+    const child = spawnTool(tool, [flag], { windowsHide: true });
     let out = '';
     child.stdout?.on('data', (b) => { out += b.toString('utf8'); });
     child.stderr?.on('data', (b) => { out += b.toString('utf8'); });
@@ -726,7 +749,54 @@ async function probeVersion(tool) {
   return tryFlag('-v');
 }
 
+// Windows stores the live PATH in the registry; this process inherited
+// whatever existed at launch, so a tool installed minutes ago (winget,
+// npm -g, an installer's "Add to PATH") stays invisible until restart.
+// Merge any newly-added registry entries into process.env.PATH so both
+// "Re-check" and subsequent runs see them immediately. Best-effort: any
+// failure just leaves the inherited PATH in place.
+let lastPathRefreshAt = 0;
+function refreshWindowsPath() {
+  if (!IS_WINDOWS) return;
+  // Throttled: two `reg query` spawns cost ~100ms, and the terminal calls
+  // this before every command. 5s is plenty — an install takes minutes.
+  if (Date.now() - lastPathRefreshAt < 5000) return;
+  lastPathRefreshAt = Date.now();
+  try {
+    // Per-arg argv (not one joined /c string): the HKLM key path contains a
+    // space, and libuv quotes only the argv entries that need it.
+    const raw = require('child_process').execFileSync(
+      process.env.ComSpec || 'cmd.exe',
+      ['/d', '/s', '/c',
+        'reg', 'query', 'HKCU\\Environment', '/v', 'Path', '&',
+        'reg', 'query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment', '/v', 'Path'],
+      { windowsHide: true, encoding: 'utf8', timeout: 5000 },
+    );
+    const registryValues = Array.from(raw.matchAll(/Path\s+REG_EXPAND_SZ\s+([^\r\n]*)/gi))
+      .map((m) => m[1].trim())
+      .filter(Boolean);
+    if (registryValues.length === 0) return;
+    const dirs = Array.from(new Set(
+      registryValues
+        .flatMap((value) => value.split(';'))
+        .map((entry) => entry.trim().replace(/%([^%]+)%/g, (_all, name) => process.env[name] || ''))
+        .filter(Boolean),
+    ));
+    const current = new Set(String(process.env.PATH || '').split(';'));
+    const additions = dirs.filter((dir) => !current.has(dir));
+    if (additions.length > 0) {
+      process.env.PATH = [...additions, ...Array.from(current)].join(';');
+    }
+  } catch {
+    // Registry read failed (policy/AV) — probe with the inherited PATH.
+  }
+}
+
 async function checkToolchains() {
+  // A fresh install is invisible to the running process's PATH until the
+  // app restarts. On Windows, re-read the live registry PATH first so the
+  // "Re-check" button finds tools installed seconds ago.
+  refreshWindowsPath();
   const out = {};
   for (const [lang, candidates] of Object.entries(LANGUAGE_TOOLS)) {
     // eslint-disable-next-line no-await-in-loop
@@ -738,6 +808,22 @@ async function checkToolchains() {
     // eslint-disable-next-line no-await-in-loop
     const version = await probeVersion(tool);
     out[lang] = { installed: true, tool, version: version || null };
+  }
+  // winget ships with Windows 11 and recent Windows 10, but older Windows 10
+  // boxes don't have it — and every Windows install command in the guides
+  // starts with it. Report availability so the UI can offer the manual
+  // download path instead of typing a command that dies with
+  // "'winget' is not recognized".
+  if (IS_WINDOWS) {
+    const shim = await whichTool('winget');
+    if (!shim) {
+      out.winget = { available: false, version: null };
+    } else {
+      const version = await probeVersion('winget');
+      out.winget = { available: true, version: version || null };
+    }
+  } else {
+    out.winget = { available: true, version: null };
   }
   return out;
 }
@@ -791,4 +877,4 @@ function registerRunnerServiceHandlers() {
   });
 }
 
-module.exports = { registerRunnerServiceHandlers };
+module.exports = { registerRunnerServiceHandlers, refreshWindowsPath };

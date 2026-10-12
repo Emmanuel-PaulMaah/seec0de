@@ -64,6 +64,36 @@ export function hasApiKey() {
   return cachedHasKey;
 }
 
+// ---- key onboarding helpers -------------------------------------------
+// Gemini keys look like "AIza" + 30-ish word characters. The pattern is a
+// fast local gate so obviously-partial pastes never hit the network.
+const KEY_PATTERN = /^AIza[\w-]{10,}$/;
+
+export function looksLikeApiKey(text) {
+  return KEY_PATTERN.test(String(text || '').trim());
+}
+
+// Best-effort pull of a key out of arbitrary clipboard text, so the UI can
+// offer a one-click paste right after the user returns from AI Studio.
+export function keyFromClipboard(text) {
+  const match = /AIza[\w-]{10,}/.exec(String(text || ''));
+  return match ? match[0] : null;
+}
+
+// Format gate + live probe. Always resolves to
+// { ok: true } or { ok: false, reason: 'format'|'invalid'|'unreachable', message? }.
+export async function validateApiKey(key) {
+  const trimmed = String(key || '').trim();
+  if (!KEY_PATTERN.test(trimmed)) {
+    return { ok: false, reason: 'format', message: 'Keys start with "AIza" — make sure you copied the whole key.' };
+  }
+  try {
+    return await window.seecode.ai.validateKey(trimmed);
+  } catch {
+    return { ok: false, reason: 'unreachable', message: "Couldn't check the key right now. Check your internet and try again." };
+  }
+}
+
 export async function refreshHasApiKey() {
   try {
     cachedHasKey = !!(await window.seecode.ai.hasKey());

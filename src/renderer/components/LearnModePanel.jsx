@@ -769,6 +769,16 @@ const styles = {
     lineHeight: 1.35,
   },
   statusIdle: {
-    display: 'none',
+    // Never display:none — an unrendered element can't be an accessibility
+    // live region, so the first announcement would be lost. Hide it with the
+    // sr-only pattern instead: still in the a11y tree, invisible on screen.
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    padding: 0,
+    overflow: 'hidden',
+    clipPath: 'inset(50%)',
+    whiteSpace: 'nowrap',
+    border: 'none',
   },
 };

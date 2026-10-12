@@ -28,6 +28,8 @@ import { findProjectCheckpoint, nextProjectCheckpoint } from './data/projects';
 import { findBuildProject } from './data/buildProjects';
 import { evaluateStep } from './engine/buildVerifier';
 import { registerTerminal } from './engine/editorBridge';
+import { useConfirm } from './components/ui/dialog';
+import { useWorkspaceLayout, PANEL_LABELS } from './lib/hooks/useWorkspaceLayout';
 // Confetti burst when a build's final step completes.
 import confetti from 'canvas-confetti';
 
@@ -36,14 +38,6 @@ import confetti from 'canvas-confetti';
 // act as the *default* for fresh installs; once the user toggles, the
 // per-session keys take over so we don't fight their last action.
 const STORAGE_KEY_FOLDER             = 'seec0de.lastFolder';
-const STORAGE_KEY_TERMINAL_OPEN      = 'seec0de.terminalVisible';
-const STORAGE_KEY_INSTRUCTION_WIDTH  = 'seec0de.instructionWidth';
-const STORAGE_KEY_LEARN_GUIDE_WIDTH  = 'seec0de.learnGuideWidth';
-const STORAGE_KEY_PREVIEW_OPEN       = 'seec0de.previewVisible';
-const STORAGE_KEY_PREVIEW_WIDTH      = 'seec0de.previewWidth';
-const STORAGE_KEY_INSTRUCTION_COLLAPSED = 'seec0de.instructionCollapsed';
-const STORAGE_KEY_EXPLANATION_COLLAPSED = 'seec0de.explanationCollapsed';
-const STORAGE_KEY_EXPLANATION_WIDTH  = 'seec0de.explanationWidth';
 
 // Languages the runner service can actually execute. Mirrors runnerService.js.
 const RUNNABLE = new Set(['javascript', 'typescript', 'python', 'c', 'cpp', 'react']);
@@ -182,6 +176,7 @@ export default function App() {
   const [learnCatalogProjectId, setLearnCatalogProjectId] = useState(
     () => restoredLearningState().lesson?.projectId || null
   );
+  const confirm = useConfirm();
 
   useEffect(() => {
     const mode = settings.colorMode || 'dark';
@@ -211,10 +206,13 @@ export default function App() {
   // ---- generator state -------------------------------------------------
   const [selectedLanguages, setSelectedLanguages] = useState(() => deriveLanguages(loadSettings()));
   const [instruction, setInstruction] = useState('');
-  const [generatedCode, setGeneratedCode] = useState(() => {
-    const current = loadSettings();
-    return current.learnMode ? restoredLearningState(current).generatedCode : { pseudocode: '', code: {} };
-  });
+  // Workspace-only editor buffer (pseudocode + generated language tabs).
+  const [generatedCode, setGeneratedCode] = useState(() => ({ pseudocode: '', code: {} }));
+  // Learn Mode keeps its OWN editor buffer. Workspace code never lands
+  // here and lesson drafts never land in the Workspace buffer — the two
+  // modes are isolated by construction instead of being swapped through
+  // refs on every mode switch.
+  const [learnGeneratedCode, setLearnGeneratedCode] = useState(() => restoredLearningState().generatedCode);
   const [explanation, setExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   // Surfaced to InstructionPanel as a small inline card so the learner
@@ -245,9 +243,6 @@ export default function App() {
     () => loadSettings().conceptNotes?.[restoredLearningState().lesson?.id] || ''
   );
   const [learnAnnouncement, setLearnAnnouncement] = useState('');
-  const learnDraftRef = useRef(restoredLearningState().generatedCode);
-  const workspaceGeneratedCodeRef = useRef({ pseudocode: '', code: {} });
-
   // Sandbox command history for Git lessons — tracks all commands and their
   // output so they can be verified against sourceChecks.
   const sandboxCommandsRef = useRef([]);
@@ -311,8 +306,7 @@ export default function App() {
     if (lesson?.language === 'git') setPreviewVisible(false);
     if (lesson) {
       const lessonCode = { pseudocode: '', code: { [lesson.language || 'javascript']: lesson.starterCode || '' } };
-      learnDraftRef.current = lessonCode;
-      setGeneratedCode(lessonCode);
+      setLearnGeneratedCode(lessonCode);
       setActiveGeneratedTab(lesson.language || 'javascript');
       setActivePath(null);
       setInstruction('');
@@ -322,8 +316,7 @@ export default function App() {
   const handleResetLessonCode = useCallback(() => {
     if (!activeLesson) return;
     const lessonCode = { pseudocode: '', code: { [activeLesson.language || 'javascript']: activeLesson.starterCode || '' } };
-    learnDraftRef.current = lessonCode;
-    setGeneratedCode(lessonCode);
+    setLearnGeneratedCode(lessonCode);
     setActiveGeneratedTab(activeLesson.language || 'javascript');
     setLessonStatus('idle');
     setLessonVerification(null);
@@ -441,46 +434,21 @@ export default function App() {
     activePath: null,
   });
   // ---- panel visibility ------------------------------------------------
-  const [terminalVisible, setTerminalVisible] = useState(() => initialPanelVisible(
-    STORAGE_KEY_TERMINAL_OPEN, loadSettings().showTerminal,
-  ));
-  // Live preview is the headline feature post-v2.4 — defaults ON unless
-  // the user has explicitly hidden it before.
-  const [previewVisible, setPreviewVisible] = useState(() => initialPanelVisible(
-    STORAGE_KEY_PREVIEW_OPEN, true,
-  ));
-  const [previewWidth, setPreviewWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(STORAGE_KEY_PREVIEW_WIDTH));
-    if (Number.isFinite(saved) && saved > 0) return Math.max(300, Math.min(680, saved));
-    return 440;
-  });
-  // Sidebars default expanded but can be collapsed to a 32 px rail to
-  // give the editor + preview more room.
-  const [instructionCollapsed, setInstructionCollapsed] = useState(
-    () => localStorage.getItem(STORAGE_KEY_INSTRUCTION_COLLAPSED) === '1'
-  );
-
-  const [instructionWidth, setInstructionWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(STORAGE_KEY_INSTRUCTION_WIDTH));
-    if (Number.isFinite(saved)) return Math.max(240, Math.min(520, saved));
-    return 320;
-  });
-
-  const [learnGuideWidth, setLearnGuideWidth] = useState(() => {
-    const saved = Number(localStorage.getItem(STORAGE_KEY_LEARN_GUIDE_WIDTH));
-    if (Number.isFinite(saved)) return Math.max(300, Math.min(640, saved));
-    return 400;
-  });
-
-  const [explanationCollapsed, setExplanationCollapsed] = useState(
-    () => localStorage.getItem(STORAGE_KEY_EXPLANATION_COLLAPSED) === '1'
-  );
-
-  const [explanationWidth, setExplanationWidth] = useState(() => {
-  const saved = Number(localStorage.getItem(STORAGE_KEY_EXPLANATION_WIDTH));
-  if (Number.isFinite(saved)) return Math.max(240, Math.min(520, saved));
-  return 320;
-});
+  // All panel visibility/width state, the editor width budget and Ctrl+.
+  // focus mode live in one hook (lib/hooks/useWorkspaceLayout.js).
+  const layout = useWorkspaceLayout(loadSettings().showTerminal);
+  const {
+    terminalVisible, setTerminalVisible,
+    // Live preview is the headline feature post-v2.4 — defaults ON unless
+    // the user has explicitly hidden it before.
+    previewVisible, setPreviewVisible, previewWidth, setPreviewWidth,
+    // Sidebars default expanded but can be collapsed to a 32 px rail to
+    // give the editor + preview more room.
+    instructionCollapsed, setInstructionCollapsed, instructionWidth, setInstructionWidth,
+    learnGuideWidth, setLearnGuideWidth,
+    explanationCollapsed, setExplanationCollapsed, explanationWidth, setExplanationWidth,
+    toggleFocusMode,
+  } = layout;
 
   // ---- runner state ----------------------------------------------------
   const terminalApi = useRef(null);
@@ -512,37 +480,7 @@ export default function App() {
     }
   }, [rootPath]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_TERMINAL_OPEN, terminalVisible ? '1' : '0');
-  }, [terminalVisible]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREVIEW_OPEN, previewVisible ? '1' : '0');
-  }, [previewVisible]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREVIEW_WIDTH, String(previewWidth));
-  }, [previewWidth]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_INSTRUCTION_COLLAPSED, instructionCollapsed ? '1' : '0');
-  }, [instructionCollapsed]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_INSTRUCTION_WIDTH, String(instructionWidth));
-  }, [instructionWidth]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_LEARN_GUIDE_WIDTH, String(learnGuideWidth));
-  }, [learnGuideWidth]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXPLANATION_COLLAPSED, explanationCollapsed ? '1' : '0');
-  }, [explanationCollapsed]);
-
-  useEffect(() => {
-  localStorage.setItem(STORAGE_KEY_EXPLANATION_WIDTH, String(explanationWidth));
-}, [explanationWidth]);
+  // Panel visibility/width persistence moved into useWorkspaceLayout.
 
   // Learn Mode state is saved with the active profile. Debouncing keeps
   // editor keystrokes responsive while still making drafts crash-resilient.
@@ -550,7 +488,9 @@ export default function App() {
     if (!settings.activeProfileId) return undefined;
     const ownerProfileId = settings.activeProfileId;
     const language = activeLesson?.language || 'javascript';
-    const savedLessonCode = learnMode ? generatedCode : learnDraftRef.current;
+    // The lesson draft always lives in the Learn buffer. The Workspace
+    // buffer is never persisted as a draft (and vice versa).
+    const savedLessonCode = learnGeneratedCode;
     const learningSession = activeLesson ? {
       lessonId: activeLesson.id,
       phase: learnPhase,
@@ -574,7 +514,7 @@ export default function App() {
     learnMode,
     activeLesson?.id,
     activeLesson?.language,
-    generatedCode,
+    learnGeneratedCode,
     learnPhase,
     lessonAttempts,
     revealedHints,
@@ -617,6 +557,13 @@ export default function App() {
         return;
       }
 
+      // Ctrl+. toggles Focus mode: the editor alone, side panels hidden.
+      if (!showHome && (e.ctrlKey || e.metaKey) && e.key === '.') {
+        e.preventDefault();
+        toggleFocusMode();
+        return;
+      }
+
       if (!showHome && e.key === 'F6' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const panels = Array.from(document.querySelectorAll('[data-workspace-panel]'))
           .filter((panel) => panel instanceof HTMLElement && panel.offsetParent !== null);
@@ -647,7 +594,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showHome, learnMode]);
+  }, [showHome, learnMode, toggleFocusMode]);
 
   // ---- file actions ----------------------------------------------------
   const handlePickFolder = useCallback(async () => {
@@ -655,11 +602,23 @@ export default function App() {
     if (picked) setRootPath(picked);
   }, []);
 
-  const handleCloseFolder = useCallback(() => {
+  const handleCloseFolder = useCallback(async () => {
+    // Destructive: tears down every open tab. Buffers that haven't been
+    // auto-saved yet go with them, so ask first.
+    const hasUnsaved = openFiles.some((f) => f.dirty);
+    const ok = await confirm({
+      title: 'Close this folder?',
+      description: hasUnsaved
+        ? 'Some files have unsaved changes — closing the folder discards them. Your files on disk are untouched.'
+        : 'All open tabs will close. You can reopen the folder any time.',
+      confirmLabel: 'Close folder',
+      danger: hasUnsaved,
+    });
+    if (!ok) return;
     setRootPath(null);
     setOpenFiles([]);
     setActivePath(null);
-  }, []);
+  }, [openFiles, confirm]);
 
   const handleOpenFile = useCallback(async (filePath) => {
     // If the file is already open, just activate the tab — never re-read
@@ -707,6 +666,23 @@ export default function App() {
       return next;
     });
   }, [activePath]);
+
+  // Tab-close path: confirm before discarding edits the debounced autosave
+  // hasn't written yet. (File deletion reuses handleCloseFile raw — the file
+  // is already gone from disk and FileExplorer confirmed that itself.)
+  const handleCloseFileWithConfirm = useCallback(async (filePath) => {
+    const file = openFiles.find((f) => f.path === filePath);
+    if (file?.dirty) {
+      const ok = await confirm({
+        title: 'Close file with unsaved changes?',
+        description: `Changes to ${basename(filePath)} haven\u2019t been saved to disk yet and will be lost.`,
+        confirmLabel: 'Close',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    handleCloseFile(filePath);
+  }, [openFiles, confirm, handleCloseFile]);
 
   const handleFileContentChange = useCallback((filePath, newContent) => {
     setOpenFiles((prev) => prev.map((f) =>
@@ -901,7 +877,7 @@ export default function App() {
     if (!isTemplate) {
       if (!keyPresent) {
         setAiError({
-          message: 'Add a free Gemini key in Settings to use AI for custom prompts. Or try one of the suggestion chips above!',
+          message: 'Add a free AI key in Settings to use AI for custom prompts. Or try one of the suggestion chips above!',
           kind: 'no-key',
         });
         return;
@@ -946,7 +922,7 @@ export default function App() {
   // editing it right now), falling back to the on-disk project file.
   const resolveLessonFile = useCallback(async (file) => {
     if (activeLesson?.kind === 'project-checkpoint' && file === activeLesson.file) {
-      const draft = generatedCode.code?.[activeLesson.language || 'javascript'];
+      const draft = learnGeneratedCode.code?.[activeLesson.language || 'javascript'];
       if (typeof draft === 'string' && draft.trim()) return draft;
     }
     if (!learnProjectDir) return null;
@@ -956,7 +932,7 @@ export default function App() {
     } catch {
       return null; // file not created yet
     }
-  }, [activeLesson, learnProjectDir, generatedCode]);
+  }, [activeLesson, learnProjectDir, learnGeneratedCode]);
 
   const currentBuildStepInfo = useCallback(() => {
     const session = buildSessionRef.current;
@@ -1301,7 +1277,7 @@ export default function App() {
     if (!inLessonMode || !learnProjectDir || activeLesson?.kind !== 'project-checkpoint') return undefined;
     const file = activeLesson.file;
     if (!file) return undefined;
-    const content = generatedCode.code?.[activeLesson.language || 'javascript'] || '';
+    const content = learnGeneratedCode.code?.[activeLesson.language || 'javascript'] || '';
     const timer = setTimeout(async () => {
       try {
         await window.seecode.fs.createDir(learnProjectDir);
@@ -1311,7 +1287,7 @@ export default function App() {
       }
     }, 600);
     return () => clearTimeout(timer);
-  }, [inLessonMode, learnProjectDir, activeLesson?.kind, activeLesson?.language, activeLesson?.file, generatedCode]);
+  }, [inLessonMode, learnProjectDir, activeLesson?.kind, activeLesson?.language, activeLesson?.file, learnGeneratedCode]);
 
   // Live content check: as the learner edits the checkpoint's file, re-run
   // its content checks (debounced) so the guide shows "not yet — this is
@@ -1326,7 +1302,7 @@ export default function App() {
       setLessonCheck({ stepId: checkpoint.id, pass: result.pass, details: result.details });
     }, 700);
     return () => clearTimeout(timer);
-  }, [inLessonMode, activeLesson, resolveLessonFile, generatedCode]);
+  }, [inLessonMode, activeLesson, resolveLessonFile, learnGeneratedCode]);
 
   // Clear any stale AI-error card the moment the learner edits the
   // instruction. Keeps the panel from showing a red banner that refers
@@ -1337,13 +1313,18 @@ export default function App() {
   }, []);
 
   const handleCodeChange = useCallback((tab, value) => {
-    setGeneratedCode((prev) => {
-      const next = tab === 'pseudocode'
-        ? { ...prev, pseudocode: value }
-        : { ...prev, code: { ...prev.code, [tab]: value } };
-      if (inLessonMode) learnDraftRef.current = next;
-      return next;
-    });
+    // Route edits to the buffer that owns the visible editor: lesson
+    // edits go to the Learn buffer, everything else to the Workspace one.
+    // This is what keeps workspace code out of the Learn editor (and
+    // lesson drafts out of the Workspace).
+    const patch = (prev) => (tab === 'pseudocode'
+      ? { ...prev, pseudocode: value }
+      : { ...prev, code: { ...prev.code, [tab]: value } });
+    if (inLessonMode) {
+      setLearnGeneratedCode(patch);
+    } else {
+      setGeneratedCode(patch);
+    }
   }, [inLessonMode]);
 
   // Single unified Explain flow. If we have an API key AND we're online,
@@ -1396,9 +1377,12 @@ export default function App() {
 
   // ---- live preview source --------------------------------------------
   // Whatever the editor is showing right now is also what the live preview
-  // renders. Computed from authoritative state (openFiles + generatedCode +
-  // activePath + activeGeneratedTab) so updates flow naturally as the user
-  // types — no extra plumbing through CodePanel.
+  // renders. Computed from authoritative state (openFiles + the active
+  // editor buffer + activePath + activeGeneratedTab) so updates flow
+  // naturally as the user types — no extra plumbing through CodePanel.
+  // The visible buffer is mode-dependent: Learn shows its own draft, the
+  // Workspace shows the generator output / open file.
+  const editorCode = inLessonMode ? learnGeneratedCode : generatedCode;
   const livePreview = useMemo(() => {
     if (!inLessonMode && activePath) {
       const file = openFiles.find((f) => f.path === activePath);
@@ -1415,14 +1399,14 @@ export default function App() {
     const tabs = inLessonMode ? [activeLesson.language || 'javascript'] : ['pseudocode', ...effectiveLanguages];
     const tab = tabs.includes(activeGeneratedTab) ? activeGeneratedTab : tabs[0];
     if (tab === 'pseudocode') {
-      return { code: generatedCode.pseudocode || '', language: 'plaintext', filename: null };
+      return { code: editorCode.pseudocode || '', language: 'plaintext', filename: null };
     }
     return {
-      code: (generatedCode.code || {})[tab] || '',
+      code: (editorCode.code || {})[tab] || '',
       language: tab,
       filename: DEFAULT_FILENAME_FOR_LANG[tab] || null,
     };
-  }, [activePath, openFiles, activeGeneratedTab, effectiveLanguages, generatedCode, activeLesson, inLessonMode]);
+  }, [activePath, openFiles, activeGeneratedTab, effectiveLanguages, editorCode, activeLesson, inLessonMode]);
 
   // ---- run code --------------------------------------------------------
   // Runs are interactive: the process starts, stdout/stderr streams live
@@ -1725,10 +1709,9 @@ export default function App() {
     setRevealedHints(restored.revealedHints);
     setActiveActivityId(restored.activityId);
     setActiveReflection(restored.reflection);
-    learnDraftRef.current = restored.generatedCode;
-    workspaceGeneratedCodeRef.current = { pseudocode: '', code: {} };
+    setLearnGeneratedCode(restored.generatedCode);
+    setGeneratedCode({ pseudocode: '', code: {} });
     workspaceCodePanelViewRef.current = { activeGeneratedTab: 'pseudocode', activePath: null };
-    setGeneratedCode(nextSettings.learnMode ? restored.generatedCode : workspaceGeneratedCodeRef.current);
     setActiveGeneratedTab(nextSettings.learnMode && restored.lesson ? restored.lesson.language : 'pseudocode');
     setActivePath(null);
     setRunnerOutput(null);
@@ -1828,12 +1811,12 @@ export default function App() {
   // terminal open (so the user actually sees it work), then pushes the
   // install command into it as if they had typed it. Walks them through
   // the link between Settings and the Terminal.
-  const handleRunInTerminal = useCallback((command) => {
+  const handleRunInTerminal = useCallback((command, options) => {
     if (!command) return;
     setTerminalVisible(true);
     // Give the terminal a tick to mount before we drive it.
     setTimeout(() => {
-      terminalApi.current?.runCommand?.(command);
+      terminalApi.current?.runCommand?.(command, options);
     }, 60);
   }, []);
 
@@ -1977,9 +1960,10 @@ const beginExplanationResize = useCallback((event) => {
     setRunLoading(false);
     setRunnerOutput(null);
     if (enteringLearnMode) {
-      workspaceGeneratedCodeRef.current = generatedCode;
+      // The two modes now own separate code buffers, so there is nothing
+      // to swap in or out here — only the *view* (active tab + open file)
+      // is parked and restored around the switch.
       workspaceCodePanelViewRef.current = { activeGeneratedTab, activePath };
-      setGeneratedCode(activeLesson ? learnDraftRef.current : { pseudocode: '', code: {} });
       setActiveGeneratedTab(activeLesson?.language || 'pseudocode');
       setActivePath(null);
       if (!activeLesson) {
@@ -1988,8 +1972,6 @@ const beginExplanationResize = useCallback((event) => {
       }
       setLearnAnnouncement(activeLesson ? `${activeLesson.title} resumed.` : 'Learn opened. Choose a course.');
     } else {
-      if (activeLesson) learnDraftRef.current = generatedCode;
-      setGeneratedCode(workspaceGeneratedCodeRef.current);
       setActiveGeneratedTab(workspaceCodePanelViewRef.current.activeGeneratedTab);
       setActivePath(workspaceCodePanelViewRef.current.activePath);
     }
@@ -2005,10 +1987,12 @@ const beginExplanationResize = useCallback((event) => {
       explanationCollapsed,
     };
     handleModeChange('workspace');
-    setTerminalVisible(true);
-    setPreviewVisible(true);
-    setInstructionCollapsed(false);
-    setExplanationCollapsed(false);
+    // Forced, unguarded: the tour needs every panel open regardless of the
+    // editor width budget, and must not trigger "moved aside" toasts.
+    layout.force.setTerminalVisible(true);
+    layout.force.setPreviewVisible(true);
+    layout.force.setInstructionCollapsed(false);
+    layout.force.setExplanationCollapsed(false);
     setShowWorkspaceTour(true);
   }
 
@@ -2032,7 +2016,19 @@ const beginExplanationResize = useCallback((event) => {
     saveLearningLibrary({ codePostcards: [postcard, ...(settings.codePostcards || [])] });
   };
 
-  const handleDeletePostcard = (postcardId) => {
+  const handleDeletePostcard = async (postcardId) => {
+    // Destructive: the captured code + explanation are removed from the
+    // learning library with no undo.
+    const postcard = (settings.codePostcards || []).find((p) => p.id === postcardId);
+    const ok = await confirm({
+      title: 'Delete this postcard?',
+      description: postcard
+        ? `"${postcard.title}" and its captured code will be removed from your library.`
+        : 'The postcard and its captured code will be removed from your library.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
     saveLearningLibrary({ codePostcards: (settings.codePostcards || []).filter((postcard) => postcard.id !== postcardId) });
   };
 
@@ -2044,7 +2040,16 @@ const beginExplanationResize = useCallback((event) => {
     });
   };
 
-  const handleDismissReminder = (reminderId) => {
+  const handleDismissReminder = async (reminderId) => {
+    // Destructive: dismissing sticks (no unsnooze), so confirm before the
+    // reminder disappears from the pulse bar.
+    const ok = await confirm({
+      title: 'Dismiss this reminder?',
+      description: 'It will be hidden for good — you can turn reminders back on in Settings, but this one won\u2019t come back.',
+      confirmLabel: 'Dismiss',
+      danger: true,
+    });
+    if (!ok) return;
     saveLearningLibrary({
       learningReminders: (settings.learningReminders || []).map((reminder) => reminder.id === reminderId
         ? { ...reminder, dismissedAt: new Date().toISOString() }
@@ -2282,7 +2287,7 @@ const beginExplanationResize = useCallback((event) => {
             aria-label="Code editor panel"
           >
             <CodePanel
-              generatedCode={generatedCode}
+              generatedCode={inLessonMode ? learnGeneratedCode : generatedCode}
               selectedLanguages={effectiveLanguages}
               colorMode={settings.colorMode || 'dark'}
               editorStickyScroll={settings.editorStickyScroll !== false}
@@ -2293,7 +2298,7 @@ const beginExplanationResize = useCallback((event) => {
               openFiles={learnMode ? [] : openFiles}
               activePath={learnMode ? null : activePath}
               onActivatePath={setActivePath}
-              onCloseFile={handleCloseFile}
+              onCloseFile={handleCloseFileWithConfirm}
               onFileContentChange={handleFileContentChange}
               onRunCode={handleRunCode}
               runLoading={runLoading}
@@ -2403,6 +2408,14 @@ const beginExplanationResize = useCallback((event) => {
             apiRef={terminalApi}
           />
         )}
+
+        {layout.movedAside && (
+          <div role="status" style={styles.layoutToast}>
+            <span>{PANEL_LABELS[layout.movedAside.panel]} moved aside to keep the editor usable</span>
+            <button type="button" onClick={layout.restoreMovedAside} style={styles.layoutToastAction}>Restore</button>
+            <button type="button" onClick={layout.dismissMovedAside} aria-label="Dismiss" style={styles.layoutToastDismiss}>×</button>
+          </div>
+        )}
       </div>
       )}
 
@@ -2475,7 +2488,7 @@ function describeAiError(err) {
   const raw = err?.message ? String(err.message) : String(err ?? '');
   if (/no api key/i.test(raw)) {
     return {
-      message: 'No Gemini key found. Add one in Settings to use AI for custom prompts.',
+      message: 'No AI key found. Add one in Settings to use AI for custom prompts.',
       kind: 'no-key',
     };
   }
@@ -2613,13 +2626,6 @@ function computeInitialGate() {
   return true;
 }
 
-// Read the per-session "is this panel open" key, falling back to the
-// settings default for fresh installs.
-function initialPanelVisible(storageKey, defaultFromSettings) {
-  const saved = localStorage.getItem(storageKey);
-  if (saved === null) return !!defaultFromSettings;
-  return saved === '1';
-}
 
 const styles = {
   container: {
@@ -2674,5 +2680,42 @@ verticalResizeHandle: {
   cursor: 'col-resize',
   background: 'transparent',
   borderRight: '1px solid var(--border)',
+},
+layoutToast: {
+  position: 'fixed',
+  left: '50%',
+  bottom: 18,
+  transform: 'translateX(-50%)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 10px 8px 14px',
+  borderRadius: 8,
+  border: '1px solid var(--border)',
+  background: 'var(--bg-secondary)',
+  color: 'var(--text-primary)',
+  fontSize: 12,
+  zIndex: 100,
+  boxShadow: 'var(--shadow-lg)',
+},
+layoutToastAction: {
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--accent)',
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+  padding: '2px 4px',
+  borderRadius: 4,
+},
+layoutToastDismiss: {
+  border: 'none',
+  background: 'transparent',
+  color: 'var(--text-muted)',
+  fontSize: 14,
+  lineHeight: 1,
+  cursor: 'pointer',
+  padding: '2px 4px',
+  borderRadius: 4,
 },
 };

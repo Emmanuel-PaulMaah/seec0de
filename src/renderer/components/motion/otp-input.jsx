@@ -1,4 +1,3 @@
-"use client";
 // Adapted from beui.dev/components/blocks/otp-input for this JSX renderer.
 
 import { AnimatePresence, LayoutGroup, animate, motion, useReducedMotion } from "motion/react";

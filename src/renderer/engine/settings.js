@@ -156,6 +156,20 @@ export const TOOLCHAIN_GUIDES = Object.freeze({
       macos: 'brew install python',
       linux: 'sudo apt install python3 python3-pip',
     },
+    // winget-free path for Windows boxes without the App Installer package
+    // (older Windows 10). Shown by Settings -> Toolchains when the probe
+    // reports winget missing.
+    fallback: {
+      win: {
+        url: 'https://www.python.org/downloads/',
+        urlLabel: 'Download from python.org',
+        steps: [
+          { text: 'Download and run the installer from python.org.' },
+          { text: 'Tick "Add python.exe to PATH" on the first screen.' },
+          { text: 'Click Install now and wait for it to finish.' },
+        ],
+      },
+    },
     verify: {
       win: [
         'where.exe py',
@@ -193,6 +207,18 @@ export const TOOLCHAIN_GUIDES = Object.freeze({
       win: 'winget install --id OpenJS.NodeJS.LTS -e --source winget --accept-package-agreements --accept-source-agreements',
       macos: 'brew install node',
       linux: 'sudo apt install nodejs npm',
+    },
+    // winget-free path for Windows boxes without the App Installer package.
+    fallback: {
+      win: {
+        url: 'https://nodejs.org/en/download',
+        urlLabel: 'Download from nodejs.org',
+        steps: [
+          { text: 'Download the LTS installer from nodejs.org and run it.' },
+          { text: 'Keep the defaults — the installer adds Node.js to PATH itself.' },
+          { text: 'Wait for the installer to finish.' },
+        ],
+      },
     },
     verify: {
       win: [
@@ -273,6 +299,18 @@ export const TOOLCHAIN_GUIDES = Object.freeze({
       macos: 'xcode-select --install',
       linux: 'sudo apt install build-essential',
     },
+    // winget-free path for Windows boxes without the App Installer package.
+    fallback: {
+      win: {
+        url: 'https://www.msys2.org/',
+        urlLabel: 'Download from msys2.org',
+        steps: [
+          { text: 'Download and run the installer from msys2.org. Keep the default C:\\msys64 folder.' },
+          { text: 'Finish the installer, then run this in the seec0de terminal:' },
+          { code: '& "C:\\msys64\\usr\\bin\\bash.exe" -lc "pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc"' },
+        ],
+      },
+    },
     verify: {
       win: [
         'where.exe gcc',
@@ -310,6 +348,18 @@ export const TOOLCHAIN_GUIDES = Object.freeze({
       win: 'winget install --id MSYS2.MSYS2 -e --source winget --accept-package-agreements --accept-source-agreements; & "C:\\msys64\\usr\\bin\\bash.exe" -lc "pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc"',
       macos: 'xcode-select --install',
       linux: 'sudo apt install build-essential',
+    },
+    // winget-free path for Windows boxes without the App Installer package.
+    fallback: {
+      win: {
+        url: 'https://www.msys2.org/',
+        urlLabel: 'Download from msys2.org',
+        steps: [
+          { text: 'Download and run the installer from msys2.org. Keep the default C:\\msys64 folder.' },
+          { text: 'Finish the installer, then run this in the seec0de terminal:' },
+          { code: '& "C:\\msys64\\usr\\bin\\bash.exe" -lc "pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc"' },
+        ],
+      },
     },
     verify: {
       win: [

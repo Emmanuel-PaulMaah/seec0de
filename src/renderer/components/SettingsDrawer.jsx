@@ -4,7 +4,7 @@ import {
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
   Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
-  Volume2, VolumeX,
+  Volume2, VolumeX, ClipboardPaste,
 } from 'lucide-react';
 import { Loader } from './motion/loader';
 import { motion, useReducedMotion } from 'motion/react';
@@ -26,6 +26,7 @@ import {
   clearProfilePin,
 } from '../engine/settings';
 import { ProfileFields } from './ProfileForm';
+import { keyFromClipboard, looksLikeApiKey, validateApiKey } from '../engine/aiService';
 import { Drawer } from './motion/drawer';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
 import { useConfirm } from './ui/dialog';
@@ -66,6 +67,8 @@ export default function SettingsDrawer({
   const [hasKey, setHasKey]     = useState(false);
   const [showKey, setShowKey]   = useState(false);
   const [keySaved, setKeySaved] = useState(false);
+  const [keyChecking, setKeyChecking] = useState(false);
+  const [keyError, setKeyError] = useState(null);
   const [notificationPermission, setNotificationPermission] = useState(() => getNotificationPermission());
   const [expandedSection, setExpandedSection] = useState('appearance');
   const update = useUpdateStatus();
@@ -138,6 +141,20 @@ export default function SettingsDrawer({
       setApiKey(hasKey ? KEY_MASK : '');
       return;
     }
+    // Validate before saving: a local format gate, then a live probe so a
+    // wrong key is rejected here — not on the learner's first AI action.
+    if (!looksLikeApiKey(trimmed)) {
+      setKeyError('Keys start with “AIza” — make sure you copied the whole key.');
+      return;
+    }
+    setKeyChecking(true);
+    setKeyError(null);
+    const result = await validateApiKey(trimmed);
+    setKeyChecking(false);
+    if (!result.ok) {
+      setKeyError(result.message || "Google didn't accept that key. Get a fresh one and try again.");
+      return;
+    }
     await setSettingsApiKey(trimmed);
     const exists = await window.seecode.ai.hasKey();
     setHasKey(exists);
@@ -148,7 +165,7 @@ export default function SettingsDrawer({
 
   const handleRemoveKey = async () => {
     const ok = await confirm({
-      title: 'Remove your Gemini API key?',
+      title: 'Remove your AI key?',
       description: 'AI generation and explanations will switch to offline mode until you add a key again.',
       confirmLabel: 'Remove Key',
       danger: true,
@@ -165,6 +182,23 @@ export default function SettingsDrawer({
   // placeholder bullets.
   const handleKeyFocus = () => {
     if (apiKey === KEY_MASK) setApiKey('');
+  };
+
+  // One-click fill from the clipboard (the user usually just came back
+  // from AI Studio with the key on their clipboard).
+  const handlePasteKey = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const key = keyFromClipboard(text);
+      if (key) {
+        setApiKey(key);
+        setKeyError(null);
+      } else {
+        setKeyError('No AI key found on the clipboard. Copy the key first, then click Paste.');
+      }
+    } catch {
+      setKeyError("Couldn't read the clipboard — paste with Ctrl+V instead.");
+    }
   };
 
   const handleRerun = () => {
@@ -271,17 +305,27 @@ export default function SettingsDrawer({
               );
               if (id === 'ai') return (
                 <Section key={id} {...props} icon={<Sparkles size={13} />} title="AI">
-                  <Field label="Gemini API key" hint="A free key from Google AI Studio. Needed for AI code generation and error explanations. Stored on this device only.">
+                  <Field label="AI key" hint="A free key from Google AI Studio. Needed for AI code generation and error explanations. Stored on this device only.">
                     <div style={styles.keyRow}>
-                      <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={(e) => setApiKey(e.target.value)} onFocus={handleKeyFocus} placeholder="AIza…" style={styles.input} autoComplete="off" spellCheck={false} />
+                      <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={(e) => { setApiKey(e.target.value); setKeyError(null); }} onFocus={handleKeyFocus} placeholder="AIza…" style={styles.input} autoComplete="off" spellCheck={false} />
+                      <button style={styles.iconBtn} onClick={handlePasteKey} title="Paste key from clipboard" aria-label="Paste key from clipboard">
+                        <ClipboardPaste size={14} />
+                      </button>
                       <button style={styles.iconBtn} onClick={() => setShowKey((v) => !v)} title={showKey ? 'Hide key' : 'Show key'} aria-label={showKey ? 'Hide API key' : 'Show API key'}>
                         {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
-                      <button style={{ ...styles.primaryBtn, minWidth: 64 }} onClick={handleSaveKey}>
+                      <button style={{ ...styles.primaryBtn, minWidth: 64 }} onClick={handleSaveKey} aria-live="polite">
                         {keySaved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save'}
                       </button>
                     </div>
                     <a style={styles.link} href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Get a free key →</a>
+                    <p style={styles.fieldHint} aria-live="polite">
+                      {keyChecking && 'Checking the key with Google…'}
+                      {!keyChecking && keySaved && keyError == null && 'Key saved.'}
+                      {!keyChecking && keyError && (
+                        <span style={{ color: 'var(--danger-text, #e5484d)' }} role="alert">{keyError}</span>
+                      )}
+                    </p>
                     {hasKey && (
                       <button type="button" style={styles.dangerLinkBtn} onClick={handleRemoveKey}>Remove key</button>
                     )}
@@ -319,7 +363,7 @@ export default function SettingsDrawer({
           })()}
 
           <p style={styles.footnote}>
-            Settings live on this device only. With a Gemini key added, your prompts and code are sent to Google to generate AI results.
+            Settings live on this device only. With an AI key added, your prompts and code are sent to Google to generate AI results.
           </p>
         </div>
     </Drawer>
@@ -486,7 +530,15 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
     }
   };
 
-  const handleRemovePin = () => {
+  const handleRemovePin = async () => {
+    // Destructive: the profile stops being PIN-protected on this device.
+    const ok = await confirm({
+      title: 'Remove the PIN lock?',
+      description: 'This profile will open without a PIN until you set one again.',
+      confirmLabel: 'Remove PIN',
+      danger: true,
+    });
+    if (!ok) return;
     clearProfilePin(activeId);
     setHasPin(false);
     setPinOpen(false);
@@ -505,6 +557,7 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
         style={{ ...styles.primaryBtn, alignSelf: 'flex-start', padding: '7px 14px', ...(!canSave ? styles.disabled : {}) }}
         onClick={handleSaveProfile}
         disabled={!canSave}
+        aria-live="polite"
       >
         {saved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save profile'}
       </button>
@@ -561,6 +614,7 @@ function ProfileSection({ onSettingsChange, onSwitchProfile, onAddProfile, onDel
                 style={{ ...styles.primaryBtn, padding: '7px 14px', ...(pinBusy || pinStatus === 'success' ? styles.disabled : {}) }}
                 onClick={handleSavePin}
                 disabled={pinBusy || pinStatus === 'success'}
+                aria-live="polite"
               >
                 {pinBusy ? 'Saving…' : pinStatus === 'success' ? 'Saved' : 'Save PIN'}
               </button>
@@ -894,6 +948,11 @@ function ToolchainPanel({ onRunInTerminal }) {
 
   useEffect(() => { probe(); }, [probe]);
 
+  // winget availability comes back from the same check as the language rows
+  // ({ winget: { available } }). Before the first probe resolves it's
+  // unknown — assume available so the Install button doesn't flicker away.
+  const wingetAvailable = status?.winget ? !!status.winget.available : true;
+
   const handleInstall = useCallback((langId) => {
     const recipe = TOOLCHAIN_GUIDES[langId];
     if (!recipe) return;
@@ -901,7 +960,9 @@ function ToolchainPanel({ onRunInTerminal }) {
     if (!command || !onRunInTerminal) return;
     setInstallingLang(langId);
     setExpandedGuide(langId);
-    onRunInTerminal(command);
+    // Installs run for minutes — hand the terminal a longer exec budget so
+    // it doesn't kill winget mid-download at the 30s default.
+    onRunInTerminal(command, { timeoutMs: 10 * 60_000 });
   }, [onRunInTerminal]);
 
   const handleCopy = useCallback(async (langId) => {
@@ -939,7 +1000,36 @@ function ToolchainPanel({ onRunInTerminal }) {
           const isLoading   = checking && !row;
           const command     = toolchainCommand(recipe);
           const guideOpen   = expandedGuide === langId;
-          const showInstall = !isLoading && !isInstalled && command;
+          // winget ships with Windows 11 and recent Windows 10, but older
+          // Windows 10 lacks it — then this command dies with
+          // "'winget' is not recognized". Swap in the manual download path.
+          const needsWinget = PLATFORM_LABEL === 'win' && /\bwinget\b/.test(command);
+          const wingetGone  = !isLoading && !isInstalled && needsWinget && !wingetAvailable;
+          const fallback    = wingetGone ? recipe.fallback?.[PLATFORM_LABEL] : null;
+          // tsx needs Node.js first — don't offer an npm command that fails.
+          const needsNodeFirst = langId === 'typescript' && !isLoading
+            && status?.javascript && !status.javascript.installed;
+          const showInstall = !isLoading && !isInstalled && !!command
+            && !wingetGone && !needsNodeFirst;
+
+          // Step-by-step for anything not installed: what to do now, what
+          // to wait for, then how to verify it works.
+          const steps = [];
+          if (!isLoading && !isInstalled) {
+            if (needsNodeFirst) {
+              steps.push({ text: 'Install Node.js first — use the Node.js row above.' });
+            } else if (fallback) {
+              steps.push({ link: fallback.url, linkLabel: fallback.urlLabel });
+              (fallback.steps || []).forEach((step) => steps.push(step));
+              steps.push({ text: 'Click Re-check toolchains below.' });
+            } else if (command) {
+              steps.push({ text: 'Click Install — the command runs in the bottom terminal.' });
+              steps.push({ text: 'Wait for it to finish. The terminal prints exit code 0 when it is done.', waiting: true });
+              steps.push({ text: 'Click Re-check toolchains below — the checkmark should light up.' });
+            }
+          }
+          const waitIdx = steps.findIndex((step) => step.waiting);
+          const currentStep = installingLang === langId && waitIdx >= 0 ? waitIdx : 0;
 
           return (
             <div key={langId} style={toolchainStyles.row}>
@@ -960,6 +1050,18 @@ function ToolchainPanel({ onRunInTerminal }) {
               </div>
 
               <p style={toolchainStyles.why}>{recipe.why}</p>
+
+              {fallback && (
+                <p style={toolchainStyles.fallbackNote}>
+                  winget isn't available on this PC, so install {recipe.label} by hand:
+                </p>
+              )}
+
+              {needsNodeFirst && (
+                <p style={toolchainStyles.fallbackNote}>
+                  Node.js is required first — install it on the Node.js row above.
+                </p>
+              )}
 
               {showInstall && (
                 <>
@@ -985,6 +1087,7 @@ function ToolchainPanel({ onRunInTerminal }) {
                       style={toolchainStyles.copyBtn}
                       onClick={() => handleCopy(langId)}
                       title="Copy the command to clipboard"
+                      aria-live="polite"
                     >
                       {copiedLang === langId
                         ? <Check size={11} />
@@ -994,14 +1097,42 @@ function ToolchainPanel({ onRunInTerminal }) {
                       </span>
                     </button>
                   </div>
-                  {installingLang === langId && (
-                    <p style={toolchainStyles.installingNote}>
-                      <Download size={11} style={{ marginRight: 4, verticalAlign: -1 }} />
-                      Watch the bottom terminal. When it finishes (exit code 0), click
-                      <b> Re-check toolchains</b> below — the checkmark should light up.
-                    </p>
-                  )}
                 </>
+              )}
+
+              {steps.length > 0 && (
+                <ol style={toolchainStyles.steps}>
+                  {steps.map((step, idx) => {
+                    const isCurrent = !isInstalled && idx === currentStep;
+                    return (
+                      <li
+                        key={`${langId}-step-${idx}`}
+                        style={{
+                          ...toolchainStyles.step,
+                          ...(isCurrent ? toolchainStyles.stepCurrent : {}),
+                        }}
+                      >
+                        {step.text && (
+                          <span>{step.text}{step.link ? ' ' : ''}</span>
+                        )}
+                        {step.link && (
+                          <a
+                            href={step.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={toolchainStyles.stepLink}
+                            title={step.link}
+                          >
+                            <Download size={10} style={{ marginRight: 3, verticalAlign: -1 }} />
+                            {step.linkLabel || step.link}
+                          </a>
+                        )}
+                        {step.code && <code style={toolchainStyles.stepCode}>{step.code}</code>}
+                      </li>
+                    );
+                  })}
+                  <li style={toolchainStyles.step}>{recipe.smokeTest}</li>
+                </ol>
               )}
 
               <div style={toolchainStyles.actions}>
@@ -1097,10 +1228,12 @@ function statusLabel(status, info) {
   }
 }
 
+// Theme tokens, not literals: the old hardcoded blues/greens/red failed
+// AA against the light theme (2.5–3.3:1). These flip per theme and all pass.
 const TONE_COLOURS = {
-  info:    '#60a5fa',
-  success: '#4ade80',
-  error:   '#f87171',
+  info:    'var(--info-text)',
+  success: 'var(--success)',
+  error:   'var(--danger-text)',
   muted:   'var(--text-muted)',
 };
 
@@ -1125,8 +1258,6 @@ const styles = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 24,
     background: 'var(--scrim)',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
     animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
   },
   profileCard: {
@@ -1136,9 +1267,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    background: 'var(--glass-bg-heavy)',
-    backdropFilter: 'blur(var(--glass-blur-heavy))',
-    WebkitBackdropFilter: 'blur(var(--glass-blur-heavy))',
+    background: 'var(--bg-elevated)',
     border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-xl)',
     boxShadow: 'var(--shadow-lg)',
@@ -1584,14 +1713,49 @@ const toolchainStyles = {
     wordBreak: 'break-all',
     whiteSpace: 'pre-wrap',
   },
-  installingNote: {
+  fallbackNote: {
     fontSize: 11,
     color: 'var(--text-secondary)',
     lineHeight: 1.5,
+    margin: '4px 0 0',
+  },
+  steps: {
     margin: '8px 0 0',
-    padding: '6px 8px',
+    paddingLeft: 18,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 5,
+  },
+  step: {
+    fontSize: 11,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.55,
+    paddingLeft: 2,
+  },
+  stepCurrent: {
+    color: 'var(--text-primary)',
+    fontWeight: 600,
+  },
+  stepLink: {
+    color: 'var(--accent)',
+    fontWeight: 600,
+    textDecoration: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    whiteSpace: 'nowrap',
+  },
+  stepCode: {
+    display: 'block',
+    marginTop: 3,
+    padding: '4px 6px',
     background: 'var(--bg-input)',
-    border: '1px dashed var(--border-strong)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 'var(--radius-sm)',
+    color: 'var(--text-primary)',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 10.5,
+    lineHeight: 1.45,
+    wordBreak: 'break-all',
+    whiteSpace: 'pre-wrap',
   },
 };

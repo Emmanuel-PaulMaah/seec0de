@@ -270,6 +270,56 @@ async function callGemini(prompt, systemInstruction) {
   throw lastError || new Error('Something went wrong with the AI. Try again in a moment.');
 }
 
+// Validate a candidate key against the API without touching the stored
+// key. Always resolves — network failures come back as
+// { ok: false, reason: 'unreachable', message } so the UI can distinguish
+// "bad key" from "no internet".
+function validateApiKey(key) {
+  return new Promise((resolve) => {
+    let parsed;
+    try {
+      parsed = new URL(`${API_BASE}?key=${encodeURIComponent(key)}&pageSize=1`);
+    } catch {
+      resolve({ ok: false, reason: 'invalid' });
+      return;
+    }
+
+    const req = https.request({
+      method: 'GET',
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      port: 443,
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': `seec0de/${app.getVersion()} (Electron ${process.versions.electron})`,
+      },
+    }, (res) => {
+      res.resume(); // body is irrelevant; the status code is the answer
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ ok: true });
+        } else if (res.statusCode === 400 || res.statusCode === 401 || res.statusCode === 403) {
+          resolve({ ok: false, reason: 'invalid' });
+        } else {
+          resolve({ ok: false, reason: 'unreachable', message: `Google replied with status ${res.statusCode}. Try again in a moment.` });
+        }
+      });
+    });
+    req.setTimeout(15_000, () => {
+      req.destroy();
+      resolve({ ok: false, reason: 'unreachable', message: 'The key check timed out. Check your internet and try again.' });
+    });
+    req.on('error', (err) => {
+      resolve({
+        ok: false,
+        reason: 'unreachable',
+        message: classifyNetworkError(err) || "Couldn't reach Google to check the key. Check your internet and try again.",
+      });
+    });
+    req.end();
+  });
+}
+
 function registerAiServiceHandlers() {
   ipcMain.handle('ai:set-key', (_e, key) => {
     return setApiKey(key);
@@ -277,6 +327,14 @@ function registerAiServiceHandlers() {
 
   ipcMain.handle('ai:has-key', () => {
     return !!encryptedApiKey;
+  });
+
+  // Cheap probe for a *candidate* key (Onboarding / Settings), independent
+  // of the stored key: list one page of models. 200 → the key works;
+  // 400/401/403 → Google rejected it; anything else explains itself.
+  ipcMain.handle('ai:validate-key', async (_e, key) => {
+    if (!key || typeof key !== 'string') return { ok: false, reason: 'invalid' };
+    return await validateApiKey(key.trim());
   });
 
   ipcMain.handle('ai:call', async (_e, { prompt, systemInstruction }) => {

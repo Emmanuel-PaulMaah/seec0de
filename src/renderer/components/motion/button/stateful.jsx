@@ -1,4 +1,3 @@
-"use client";;
 import { Check, Loader2, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { forwardRef, useLayoutEffect, useRef, useState } from "react";

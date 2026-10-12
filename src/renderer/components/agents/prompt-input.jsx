@@ -1,4 +1,3 @@
-"use client";;
 // beui.dev/components/agents/prompt-input
 
 import { ArrowUp, Plus, Square } from "lucide-react";

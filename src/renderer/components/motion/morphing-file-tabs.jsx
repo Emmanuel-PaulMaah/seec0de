@@ -1,4 +1,3 @@
-"use client";
 // Compact file-tab adaptation of beui.dev/components/blocks/morphing-tabs.
 
 import { File, FileCode, FileJson, FileText, X } from 'lucide-react';

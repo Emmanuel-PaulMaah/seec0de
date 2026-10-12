@@ -1,4 +1,3 @@
-"use client";;
 // beui.dev/components/motion/tabs
 
 import { motion, MotionConfig, useReducedMotion } from "motion/react";

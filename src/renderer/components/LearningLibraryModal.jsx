@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   CalendarClock, Check, Download, Image, Plus, Trash2, X,
 } from 'lucide-react';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
 
 export default function LearningLibraryModal({
   open,
@@ -13,6 +14,7 @@ export default function LearningLibraryModal({
   onSchedulePostcard,
 }) {
   const titleRef = useRef(null);
+  const modalRef = useRef(null);
   const [title, setTitle] = useState('');
   const [explanation, setExplanation] = useState('');
   const [saved, setSaved] = useState(false);
@@ -26,6 +28,10 @@ export default function LearningLibraryModal({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
+
+  // Modal contract: Tab stays inside the sheet; focus returns to the trigger
+  // on close. Runs after the effect above so the title keeps its focus.
+  useFocusTrap(modalRef, open, { initialFocusRef: titleRef });
 
   if (!open) return null;
 
@@ -41,7 +47,7 @@ export default function LearningLibraryModal({
 
   return (
     <div style={styles.scrim} role="presentation" onClick={onClose}>
-      <section style={styles.modal} role="dialog" aria-modal="true" aria-labelledby="learning-library-title" onClick={(event) => event.stopPropagation()}>
+      <section ref={modalRef} style={styles.modal} role="dialog" aria-modal="true" aria-labelledby="learning-library-title" onClick={(event) => event.stopPropagation()}>
         <header style={styles.header}>
           <div>
             <div style={styles.kicker}>Private · stored on this device</div>
@@ -61,7 +67,7 @@ export default function LearningLibraryModal({
                     <div style={styles.candidateMeta}>{codeCandidate.language} · {codeCandidate.filename || 'current snippet'}{codeCandidate.output ? ' · latest output included' : ''}</div>
                     <input style={styles.input} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Give this program a title" maxLength={80} />
                     <textarea style={styles.textarea} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="What does it do, and what did you learn while making it?" rows={4} maxLength={600} />
-                    <button type="button" style={{ ...styles.primaryButton, ...(!canCreate ? styles.disabled : {}) }} disabled={!canCreate} onClick={createPostcard}>
+                    <button type="button" style={{ ...styles.primaryButton, ...(!canCreate ? styles.disabled : {}) }} disabled={!canCreate} onClick={createPostcard} aria-live="polite">
                       {saved ? <><Check size={13} /> Saved</> : <><Image size={13} /> Create postcard</>}
                     </button>
                   </>
@@ -123,7 +129,7 @@ function safeFilename(value) {
 }
 
 const styles = {
-  scrim: { position: 'fixed', inset: 0, zIndex: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'var(--scrim)', backdropFilter: 'blur(5px)' },
+  scrim: { position: 'fixed', inset: 0, zIndex: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'var(--scrim)' },
   modal: { width: 760, maxWidth: '100%', maxHeight: 'calc(100vh - 48px)', display: 'flex', flexDirection: 'column', border: '1px solid var(--border-strong)', borderRadius: 14, background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' },
   header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: '1px solid var(--border)' },
   kicker: { color: 'var(--accent)', fontSize: 9, fontWeight: 700, letterSpacing: 1.1, textTransform: 'uppercase' },

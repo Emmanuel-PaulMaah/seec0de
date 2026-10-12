@@ -1,4 +1,3 @@
-"use client";;
 // beui.dev/components/motion/expanding-arrow-button
 //
 // Local change: the registry version hides the label on hover/focus so the

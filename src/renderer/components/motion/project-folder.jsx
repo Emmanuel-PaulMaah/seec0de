@@ -1,4 +1,3 @@
-"use client";
 // beui.dev/components/blocks/project-folder
 //
 // Local deviation from the registry version: an optional `tone` prop tints

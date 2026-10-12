@@ -1,4 +1,3 @@
-"use client";
 // beui.dev/components/motion/theme-toggle — adapted for Electron
 // No next-themes dependency; reads/writes colorMode via props.
 
@@ -24,18 +23,13 @@ html[data-beui-vt="rect"]::view-transition-new(root) {
   mix-blend-mode: normal;
   animation: beui-rect-reveal 400ms ease-out;
 }
-html[data-beui-vt="circle"]::view-transition-old(root),
-html[data-beui-vt="circle-blur"]::view-transition-old(root) {
+html[data-beui-vt="circle"]::view-transition-old(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 html[data-beui-vt="circle"]::view-transition-new(root) {
   mix-blend-mode: normal;
-  animation: beui-circle-reveal 700ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-html[data-beui-vt="circle-blur"]::view-transition-new(root) {
-  mix-blend-mode: normal;
-  animation: beui-circle-blur-reveal 700ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: beui-circle-reveal 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 html[data-beui-vt="blinds"]::view-transition-old(root) {
   animation: none;
@@ -64,10 +58,6 @@ html[data-beui-vt="blinds"]::view-transition-new(root) {
 @keyframes beui-circle-reveal {
   from { clip-path: circle(0% at var(--beui-vt-origin, 50% 100%)); }
   to   { clip-path: circle(150% at var(--beui-vt-origin, 50% 100%)); }
-}
-@keyframes beui-circle-blur-reveal {
-  from { clip-path: circle(0% at var(--beui-vt-origin, 50% 100%)); filter: blur(8px); }
-  to   { clip-path: circle(150% at var(--beui-vt-origin, 50% 100%)); filter: blur(0px); }
 }
 @keyframes beui-blinds-reveal {
   from { --beui-vt-slat: -20px; }
@@ -148,7 +138,7 @@ export function useThemeToggle({
 }
 
 export function ThemeToggle({
-  variant = "circle-blur",
+  variant = "circle",
   start = "bottom-up",
   colorMode = "dark",
   onColorModeChange,
@@ -173,7 +163,7 @@ export function ThemeToggle({
       {mounted ? (
         <ActionSwapIcon
           value={isDark ? "dark" : "light"}
-          animation="blur"
+          animation="roll"
           className={iconClassName}>
           {isDark ? (
             <Sun className={iconClassName} />

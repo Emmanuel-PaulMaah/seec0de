@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import lessonsData from '../data/lessons/index.js';
 import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
-import { ProjectFolder } from './motion/project-folder';
 import projects, { projectCheckpoint } from '../data/projects';
 import { renderInline } from './InlineCode';
 
@@ -39,8 +38,8 @@ const SECTION_TONES = {
   projects: 'var(--string-highlight)',
 };
 
-// Course folders cycle through the palette so a wall of them reads as a set of
-// distinct courses instead of N identical accent-tinted folders.
+// Course cards cycle through the palette so a wall of them reads as a set of
+// distinct courses instead of N identical accent-tinted cards.
 const COURSE_TONES = [
   'var(--accent)',
   'var(--algorithm)',
@@ -209,37 +208,32 @@ export default function LearnHomeScreen({
       <p style={{ maxWidth: 540, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
         Pick a course to see its lessons and pick up where you left off.
       </p>
-      <div className="learn-course-wall" style={{ marginTop: 32 }}>
+      <div className="learn-home-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 28 }}>
         {languageTracks.map((track, trackIndex) => {
           const lessons = track.lessons || [];
-          const previews = lessons.map((l) => ({
-            id: l.id,
-            content: (
-              <div style={{ padding: '12px 10px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 4 }}>
-                    {completedLessons.includes(l.id) ? '✓ Done' : `Lesson ${lessons.indexOf(l) + 1}`}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>{l.title}</div>
-                  {l.summary && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.4 }}>{l.summary}</div>}
-                </div>
-              </div>
-            ),
-          }));
+          const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
+          const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
           return (
-            <ProjectFolder
+            <button
               key={track.id}
-              tone={COURSE_TONES[trackIndex % COURSE_TONES.length]}
-              title={track.name}
-              description={track.description}
-              previews={previews}
-              count={lessons.length}
-              itemLabel="lesson"
-              onPreviewClick={(preview) => {
-                const lesson = lessons.find((l) => l.id === preview.id);
-                if (lesson) onSelectLesson({ ...lesson, language: track.language });
-              }}
-            />
+              type="button"
+              className="learn-card learn-opt-card"
+              style={{ '--opt-tone': COURSE_TONES[trackIndex % COURSE_TONES.length] }}
+              onClick={() => setActiveTrackId(track.id)}
+            >
+              <span className="learn-opt-head">
+                <BookOpen size={15} className="learn-opt-icon" aria-hidden="true" />
+                <span className="learn-opt-name">{track.name}</span>
+                <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />
+              </span>
+              <span className="learn-opt-meta">{track.description}</span>
+              <span className="learn-opt-progress">
+                <span className="learn-progress-track">
+                  <span className="learn-progress-fill" style={{ width: `${pct}%` }} />
+                </span>
+                <span className="learn-opt-count">{done}/{lessons.length}</span>
+              </span>
+            </button>
           );
         })}
       </div>

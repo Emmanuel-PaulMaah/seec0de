@@ -3,7 +3,6 @@ import { Sparkles } from 'lucide-react';
 import BulletinSection from './BulletinSection';
 import { ExpandingArrowButton } from './motion/expanding-arrow-button';
 import { TextReveal } from './motion/text-reveal';
-import { ChromaticName } from './motion/chromatic-text-reveal';
 
 // Language ids come from the lesson data; only a handful ever appear here.
 const LANGUAGE_LABELS = {
@@ -52,19 +51,25 @@ export default function HomeScreen({
         <div className="home-kicker"><Sparkles size={12} /> Your coding home</div>
         {username ? (
           <h1 ref={headingRef} tabIndex={-1} id="home-heading" className="home-heading">
+            {/* Short opacity/transform fade only — the old chromatic rainbow
+             * and blur-in words read as decoration, not information. */}
             {'Welcome back,'.split(' ').map((word, i, arr) => (
               <span key={`w-${i}`} className="inline-block whitespace-pre beui-text-reveal-word" style={{
-                '--ty': '20px', '--blur': '6px',
-                opacity: 0, transform: 'translateY(20px)', filter: 'blur(6px)',
-                animation: `beui-text-reveal-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.08}s forwards`,
+                '--ty': '8px',
+                opacity: 0,
+                animation: `beui-text-reveal-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.04}s forwards`,
               }}>{word}{i < arr.length - 1 ? '\u00A0' : '\u00A0'}</span>
             ))}
             {'\u00A0'}
-            <ChromaticName duration={2} delay={0.5}>{username}</ChromaticName>
             <span className="inline-block whitespace-pre beui-text-reveal-word" style={{
-              '--ty': '20px', '--blur': '6px',
-              opacity: 0, transform: 'translateY(20px)', filter: 'blur(6px)',
-              animation: 'beui-text-reveal-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards',
+              '--ty': '8px',
+              opacity: 0,
+              animation: 'beui-text-reveal-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards',
+            }}>{username}</span>
+            <span className="inline-block whitespace-pre beui-text-reveal-word" style={{
+              '--ty': '8px',
+              opacity: 0,
+              animation: 'beui-text-reveal-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.24s forwards',
             }}>.</span>
           </h1>
         ) : (
@@ -74,9 +79,8 @@ export default function HomeScreen({
             tabIndex={-1}
             id="home-heading"
             text="Welcome to seec0de."
-            stagger={0.06}
-            blur={6}
-            yOffset={20}
+            stagger={0.05}
+            yOffset={8}
             className="home-heading"
           />
         )}

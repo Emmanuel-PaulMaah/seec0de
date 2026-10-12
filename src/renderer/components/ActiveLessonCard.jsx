@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { explainCode, traceCode } from '../engine/codeExplainer';
 import { renderInline } from './InlineCode';
+import SpeakButton from './SpeakButton';
+import { useConfirm } from './ui/dialog';
 
 // ActiveLessonCard — the rich teaching view that replaces the
 // instruction textarea while a lesson is active.
@@ -50,6 +52,7 @@ export default function ActiveLessonCard({
   const [solutionShown, setSolutionShown] = useState(false);
   const [examplesShown, setExamplesShown] = useState(false);
   const resultRef = React.useRef(null);
+  const confirm = useConfirm();
 
   // Reset hint progression + solution reveal whenever the lesson changes.
   useEffect(() => {
@@ -101,7 +104,10 @@ export default function ActiveLessonCard({
 
       {/* Task callout */}
       {!teachingOnly && <div style={styles.taskBox}>
-        <div style={styles.taskLabel}>Your turn</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={styles.taskLabel}>Your turn</div>
+          <SpeakButton text={String(lesson.task || '')} title="Read the task aloud" />
+        </div>
         <div style={styles.taskText}>{renderInline(lesson.task)}</div>
         <div style={styles.taskHint}>
           Edit the code in the editor → click <strong>Run</strong> in the toolbar.
@@ -130,7 +136,7 @@ export default function ActiveLessonCard({
 
       {/* Status footer */}
       {status === 'pass' && (
-        <div ref={resultRef} tabIndex={-1} style={{ ...styles.statusBox, ...styles.statusPass }}>
+        <div ref={resultRef} tabIndex={-1} role="status" style={{ ...styles.statusBox, ...styles.statusPass }}>
           <CheckCircle2 size={14} />
           <div style={styles.statusBody}>
             <div style={styles.statusTitle}>Nailed it.</div>
@@ -153,7 +159,7 @@ export default function ActiveLessonCard({
       )}
 
       {status === 'fail' && verification && (
-        <div ref={resultRef} tabIndex={-1} style={{ ...styles.statusBox, ...styles.statusFail }}>
+        <div ref={resultRef} tabIndex={-1} role="status" style={{ ...styles.statusBox, ...styles.statusFail }}>
           <XCircle size={14} />
           <div style={styles.statusBody}>
             <div style={styles.statusTitle}>Not quite.</div>
@@ -272,7 +278,17 @@ export default function ActiveLessonCard({
         )}
         <button
           style={styles.actionBtn}
-          onClick={onResetCode}
+          onClick={async () => {
+            // Destructive: overwrites whatever is in the editor with the
+            // lesson's starter code — the learner's own edits are lost.
+            const ok = await confirm({
+              title: 'Reset the code?',
+              description: 'Your edits in the editor will be replaced with the lesson\'s starter code.',
+              confirmLabel: 'Reset code',
+              danger: true,
+            });
+            if (ok) onResetCode?.();
+          }}
           title="Restore the starter code"
         >
           <RotateCcw size={11} />
@@ -336,11 +352,15 @@ function SelfExplanationSection({ prompt, concept, note, onNoteChange, onSave })
           {saved ? 'Saved' : 'Save explanation'}
         </button>
       </div>
-      {saved && (
-        <div style={styles.explainSaved}>
-          Explanation saved — you can review it later in your concept notes.
-        </div>
-      )}
+      {/* Always rendered: an aria-live region that only exists once "Saved"
+          is in it would never announce its own arrival. */}
+      <div
+        role="status"
+        aria-live="polite"
+        style={saved ? styles.explainSaved : styles.explainSavedIdle}
+      >
+        {saved ? 'Explanation saved — you can review it later in your concept notes.' : ''}
+      </div>
     </div>
   );
 }
@@ -1096,5 +1116,15 @@ const styles = {
     color: 'var(--success, #4ade80)',
     fontSize: 10,
     lineHeight: 1.4,
+  },
+  explainSavedIdle: {
+    // sr-only: keeps the status region in the a11y tree without taking space.
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    padding: 0,
+    overflow: 'hidden',
+    clipPath: 'inset(50%)',
+    whiteSpace: 'nowrap',
   },
 };

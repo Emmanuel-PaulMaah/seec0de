@@ -1,4 +1,3 @@
-"use client";;
 import { Check, ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -26,8 +25,8 @@ const LIST_VARIANTS = {
   show: { transition: { staggerChildren: 0.035, delayChildren: 0.05 } },
 };
 const ITEM_VARIANTS = {
-  hidden: { opacity: 0, y: -6, filter: "blur(3px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)" },
+  hidden: { opacity: 0, y: -6 },
+  show: { opacity: 1, y: 0 },
 };
 
 const SelectContext = createContext(null);
@@ -341,7 +340,11 @@ export function SelectItem({
   }, [ctx.register, ctx.unregister, value, label]);
 
   return (
-    <motion.li variants={ctx.reduce ? undefined : ITEM_VARIANTS}>
+    // A plain div, NOT an <li>: the listbox container is a <div>, and a bare
+    // <li> outside a <ul>/<ol> still renders a ::marker bullet (Tailwind's
+    // preflight only resets list styles on ul/ol/menu). role="presentation"
+    // keeps the wrapper out of the a11y tree so the options own the listbox.
+    <motion.div role="presentation" variants={ctx.reduce ? undefined : ITEM_VARIANTS}>
       <button
         type="button"
         role="option"
@@ -359,6 +362,6 @@ export function SelectItem({
         {children}
         {selected ? <Check className="h-3.5 w-3.5 shrink-0" /> : null}
       </button>
-    </motion.li>
+    </motion.div>
   );
 }

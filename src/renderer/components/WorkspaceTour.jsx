@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
 
 const STEPS = [
   {
@@ -43,6 +44,11 @@ export default function WorkspaceTour({ open, onClose }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
   const cardRef = useRef(null);
+
+  // Modal contract: Tab stays inside the card (it renders only once the
+  // target rect is measured) and focus returns to the trigger on close. The
+  // per-step card.focus() below still wins because focus is already inside.
+  useFocusTrap(cardRef, open && !!targetRect);
 
   useEffect(() => {
     if (open) setStepIdx(0);

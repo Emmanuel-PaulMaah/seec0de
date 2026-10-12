@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { X } from 'lucide-react';
 import { SPRING_PANEL, EASE_OUT } from '../lib/ease';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
 
 const MORPH_CLIP_TRANSITION = { duration: 0.32, ease: EASE_OUT };
 
@@ -24,6 +25,45 @@ export default function KeywordTooltip({ keyword, definition, example, language,
       setPanelSize({ width: node.offsetWidth, height: node.offsetHeight });
     }
   }, []);
+
+  // Keyboard contract: the tooltip opens on a text selection, so stealing
+  // focus would swallow the user's next keystroke — instead, trap only once
+  // focus has moved into the panel (Tab to the close button), remember
+  // whatever had focus before, and hand it back when the tooltip closes so
+  // the editor doesn't strand the user on <body>.
+  const [focusInside, setFocusInside] = useState(false);
+  const returnFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!keyword) {
+      setFocusInside(false);
+      const target = returnFocusRef.current;
+      if (target instanceof HTMLElement && document.contains(target)) target.focus();
+      return undefined;
+    }
+    const onFocusIn = (e) => {
+      // Ignore transient focus on <body> (pointer down on a non-focusable
+      // area) — treating it as "outside" would let the trap's cleanup pull
+      // focus back to the close button after the user clicked away.
+      if (!e.target || e.target === document.body) return;
+      const inside = Boolean(panelRef.current && panelRef.current.contains(e.target));
+      setFocusInside(inside);
+      if (!inside) returnFocusRef.current = e.target;
+    };
+    document.addEventListener('focusin', onFocusIn, true);
+    return () => {
+      document.removeEventListener('focusin', onFocusIn, true);
+      // Unmounted while focus was still inside: the panel is going away with
+      // focus in it, so send focus back to where the user came from.
+      const target = returnFocusRef.current;
+      const active = document.activeElement;
+      const stranded = !active || active === document.body
+        || (panelRef.current && panelRef.current.contains(active));
+      if (target instanceof HTMLElement && document.contains(target) && stranded) target.focus();
+    };
+  }, [keyword]);
+
+  useFocusTrap(panelRef, Boolean(keyword) && focusInside);
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -104,6 +144,8 @@ export default function KeywordTooltip({ keyword, definition, example, language,
         >
           <motion.div
             ref={measureRef}
+            role="dialog"
+            aria-label={`${keyword} in ${language}`}
             variants={clip}
             style={{
               borderRadius: radius,

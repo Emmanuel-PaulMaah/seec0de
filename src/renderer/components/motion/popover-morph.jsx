@@ -1,4 +1,3 @@
-"use client";;
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   cloneElement,

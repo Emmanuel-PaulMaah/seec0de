@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { RefreshCw, Download, X } from 'lucide-react';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
+import { useFocusTrap } from '../lib/hooks/use-focus-trap';
+import { useConfirm } from './ui/dialog';
 
 // Tiny inline renderer for the subset of markdown the CHANGELOG uses:
 // `### Heading`, `- bullet`, blank lines. Anything else renders as a
@@ -54,6 +56,7 @@ export default function UpdatePill() {
   const { status, info, releaseNotes, progress, installNow } = useUpdateStatus();
   const [expanded, setExpanded] = useState(false);
   const popRef = useRef(null);
+  const confirm = useConfirm();
 
   // Close popover on outside click.
   useEffect(() => {
@@ -66,6 +69,16 @@ export default function UpdatePill() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [expanded]);
+
+  // Close on Esc; while open, Tab stays in the popover and focus returns to
+  // the pill when it closes.
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setExpanded(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [expanded]);
+  useFocusTrap(popRef, expanded);
 
   // Only surface the pill in the title bar for two states:
   // mid-download (subtle) and ready-to-install (prominent).
@@ -97,7 +110,7 @@ export default function UpdatePill() {
       </button>
 
       {expanded && (
-        <div style={styles.popover}>
+        <div ref={popRef} style={styles.popover} role="dialog" aria-modal="true" aria-label={`What's new in ${version}`}>
           <div style={styles.popHeader}>
             <span style={styles.popTitle}>What's new in {version}</span>
             <button
@@ -120,7 +133,21 @@ export default function UpdatePill() {
             <button type="button" style={styles.laterBtn} onClick={() => setExpanded(false)}>
               Later
             </button>
-            <button type="button" style={styles.restartBtn} onClick={() => installNow()}>
+            <button
+              type="button"
+              style={styles.restartBtn}
+              onClick={async () => {
+                // Restart closes the app outright — any editor buffer not yet
+                // through the autosave debounce goes with it.
+                const ok = await confirm({
+                  title: 'Restart and install now?',
+                  description: 'seec0de will quit to install the update. Files you just edited may not have been saved yet — give autosave a moment or save first.',
+                  confirmLabel: 'Restart & install',
+                  danger: true,
+                });
+                if (ok) installNow();
+              }}
+            >
               Restart & install
             </button>
           </div>
