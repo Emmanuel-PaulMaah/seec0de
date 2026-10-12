@@ -49,8 +49,9 @@ The application will launch in its own Electron window with Webpack Hot Module R
 - **Offline & AI-Powered:** Covers common syntax and runtime errors offline across JS, TS, Python, C, and C++. Recognizes custom variable names and falls back to an AI error translator when connected.
 
 ### 6. Learn Mode & Interactive Drills
-- **Curated Track & Courses:** Switch the Instruction Panel from *Build* to *Learn Mode* to access curated lessons, practice exercises, and multi-checkpoint capstone projects.
+- **Eight courses:** JavaScript, Python, TypeScript, React, HTML, CSS, Git, and **Node.js** (16 lessons across *Node.js Core*, *Modules & npm*, and *Server Basics* — runtime, `fs`, `require`/exports, `npm`, the `http` module and a JSON API — all runnable in-app). Switch the Build panel from *Build* to *Learn* to browse the catalog.
 - **Interactive Exercise Formats:** Includes Code-alongs, Retrieval drills, Fix drills, Parsons problems (line reordering), Faded examples (fill-in-the-blank), Output-first builds, and Micro-capstones.
+- **Explain it back:** After a lesson passes, an optional prompt asks you to explain the concept in your own words. Notes stay on your profile and are reviewable from the Learn catalog; 20 foundational lessons across all eight courses carry reflection prompts aimed at the *why*, not the syntax.
 - **Auto-Verification & Reminders:** Automatically verifies output against success criteria upon running code, tracks completion across user profiles, and schedules spaced learning reminders.
 
 ### 7. Explained Terminal
@@ -83,6 +84,11 @@ The application will launch in its own Electron window with Webpack Hot Module R
 - **Visible & announced state.** Focus rings on every control, `role="log"` live regions for terminal/sandbox/console output, `role="status"` for check results and explanations, and `aria-label`s on every icon-only button.
 - **Colour that passes WCAG AA** in both the dark and light themes (text, accents, semantic and syntax colours), native controls that follow the active theme, and OS **reduce-motion** respected across all animations.
 - **Destructive actions ask first.** Closing unsaved files, resetting lesson code, deleting projects/postcards, clearing terminals and "Restart & install" all confirm through one shared dialog.
+
+### 13. A Refreshed Look — beUI, shadcn & Tailwind
+- **beUI component library.** Animated components from [beui.dev](https://beui.dev) — tabs, morphing file tabs, file tree, loaders, selects, switches, drawer, tooltip, theme toggle, bouncy accordion, popover morph, OTP PIN pad, morphing search, scroll progress, text reveal, expanding arrow and the Button family — are vendored in `src/renderer/components/motion/` and wired through the Build panel, editor tabs, file explorer, Settings, profile PIN, title bar, explanation sidebar and home screen.
+- **shadcn + Tailwind v4 toolchain.** `components.json` (registry config), shared Button / Input / Dialog primitives with a `cn()` helper (`clsx` + `tailwind-merge`), and `@import "tailwindcss"` driving `global.css`.
+- **17 polish touches.** 6px scrollbars, `kbd` shortcut hints, tabular numerals in code, heading letter-spacing, card hover glow, gradient title-bar separator, a one-shot Run pulse when code becomes runnable, staggered explanation rows, progress bars on Learn home cards, ▶ in Workspace / ✓ in Learn on the Run button, and a bundled Inter variable font.
 
 ---
 
