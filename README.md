@@ -22,7 +22,7 @@ The application will launch in its own Electron window with Webpack Hot Module R
 
 ## What You Can Do
 
-`seec0de` features a flexible, multi-column workspace layout (**File Explorer · Instruction / Learn Panel · Code Panel · Live Preview / Console · Explanation Sidebar**) with an **Explained Terminal** docked at the bottom. Each side panel can be resized or collapsed into a compact 32px rail.
+`seec0de` features a flexible, multi-column workspace layout (**File Explorer · Build / Learn Panel · Code Panel · Live Preview / Console · Explanation Sidebar**) with an **Explained Terminal** docked at the bottom. Each side panel can be resized or collapsed into a compact 32px rail — `Ctrl+B` toggles the left sidebar, and `Ctrl+.` drops everything but the editor for focus mode.
 
 ### 1. Describe → See Code (Dual-Engine Generation)
 - **Natural Language Prompts:** Type what you want to build (e.g., *"sort a list of numbers"*, *"fizzbuzz from 1 to 20"*, *"check if a word is a palindrome"*, *"read a csv file & print top 5 averages"*), or pick from randomized suggestion chips (shuffle).
@@ -71,6 +71,18 @@ The application will launch in its own Electron window with Webpack Hot Module R
 - **Start-build dialog:** Before anything touches disk you choose a **project name** (doubles as the subfolder name), **where the files go** (the open folder or a new subfolder), and whether to **pre-fill starter files**.
 - **Verifiable steps:** Each step targets one file and runs **live content checks** as you edit; steps with runnable output are gated on **Run**, with a **Check step** button for setup-style steps. Completed steps collapse to a ✓ row, **Back** / clickable step rows let you revisit earlier steps, and finishing the project fires confetti + a fanfare (both respect the Sounds setting).
 - **Real multi-file projects:** The runner executes build files **in the project folder**, so multi-file code can `require()` sibling modules and be verified against its real output. Two terminal-first samples — **Realtime Chat** (`ws`) and **Notes API** (Express) — teach the real `npm init` / `npm install` workflow, verified via terminal checks.
+
+### 11. Guided Setup — AI key & toolchains
+- **Get a free AI key in three steps.** The "Get a free key" links open Google AI Studio in your real browser. Onboarding step 3 then walks you through it: when you come back to seec0de with an `AIza…` key on the clipboard, it offers one-click paste, validates the key live against the API, and only then unlocks **Save** — wrong keys are rejected at entry, and network failures are told apart from bad keys. Settings → AI has a matching Paste button.
+- **Toolchain setup that works on any Windows PC, winget or not.** Settings → Toolchains probes winget *and* the languages; if winget is missing you get manual download links plus per-language numbered steps (including the MSYS2 `pacman` line to paste into the terminal). Every missing tool shows a numbered list — install, wait for exit code 0, **Re-check toolchains**, then the smoke test — with the current step highlighted while an install runs.
+- **Installs are never cut short.** Terminal commands clamp timeouts sanely (5 s – 15 min), installer-shaped commands (`winget install`, `npm -g`, `pacman -S`) get a 10-minute budget, and the Windows PATH is re-read from the registry so `node --version` works immediately after an install — no app restart.
+
+### 12. Accessibility & Keyboard Support
+- **Read-aloud (Speak).** A **Speak** button on the lesson task and the Explanation panel reads the text with the built-in, offline Web Speech API; explanations highlight sentence-by-sentence while reading, with Pause/Stop during playback and only one reading ever in flight.
+- **Full keyboard reach.** Every hand-rolled modal traps focus and returns it on close; right-click menus open with Shift+F10 / the ContextMenu key and rove with Arrow/Home/End; `F2` renames the active file; `Ctrl+B` toggles the left sidebar; `Ctrl+.` toggles **Focus mode** (editor only, everything else hidden and restored on exit).
+- **Visible & announced state.** Focus rings on every control, `role="log"` live regions for terminal/sandbox/console output, `role="status"` for check results and explanations, and `aria-label`s on every icon-only button.
+- **Colour that passes WCAG AA** in both the dark and light themes (text, accents, semantic and syntax colours), native controls that follow the active theme, and OS **reduce-motion** respected across all animations.
+- **Destructive actions ask first.** Closing unsaved files, resetting lesson code, deleting projects/postcards, clearing terminals and "Restart & install" all confirm through one shared dialog.
 
 ---
 
