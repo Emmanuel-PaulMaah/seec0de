@@ -1,0 +1,628 @@
+{
+  "tracks": [
+    {
+      "id": "mongodb-basics",
+      "name": "MongoDB Basics",
+      "language": "mongodb",
+      "description": "Documents, collections, and the shell commands that create and read data.",
+      "lessons": [
+        {
+          "id": "mongo-01-documents",
+          "title": "1. Documents and collections",
+          "concept": "Documents & collections",
+          "summary": "MongoDB stores JSON-like documents in collections — not rows in tables.",
+          "activities": [
+            {
+              "id": "mongo-01-see",
+              "type": "worked-example",
+              "title": "A collection of documents",
+              "instruction": "A MongoDB database holds collections, and a collection holds documents. A document is a JSON-like object — a set of fields with values. Documents in one collection don't need the same shape.",
+              "example": "// database: shop\n// collection: products\n{\n  name: 'Keyboard',\n  price: 49\n}\n\n{\n  name: 'Mouse',\n  price: 19,\n  wireless: true\n}"
+            },
+            {
+              "id": "mongo-01-predict",
+              "type": "prediction",
+              "title": "What is a document?",
+              "question": "In MongoDB, what is a document closest to?",
+              "choices": [
+                "A row in a table",
+                "A JSON-like object with fields and values",
+                "A column definition"
+              ],
+              "answer": "A JSON-like object with fields and values",
+              "explanation": "A document is a JSON-like object. It lives in a collection the way a row lives in a table, but it carries its own field names and can differ from its neighbours."
+            },
+            {
+              "id": "mongo-01-edit",
+              "type": "edit",
+              "title": "Insert a document",
+              "instruction": "Insert a document into the `books` collection with the title 'Dune' and 412 pages."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "MongoDB is a **document database**. Instead of tables and rows it stores **documents** — JSON-like objects — inside **collections**." },
+            { "type": "code", "text": "// shop is the database, products is the collection\n{\n  name: 'Keyboard',\n  price: 49\n}" },
+            { "type": "p", "text": "Every document gets a unique `_id` automatically if you don't supply one. Documents in the same collection are allowed to have different fields — one product can have `wireless`, another can leave it out." },
+            { "type": "note", "text": "These lessons use the MongoDB Shell (`mongosh`). `use('shop')` switches to the `shop` database and creates it on the first write." }
+          ],
+          "task": "Insert a document into the `books` collection with the title 'Dune' and 412 pages.",
+          "starterCode": "use('library');\n\n// Insert one document into the books collection\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["insertOne", "Dune", "412"],
+          "hints": [
+            "`db.books.insertOne({ ... })` inserts one document.",
+            "db.books.insertOne({ title: 'Dune', pages: 412 });"
+          ],
+          "solution": "use('library');\n\ndb.books.insertOne({ title: 'Dune', pages: 412 });\n",
+          "reflectionPrompt": "Why might it be useful that documents in one collection don't all share the same fields?"
+        },
+        {
+          "id": "mongo-02-insert",
+          "title": "2. Inserting documents",
+          "concept": "insertOne / insertMany",
+          "summary": "Add one document, or many at once.",
+          "activities": [
+            {
+              "id": "mongo-02-see",
+              "type": "worked-example",
+              "title": "One or many",
+              "instruction": "`insertOne()` adds a single document. `insertMany()` takes an **array** of documents and adds them all in one round trip to the server.",
+              "example": "use('shop');\n\ndb.products.insertOne({ name: 'Keyboard', price: 49 });\n\ndb.products.insertMany([\n  { name: 'Mouse', price: 19 },\n  { name: 'Monitor', price: 199 }\n]);"
+            },
+            {
+              "id": "mongo-02-predict",
+              "type": "prediction",
+              "title": "The insertMany() argument",
+              "question": "What does `insertMany()` take as its argument?",
+              "choices": [
+                "One document",
+                "An array of documents",
+                "A JSON string"
+              ],
+              "answer": "An array of documents",
+              "explanation": "insertMany() expects an array, even when it only holds one document."
+            },
+            {
+              "id": "mongo-02-edit",
+              "type": "edit",
+              "title": "Add two products",
+              "instruction": "Use `insertMany()` to add two products: Mouse at 19 and Monitor at 199."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`db.<collection>.insertOne(document)` writes one document. `db.<collection>.insertMany(arrayOfDocuments)` writes several." },
+            { "type": "code", "text": "use('shop');\n\ndb.products.insertMany([\n  { name: 'Mouse', price: 19 },\n  { name: 'Monitor', price: 199 }\n]);" },
+            { "type": "p", "text": "Both return a result object with `acknowledged` and the `insertedIds` the server assigned. If the collection doesn't exist yet, MongoDB creates it on the first insert." },
+            { "type": "note", "text": "A write is atomic **per document**, not per batch — if one document in an `insertMany()` fails, the others already written stay written unless you use a transaction." }
+          ],
+          "task": "Use insertMany() to add two products: Mouse at 19 and Monitor at 199.",
+          "starterCode": "use('shop');\n\n// Add both products in a single call\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["insertMany", "Mouse", "Monitor"],
+          "hints": [
+            "`insertMany()` takes an array, so open with `[` and close with `]`.",
+            "db.products.insertMany([{ name: 'Mouse', price: 19 }, { name: 'Monitor', price: 199 }]);"
+          ],
+          "solution": "use('shop');\n\ndb.products.insertMany([\n  { name: 'Mouse', price: 19 },\n  { name: 'Monitor', price: 199 }\n]);\n",
+          "reflectionPrompt": "When would you prefer insertMany() over calling insertOne() twice?"
+        },
+        {
+          "id": "mongo-03-find",
+          "title": "3. Reading documents",
+          "concept": "find / findOne",
+          "summary": "Read documents back out of a collection.",
+          "activities": [
+            {
+              "id": "mongo-03-see",
+              "type": "worked-example",
+              "title": "find and findOne",
+              "instruction": "`find()` returns every matching document as a cursor. `findOne()` returns just the first match, or `null` when nothing matches.",
+              "example": "use('shop');\n\ndb.products.find();\n// every document in the collection\n\ndb.products.findOne({ name: 'Mouse' });\n// the first document whose name is Mouse"
+            },
+            {
+              "id": "mongo-03-predict",
+              "type": "prediction",
+              "title": "find() with no filter",
+              "question": "What does `find()` with no arguments return?",
+              "choices": [
+                "Only the first document",
+                "All documents in the collection",
+                "An error — a filter is required"
+              ],
+              "answer": "All documents in the collection",
+              "explanation": "With no filter, every document matches. findOne() with no filter returns just the first one."
+            },
+            {
+              "id": "mongo-03-edit",
+              "type": "edit",
+              "title": "Read the Monitor document",
+              "instruction": "Use `findOne()` to read the product whose name is 'Monitor'."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Reading data works the same way for one document or many: pass a filter object describing which documents you want." },
+            { "type": "code", "text": "use('shop');\n\ndb.products.find({ price: 19 });   // cursor of matches\ndb.products.findOne({ name: 'Mouse' });  // first match, or null" },
+            { "type": "p", "text": "`{}` matches every document. `find()` gives you a **cursor** — a lazy pointer you can sort, limit, or iterate instead of loading everything into memory at once." },
+            { "type": "note", "text": "An empty result from `findOne()` is `null`, not an error. Always check before reading fields off it." }
+          ],
+          "task": "Use findOne() to read the product named 'Monitor'.",
+          "starterCode": "use('shop');\n\n// Read the Monitor document\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["findOne", "Monitor"],
+          "hints": [
+            "`db.products.findOne({ ... })` returns the first document that matches.",
+            "db.products.findOne({ name: 'Monitor' });"
+          ],
+          "solution": "use('shop');\n\ndb.products.findOne({ name: 'Monitor' });\n",
+          "reflectionPrompt": "Why does find() hand back a cursor instead of an array of every document?"
+        },
+        {
+          "id": "mongo-04-projection",
+          "title": "4. Projections",
+          "concept": "Projection",
+          "summary": "Return only the fields you actually need.",
+          "activities": [
+            {
+              "id": "mongo-04-see",
+              "type": "worked-example",
+              "title": "Pick the fields",
+              "instruction": "The second argument to `find()` is a **projection**: list the fields you want with `1`, or the fields you don't want with `0`. You can't mix the two styles, except for `_id`.",
+              "example": "use('shop');\n\ndb.products.find(\n  { price: { $gt: 20 } },        // filter\n  { name: 1, price: 1, _id: 0 }   // projection\n);\n// { name: 'Keyboard', price: 49 }"
+            },
+            {
+              "id": "mongo-04-predict",
+              "type": "prediction",
+              "title": "Reading a projection",
+              "question": "What does the projection `{ name: 1, _id: 0 }` do?",
+              "choices": [
+                "Returns only the name field, without _id",
+                "Renames name to _id",
+                "Sorts the results by name"
+              ],
+              "answer": "Returns only the name field, without _id",
+              "explanation": "1 means include, 0 means exclude. _id is included by default, so you switch it off explicitly."
+            },
+            {
+              "id": "mongo-04-edit",
+              "type": "edit",
+              "title": "Project name and price",
+              "instruction": "Find every product but return only the `name` and `price` fields, hiding `_id`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Documents can be large. A projection trims the shape of each result so you only transfer the fields you use." },
+            { "type": "code", "text": "db.products.find(\n  {},\n  { name: 1, price: 1, _id: 0 }\n);" },
+            { "type": "p", "text": "`1` includes a field, `0` excludes it. Mixing include and exclude in the same projection is an error — the one exception is `_id`, which you can always turn off." },
+            { "type": "note", "text": "Projections also help queries use a **covered index**: if every field you ask for lives in an index, MongoDB never has to read the full document." }
+          ],
+          "task": "Find every product, returning only name and price and hiding _id.",
+          "starterCode": "use('shop');\n\n// Every product, but only the name and price fields\n",
+          "matchType": "source-regex",
+          "sourceChecks": ["name\\s*:\\s*1", "price\\s*:\\s*1", "_id\\s*:\\s*0"],
+          "hints": [
+            "The projection is the second argument to `find()`.",
+            "db.products.find({}, { name: 1, price: 1, _id: 0 });"
+          ],
+          "solution": "use('shop');\n\ndb.products.find(\n  {},\n  { name: 1, price: 1, _id: 0 }\n);\n",
+          "reflectionPrompt": "What do you gain by projecting away fields you don't display?"
+        }
+      ]
+    },
+    {
+      "id": "mongodb-queries",
+      "name": "Queries & Updates",
+      "language": "mongodb",
+      "description": "Filter, update, and delete documents with MongoDB's query operators.",
+      "lessons": [
+        {
+          "id": "mongo-05-comparison",
+          "title": "5. Comparison operators",
+          "concept": "$gt / $lt / $gte / $lte",
+          "summary": "Match documents by comparing field values.",
+          "activities": [
+            {
+              "id": "mongo-05-see",
+              "type": "worked-example",
+              "title": "Greater and less than",
+              "instruction": "Operators start with `$` and sit inside the field they test: `{ price: { $gt: 20 } }` means 'price greater than 20'. You can combine two bounds on one field.",
+              "example": "use('shop');\n\ndb.products.find({ price: { $gt: 20 } });\ndb.products.find({ price: { $gte: 19, $lte: 50 } });"
+            },
+            {
+              "id": "mongo-05-predict",
+              "type": "prediction",
+              "title": "Cheaper than 20",
+              "question": "Which query finds products cheaper than 20?",
+              "choices": [
+                "{ price: { $lt: 20 } }",
+                "{ price: { $gt: 20 } }",
+                "{ price: 20 }"
+              ],
+              "answer": "{ price: { $lt: 20 } }",
+              "explanation": "$lt means less than, $gt means greater than, and { price: 20 } means exactly 20."
+            },
+            {
+              "id": "mongo-05-edit",
+              "type": "edit",
+              "title": "Products at 100 or more",
+              "instruction": "Find every product whose price is 100 or more."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A filter object answers 'which documents?'. Equality is the default — `{ name: 'Mouse' }` — and comparisons use `$` operators." },
+            { "type": "code", "text": "db.products.find({ price: { $gt: 20 } });\ndb.products.find({ price: { $lt: 20 } });\ndb.products.find({ price: { $gte: 100 } });\ndb.products.find({ price: { $lte: 50 } });" },
+            { "type": "p", "text": "`$gt` and `$lt` are strict; `$gte` and `$lte` include the boundary. Several operators on one field are combined with AND." },
+            { "type": "note", "text": "`$ne` (not equal) also matches documents that don't have the field at all — worth remembering when data is uneven." }
+          ],
+          "task": "Find every product whose price is 100 or more.",
+          "starterCode": "use('shop');\n\n// Products that cost 100 or more\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["$gte", "100"],
+          "hints": [
+            "Use `$gte` so the price 100 itself is included.",
+            "db.products.find({ price: { $gte: 100 } });"
+          ],
+          "solution": "use('shop');\n\ndb.products.find({ price: { $gte: 100 } });\n",
+          "reflectionPrompt": "Why does MongoDB need `$gt` instead of letting you write `price > 20`?"
+        },
+        {
+          "id": "mongo-06-in-regex",
+          "title": "6. Lists and patterns",
+          "concept": "$in / $regex",
+          "summary": "Match any value in a list, or text against a pattern.",
+          "activities": [
+            {
+              "id": "mongo-06-see",
+              "type": "worked-example",
+              "title": "$in and $regex",
+              "instruction": "`$in` matches any value in an array. `$regex` matches a field against a regular expression, and `$options: 'i'` makes it case-insensitive.",
+              "example": "use('shop');\n\ndb.products.find({ name: { $in: ['Mouse', 'Monitor'] } });\n\ndb.products.find({ name: { $regex: '^m', $options: 'i' } });\n// names starting with m, in any case"
+            },
+            {
+              "id": "mongo-06-predict",
+              "type": "prediction",
+              "title": "What $in matches",
+              "question": "What does `{ name: { $in: ['Mouse', 'Monitor'] } }` match?",
+              "choices": [
+                "Documents whose name is either Mouse or Monitor",
+                "Documents whose name contains the word Mouse or Monitor",
+                "Documents with both a Mouse and a Monitor field"
+              ],
+              "answer": "Documents whose name is either Mouse or Monitor",
+              "explanation": "$in compares the whole field value against the list — it is an exact match against any one entry, not a substring search."
+            },
+            {
+              "id": "mongo-06-edit",
+              "type": "edit",
+              "title": "Names starting with M",
+              "instruction": "Find every product whose name starts with 'M', using `$regex`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`$in` is the compact form of several equality checks. `$regex` handles text that follows a pattern." },
+            { "type": "code", "text": "db.products.find({ name: { $in: ['Mouse', 'Monitor'] } });\ndb.products.find({ name: { $regex: '^M' } });\ndb.products.find({ name: { $regex: '^m', $options: 'i' } });" },
+            { "type": "p", "text": "In a regex, `^` anchors to the start of the string, so `'^M'` means 'begins with M'. Without an anchor the pattern matches anywhere in the value." },
+            { "type": "note", "text": "An unanchored `$regex` can't use an index efficiently — it has to scan the collection. Anchoring the pattern or using a text index keeps large collections fast." }
+          ],
+          "task": "Use $regex to find products whose name starts with M.",
+          "starterCode": "use('shop');\n\n// Products whose name starts with M\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["$regex", "^M"],
+          "hints": [
+            "`^` anchors the pattern to the start of the string.",
+            "db.products.find({ name: { $regex: '^M' } });"
+          ],
+          "solution": "use('shop');\n\ndb.products.find({ name: { $regex: '^M' } });\n",
+          "reflectionPrompt": "When is $in clearer than chaining several $or conditions?"
+        },
+        {
+          "id": "mongo-07-update",
+          "title": "7. Updating documents",
+          "concept": "updateOne / $set",
+          "summary": "Change fields on documents that already exist.",
+          "activities": [
+            {
+              "id": "mongo-07-see",
+              "type": "worked-example",
+              "title": "Change a field",
+              "instruction": "`updateOne(filter, update)` changes the first matching document. Update operators like `$set` and `$inc` describe *what* to change — a plain object as the second argument replaces the whole document instead.",
+              "example": "use('shop');\n\ndb.products.updateOne(\n  { name: 'Keyboard' },\n  { $set: { price: 45 }, $inc: { stock: 1 } }\n);\n// price becomes 45, stock goes up by 1"
+            },
+            {
+              "id": "mongo-07-predict",
+              "type": "prediction",
+              "title": "No operator",
+              "question": "What happens if the second argument is `{ price: 45 }` with no `$set`?",
+              "choices": [
+                "The price field is updated to 45",
+                "The whole document is replaced with `{ price: 45 }`",
+                "MongoDB throws an error"
+              ],
+              "answer": "The whole document is replaced with `{ price: 45 }`",
+              "explanation": "Without update operators, the second argument is a replacement document — every other field disappears."
+            },
+            {
+              "id": "mongo-07-edit",
+              "type": "edit",
+              "title": "Set the Mouse price",
+              "instruction": "Use `updateOne()` with `$set` to set the price of 'Mouse' to 25."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Writes that change existing data take a filter first, so the same query language you learned for `find()` selects *which* documents get updated." },
+            { "type": "code", "text": "db.products.updateOne(\n  { name: 'Mouse' },\n  { $set: { price: 25 } }\n);" },
+            { "type": "p", "text": "`$set` changes the listed fields and leaves the rest alone. `$inc` adds to a number, `$unset` removes a field, and `updateMany()` applies the change to every match." },
+            { "type": "note", "text": "The result object reports `matchedCount` and `modifiedCount` — a filter that matched nothing is not an error, so check `matchedCount` when a change seems to vanish." }
+          ],
+          "task": "Use updateOne() with $set to set the Mouse price to 25.",
+          "starterCode": "use('shop');\n\n// Change the Mouse price to 25\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["updateOne", "$set", "25"],
+          "hints": [
+            "Pass the filter first, then the update: `{ $set: { ... } }`.",
+            "db.products.updateOne({ name: 'Mouse' }, { $set: { price: 25 } });"
+          ],
+          "solution": "use('shop');\n\ndb.products.updateOne(\n  { name: 'Mouse' },\n  { $set: { price: 25 } }\n);\n",
+          "reflectionPrompt": "Why are update operators like $set safer than passing a plain object?"
+        },
+        {
+          "id": "mongo-08-delete",
+          "title": "8. Counting and deleting",
+          "concept": "countDocuments / deleteOne / deleteMany",
+          "summary": "Count what you have and remove documents you no longer need.",
+          "activities": [
+            {
+              "id": "mongo-08-see",
+              "type": "worked-example",
+              "title": "Removing documents",
+              "instruction": "`countDocuments(filter)` counts matches. `deleteOne()` removes the first match and `deleteMany()` removes every match.",
+              "example": "use('shop');\n\ndb.products.countDocuments({ price: { $lt: 50 } });\n\ndb.products.deleteOne({ name: 'Monitor' });\n\ndb.products.deleteMany({ price: { $lt: 10 } });"
+            },
+            {
+              "id": "mongo-08-predict",
+              "type": "prediction",
+              "title": "One versus many",
+              "question": "What is the difference between `deleteOne()` and `deleteMany()`?",
+              "choices": [
+                "deleteOne removes the first match; deleteMany removes every match",
+                "deleteOne removes a field; deleteMany removes a document",
+                "They are identical — only the name differs"
+              ],
+              "answer": "deleteOne removes the first match; deleteMany removes every match",
+              "explanation": "The filter is the same; only how many matches get removed differs."
+            },
+            {
+              "id": "mongo-08-edit",
+              "type": "edit",
+              "title": "Delete and count",
+              "instruction": "Delete every product priced below 20, then print how many products remain."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Counting and deleting reuse the filter object, which makes it easy to check what you are about to remove." },
+            { "type": "code", "text": "db.products.countDocuments({ price: { $lt: 50 } });\ndb.products.deleteMany({ price: { $lt: 20 } });\nconsole.log(db.products.countDocuments());" },
+            { "type": "p", "text": "`deleteMany({})` with an empty filter clears the whole collection — the documents go, but the collection and its indexes remain." },
+            { "type": "note", "text": "Run the same filter through `find()` before you delete. `deletedCount` in the result tells you afterwards how many documents actually went." }
+          ],
+          "task": "Delete products under 20, then print how many products remain.",
+          "starterCode": "use('shop');\n\n// Delete cheap products, then count what's left\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["deleteMany", "countDocuments", "$lt", "20"],
+          "hints": [
+            "Use `$lt: 20` as the filter for both the delete and the count.",
+            "db.products.deleteMany({ price: { $lt: 20 } });\nconsole.log(db.products.countDocuments());"
+          ],
+          "solution": "use('shop');\n\ndb.products.deleteMany({ price: { $lt: 20 } });\nconsole.log(db.products.countDocuments());\n",
+          "reflectionPrompt": "Why should you run find() with the same filter before you call deleteMany()?"
+        }
+      ]
+    },
+    {
+      "id": "mongodb-driver",
+      "name": "Aggregation & Node.js",
+      "language": "mongodb",
+      "description": "Summarise data with pipelines and use MongoDB from a Node.js app.",
+      "lessons": [
+        {
+          "id": "mongo-09-sort-limit",
+          "title": "9. Sorting and paging",
+          "concept": "sort / limit / skip",
+          "summary": "Order results and page through them.",
+          "activities": [
+            {
+              "id": "mongo-09-see",
+              "type": "worked-example",
+              "title": "Order and cap",
+              "instruction": "`sort()` takes fields with `1` for ascending or `-1` for descending. `limit()` caps how many documents come back, and `skip()` jumps ahead — together they page through results.",
+              "example": "use('shop');\n\ndb.products\n  .find()\n  .sort({ price: -1 })\n  .limit(2);\n// the two most expensive products"
+            },
+            {
+              "id": "mongo-09-predict",
+              "type": "prediction",
+              "title": "Cheapest first",
+              "question": "Which sort puts the cheapest product first?",
+              "choices": [
+                ".sort({ price: 1 })",
+                ".sort({ price: -1 })",
+                ".limit(1)"
+              ],
+              "answer": ".sort({ price: 1 })",
+              "explanation": "1 is ascending, so the smallest price comes first. -1 is descending, and limit() only caps the count."
+            },
+            {
+              "id": "mongo-09-edit",
+              "type": "edit",
+              "title": "Two most expensive",
+              "instruction": "Find the two most expensive products."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Cursors are chainable. `find()` gives you the matches, then `sort()`, `skip()`, and `limit()` shape what you receive." },
+            { "type": "code", "text": "db.products.find().sort({ price: -1 }).limit(2);\n\n// page 2 of 10 per page\ndb.products.find().sort({ price: 1 }).skip(10).limit(10);" },
+            { "type": "p", "text": "`1` sorts ascending and `-1` descending. Sorting happens on the server, before `limit()` trims the result — which is why `sort` + `limit` returns the top N, not a random N." },
+            { "type": "note", "text": "Sorting a field with no index forces an in-memory sort. Large collections need an index on the sort key to stay fast." }
+          ],
+          "task": "Find the two most expensive products.",
+          "starterCode": "use('shop');\n\n// The two most expensive products\n",
+          "matchType": "source-regex",
+          "sourceChecks": ["sort\\s*\\(", "price\\s*:\\s*-1", "limit\\s*\\(\\s*2\\s*\\)"],
+          "hints": [
+            "Descending means `-1`, so the biggest price comes first.",
+            "db.products.find().sort({ price: -1 }).limit(2);"
+          ],
+          "solution": "use('shop');\n\ndb.products.find().sort({ price: -1 }).limit(2);\n",
+          "reflectionPrompt": "How would skip() and limit() combine to show page 2 of a paginated list?"
+        },
+        {
+          "id": "mongo-10-aggregation",
+          "title": "10. Aggregation pipelines",
+          "concept": "aggregate / $match / $group",
+          "summary": "Transform documents in stages to build summaries.",
+          "activities": [
+            {
+              "id": "mongo-10-see",
+              "type": "worked-example",
+              "title": "Stages in a pipeline",
+              "instruction": "`aggregate()` runs documents through a list of stages. Each stage takes the documents from the stage before it: `$match` filters, `$group` combines, and `$sum` adds up a field.",
+              "example": "use('shop');\n\ndb.orders.aggregate([\n  { $match: { status: 'paid' } },\n  { $group: { _id: '$customer', total: { $sum: '$amount' } } }\n]);\n// one document per customer, with the amount they paid"
+            },
+            {
+              "id": "mongo-10-predict",
+              "type": "prediction",
+              "title": "What _id means in $group",
+              "question": "What does `_id` inside `$group` define?",
+              "choices": [
+                "The unique id of the output document",
+                "The value documents are grouped by",
+                "The field to sort the output on"
+              ],
+              "answer": "The value documents are grouped by",
+              "explanation": "In a $group stage, _id is the grouping key. `'$status'` means 'the status field of each document', while a literal string groups everything into one bucket."
+            },
+            {
+              "id": "mongo-10-edit",
+              "type": "edit",
+              "title": "Count per status",
+              "instruction": "Group the orders by `status` and count how many orders are in each group."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Aggregation is how you compute things MongoDB can't express with a simple filter — totals, averages, counts per category." },
+            { "type": "code", "text": "db.orders.aggregate([\n  { $group: { _id: '$status', count: { $sum: 1 } } }\n]);" },
+            { "type": "p", "text": "A `$` in front of a value means 'read this field from the document', so `'$status'` is the value of status. `$sum: 1` counts documents because 1 is added for each one." },
+            { "type": "note", "text": "Put `$match` first in a pipeline. Stages run in order, so filtering early means every later stage works on fewer documents." }
+          ],
+          "task": "In the orders collection, group by status and count each group.",
+          "starterCode": "use('shop');\n\n// Count the orders in each status\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["aggregate(", "$group", "$sum"],
+          "hints": [
+            "The pipeline is an array, so each stage is its own object.",
+            "db.orders.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);"
+          ],
+          "solution": "use('shop');\n\ndb.orders.aggregate([\n  { $group: { _id: '$status', count: { $sum: 1 } } }\n]);\n",
+          "reflectionPrompt": "How is an aggregation pipeline different from chaining several find() queries together?"
+        },
+        {
+          "id": "mongo-11-driver-connect",
+          "title": "11. Connecting from Node.js",
+          "concept": "MongoClient",
+          "summary": "Reach MongoDB from your app with the official driver.",
+          "activities": [
+            {
+              "id": "mongo-11-see",
+              "type": "worked-example",
+              "title": "One client per app",
+              "instruction": "`MongoClient` is the entry point. Create it once, call `connect()` (queries also connect lazily), pick a database with `db()`, and close the client when the app shuts down.",
+              "example": "// npm install mongodb\nimport { MongoClient } from 'mongodb';\n\nconst client = new MongoClient('mongodb://localhost:27017');\nawait client.connect();\n\nconst db = client.db('shop');\nconsole.log(await db.collection('products').countDocuments());\n\nawait client.close();"
+            },
+            {
+              "id": "mongo-11-predict",
+              "type": "prediction",
+              "title": "What db() gives you",
+              "question": "What does `client.db('shop')` return?",
+              "choices": [
+                "A single document",
+                "A database handle you can query collections from",
+                "A brand new database server"
+              ],
+              "answer": "A database handle you can query collections from",
+              "explanation": "db() returns a handle. `db.collection('products')` narrows it to one collection, and that's what you run queries against."
+            },
+            {
+              "id": "mongo-11-edit",
+              "type": "edit",
+              "title": "Connect and count",
+              "instruction": "Create a `MongoClient` for `mongodb://localhost:27017`, connect, log the number of documents in the products collection, then close the client."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "In your own code you don't type queries into a shell — you use a driver. Install it with `npm install mongodb` and import `MongoClient`." },
+            { "type": "code", "text": "const client = new MongoClient('mongodb://localhost:27017');\nawait client.connect();\n\nconst db = client.db('shop');\nconst products = db.collection('products');\n\nconsole.log(await products.countDocuments());\nawait client.close();" },
+            { "type": "p", "text": "The driver is asynchronous, so every query returns a promise — `await` the reads and writes. The object you build up (`client` → `db` → `collection`) mirrors the server's structure." },
+            { "type": "note", "text": "Keep one shared `MongoClient` for the whole process. Creating a client per request opens a new connection pool each time and exhausts the server's connection limit." }
+          ],
+          "task": "Connect to MongoDB from Node.js and log the number of products.",
+          "starterCode": "import { MongoClient } from 'mongodb';\n\n// Connect, count the products, then close the client\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new MongoClient", "connect()", "countDocuments"],
+          "hints": [
+            "`new MongoClient(url)` creates the client; `await client.connect()` opens the pool.",
+            "const client = new MongoClient('mongodb://localhost:27017');\nawait client.connect();\nconsole.log(await client.db('shop').collection('products').countDocuments());"
+          ],
+          "solution": "import { MongoClient } from 'mongodb';\n\nconst client = new MongoClient('mongodb://localhost:27017');\nawait client.connect();\n\nconst db = client.db('shop');\nconsole.log(await db.collection('products').countDocuments());\n\nawait client.close();\n",
+          "reflectionPrompt": "Why is one shared MongoClient better than opening a connection per request?"
+        },
+        {
+          "id": "mongo-12-driver-crud",
+          "title": "12. CRUD with the driver",
+          "concept": "collection.insertOne / find",
+          "summary": "Insert, read, and update documents from your Node.js code.",
+          "activities": [
+            {
+              "id": "mongo-12-see",
+              "type": "worked-example",
+              "title": "Same queries, different place",
+              "instruction": "A collection handle supports the same operations as the shell, as promises. `find()` returns a cursor, so call `toArray()` when you want the documents.",
+              "example": "const products = client.db('shop').collection('products');\n\nawait products.insertOne({ name: 'Webcam', price: 35 });\n\nconst cheap = await products.find({ price: { $lt: 50 } }).toArray();\nconsole.log(cheap.length);\n\nawait products.updateOne({ name: 'Webcam' }, { $set: { price: 30 } });"
+            },
+            {
+              "id": "mongo-12-predict",
+              "type": "prediction",
+              "title": "What find() returns",
+              "question": "What does `find()` return from the Node.js driver?",
+              "choices": [
+                "An array of documents",
+                "A cursor you convert with toArray()",
+                "A promise for exactly one document"
+              ],
+              "answer": "A cursor you convert with toArray()",
+              "explanation": "find() returns a cursor so large result sets aren't loaded at once. toArray(), or a for-await loop, pulls the documents out."
+            },
+            {
+              "id": "mongo-12-edit",
+              "type": "edit",
+              "title": "Insert then read",
+              "instruction": "Insert a product named 'Webcam' priced 35, then read every product under 50 into an array."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The driver API is the shell API with promises: `collection.insertOne()`, `find()`, `updateOne()`, `deleteOne()`. Filters and operators are identical." },
+            { "type": "code", "text": "const products = client.db('shop').collection('products');\n\nawait products.insertOne({ name: 'Webcam', price: 35 });\nconst cheap = await products.find({ price: { $lt: 50 } }).toArray();\nconsole.log(cheap.length);" },
+            { "type": "p", "text": "`find()` returns a cursor, not an array — `await products.find()` alone hands back the cursor object. Add `.toArray()` for all documents, or `.next()` for one at a time." },
+            { "type": "note", "text": "Writes resolve with a result object (`insertedId`, `modifiedCount`, `deletedCount`), not the document itself. Read the field you need from the result." }
+          ],
+          "task": "Insert one product and read the products under 50 into an array.",
+          "starterCode": "const products = client.db('shop').collection('products');\n\n// Insert a Webcam at 35, then read everything under 50\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["insertOne", "toArray", "Webcam"],
+          "hints": [
+            "`await products.insertOne({ ... })` then `await products.find({ price: { $lt: 50 } }).toArray()`.",
+            "await products.insertOne({ name: 'Webcam', price: 35 });\nconst cheap = await products.find({ price: { $lt: 50 } }).toArray();"
+          ],
+          "solution": "const products = client.db('shop').collection('products');\n\nawait products.insertOne({ name: 'Webcam', price: 35 });\nconst cheap = await products.find({ price: { $lt: 50 } }).toArray();\nconsole.log(cheap.length);\n",
+          "reflectionPrompt": "When would you reach for findOne() instead of find().toArray() in an API route?"
+        }
+      ]
+    }
+  ]
+}

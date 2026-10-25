@@ -18,12 +18,14 @@
 // branch on it during render. We hydrate the cache on module load and
 // also refresh it whenever the key is saved (see engine/settings.js).
 
+import { getEntitlementState } from './entitlements';
+
 let cachedHasKey = false;
 const subscribers = new Set();
 
 function notify() {
   for (const fn of subscribers) {
-    try { fn(cachedHasKey); } catch { /* ignore subscriber errors */ }
+    try { fn(hasApiKey()); } catch { /* ignore subscriber errors */ }
   }
 }
 
@@ -60,14 +62,21 @@ if (typeof window !== 'undefined' && window.seecode?.ai) {
   })();
 }
 
+function hasManagedAi() {
+  const entitlement = getEntitlementState().entitlement;
+  return entitlement.plan === 'pro' && (entitlement.features || []).includes('managedAI');
+}
+
 export function hasApiKey() {
-  return cachedHasKey;
+  return cachedHasKey || hasManagedAi();
 }
 
 // ---- key onboarding helpers -------------------------------------------
-// Gemini keys look like "AIza" + 30-ish word characters. The pattern is a
-// fast local gate so obviously-partial pastes never hit the network.
-const KEY_PATTERN = /^AIza[\w-]{10,}$/;
+// Gemini has two key shapes: legacy standard keys ("AIza" + word characters)
+// and the authorization keys AI Studio now issues ("AQ." + chars, dots
+// included). The pattern is a fast local gate so obviously-partial pastes
+// never hit the network.
+const KEY_PATTERN = /^(?:AIza[\w-]{10,}|AQ\.[\w.-]{10,})$/;
 
 export function looksLikeApiKey(text) {
   return KEY_PATTERN.test(String(text || '').trim());
@@ -76,7 +85,7 @@ export function looksLikeApiKey(text) {
 // Best-effort pull of a key out of arbitrary clipboard text, so the UI can
 // offer a one-click paste right after the user returns from AI Studio.
 export function keyFromClipboard(text) {
-  const match = /AIza[\w-]{10,}/.exec(String(text || ''));
+  const match = /AIza[\w-]{10,}|AQ\.[\w.-]{10,}/.exec(String(text || ''));
   return match ? match[0] : null;
 }
 
@@ -85,7 +94,7 @@ export function keyFromClipboard(text) {
 export async function validateApiKey(key) {
   const trimmed = String(key || '').trim();
   if (!KEY_PATTERN.test(trimmed)) {
-    return { ok: false, reason: 'format', message: 'Keys start with "AIza" — make sure you copied the whole key.' };
+    return { ok: false, reason: 'format', message: 'Keys start with "AIza" (legacy) or "AQ." (new). Make sure you copied the whole key.' };
   }
   try {
     return await window.seecode.ai.validateKey(trimmed);
@@ -101,7 +110,7 @@ export async function refreshHasApiKey() {
     cachedHasKey = false;
   }
   notify();
-  return cachedHasKey;
+  return hasApiKey();
 }
 
 // Subscribe to key-presence changes. Returns an unsubscribe function.
@@ -114,6 +123,48 @@ export function subscribeHasApiKey(fn) {
 
 async function callGemini(prompt, systemInstruction) {
   return await window.seecode.ai.call({ prompt, systemInstruction });
+}
+
+// Gemini occasionally wraps JSON in prose or leaves a fence unterminated.
+// Pull the first balanced object out so a stray "Here you go:" doesn't turn
+// an otherwise valid reply into a parse error.
+function jsonSlice(text) {
+  const start = text.includes('{') ? text.indexOf('{') : text.indexOf('[');
+  if (start === -1) return text;
+  const open = text[start];
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === open) {
+      depth += 1;
+    } else if (ch === close) {
+      depth -= 1;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return text.slice(start);
+}
+
+function parseJsonReply(raw) {
+  let cleaned = String(raw || '').trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  cleaned = jsonSlice(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error('The AI sent a reply that was not valid JSON — try clicking Generate again.');
+  }
 }
 
 const CODE_SYSTEM_PROMPT = `You are SEEC0DE, an expert programming instructor and code generator. Your purpose is to help people learn to code by generating clear, well-structured, production-quality code.
@@ -181,6 +232,131 @@ You MUST respond with ONLY a valid JSON object — no markdown, no code fences, 
   ]
 }`;
 
+const TUTOR_SYSTEM_PROMPT = `You are SEEC0DE's in-lesson programming tutor. You explain the lesson's ideas. You are not a replacement for the lesson's curated hints, error explainer, or code explainer.
+
+RULES:
+- Follow the MODE block in the prompt. It defines what you may help with.
+- In CONCEPT_ONLY mode, explain the underlying concept with a NEW example. Do NOT give hints, debugging help, code fixes, next steps, or solutions for the current exercise.
+- When the lesson provides progressive hints, never reveal, list, paraphrase, or jump ahead to them.
+- Do not inspect or mention the learner's code or run output in CONCEPT_ONLY mode; you will not be given it.
+- If asked for exercise help in CONCEPT_ONLY mode, briefly say the lesson's Hint button has the next nudge and offer to explain the concept instead.
+- Keep answers under 180 words. Prefer short paragraphs or a small numbered list.
+- Use single backticks for inline code and values.
+- Never invent an error, hint, or lesson detail that is not in the context.
+- Return ONLY valid JSON: {"answer":"your reply"}`;
+
+export async function askLessonTutor({
+  lesson,
+  code = '',
+  language = 'javascript',
+  status = 'idle',
+  verification = null,
+  coaching = [],
+  runOutput = null,
+  messages = [],
+  question = '',
+  restricted = false,
+  revealedHints = 0,
+}) {
+  const hintCount = Array.isArray(lesson?.hints) ? lesson.hints.length : 0;
+  const lessonContext = lesson ? {
+    title: lesson.title,
+    concept: lesson.concept,
+    summary: lesson.summary,
+    ...(restricted ? {} : {
+      task: lesson.task,
+      hints: lesson.hints,
+    }),
+    teaching: (lesson.teaching || []).map((block) => block?.text).filter(Boolean).slice(0, 5),
+  } : null;
+  const history = (messages || [])
+    .slice(-8)
+    .map((message) => `${message.role === 'assistant' ? 'Tutor' : 'Learner'}: ${String(message.content || '').slice(0, 2000)}`)
+    .join('\n');
+  const exerciseHelpRedirect = hintCount > 0
+    ? `The lesson has ${hintCount} curated hint${hintCount === 1 ? '' : 's'}; ${revealedHints} revealed so far. If the learner asks for exercise help, point them to the lesson's Hint button and offer a concept explanation with a different example.`
+    : `This exercise has no curated hints. Do not invent hints. If the learner asks for exercise help, offer a concept explanation with a different example and point them to the error explainer for failures.`;
+  const modeBlock = restricted
+    ? `MODE: CONCEPT_ONLY
+The learner is in a code exercise. Do not give hints, debugging help, code fixes, next steps, or solutions.
+${exerciseHelpRedirect}
+The learner's code and run output are intentionally hidden from you.`
+    : `MODE: LESSON_SUPPORT
+The learner is studying the lesson material. Explain the lesson more clearly, add context, analogies, and different examples. Do not do the exercise for them.`;
+  const activityContext = restricted
+    ? `EXERCISE CONTEXT: hidden by design. Do not ask for the code and do not guess at it.`
+    : `LEARNER'S CURRENT CODE:
+\`\`\`
+${String(code || '').slice(0, 12000)}
+\`\`\`
+
+CHECK RESULT:
+${verification ? JSON.stringify(verification).slice(0, 3000) : 'none'}
+
+COACHING NOTES:
+${(coaching || []).map((item) => `${item.title}: ${item.plain}`).join('\n').slice(0, 3000) || 'none'}
+
+LAST RUN:
+${runOutput ? `stdout:\n${String(runOutput.stdout || '').slice(0, 1500)}\nstderr:\n${String(runOutput.stderr || '').slice(0, 3000)}` : 'none'}`;
+  const prompt = `LESSON CONTEXT:
+${JSON.stringify(lessonContext, null, 2)}
+
+LANGUAGE: ${language}
+LESSON STATUS: ${status}
+
+${modeBlock}
+
+${activityContext}
+
+CONVERSATION:
+${history || 'This is the first question.'}
+
+LEARNER QUESTION:
+${String(question || '').slice(0, 4000)}
+
+Respond with ONLY the JSON object described in your instructions.`;
+
+  const raw = await callGemini(prompt, TUTOR_SYSTEM_PROMPT);
+  const parsed = parseJsonReply(raw);
+  const answer = typeof parsed.answer === 'string' ? parsed.answer.trim() : '';
+  if (!answer) throw new Error('The tutor sent an empty reply. Try asking again.');
+  return answer;
+}
+
+const INTERVIEW_SYSTEM_PROMPT = `You are SEEC0DE's technical interview coach. You evaluate a learner's spoken-style answer to a practice interview question.
+
+RULES:
+- Be encouraging but honest. Judge the answer against the level and language in the prompt.
+- Reward structure, concrete examples, trade-offs, and clear communication.
+- Do not invent experience for the learner. If an answer is thin, say what is missing.
+- Keep every list item under 24 words.
+- "score" is an integer from 1 to 5.
+- "followUp" is one realistic interviewer follow-up question.
+- Return ONLY valid JSON: {"score":3,"strengths":["..."],"improvements":["..."],"followUp":"..."}`;
+
+export async function askInterviewCoach({ language = 'javascript', level = 'mid', question = '', answer = '' }) {
+  const prompt = `LANGUAGE: ${language}
+LEVEL: ${level}
+QUESTION: ${String(question || '').slice(0, 2000)}
+
+LEARNER ANSWER:
+${String(answer || '').slice(0, 6000)}
+
+Evaluate this answer and return ONLY the JSON object described in your instructions.`;
+  const raw = await callGemini(prompt, INTERVIEW_SYSTEM_PROMPT);
+  const parsed = parseJsonReply(raw);
+  const score = Math.max(1, Math.min(5, Math.round(Number(parsed.score) || 3)));
+  const strengths = Array.isArray(parsed.strengths) ? parsed.strengths.map(String).filter(Boolean).slice(0, 3) : [];
+  const improvements = Array.isArray(parsed.improvements) ? parsed.improvements.map(String).filter(Boolean).slice(0, 3) : [];
+  const followUp = typeof parsed.followUp === 'string' ? parsed.followUp.trim() : '';
+  return {
+    score,
+    strengths: strengths.length ? strengths : ['You gave a complete answer.'],
+    improvements: improvements.length ? improvements : ['Add one concrete example and one trade-off.'],
+    followUp,
+  };
+}
+
 export async function generateCodeWithAI(instruction, languages) {
   const langList = languages.join(', ');
   const prompt = `Generate code for this instruction in the following languages: ${langList}.
@@ -191,12 +367,7 @@ Remember: respond with ONLY valid JSON matching the required format. Include pse
 
   const raw = await callGemini(prompt, CODE_SYSTEM_PROMPT);
 
-  let cleaned = raw.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-
-  const parsed = JSON.parse(cleaned);
+  const parsed = parseJsonReply(raw);
   return {
     pseudocode: parsed.pseudocode || '',
     code: parsed.code || {},
@@ -233,12 +404,7 @@ Remember: respond with ONLY valid JSON matching the required {title, plain, fixe
 
   const raw = await callGemini(prompt, ERROR_SYSTEM_PROMPT);
 
-  let cleaned = raw.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-
-  const parsed = JSON.parse(cleaned);
+  const parsed = parseJsonReply(raw);
   return {
     title: String(parsed.title || 'Something went wrong with your code').trim(),
     plain: String(parsed.plain || '').trim(),
@@ -324,16 +490,7 @@ Remember: respond with ONLY valid JSON matching the required format.`;
 
   const raw = await callGemini(p, BUILD_PROJECT_SYSTEM_PROMPT);
 
-  let cleaned = raw.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-
-  try {
-    return JSON.parse(cleaned);
-  } catch {
-    throw new Error('Gemini returned an invalid response — try again or rephrase your request.');
-  }
+  return parseJsonReply(raw);
 }
 
 export async function explainCodeWithAI(code, language) {
@@ -347,12 +504,7 @@ Remember: respond with ONLY valid JSON matching the required format.`;
 
   const raw = await callGemini(prompt, EXPLAIN_SYSTEM_PROMPT);
 
-  let cleaned = raw.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-
-  const parsed = JSON.parse(cleaned);
+  const parsed = parseJsonReply(raw);
 
   // Normalise the AI's per-line shape to the offline explainer's shape so
   // ExplanationSidebar can render either source uniformly.
@@ -435,11 +587,7 @@ export async function explainTerminalWithAI(input, kind = 'command') {
       : `Explain what this terminal ${label} does in one brief sentence:\n\n${text}`;
 
     const raw = await callGemini(prompt, TERMINAL_EXPLAIN_SYSTEM_PROMPT);
-    let cleaned = raw.trim();
-    if (cleaned.startsWith('```')) {
-      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-    }
-    const parsed = JSON.parse(cleaned);
+    const parsed = parseJsonReply(raw);
     const explanation = typeof parsed.explanation === 'string' && parsed.explanation.trim()
       ? parsed.explanation.trim()
       : null;

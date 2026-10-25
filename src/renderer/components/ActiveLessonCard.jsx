@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { explainCode, traceCode } from '../engine/codeExplainer';
 import { renderInline } from './InlineCode';
-import SpeakButton from './SpeakButton';
 import { useConfirm } from './ui/dialog';
 
 // ActiveLessonCard — the rich teaching view that replaces the
@@ -104,10 +103,7 @@ export default function ActiveLessonCard({
 
       {/* Task callout */}
       {!teachingOnly && <div style={styles.taskBox}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={styles.taskLabel}>Your turn</div>
-          <SpeakButton text={String(lesson.task || '')} title="Read the task aloud" />
-        </div>
+        <div style={styles.taskLabel}>Your turn</div>
         <div style={styles.taskText}>{renderInline(lesson.task)}</div>
         <div style={styles.taskHint}>
           Edit the code in the editor → click <strong>Run</strong> in the toolbar.
@@ -556,7 +552,7 @@ const styles = {
   card: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
+    gap: 14,
     background: 'transparent',
     border: 'none',
     borderRadius: 0,
@@ -570,34 +566,34 @@ const styles = {
     padding: 0,
   },
   summary: {
-    fontSize: 12,
+    fontSize: 14.5,
     color: 'var(--text-secondary)',
-    lineHeight: 1.45,
+    lineHeight: 1.6,
     margin: 0,
   },
   teaching: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
-    marginTop: 4,
+    gap: 13,
+    marginTop: 6,
   },
   p: {
-    fontSize: 12,
+    fontSize: 14.5,
     color: 'var(--text-secondary)',
-    lineHeight: 1.55,
+    lineHeight: 1.7,
     margin: 0,
   },
   code: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border)',
     color: 'var(--text-primary)',
-    padding: '8px 10px',
+    padding: '10px 12px',
     borderRadius: 6,
     margin: 0,
     overflowX: 'auto',
-    lineHeight: 1.5,
+    lineHeight: 1.55,
     whiteSpace: 'pre',
   },
   codeShell: {
@@ -622,8 +618,8 @@ const styles = {
     padding: '1px 10px',
     cursor: 'default',
     fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
-    fontSize: 11.5,
-    lineHeight: 1.5,
+    fontSize: 12.5,
+    lineHeight: 1.55,
   },
   codeLineClickable: {
     cursor: 'pointer',
@@ -644,10 +640,10 @@ const styles = {
     display: 'flex',
     gap: 6,
     borderTop: '1px solid var(--border)',
-    padding: '7px 10px',
+    padding: '8px 12px',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    lineHeight: 1.45,
+    fontSize: 12.5,
+    lineHeight: 1.55,
   },
   traceToggle: {
     display: 'inline-flex',
@@ -697,37 +693,37 @@ const styles = {
     display: 'flex',
     alignItems: 'flex-start',
     gap: 6,
-    fontSize: 11.5,
+    fontSize: 13,
     color: 'var(--text-muted)',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     background: 'transparent',
     borderLeft: '2px solid var(--border-strong)',
-    paddingLeft: 8,
+    paddingLeft: 10,
   },
   taskBox: {
     background: 'var(--bg-tertiary)',
     border: '1px solid var(--border-strong)',
     borderLeft: '3px solid var(--algorithm)',
     borderRadius: 6,
-    padding: 10,
+    padding: 14,
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
+    gap: 6,
   },
   taskLabel: {
-    fontSize: 10,
+    fontSize: 10.5,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     color: 'var(--algorithm)',
     fontWeight: 700,
   },
   taskText: {
-    fontSize: 12.5,
+    fontSize: 14.5,
     color: 'var(--text-primary)',
-    lineHeight: 1.5,
+    lineHeight: 1.55,
   },
   taskHint: {
-    fontSize: 11,
+    fontSize: 12,
     color: 'var(--text-muted)',
     marginTop: 2,
   },
@@ -757,13 +753,13 @@ const styles = {
     minWidth: 0,
   },
   statusTitle: {
-    fontSize: 12,
+    fontSize: 13.5,
     fontWeight: 700,
   },
   statusText: {
-    fontSize: 11.5,
+    fontSize: 13,
     color: 'var(--text-secondary)',
-    lineHeight: 1.45,
+    lineHeight: 1.55,
   },
   diffRow: {
     marginTop: 4,
@@ -776,12 +772,12 @@ const styles = {
     marginBottom: 2,
   },
   diffBlock: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
     background: 'var(--bg-primary)',
     border: '1px solid var(--border)',
     borderRadius: 4,
-    padding: '6px 8px',
+    padding: '7px 9px',
     color: 'var(--text-primary)',
     margin: 0,
     overflowX: 'auto',
@@ -811,20 +807,20 @@ const styles = {
   },
   fixTitle: {
     color: 'var(--text-primary)',
-    fontSize: 12,
+    fontSize: 13.5,
     fontWeight: 700,
   },
   fixText: {
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    lineHeight: 1.45,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   fixList: {
-    margin: '2px 0 0 16px',
+    margin: '2px 0 0 18px',
     padding: 0,
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    lineHeight: 1.45,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   reflectionBox: {
     display: 'flex',
@@ -835,20 +831,20 @@ const styles = {
     borderRadius: 7,
     background: 'var(--bg-tertiary)',
   },
-  reflectionLabel: { color: 'var(--text-primary)', fontSize: 11, fontWeight: 700 },
-  reflectionPrompt: { color: 'var(--text-secondary)', fontSize: 10.5, lineHeight: 1.45 },
+  reflectionLabel: { color: 'var(--text-primary)', fontSize: 12.5, fontWeight: 700 },
+  reflectionPrompt: { color: 'var(--text-secondary)', fontSize: 12.5, lineHeight: 1.55 },
   reflectionInput: {
     width: '100%',
     boxSizing: 'border-box',
     resize: 'vertical',
-    padding: 8,
+    padding: 10,
     border: '1px solid var(--border)',
     borderRadius: 5,
     background: 'var(--bg-input)',
     color: 'var(--text-primary)',
     font: 'inherit',
-    fontSize: 11,
-    lineHeight: 1.45,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   completeCheckpointBtn: {
     display: 'inline-flex',
@@ -878,9 +874,9 @@ const styles = {
     display: 'flex',
     alignItems: 'flex-start',
     gap: 6,
-    fontSize: 11.5,
+    fontSize: 13,
     color: 'var(--text-secondary)',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
   },
   hintText: { flex: 1 },
   solutionBox: {
@@ -900,22 +896,22 @@ const styles = {
     fontWeight: 700,
   },
   solutionCode: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
     background: 'var(--bg-primary)',
     border: '1px solid var(--border)',
     color: 'var(--text-primary)',
-    padding: '8px 10px',
+    padding: '10px 12px',
     borderRadius: 4,
     margin: 0,
     overflowX: 'auto',
     whiteSpace: 'pre',
-    lineHeight: 1.5,
+    lineHeight: 1.55,
   },
   solutionHint: {
     display: 'flex',
     gap: 6,
-    fontSize: 11,
+    fontSize: 12.5,
     color: 'var(--text-muted)',
     alignItems: 'flex-start',
   },
@@ -1059,18 +1055,18 @@ const styles = {
   },
   explainTitle: {
     color: 'var(--text-primary)',
-    fontSize: 12,
+    fontSize: 13.5,
     fontWeight: 700,
   },
   explainPrompt: {
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    lineHeight: 1.5,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   explainHint: {
     color: 'var(--text-muted)',
-    fontSize: 10.5,
-    lineHeight: 1.4,
+    fontSize: 12,
+    lineHeight: 1.5,
   },
   explainConcept: {
     fontFamily: 'var(--font-mono, ui-monospace, "Cascadia Code", monospace)',
@@ -1084,14 +1080,14 @@ const styles = {
     width: '100%',
     boxSizing: 'border-box',
     resize: 'vertical',
-    padding: 8,
+    padding: 10,
     border: '1px solid var(--border)',
     borderRadius: 5,
     background: 'var(--bg-input)',
     color: 'var(--text-primary)',
     font: 'inherit',
-    fontSize: 11,
-    lineHeight: 1.5,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   explainActions: {
     display: 'flex',

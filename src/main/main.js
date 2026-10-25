@@ -51,6 +51,66 @@ function setStatus(patch) {
   broadcastStatus();
 }
 
+// ---- In-app browser window for external links -----------------------------
+// Bulletin articles, "Get a free key", and toolchain download links open in a
+// reusable seec0de window (stock Chromium, no Node, no address bar) instead of
+// handing the URL to the system browser. The default session is shared, so
+// logins (e.g. Google AI Studio) survive app restarts.
+let browserWindow = null;
+
+// Google sign-in refuses Electron's default user agent, so the in-app browser
+// identifies as plain Chrome for the current platform.
+const BROWSER_UA = process.platform === 'darwin'
+  ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  : process.platform === 'linux'
+    ? 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+function openInBrowserWindow(url) {
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return { ok: false };
+
+  if (browserWindow && !browserWindow.isDestroyed()) {
+    browserWindow.loadURL(url);
+    if (browserWindow.isMinimized()) browserWindow.restore();
+    browserWindow.focus();
+    return { ok: true, reused: true, url };
+  }
+
+  browserWindow = new BrowserWindow({
+    width: 1100,
+    height: 800,
+    minWidth: 420,
+    minHeight: 320,
+    title: 'seec0de Preview',
+    backgroundColor: '#1a1d23',
+    autoHideMenuBar: true,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+
+  browserWindow.webContents.setUserAgent(BROWSER_UA);
+
+  // Links with target="_blank" inside the page load here too — one window,
+  // no popups. Non-http targets are refused.
+  browserWindow.webContents.setWindowOpenHandler(({ url: target }) => {
+    openInBrowserWindow(target);
+    return { action: 'deny' };
+  });
+  browserWindow.webContents.on('will-navigate', (event, target) => {
+    if (!/^https?:\/\//i.test(target)) event.preventDefault();
+  });
+  // Keep a stable, trustworthy title rather than whatever the page sets.
+  browserWindow.webContents.on('page-title-updated', (event) => event.preventDefault());
+
+  browserWindow.loadURL(url);
+  browserWindow.on('closed', () => { browserWindow = null; });
+
+  return { ok: true, url };
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -66,14 +126,11 @@ function createWindow() {
     },
   });
 
-  // Any target="_blank" link in the renderer (e.g. "Get a free AI key" →
-  // Google AI Studio) must open in the user's real browser, never as an
-  // address-bar-less app window. Hand http(s) to the OS and deny the
-  // in-app popup.
+  // Any target="_blank" link in the renderer (bulletin articles, "Get a free
+  // AI key", toolchain downloads) opens in a seec0de browser window, never in
+  // the user's external browser and never as an address-bar-less app popup.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://') || url.startsWith('http://')) {
-      shell.openExternal(url);
-    }
+    openInBrowserWindow(url);
     return { action: 'deny' };
   });
 
@@ -249,6 +306,12 @@ app.whenReady().then(() => {
   if (typeof registerAiServiceHandlers === 'function') {
     registerAiServiceHandlers();
   }
+
+  const { registerBillingServiceHandlers } = require('./billingService');
+  registerBillingServiceHandlers({
+    openCheckout: openInBrowserWindow,
+    openPortal: openInBrowserWindow,
+  });
 
   createWindow();
   setupAutoUpdates();

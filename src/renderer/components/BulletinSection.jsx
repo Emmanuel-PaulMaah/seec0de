@@ -126,7 +126,7 @@ function BulletinCard({ tone, icon, label, article }) {
 
       <span className="bulletin-card-title">
         {article.title}
-        <span className="sr-only"> — opens on Wikipedia in a new tab</span>
+        <span className="sr-only"> — opens in a seec0de preview window</span>
       </span>
 
       {article.description ? (

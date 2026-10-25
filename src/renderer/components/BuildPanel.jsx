@@ -8,7 +8,7 @@ import {
 import { Loader } from './motion/loader';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
-  listBuildProjects, listGeneratedProjects, findBuildProject,
+  BUILD_LEVELS, listBuildProjects, listGeneratedProjects, findBuildProject,
   sanitizeGeneratedProject, registerGeneratedProject, deleteGeneratedProject,
 } from '../data/buildProjects';
 import { hasApiKey, subscribeHasApiKey, generateBuildProjectWithAI } from '../engine/aiService';
@@ -69,6 +69,8 @@ export default function BuildPanel({
   const [pickerPage, setPickerPage] = useState('home');
   // Stack filter for the Sample Projects list ('all' = every language).
   const [langFilter, setLangFilter] = useState('all');
+  // Level filter for the Sample Projects list ('all' = every level).
+  const [levelFilter, setLevelFilter] = useState('all');
   // Accordion: which sample project's card is expanded (one at a time).
   const [expandedProjectId, setExpandedProjectId] = useState(null);
   // Start-build dialog: the project awaiting the learner's answers to
@@ -87,6 +89,12 @@ export default function BuildPanel({
   }, []);
 
   const labelFor = (id) => LANGUAGES[id]?.label || id;
+
+  // Sample projects are grouped by experience level. Unknown levels fall back
+  // to "mid" so an older project can never vanish from the library.
+  const levelFor = (project) => (
+    BUILD_LEVELS.some((level) => level.id === project.level) ? project.level : 'mid'
+  );
 
   // ---- Start-build dialog ----------------------------------------------
   // Both sample "Start build" and AI "Build it" funnel through a few quick
@@ -201,6 +209,7 @@ export default function BuildPanel({
     const projects = listBuildProjects()
       .filter((p) => !p.generated) // generated ones live under "My Projects"
       .filter((p) => langFilter === 'all' || p.language === langFilter)
+      .filter((p) => levelFilter === 'all' || levelFor(p) === levelFilter)
       .filter((p) => {
         const hay = `${p.title} ${p.summary} ${(p.concepts || []).join(' ')} ${p.language}`.toLowerCase();
         return hay.includes(query.trim().toLowerCase());
@@ -226,6 +235,7 @@ export default function BuildPanel({
 
     const sampleItems = projects.map((project) => ({
       id: project.id,
+      level: levelFor(project),
       icon: <Code2 className="size-4" />,
       title: (
         <span className="flex min-w-0 items-center gap-2">
@@ -253,6 +263,13 @@ export default function BuildPanel({
         </div>
       ),
     }));
+
+    // One accordion per level, in Junior → Mid-level → Expert order. Filtered
+    // groups with no matches drop out, so search and the language filter stay
+    // honest without a separate "no results in this level" state.
+    const sampleGroups = BUILD_LEVELS
+      .map((level) => ({ ...level, items: sampleItems.filter((item) => item.level === level.id) }))
+      .filter((group) => group.items.length > 0);
 
     const pageMotion = reduce
       ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
@@ -364,44 +381,73 @@ export default function BuildPanel({
           ) : (
             <motion.section key="samples" {...pageMotion} transition={{ duration: reduce ? 0 : 0.22 }} className="space-y-4">
               <PickerPageHeader title="Sample library" subtitle="Choose a sample project, then make it yours" onBack={() => setPickerPage('home')} />
-              <div className="flex items-center gap-2">
-                <label className="relative min-w-0 flex-1">
+              <div className="space-y-2">
+                <label className="relative block min-w-0">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search projects" aria-label="Search sample projects" className="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-xs text-foreground outline-none transition focus:border-border-strong focus:ring-2 focus:ring-foreground/5" />
                 </label>
-                <Select value={langFilter} onValueChange={setLangFilter} className="shrink-0">
-                  <SelectTrigger className="h-10 w-[112px] rounded-lg border-border bg-card px-3 text-xs">
-                    <SelectValue placeholder="Language" />
-                  </SelectTrigger>
-                  <SelectContent className="w-40">
-                    {sampleLanguages.map((language) => (
-                      <SelectItem key={language} value={language}>
-                        {language === 'all' ? 'All languages' : labelFor(language)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Select value={langFilter} onValueChange={setLangFilter} className="min-w-0 flex-1">
+                    <SelectTrigger className="h-10 w-full rounded-lg border-border bg-card px-3 text-xs">
+                      <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent className="w-40">
+                      {sampleLanguages.map((language) => (
+                        <SelectItem key={language} value={language}>
+                          {language === 'all' ? 'All languages' : labelFor(language)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={levelFilter} onValueChange={setLevelFilter} className="min-w-0 flex-1">
+                    <SelectTrigger className="h-10 w-full rounded-lg border-border bg-card px-3 text-xs">
+                      <SelectValue placeholder="Level" />
+                    </SelectTrigger>
+                    <SelectContent className="w-40">
+                      <SelectItem value="all">All levels</SelectItem>
+                      {BUILD_LEVELS.map((level) => (
+                        <SelectItem key={level.id} value={level.id}>
+                          {level.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               {sampleItems.length > 0 ? (
-                <BouncyAccordion
-                  key={pickerTick}
-                  items={sampleItems}
-                  value={expandedProjectId}
-                  onValueChange={setExpandedProjectId}
-                  classNames={{
-                    item: 'border-x-0 border-b-0 border-t border-border bg-transparent',
-                    trigger: 'min-h-[58px] gap-3 px-2',
-                    icon: 'size-5 bg-transparent',
-                    title: 'text-xs',
-                    content: 'border-t border-border/70',
-                    description: 'px-0 pt-4',
-                  }}
-                />
+                <div className="space-y-6">
+                  {sampleGroups.map((group) => (
+                    <section key={group.id} aria-label={`${group.label} projects`}>
+                      <div className="flex items-baseline justify-between px-2 pb-1">
+                        <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {group.label}
+                        </h3>
+                        <span className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+                          {group.items.length}
+                        </span>
+                      </div>
+                      <BouncyAccordion
+                        key={`${pickerTick}:${group.id}`}
+                        items={group.items}
+                        value={expandedProjectId}
+                        onValueChange={setExpandedProjectId}
+                        classNames={{
+                          item: 'border-x-0 border-b-0 border-t border-border bg-transparent',
+                          trigger: 'min-h-[58px] gap-3 px-2',
+                          icon: 'size-5 bg-transparent',
+                          title: 'text-xs',
+                          content: 'border-t border-border/70',
+                          description: 'px-0 pt-4',
+                        }}
+                      />
+                    </section>
+                  ))}
+                </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-border p-6 text-center">
                   <Search className="mx-auto size-5 text-muted-foreground" />
                   <p className="mt-3 text-xs font-medium text-foreground">No matching project</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">Try a broader name or another language.</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Try a broader name, another language, or every level.</p>
                 </div>
               )}
             </motion.section>

@@ -1,0 +1,472 @@
+{
+  "tracks": [
+    {
+      "id": "system-design-contracts",
+      "name": "API Contracts",
+      "language": "systemdesign",
+      "description": "Interfaces that survive real clients, retries and time.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "sys-01-pagination",
+          "title": "1. Pagination as a contract",
+          "concept": "cursors and envelopes",
+          "summary": "Return a shape that tells the client how to ask for the next page.",
+          "activities": [
+            {
+              "id": "sys-01-see",
+              "type": "worked-example",
+              "title": "Data plus a way forward",
+              "instruction": "A bare array forces the client to guess the page size and append `?page=` forever. Return an envelope with the page and an opaque cursor for the next one. The cursor hides how pagination works, so you can change the strategy later without breaking clients.",
+              "example": "app.get('/api/posts', async (req, res) => {\n  const limit = Math.min(Number(req.query.limit) || 20, 100);\n  const rows = await Post.find(\n    req.query.cursor ? { _id: { $lt: req.query.cursor } } : {}\n  ).sort({ _id: -1 }).limit(limit + 1).lean();\n\n  const hasMore = rows.length > limit;\n  const page = rows.slice(0, limit);\n  res.json({\n    data: page,\n    nextCursor: hasMore ? page[page.length - 1]._id : null,\n  });\n});"
+            },
+            {
+              "id": "sys-01-predict",
+              "type": "prediction",
+              "title": "Offset drift",
+              "question": "A client is on `page=2` of an offset-paginated feed when three new posts are inserted at the top. What happens on the next request?",
+              "choices": [
+                "Some posts appear twice and none are missing",
+                "Nothing changes — offsets are stable",
+                "The request fails with a 409"
+              ],
+              "answer": "Some posts appear twice and none are missing",
+              "explanation": "The offset counted rows from the old start. New rows shift everything down, so page 2 now begins with rows the user already saw."
+            },
+            {
+              "id": "sys-01-edit",
+              "type": "edit",
+              "title": "Return an envelope",
+              "instruction": "Return `{ data, nextCursor }` from the route, using the last row's id when there is another page."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Clients break on shapes, not on intentions. Decide the envelope, the page size cap and the end-of-list signal once, then keep them." },
+            { "type": "code", "text": "res.json({ data: page, nextCursor: hasMore ? page.at(-1)._id : null });" },
+            { "type": "note", "text": "Cap `limit`. An uncapped page size is a denial-of-service waiting for one curious client." }
+          ],
+          "task": "Return data with a nextCursor for the next page.",
+          "starterCode": "app.get('/api/posts', async (req, res) => {\n  const posts = await Post.find().limit(20).lean();\n  res.json(posts);\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["nextcursor", "data:"],
+          "hints": [
+            "Fetch one extra row to know whether a next page exists.",
+            "res.json({\n  data: page,\n  nextCursor: hasMore ? page[page.length - 1]._id : null,\n});"
+          ],
+          "solution": "app.get('/api/posts', async (req, res) => {\n  const limit = 20;\n  const rows = await Post.find().sort({ _id: -1 }).limit(limit + 1).lean();\n  const hasMore = rows.length > limit;\n  const page = rows.slice(0, limit);\n\n  res.json({\n    data: page,\n    nextCursor: hasMore ? page[page.length - 1]._id : null,\n  });\n});\n",
+          "reflectionPrompt": "Why does an opaque cursor make future pagination changes easier?"
+        },
+        {
+          "id": "sys-02-idempotency",
+          "title": "2. Idempotent writes",
+          "concept": "idempotency keys",
+          "summary": "If a client can retry, the write must be safe to repeat.",
+          "activities": [
+            {
+              "id": "sys-02-see",
+              "type": "worked-example",
+              "title": "One key, one charge",
+              "instruction": "Networks time out and clients retry. A charge that ran server-side but timed out will run again on retry, unless the request carries a key the server remembers. Store the key with the result, return the stored result on repeat, and let a unique index enforce it.",
+              "example": "app.post('/api/payments', async (req, res) => {\n  const key = req.get('Idempotency-Key');\n  if (!key) return res.status(400).json({ error: 'missing key' });\n\n  const existing = await Payment.findOne({ idempotencyKey: key });\n  if (existing) return res.status(200).json(existing.result);\n\n  const result = await charge(req.body.amount);\n  await Payment.create({ idempotencyKey: key, result });\n  res.status(201).json(result);\n});"
+            },
+            {
+              "id": "sys-02-predict",
+              "type": "prediction",
+              "title": "The timeout retry",
+              "question": "The server charges the card, then the response times out. The client retries without an idempotency key. What is the outcome?",
+              "choices": [
+                "A second charge, because the server cannot tell it is a retry",
+                "The first charge is refunded automatically",
+                "The retry is rejected as a duplicate"
+              ],
+              "answer": "A second charge, because the server cannot tell it is a retry",
+              "explanation": "At-least-once delivery is the normal case, not the exception. Idempotency moves duplicate detection to the server, where it can be enforced."
+            },
+            {
+              "id": "sys-02-edit",
+              "type": "edit",
+              "title": "Make the charge safe to retry",
+              "instruction": "Read `Idempotency-Key`, return the stored result when it exists, and store it after charging."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Idempotency is not caching. The guarantee is that repeating the same request has the same effect as doing it once; the response should be the original one." },
+            { "type": "code", "text": "const existing = await Payment.findOne({ idempotencyKey: key });\nif (existing) return res.status(200).json(existing.result);" },
+            { "type": "note", "text": "Two racing retries can both pass the find check. A unique index on the key turns that race into a duplicate-key error you can handle." }
+          ],
+          "task": "Make the payment route idempotent using the Idempotency-Key header.",
+          "starterCode": "app.post('/api/payments', async (req, res) => {\n  const result = await charge(req.body.amount);\n  res.status(201).json(result);\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["idempotency-key", "findone(", "charge("],
+          "hints": [
+            "Look the key up before charging, and save it with the result.",
+            "const key = req.get('Idempotency-Key');\nconst existing = await Payment.findOne({ idempotencyKey: key });\nif (existing) return res.status(200).json(existing.result);"
+          ],
+          "solution": "app.post('/api/payments', async (req, res) => {\n  const key = req.get('Idempotency-Key');\n  if (!key) return res.status(400).json({ error: 'missing key' });\n\n  const existing = await Payment.findOne({ idempotencyKey: key });\n  if (existing) return res.status(200).json(existing.result);\n\n  const result = await charge(req.body.amount);\n  await Payment.create({ idempotencyKey: key, result });\n  res.status(201).json(result);\n});\n",
+          "reflectionPrompt": "Why is a unique database index needed even when you check for the key first?"
+        },
+        {
+          "id": "sys-03-errors",
+          "title": "3. Errors and versioning",
+          "concept": "stable error contract",
+          "summary": "Give every failure a code, a message and a request id.",
+          "activities": [
+            {
+              "id": "sys-03-see",
+              "type": "worked-example",
+              "title": "One error shape",
+              "instruction": "Clients branch on status codes and stable machine-readable codes, not on prose. One error middleware, one shape, and a request id in every response so a user's screenshot can be traced to a log line.",
+              "example": "app.use((err, req, res, next) => {\n  const status = err.status || 500;\n  res.status(status).json({\n    error: {\n      code: err.code || 'internal_error',\n      message: status === 500 ? 'Something went wrong' : err.message,\n      requestId: req.id,\n    },\n  });\n});"
+            },
+            {
+              "id": "sys-03-predict",
+              "type": "prediction",
+              "title": "Which change is breaking?",
+              "question": "Which API change is most likely to break existing clients?",
+              "choices": [
+                "Renaming `userName` to `username` in responses",
+                "Adding a new optional field to a response",
+                "Adding a new endpoint"
+              ],
+              "answer": "Renaming `userName` to `username` in responses",
+              "explanation": "Additive changes are usually safe. Renames and removals break parsing. Version when you must; keep the old shape until clients migrate."
+            },
+            {
+              "id": "sys-03-edit",
+              "type": "edit",
+              "title": "Write the error middleware",
+              "instruction": "Return one error shape with `code`, a safe `message` and `requestId` from `req.id`, hiding the message for 500s."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "An error contract is part of the API. Decide the codes and statuses once, write them down, and let the client show copy based on the code." },
+            { "type": "code", "text": "res.status(status).json({\n  error: { code: err.code, message, requestId: req.id },\n});" },
+            { "type": "note", "text": "Never forward a raw database or stack-trace message to a client. Log it with the request id; return the id instead." }
+          ],
+          "task": "Write an error middleware with a stable error shape.",
+          "starterCode": "app.use((err, req, res, next) => {\n  // Return { error: { code, message, requestId } }\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["requestid", "code:", "status("],
+          "hints": [
+            "Use `err.status` for the status and `req.id` for the id.",
+            "const status = err.status || 500;\nres.status(status).json({ error: { code: err.code || 'internal_error', message, requestId: req.id } });"
+          ],
+          "solution": "app.use((err, req, res, next) => {\n  const status = err.status || 500;\n  res.status(status).json({\n    error: {\n      code: err.code || 'internal_error',\n      message: status === 500 ? 'Something went wrong' : err.message,\n      requestId: req.id,\n    },\n  });\n});\n",
+          "reflectionPrompt": "Why do clients prefer a stable error code over a readable message?"
+        }
+      ]
+    },
+    {
+      "id": "system-design-async",
+      "name": "Queues & Caching",
+      "language": "systemdesign",
+      "description": "Move slow work out of the request and keep hot data close.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "sys-04-jobs",
+          "title": "4. Background jobs",
+          "concept": "queue plus worker",
+          "summary": "Anything that can take seconds belongs outside the request.",
+          "activities": [
+            {
+              "id": "sys-04-see",
+              "type": "worked-example",
+              "title": "Respond, then work",
+              "instruction": "Sending email, generating PDFs and calling third parties inside a request ties your latency and availability to theirs. Enqueue a job and return. Workers retry with backoff, so job handlers must be idempotent.",
+              "example": "// In the route: fast, predictable\nawait emailQueue.add('welcome', { userId: user.id }, {\n  attempts: 5,\n  backoff: { type: 'exponential', delay: 1000 },\n});\nres.status(202).json({ queued: true });\n\n// In the worker\nworker.process('welcome', async (job) => {\n  await sendWelcomeEmail(job.data.userId);\n});"
+            },
+            {
+              "id": "sys-04-predict",
+              "type": "prediction",
+              "title": "Why not inline?",
+              "question": "What is the main reason not to call a third-party email API directly inside the signup request?",
+              "choices": [
+                "The request inherits the provider's latency and failures",
+                "Emails cannot be sent from an HTTP handler",
+                "The API key would be exposed to the user"
+              ],
+              "answer": "The request inherits the provider's latency and failures",
+              "explanation": "A slow provider makes signup slow; a down provider makes signup fail. A queue decouples your success from theirs."
+            },
+            {
+              "id": "sys-04-edit",
+              "type": "edit",
+              "title": "Enqueue the email",
+              "instruction": "Replace the awaited send with `emailQueue.add('welcome', ...)` using retry attempts, then respond 202."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Queues turn a synchronous dependency into a boundary. The request does the minimum durable work, and the worker can be retried, scaled and paused independently." },
+            { "type": "code", "text": "await emailQueue.add('welcome', { userId }, {\n  attempts: 5,\n  backoff: { type: 'exponential', delay: 1000 },\n});" },
+            { "type": "note", "text": "Retries mean your handler will run more than once. Use the job id or a unique business key so a retried job does not send two receipts." }
+          ],
+          "task": "Queue the welcome email instead of awaiting it.",
+          "starterCode": "app.post('/api/signup', async (req, res) => {\n  const user = await createUser(req.body);\n  await sendWelcomeEmail(user.id);\n  res.status(201).json({ id: user.id });\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["queue.add(", "attempts"],
+          "hints": [
+            "Add the job to the queue and return before it runs.",
+            "await emailQueue.add('welcome', { userId: user.id }, {\n  attempts: 5,\n  backoff: { type: 'exponential', delay: 1000 },\n});\nres.status(202).json({ queued: true });"
+          ],
+          "solution": "app.post('/api/signup', async (req, res) => {\n  const user = await createUser(req.body);\n  await emailQueue.add('welcome', { userId: user.id }, {\n    attempts: 5,\n    backoff: { type: 'exponential', delay: 1000 },\n  });\n  res.status(202).json({ queued: true });\n});\n",
+          "reflectionPrompt": "Why must a job handler tolerate running twice?"
+        },
+        {
+          "id": "sys-05-redis-cache",
+          "title": "5. Caching with Redis",
+          "concept": "cache-aside and invalidation",
+          "summary": "Read from the cache, fall back to the database, invalidate on write.",
+          "activities": [
+            {
+              "id": "sys-05-see",
+              "type": "worked-example",
+              "title": "Cache by identity, expire by time",
+              "instruction": "The cache-aside pattern reads the cache first, loads from the database on a miss, and stores the result with a TTL. Writes must delete the key, or users keep seeing stale data until it expires. Always key by the identity the response depends on.",
+              "example": "async function getUser(id) {\n  const key = `user:${id}`;\n  const hit = await redis.get(key);\n  if (hit) return JSON.parse(hit);\n\n  const user = await db.users.findById(id);\n  if (user) await redis.set(key, JSON.stringify(user), 'EX', 300);\n  return user;\n}\n\nasync function updateUser(id, patch) {\n  const user = await db.users.update(id, patch);\n  await redis.del(`user:${id}`);\n  return user;\n}"
+            },
+            {
+              "id": "sys-05-predict",
+              "type": "prediction",
+              "title": "The shared key",
+              "question": "A profile endpoint caches the response under the key `profile` for all users. What happens?",
+              "choices": [
+                "One user's private profile is served to everyone else",
+                "The cache hit rate drops to zero",
+                "Redis rejects the second write"
+              ],
+              "answer": "One user's private profile is served to everyone else",
+              "explanation": "The key is the cache's identity. If it does not include the user, the cache stops distinguishing users — a data leak and a correctness bug at once."
+            },
+            {
+              "id": "sys-05-edit",
+              "type": "edit",
+              "title": "Write the cache-aside read",
+              "instruction": "Write `getUser(id)`: read `user:${id}` from Redis, fall back to the database, cache for 300 seconds, and delete the key in `updateUser`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A cache is a copy you can afford to lose. That means the database stays the source of truth, every cached value has an expiry, and writes know which keys they invalidate." },
+            { "type": "code", "text": "const hit = await redis.get(key);\nif (hit) return JSON.parse(hit);\n// ...load and set with TTL" },
+            { "type": "note", "text": "Avoid caching per-user data on a shared CDN. Redis is private and keyed; a public edge cache is not." }
+          ],
+          "task": "Implement cache-aside for a user lookup and invalidate on update.",
+          "starterCode": "async function getUser(id) {\n  // Try Redis, then the database\n}\n\nasync function updateUser(id, patch) {\n  return db.users.update(id, patch);\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["redis.get(", "redis.set(", "redis.del("],
+          "hints": [
+            "Build the key from the user id in both functions.",
+            "const key = `user:${id}`;\nconst hit = await redis.get(key);\nif (hit) return JSON.parse(hit);"
+          ],
+          "solution": "async function getUser(id) {\n  const key = `user:${id}`;\n  const hit = await redis.get(key);\n  if (hit) return JSON.parse(hit);\n\n  const user = await db.users.findById(id);\n  if (user) await redis.set(key, JSON.stringify(user), 'EX', 300);\n  return user;\n}\n\nasync function updateUser(id, patch) {\n  const user = await db.users.update(id, patch);\n  await redis.del(`user:${id}`);\n  return user;\n}\n",
+          "reflectionPrompt": "Why is a cache without a TTL a correctness bug waiting to happen?"
+        },
+        {
+          "id": "sys-06-ratelimit",
+          "title": "6. Rate limiting",
+          "concept": "counters and buckets",
+          "summary": "Protect the service and tell the client when to come back.",
+          "activities": [
+            {
+              "id": "sys-06-see",
+              "type": "worked-example",
+              "title": "Count per window, per identity",
+              "instruction": "A fixed-window counter is the simplest limiter: increment a key, set an expiry on the first hit, and reject once the count passes the limit. Key it by user or IP and return 429 with `Retry-After` so well-behaved clients back off instead of hammering.",
+              "example": "async function limit(userId, max = 100, window = 60) {\n  const key = `rl:${userId}:${Math.floor(Date.now() / 1000 / window)}`;\n  const count = await redis.incr(key);\n  if (count === 1) await redis.expire(key, window);\n  return { allowed: count <= max, count };\n}\n\nconst { allowed } = await limit(req.user.id);\nif (!allowed) {\n  res.setHeader('Retry-After', '60');\n  return res.status(429).json({ error: { code: 'rate_limited' } });\n}"
+            },
+            {
+              "id": "sys-06-predict",
+              "type": "prediction",
+              "title": "The window edge",
+              "question": "A fixed window of 100 requests per minute resets at :00. A client sends 100 at :59 and 100 at :01. What does the limiter allow?",
+              "choices": [
+                "200 requests in a two-second span",
+                "100 in total",
+                "The second batch is queued"
+              ],
+              "answer": "200 requests in a two-second span",
+              "explanation": "Fixed windows allow double bursts at the boundary. A sliding window or token bucket smooths this; the simple counter is still a reasonable first step."
+            },
+            {
+              "id": "sys-06-edit",
+              "type": "edit",
+              "title": "Implement the limiter",
+              "instruction": "Increment a per-user key with `incr`, set an `expire`, and respond 429 when the count exceeds the limit."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Rate limiting is both protection and a product decision. Limits per user, per IP and per endpoint answer different attacks; start with the expensive ones." },
+            { "type": "code", "text": "const count = await redis.incr(key);\nif (count === 1) await redis.expire(key, window);\nif (count > max) return res.status(429).end();" },
+            { "type": "note", "text": "An in-process limiter counts per instance. Behind a load balancer that means N times the intended limit — use a shared store." }
+          ],
+          "task": "Write a Redis-backed fixed-window limiter returning 429.",
+          "starterCode": "async function limit(userId, max = 100, window = 60) {\n  // Increment, expire, decide\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["incr(", "expire(", "429"],
+          "hints": [
+            "`INCR` creates the key at 1; set the expiry only on that first increment.",
+            "const count = await redis.incr(key);\nif (count === 1) await redis.expire(key, window);\nreturn count <= max;"
+          ],
+          "solution": "async function limit(userId, max = 100, window = 60) {\n  const key = `rl:${userId}:${Math.floor(Date.now() / 1000 / window)}`;\n  const count = await redis.incr(key);\n  if (count === 1) await redis.expire(key, window);\n  return count <= max;\n}\n\nconst allowed = await limit(req.user.id);\nif (!allowed) {\n  res.setHeader('Retry-After', '60');\n  return res.status(429).json({ error: { code: 'rate_limited' } });\n}\n",
+          "reflectionPrompt": "Why does a limiter kept in memory stop working when you add a second server?"
+        }
+      ]
+    },
+    {
+      "id": "system-design-scale",
+      "name": "Scaling Decisions",
+      "language": "systemdesign",
+      "description": "What changes when one server becomes many.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "sys-07-stateless",
+          "title": "7. Stateless services",
+          "concept": "state belongs in a store",
+          "summary": "Any instance must be able to serve any request.",
+          "activities": [
+            {
+              "id": "sys-07-see",
+              "type": "worked-example",
+              "title": "Local memory is not shared",
+              "instruction": "In-memory sessions, uploads written to disk and per-process caches all assume one server. Behind a load balancer the next request may land elsewhere. Move state into Redis, the database or object storage so instances are interchangeable.",
+              "example": "import RedisStore from 'connect-redis';\n\napp.use(session({\n  store: new RedisStore({ client: redis }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n}));"
+            },
+            {
+              "id": "sys-07-predict",
+              "type": "prediction",
+              "title": "Two instances",
+              "question": "A service keeps rate-limit counters in module memory and runs two instances. Each enforces 100 requests per minute. What is the effective limit?",
+              "choices": [
+                "200 per minute, split across whichever instance answers",
+                "100 per minute, because they share memory",
+                "50 per minute"
+              ],
+              "answer": "200 per minute, split across whichever instance answers",
+              "explanation": "Each process counts only what it saw. Any state that must be globally true needs a shared store."
+            },
+            {
+              "id": "sys-07-edit",
+              "type": "edit",
+              "title": "Move sessions out",
+              "instruction": "Configure express-session to use a Redis store instead of the default in-memory store."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Statelessness is a property you choose: no request depends on what a previous request left in this process's memory. It is what makes restarts and horizontal scaling boring." },
+            { "type": "code", "text": "app.use(session({ store: new RedisStore({ client: redis }), ... }));" },
+            { "type": "note", "text": "Uploads are state too. Write to object storage and pass a URL, not a path on one machine's disk." }
+          ],
+          "task": "Switch the session store to Redis.",
+          "starterCode": "app.use(session({\n  secret: process.env.SESSION_SECRET,\n}));\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["redisstore", "store:"],
+          "hints": [
+            "Import the Redis store adapter and pass it as `store`.",
+            "app.use(session({\n  store: new RedisStore({ client: redis }),\n  secret: process.env.SESSION_SECRET,\n}));"
+          ],
+          "solution": "import RedisStore from 'connect-redis';\n\napp.use(session({\n  store: new RedisStore({ client: redis }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n}));\n",
+          "reflectionPrompt": "Why does a local disk upload break the moment you run two instances?"
+        },
+        {
+          "id": "sys-08-replication",
+          "title": "8. Replicas and read-your-writes",
+          "concept": "replication lag",
+          "summary": "A replica is behind by milliseconds — sometimes more.",
+          "activities": [
+            {
+              "id": "sys-08-see",
+              "type": "worked-example",
+              "title": "Route the read that matters",
+              "instruction": "Read replicas take load off the primary, but replication is asynchronous. A user who just saved a change may hit a replica that has not caught up. Send reads that must reflect the user's own write to the primary, or keep a short window after a write where the session reads primary.",
+              "example": "function readerFor(user) {\n  const justWrote = Date.now() - user.lastWriteAt < 2000;\n  return justWrote ? primary : replicaPool.reader();\n}\n\nconst profile = await readerFor(req.user)\n  .query('SELECT name, bio FROM users WHERE id = $1', [req.user.id]);"
+            },
+            {
+              "id": "sys-08-predict",
+              "type": "prediction",
+              "title": "The vanished edit",
+              "question": "A user saves a new display name and is redirected to their profile, which reads from a replica. What do they see?",
+              "choices": [
+                "The old name, until replication catches up",
+                "A database error",
+                "The new name, because writes replicate instantly"
+              ],
+              "answer": "The old name, until replication catches up",
+              "explanation": "Replication is usually asynchronous. This is the 'read-your-writes' problem, and it looks like data loss to the user even though nothing was lost."
+            },
+            {
+              "id": "sys-08-edit",
+              "type": "edit",
+              "title": "Route the critical read",
+              "instruction": "Write `readerFor(user)` that returns the primary when the last write was under two seconds ago, otherwise the replica."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Replication buys read capacity at the cost of consistency. Decide per query: a product listing can be slightly stale, a bank balance after a transfer cannot." },
+            { "type": "code", "text": "const justWrote = Date.now() - user.lastWriteAt < 2000;\nreturn justWrote ? primary : replicaPool.reader();" },
+            { "type": "note", "text": "Measure replica lag and alert on it. A replica that falls minutes behind is a correctness incident, not a performance chart." }
+          ],
+          "task": "Route reads to the primary right after a write.",
+          "starterCode": "function readerFor(user) {\n  return replicaPool.reader();\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["primary", "replica"],
+          "hints": [
+            "Compare `Date.now()` with the stored last-write timestamp.",
+            "const justWrote = Date.now() - user.lastWriteAt < 2000;\nreturn justWrote ? primary : replicaPool.reader();"
+          ],
+          "solution": "function readerFor(user) {\n  const justWrote = Date.now() - user.lastWriteAt < 2000;\n  return justWrote ? primary : replicaPool.reader();\n}\n",
+          "reflectionPrompt": "Why is 'the user just wrote' a better signal than 'always read the primary'?"
+        },
+        {
+          "id": "sys-09-decisions",
+          "title": "9. Write the trade-off down",
+          "concept": "architecture decision records",
+          "summary": "The most valuable design document is a short record of why.",
+          "activities": [
+            {
+              "id": "sys-09-see",
+              "type": "worked-example",
+              "title": "Context, decision, consequences",
+              "instruction": "An ADR is a one-page note kept next to the code: the situation, the choice, and what you accept by making it. It takes ten minutes and saves the next engineer from re-litigating a decision — or from unknowingly depending on it.",
+              "example": "# Use Redis for session storage\n\n## Context\nSessions live in process memory, so a second instance and every deploy log users out.\n\n## Decision\nStore sessions in Redis, which is already used for rate limiting.\n\n## Consequences\n- Sessions survive deploys and are shared across instances.\n- Redis becomes a required dependency for login.\n- A Redis outage logs everyone out; it is monitored with a pager."
+            },
+            {
+              "id": "sys-09-predict",
+              "type": "prediction",
+              "title": "When is an ADR worth it?",
+              "question": "Which decision most deserves a written record?",
+              "choices": [
+                "Adding a queue that the whole signup flow now depends on",
+                "Renaming a local variable",
+                "Adding a unit test"
+              ],
+              "answer": "Adding a queue that the whole signup flow now depends on",
+              "explanation": "Write down decisions that are expensive to reverse or easy to misunderstand. Cheap, local, reversible choices do not need ceremony."
+            },
+            {
+              "id": "sys-09-edit",
+              "type": "edit",
+              "title": "Draft the ADR",
+              "instruction": "Write an ADR for adopting Redis, with Context, Decision and Consequences sections."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Architecture is a series of trade-offs, and each one has a cost you will pay later. Writing it down makes the cost explicit while you are still choosing." },
+            { "type": "code", "text": "## Context\n## Decision\n## Consequences" },
+            { "type": "note", "text": "Put ADRs in the repository (`docs/adr/0007-redis-sessions.md`). A document in a wiki nobody opens is a decision nobody can find." }
+          ],
+          "task": "Write a short ADR for using Redis for sessions.",
+          "starterCode": "# Use Redis for session storage\n\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["## context", "## decision", "## consequences"],
+          "hints": [
+            "Three headings, a few lines each. Name the cost in Consequences.",
+            "## Context\nSessions are lost on every deploy.\n\n## Decision\nStore sessions in Redis.\n\n## Consequences\n- Sessions survive deploys.\n- Redis becomes a required dependency."
+          ],
+          "solution": "# Use Redis for session storage\n\n## Context\nSessions live in process memory, so a second instance and every deploy log users out.\n\n## Decision\nStore sessions in Redis, which is already used for rate limiting.\n\n## Consequences\n- Sessions survive deploys and are shared across instances.\n- Redis becomes a required dependency for login.\n- A Redis outage logs everyone out; it is monitored with a pager.\n",
+          "reflectionPrompt": "Why is naming the downside the most useful line in an ADR?"
+        }
+      ]
+    }
+  ]
+}

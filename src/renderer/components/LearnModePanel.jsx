@@ -1,19 +1,59 @@
 import React from 'react';
-import { BookOpen, Play, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft, MessageSquareText } from 'lucide-react';
+import { Code2, Wrench, CheckCircle2, Circle, GraduationCap, ArrowRight, ChevronLeft, MessageSquareText, Sparkles, Lock } from 'lucide-react';
 import LessonsPanel, { formatLanguage } from './LessonsPanel';
 import ActiveLessonCard from './ActiveLessonCard';
+import LessonTutor from './LessonTutor';
+import SpeakButton from './SpeakButton';
 import { isCourseActivity } from '../data/exerciseCatalog';
 import lessonsData from '../data/lessons';
 import { renderInline as renderActivityInline } from './InlineCode';
 
 const PHASES = [
-  { id: 'learn', label: 'Learn', icon: BookOpen },
-  { id: 'run', label: 'Run', icon: Play },
+  { id: 'run', label: 'Code', icon: Code2 },
   { id: 'fix', label: 'Fix', icon: Wrench },
 ];
 export const WRITING_ACTIVITY_TYPES = new Set(['code-along', 'drill', 'edit']);
 
 export const TEACHING_STEP_ID = '__teaching__';
+
+// Lesson copy uses `inline code` and **bold** markers for rendering; strip
+// them before handing text to the speech engine so it doesn't read punctuation.
+function cleanSpeech(text) {
+  return String(text || '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .trim();
+}
+
+function joinSpeech(parts) {
+  return parts.filter(Boolean).map(cleanSpeech).filter(Boolean).join('. ');
+}
+
+// One page of a lesson, one reading. "Speak" reads whatever the panel is
+// currently showing: the teaching page, the active activity, or the coding
+// task — never a fixed string.
+function teachingSpeech(lesson) {
+  const prose = (lesson?.teaching || [])
+    .filter((block) => block?.type === 'p' || block?.type === 'note')
+    .map((block) => block.text);
+  return joinSpeech([lesson?.summary, ...prose, lesson?.task]);
+}
+
+function activitySpeech(activity) {
+  const steps = Array.isArray(activity?.steps)
+    ? activity.steps.map((step, index) => `Step ${index + 1}. ${step}`)
+    : [];
+  const choices = Array.isArray(activity?.choices) ? [`Choices: ${activity.choices.join('. ')}`] : [];
+  return joinSpeech([
+    activity?.title,
+    activity?.instruction,
+    activity?.example,
+    ...steps,
+    activity?.question,
+    ...choices,
+    activity?.successCriteria && `Done when: ${activity.successCriteria}`,
+  ]);
+}
 
 export default function LearnModePanel({
   activeLesson,
@@ -49,11 +89,17 @@ export default function LearnModePanel({
   onNextLesson,
   onStartExercise,
   focused = false,
+  hasTutor = false,
+  onUpgrade,
+  lessonCode = '',
+  runOutput = null,
 }) {
   const headingRef = React.useRef(null);
   const mountedRef = React.useRef(false);
   const [catalogLanguage, setCatalogLanguage] = React.useState(activeLesson?.language || null);
-  const activePhase = phase === 'complete' ? 'run' : phase;
+  const [tutorOpen, setTutorOpen] = React.useState(false);
+  const activePhase = phase === 'complete' ? null : phase === 'learn' ? 'run' : phase;
+  const tutorRestricted = !!activeLesson && (phase === 'run' || phase === 'fix');
   const allActivities = activeLesson?.kind === 'exercise'
     ? activeLesson?.activities || []
     : (activeLesson?.activities || []).filter(isCourseActivity);
@@ -76,6 +122,14 @@ export default function LearnModePanel({
       : null;
   const suggestLessGuidance = phase === 'complete' && guidanceSuccessStreak >= 3 && nextGuidanceLevel;
 
+  // Speak reads the page that's on screen — teaching, the active activity,
+  // or the coding task — so the button never narrates a different step.
+  const speechText = !activeLesson
+    ? ''
+    : phase === 'learn'
+      ? (activeActivity ? activitySpeech(activeActivity) : teachingSpeech(activeLesson))
+      : joinSpeech([activeLesson.task]);
+
   React.useEffect(() => {
     if (!mountedRef.current || !activeLesson) headingRef.current?.focus();
     mountedRef.current = true;
@@ -84,6 +138,10 @@ export default function LearnModePanel({
   React.useEffect(() => {
     if (activeLesson?.language) setCatalogLanguage(activeLesson.language);
   }, [activeLesson?.language]);
+
+  React.useEffect(() => {
+    if (!activeLesson) setTutorOpen(false);
+  }, [activeLesson]);
 
   return (
     <aside style={{ ...styles.panel, ...(focused ? styles.panelFocused : {}) }} aria-label="Learn guide">
@@ -94,7 +152,23 @@ export default function LearnModePanel({
               <button type="button" style={styles.browseBtn} onClick={() => onSelectLesson(null)}>
                 <ChevronLeft size={11} /> {activeLesson.kind === 'exercise' ? 'Exercises' : activeLesson.kind === 'project-checkpoint' ? 'Projects' : 'Courses'}
               </button>
-              {activeLesson.concept && <span style={styles.conceptChip}>{activeLesson.concept}</span>}
+              <div style={styles.headerActions}>
+                <button
+                  type="button"
+                  style={{ ...styles.tutorBtn, ...(tutorOpen && hasTutor ? styles.tutorBtnActive : {}) }}
+                  onClick={() => (hasTutor ? setTutorOpen((value) => !value) : onUpgrade?.())}
+                  aria-expanded={hasTutor ? tutorOpen : undefined}
+                  title={hasTutor ? 'Ask the lesson tutor' : 'Unlock the lesson tutor with Pro'}
+                >
+                  {hasTutor ? <Sparkles size={12} /> : <Lock size={11} />}
+                  Tutor
+                </button>
+                <SpeakButton
+                  text={speechText}
+                  title="Read this page aloud"
+                />
+                {activeLesson.concept && <span style={styles.conceptChip}>{activeLesson.concept}</span>}
+              </div>
             </div>
             <h2 ref={headingRef} tabIndex={-1} style={styles.heading}>{activeLesson.title}</h2>
             {attempts > 0 && (
@@ -123,7 +197,7 @@ export default function LearnModePanel({
           {PHASES.map(({ id, label, icon: Icon }, index) => {
             const selected = id === activePhase;
             const complete = phase === 'complete'
-              ? index <= 1
+              ? true
               : PHASES.findIndex((item) => item.id === activePhase) > index;
             return (
               <React.Fragment key={id}>
@@ -231,6 +305,21 @@ export default function LearnModePanel({
           </>
         )}
       </div>
+
+      {activeLesson && tutorOpen && hasTutor && (
+        <LessonTutor
+          lesson={activeLesson}
+          code={tutorRestricted ? '' : lessonCode}
+          language={activeLesson.language}
+          status={lessonStatus}
+          verification={lessonVerification}
+          coaching={lessonErrorCoaching}
+          runOutput={tutorRestricted ? null : runOutput}
+          restricted={tutorRestricted}
+          revealedHints={revealedHints}
+          onClose={() => setTutorOpen(false)}
+        />
+      )}
 
       <div
         style={{ ...styles.status, ...(announcement ? null : styles.statusIdle) }}
@@ -427,6 +516,30 @@ const styles = {
     gap: 8,
     marginBottom: 7,
   },
+  headerActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
+  tutorBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 7px',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: 6,
+    background: 'transparent',
+    color: 'var(--text-secondary)',
+    fontSize: 10,
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  tutorBtnActive: {
+    borderColor: 'var(--accent)',
+    color: 'var(--accent)',
+    background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+  },
   conceptChip: {
     background: 'var(--algorithm-soft)',
     color: 'var(--text-primary)',
@@ -454,7 +567,7 @@ const styles = {
   heading: {
     margin: 0,
     color: 'var(--text-primary)',
-    fontSize: 14.5,
+    fontSize: 16.5,
     fontWeight: 700,
     lineHeight: 1.3,
   },
@@ -472,10 +585,10 @@ const styles = {
     cursor: 'pointer',
   },
   subheading: {
-    marginTop: 5,
+    marginTop: 6,
     color: 'var(--text-muted)',
-    fontSize: 11,
-    lineHeight: 1.45,
+    fontSize: 12.5,
+    lineHeight: 1.5,
   },
   phaseBar: {
     display: 'flex',
@@ -490,7 +603,7 @@ const styles = {
     gap: 4,
     padding: '2px 0',
     color: 'var(--text-muted)',
-    fontSize: 10.5,
+    fontSize: 11.5,
     whiteSpace: 'nowrap',
     flexShrink: 0,
   },
@@ -511,13 +624,13 @@ const styles = {
     flex: 1,
     minHeight: 0,
     overflowY: 'auto',
-    padding: 12,
+    padding: 16,
   },
   contentFocused: { padding: 'clamp(18px, 4vw, 48px)' },
   lessonStack: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 10,
+    gap: 14,
   },
   lessonStackFocused: { width: '100%' },
   fadeSuggestion: {
@@ -534,8 +647,8 @@ const styles = {
   fadeSuggestionText: {
     marginTop: 4,
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    lineHeight: 1.45,
+    fontSize: 12.5,
+    lineHeight: 1.5,
   },
   fadeSuggestionActions: {
     display: 'flex',
@@ -570,51 +683,52 @@ const styles = {
   },
   activityMeta: {
     color: 'var(--accent)',
-    fontSize: 9.5,
+    fontSize: 10.5,
     fontWeight: 700,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   activityTitle: {
-    margin: '7px 0 0',
+    margin: '8px 0 0',
     color: 'var(--text-primary)',
-    fontSize: 14,
+    fontSize: 17,
+    lineHeight: 1.3,
   },
   activityText: {
-    margin: '7px 0 0',
+    margin: '9px 0 0',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    lineHeight: 1.5,
+    fontSize: 14.5,
+    lineHeight: 1.65,
   },
   activityCode: {
-    margin: '9px 0 0',
-    padding: '8px 9px',
+    margin: '12px 0 0',
+    padding: '10px 12px',
     overflowX: 'auto',
     border: '1px solid var(--border)',
     borderRadius: 5,
     background: 'var(--bg-primary)',
     color: 'var(--text-primary)',
-    fontSize: 11,
-    lineHeight: 1.45,
+    fontSize: 12.5,
+    lineHeight: 1.5,
   },
   codeAlongSteps: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 6,
-    marginTop: 10,
+    gap: 8,
+    marginTop: 12,
   },
   codeAlongStep: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: 7,
+    gap: 8,
     width: '100%',
-    padding: '7px 8px',
+    padding: '9px 10px',
     border: '1px solid var(--border)',
     borderRadius: 5,
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    lineHeight: 1.4,
+    fontSize: 13,
+    lineHeight: 1.5,
     textAlign: 'left',
   },
   codeAlongStepChecked: {
@@ -623,45 +737,45 @@ const styles = {
   },
   writingPrompt: {
     color: 'var(--text-muted)',
-    fontSize: 10.5,
-    lineHeight: 1.4,
+    fontSize: 12,
+    lineHeight: 1.5,
   },
   drillPrompt: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 4,
-    marginTop: 10,
-    padding: '8px 9px',
+    gap: 5,
+    marginTop: 12,
+    padding: '10px 11px',
     borderLeft: '3px solid var(--algorithm)',
     borderRadius: 4,
     background: 'var(--algorithm-soft)',
     color: 'var(--text-secondary)',
-    fontSize: 11,
-    lineHeight: 1.45,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   drillCriteria: {
     color: 'var(--text-muted)',
-    fontSize: 10.5,
+    fontSize: 12,
   },
   predictionGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 6,
-    marginTop: 10,
+    gap: 8,
+    marginTop: 12,
   },
   predictionQuestion: {
     color: 'var(--text-primary)',
-    fontSize: 11.5,
+    fontSize: 14.5,
     fontWeight: 600,
-    lineHeight: 1.45,
+    lineHeight: 1.55,
   },
   choiceBtn: {
-    padding: '7px 8px',
+    padding: '9px 10px',
     border: '1px solid var(--border)',
     borderRadius: 5,
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
+    fontSize: 13.5,
     textAlign: 'left',
   },
   choiceBtnSelected: {
@@ -670,11 +784,11 @@ const styles = {
     color: 'var(--text-primary)',
   },
   predictionFeedback: {
-    padding: '7px 8px',
+    padding: '9px 10px',
     borderLeft: '2px solid var(--accent)',
     background: 'var(--bg-tertiary)',
-    fontSize: 11,
-    lineHeight: 1.45,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   continueBtn: {
     display: 'inline-flex',
@@ -682,40 +796,40 @@ const styles = {
     justifyContent: 'center',
     gap: 5,
     flex: 1,
-    padding: '7px 10px',
+    padding: '8px 10px',
     border: 'none',
     borderRadius: 5,
     background: 'var(--accent)',
     color: 'var(--text-on-accent)',
-    fontSize: 11.5,
+    fontSize: 13,
     fontWeight: 700,
   },
   activityActions: {
     display: 'flex',
     gap: 6,
-    marginTop: 10,
+    marginTop: 12,
   },
   backActivityBtn: {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    padding: '7px 9px',
+    padding: '8px 10px',
     border: '1px solid var(--border)',
     borderRadius: 5,
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
+    fontSize: 13,
   },
   intro: {
     marginBottom: 16,
-    padding: 10,
+    padding: 12,
     border: '1px solid var(--border)',
     borderRadius: 7,
     background: 'var(--bg-tertiary)',
     color: 'var(--text-secondary)',
-    fontSize: 11.5,
-    lineHeight: 1.5,
+    fontSize: 13,
+    lineHeight: 1.6,
   },
   notesSummary: {
     marginBottom: 12,
@@ -757,9 +871,9 @@ const styles = {
     marginBottom: 2,
   },
   noteText: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: 'var(--text-secondary)',
-    lineHeight: 1.5,
+    lineHeight: 1.6,
   },
   status: {
     padding: '7px 14px',

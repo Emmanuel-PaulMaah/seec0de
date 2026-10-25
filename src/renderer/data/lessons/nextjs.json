@@ -1,0 +1,612 @@
+{
+  "tracks": [
+    {
+      "id": "nextjs-app-router",
+      "name": "App Router Basics",
+      "language": "nextjs",
+      "description": "Pages, layouts, and navigation in the Next.js App Router.",
+      "lessons": [
+        {
+          "id": "nextjs-01-page",
+          "title": "1. A page is a component",
+          "concept": "app/page.js",
+          "summary": "Every folder in app/ becomes a route; page.js is what renders there.",
+          "activities": [
+            {
+              "id": "nextjs-01-see",
+              "type": "worked-example",
+              "title": "The route is the file",
+              "instruction": "`app/page.js` exports a React component and answers `/`. There is no route table to edit — the folder structure is the route table.",
+              "example": "// app/page.js\nexport default function HomePage() {\n  return (\n    <main>\n      <h1>Welcome to the shop</h1>\n    </main>\n  );\n}"
+            },
+            {
+              "id": "nextjs-01-predict",
+              "type": "prediction",
+              "title": "Which file wins",
+              "question": "Which file renders at the root URL `/` in the App Router?",
+              "choices": ["app/layout.js", "app/page.js", "pages/index.jsx"],
+              "answer": "app/page.js",
+              "explanation": "`layout.js` wraps pages but is not a page itself. `pages/` belongs to the older Pages Router."
+            },
+            {
+              "id": "nextjs-01-edit",
+              "type": "edit",
+              "title": "Write the home page",
+              "instruction": "Export a default `HomePage` component from `app/page.js` that renders a `main` with an `h1` saying 'Welcome to the shop'."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "In the App Router a folder is a URL segment. A folder with a `page.js` is a route; a folder with only a `layout.js` is just a wrapper for the routes inside it." },
+            { "type": "code", "text": "// app/page.js\nexport default function HomePage() {\n  return <h1>Welcome to the shop</h1>;\n}" },
+            { "type": "note", "text": "The default export is required. A named export called `Page` renders nothing, which is a common and silent mistake." }
+          ],
+          "task": "Export a default component from app/page.js rendering an h1.",
+          "starterCode": "// app/page.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export default function", "<h1>", "welcome"],
+          "hints": [
+            "Export a function as default and return JSX.",
+            "export default function HomePage() {\n  return (\n    <main>\n      <h1>Welcome to the shop</h1>\n    </main>\n  );\n}"
+          ],
+          "solution": "// app/page.js\nexport default function HomePage() {\n  return (\n    <main>\n      <h1>Welcome to the shop</h1>\n    </main>\n  );\n}\n",
+          "reflectionPrompt": "Why does adding a folder to app/ not automatically create a working route?"
+        },
+        {
+          "id": "nextjs-02-routing",
+          "title": "2. Nested routes",
+          "concept": "app/about/page.js",
+          "summary": "Nesting folders nests URLs, one page file per segment.",
+          "activities": [
+            {
+              "id": "nextjs-02-see",
+              "type": "worked-example",
+              "title": "Folders map to paths",
+              "instruction": "`app/about/page.js` answers `/about`. `app/shop/shoes/page.js` answers `/shop/shoes`. No configuration, no router file.",
+              "example": "// app/about/page.js\nexport default function AboutPage() {\n  return <h1>About us</h1>;\n}\n\n// app/shop/shoes/page.js -> /shop/shoes"
+            },
+            {
+              "id": "nextjs-02-predict",
+              "type": "prediction",
+              "title": "Folder without a page",
+              "question": "`app/dashboard/settings/layout.js` exists but there is no `page.js`. What does `/dashboard/settings` return?",
+              "choices": [
+                "The layout's content",
+                "A 404 — a segment needs a page to be a route",
+                "A redirect to /dashboard"
+              ],
+              "answer": "A 404 — a segment needs a page to be a route",
+              "explanation": "Layouts wrap pages. With no page at that segment, the URL has nothing to render."
+            },
+            {
+              "id": "nextjs-02-edit",
+              "type": "edit",
+              "title": "Add an about page",
+              "instruction": "Create `app/about/page.js` exporting `AboutPage` that renders an `h1` with 'About us'."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Route segments are folders. The `page.js` file marks the segment as navigable; siblings without one are ignored by routing." },
+            { "type": "code", "text": "// app/about/page.js\nexport default function AboutPage() {\n  return <h1>About us</h1>;\n}" },
+            { "type": "note", "text": "Name folders for URLs, not for the components inside. Renaming a folder changes a public URL." }
+          ],
+          "task": "Create app/about/page.js with an AboutPage component.",
+          "starterCode": "// app/about/page.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export default function AboutPage", "<h1>About us</h1>"],
+          "hints": [
+            "The file lives at `app/about/page.js` and exports a component as default.",
+            "export default function AboutPage() {\n  return <h1>About us</h1>;\n}"
+          ],
+          "solution": "// app/about/page.js\nexport default function AboutPage() {\n  return <h1>About us</h1>;\n}\n",
+          "reflectionPrompt": "What URL does `app/shop/shoes/page.js` serve, and why?"
+        },
+        {
+          "id": "nextjs-03-layout",
+          "title": "3. Layouts",
+          "concept": "app/layout.js / children",
+          "summary": "A layout wraps every page below it and keeps its state across navigation.",
+          "activities": [
+            {
+              "id": "nextjs-03-see",
+              "type": "worked-example",
+              "title": "The shell around the page",
+              "instruction": "The root layout must render `html` and `body`. It receives the current page as `children` and renders nav, fonts, and providers around it.",
+              "example": "// app/layout.js\nexport default function RootLayout({ children }) {\n  return (\n    <html lang=\"en\">\n      <body>{children}</body>\n    </html>\n  );\n}"
+            },
+            {
+              "id": "nextjs-03-predict",
+              "type": "prediction",
+              "title": "Do layouts re-render?",
+              "question": "You navigate between two pages under the same layout. What happens to the layout?",
+              "choices": [
+                "It unmounts and mounts again",
+                "It stays mounted; only the page content swaps",
+                "Both layout and page remount"
+              ],
+              "answer": "It stays mounted; only the page content swaps",
+              "explanation": "That persistence is why layouts are the right place for navigation and providers — their state survives page changes."
+            },
+            {
+              "id": "nextjs-03-edit",
+              "type": "edit",
+              "title": "Root layout",
+              "instruction": "Write the root layout that renders `html` and `body` around `children`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Layouts are shared UI. The root layout is required and must contain `html` and `body`; nested layouts wrap only their own segment." },
+            { "type": "code", "text": "export default function RootLayout({ children }) {\n  return (\n    <html lang=\"en\">\n      <body>{children}</body>\n    </html>\n  );\n}" },
+            { "type": "note", "text": "Do not put `'use client'` on the root layout. It turns every page below it into a client boundary." }
+          ],
+          "task": "Write a root layout wrapping children in html and body.",
+          "starterCode": "// app/layout.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export default function RootLayout", "children", "<html"],
+          "hints": [
+            "Destructure `children` from props and render it inside `<body>`.",
+            "<html lang=\"en\">\n  <body>{children}</body>\n</html>"
+          ],
+          "solution": "// app/layout.js\nexport default function RootLayout({ children }) {\n  return (\n    <html lang=\"en\">\n      <body>{children}</body>\n    </html>\n  );\n}\n",
+          "reflectionPrompt": "Why is the root layout a bad place for a cart badge that should update on navigation?"
+        },
+        {
+          "id": "nextjs-04-link",
+          "title": "4. Navigating with Link",
+          "concept": "next/link",
+          "summary": "Link navigates client-side without a full page reload.",
+          "activities": [
+            {
+              "id": "nextjs-04-see",
+              "type": "worked-example",
+              "title": "Client-side navigation",
+              "instruction": "`<Link href=\"...\">` prefetches and swaps only the changed segment. A plain `<a>` makes the browser reload the whole app.",
+              "example": "import Link from 'next/link';\n\nexport default function Nav() {\n  return (\n    <nav>\n      <Link href=\"/\">Home</Link>\n      <Link href=\"/about\">About</Link>\n    </nav>\n  );\n}"
+            },
+            {
+              "id": "nextjs-04-predict",
+              "type": "prediction",
+              "title": "Anchor vs Link",
+              "question": "What do you lose by using a plain `<a href=\"/about\">` for internal navigation?",
+              "choices": [
+                "Nothing — they are equivalent",
+                "Client-side navigation, prefetching, and preserved layout state",
+                "SEO, because crawlers cannot follow anchors"
+              ],
+              "answer": "Client-side navigation, prefetching, and preserved layout state",
+              "explanation": "An anchor triggers a full document load. Next's Link keeps the React tree and prefetches the route in view."
+            },
+            {
+              "id": "nextjs-04-edit",
+              "type": "edit",
+              "title": "Link to about",
+              "instruction": "Import `Link` from `next/link` and render a nav with links to `/` and `/about`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Link is the App Router's navigation primitive. It renders an anchor for accessibility and crawlers while intercepting the click for client-side routing." },
+            { "type": "code", "text": "import Link from 'next/link';\n\n<Link href=\"/about\">About</Link>" },
+            { "type": "note", "text": "For programmatic navigation use `useRouter()` from `next/navigation`. The old `next/router` import fails in the App Router." }
+          ],
+          "task": "Link to / and /about using next/link.",
+          "starterCode": "// app/nav.js\nexport default function Nav() {\n  return (\n    <nav>\n      \n    </nav>\n  );\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["from 'next/link'", "<Link", "href=\"/about\""],
+          "hints": [
+            "Import the component first, then use it like an anchor with `href`.",
+            "import Link from 'next/link';\n\n<Link href=\"/about\">About</Link>"
+          ],
+          "solution": "import Link from 'next/link';\n\nexport default function Nav() {\n  return (\n    <nav>\n      <Link href=\"/\">Home</Link>\n      <Link href=\"/about\">About</Link>\n    </nav>\n  );\n}\n",
+          "reflectionPrompt": "When is a plain anchor still the correct choice inside a Next.js app?"
+        }
+      ]
+    },
+    {
+      "id": "nextjs-data-ui",
+      "name": "Data & Loading States",
+      "language": "nextjs",
+      "description": "Fetch on the server and give every slow or broken state a screen.",
+      "lessons": [
+        {
+          "id": "nextjs-05-async-page",
+          "title": "5. Fetching in a server component",
+          "concept": "async components",
+          "summary": "Server components can await data directly, with no useEffect.",
+          "activities": [
+            {
+              "id": "nextjs-05-see",
+              "type": "worked-example",
+              "title": "Await in the component",
+              "instruction": "A server component may be `async`. Run the query with `await` before returning JSX; the HTML arrives already filled in.",
+              "example": "export default async function ProductsPage() {\n  const res = await fetch('https://api.example.com/products', { cache: 'no-store' });\n  const products = await res.json();\n\n  return (\n    <ul>\n      {products.map((p) => <li key={p.id}>{p.name}</li>)}\n    </ul>\n  );\n}"
+            },
+            {
+              "id": "nextjs-05-predict",
+              "type": "prediction",
+              "title": "Why no useEffect",
+              "question": "Why is there no `useEffect` or loading flag in the example?",
+              "choices": [
+                "Next.js hides them internally",
+                "The HTML is rendered on the server after the await resolves",
+                "Server components cannot hold state"
+              ],
+              "answer": "The HTML is rendered on the server after the await resolves",
+              "explanation": "Server components render to HTML on the server, so the data is already there in the first response. A `loading.js` covers the wait."
+            },
+            {
+              "id": "nextjs-05-edit",
+              "type": "edit",
+              "title": "Server-side fetch",
+              "instruction": "Write an async default page component that fetches `https://api.example.com/products` and renders the product names in a list."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Server components run on the server and never ship to the browser. That makes them the default place for database and API access." },
+            { "type": "code", "text": "export default async function ProductsPage() {\n  const res = await fetch('https://api.example.com/products', { cache: 'no-store' });\n  const products = await res.json();\n  return <ul>{products.map((p) => <li key={p.id}>{p.name}</li>)}</ul>;\n}" },
+            { "type": "note", "text": "Next extends `fetch` with caching. Without `cache: 'no-store'` or `revalidate`, a fetch may be cached and serve stale data." }
+          ],
+          "task": "Fetch products in an async page component and render them.",
+          "starterCode": "// app/products/page.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export default async function", "await fetch(", "await res.json()"],
+          "hints": [
+            "Mark the component `async` so you can `await` inside it.",
+            "const res = await fetch('https://api.example.com/products');\nconst products = await res.json();"
+          ],
+          "solution": "// app/products/page.js\nexport default async function ProductsPage() {\n  const res = await fetch('https://api.example.com/products', { cache: 'no-store' });\n  const products = await res.json();\n\n  return (\n    <ul>\n      {products.map((p) => <li key={p.id}>{p.name}</li>)}\n    </ul>\n  );\n}\n",
+          "reflectionPrompt": "What does the browser receive for this page, given the component never runs there?"
+        },
+        {
+          "id": "nextjs-06-loading",
+          "title": "6. loading.js",
+          "concept": "loading UI",
+          "summary": "A sibling loading.js streams an instant placeholder while the page awaits data.",
+          "activities": [
+            {
+              "id": "nextjs-06-see",
+              "type": "worked-example",
+              "title": "A fallback per segment",
+              "instruction": "Drop `loading.js` next to a `page.js` and Next shows it while that segment renders. Returning skeleton markup instead of a spinner prevents layout shift.",
+              "example": "// app/products/loading.js\nexport default function Loading() {\n  return (\n    <div className=\"animate-pulse space-y-2\">\n      <div className=\"h-6 w-40 rounded bg-gray-200\" />\n      <div className=\"h-6 w-56 rounded bg-gray-200\" />\n    </div>\n  );\n}"
+            },
+            {
+              "id": "nextjs-06-predict",
+              "type": "prediction",
+              "title": "Where it applies",
+              "question": "What does `app/products/loading.js` cover?",
+              "choices": [
+                "The whole site",
+                "The /products segment, including its nested routes",
+                "Only the /products page, not children"
+              ],
+              "answer": "The /products segment, including its nested routes",
+              "explanation": "A loading file wraps its segment and everything below it, unless a nested segment provides its own."
+            },
+            {
+              "id": "nextjs-06-edit",
+              "type": "edit",
+              "title": "Skeleton loader",
+              "instruction": "Create `app/products/loading.js` exporting `Loading` that renders a pulsing placeholder."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Streaming lets the server send the shell immediately and the data-filled page when it is ready. `loading.js` is the fallback in between." },
+            { "type": "code", "text": "// app/products/loading.js\nexport default function Loading() {\n  return <div className=\"animate-pulse h-6 w-40 rounded bg-gray-200\" />;\n}" },
+            { "type": "note", "text": "Skeletons shaped like the real content read as fast. A centred spinner makes the page jump when content lands." }
+          ],
+          "task": "Add a loading component for the products segment.",
+          "starterCode": "// app/products/loading.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export default function Loading", "animate-pulse"],
+          "hints": [
+            "The file is a plain component with no data fetching.",
+            "export default function Loading() {\n  return <div className=\"animate-pulse h-6 w-40 rounded bg-gray-200\" />;\n}"
+          ],
+          "solution": "// app/products/loading.js\nexport default function Loading() {\n  return (\n    <div className=\"animate-pulse space-y-2\">\n      <div className=\"h-6 w-40 rounded bg-gray-200\" />\n      <div className=\"h-6 w-56 rounded bg-gray-200\" />\n    </div>\n  );\n}\n",
+          "reflectionPrompt": "Why does a skeleton usually feel faster than a spinner, even with identical timing?"
+        },
+        {
+          "id": "nextjs-07-error",
+          "title": "7. error.js",
+          "concept": "error boundaries",
+          "summary": "An error boundary keeps a failed segment from taking down the page.",
+          "activities": [
+            {
+              "id": "nextjs-07-see",
+              "type": "worked-example",
+              "title": "Catch render errors",
+              "instruction": "`error.js` must be a client component. It receives `error` and a `reset` function that retries rendering the segment.",
+              "example": "'use client';\n\nexport default function ProductsError({ error, reset }) {\n  return (\n    <div>\n      <h2>Could not load products</h2>\n      <button onClick={() => reset()}>Try again</button>\n    </div>\n  );\n}"
+            },
+            {
+              "id": "nextjs-07-predict",
+              "type": "prediction",
+              "title": "Server or client",
+              "question": "Why must an error boundary be a client component?",
+              "choices": [
+                "It needs `window`",
+                "React catches render errors in the browser, which needs component state and effects",
+                "Server components cannot return JSX"
+              ],
+              "answer": "React catches render errors in the browser, which needs component state and effects",
+              "explanation": "The boundary subscribes to React's error lifecycle, which only exists in the client runtime."
+            },
+            {
+              "id": "nextjs-07-edit",
+              "type": "edit",
+              "title": "Retry screen",
+              "instruction": "Write `app/products/error.js` as a client component with an h2 and a button that calls `reset`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Errors thrown while rendering a segment bubble to the nearest `error.js`. The rest of the layout stays alive." },
+            { "type": "code", "text": "'use client';\n\nexport default function ProductsError({ error, reset }) {\n  return <button onClick={() => reset()}>Try again</button>;\n}" },
+            { "type": "note", "text": "Leaving `error.message` on screen leaks internals. Log the error, show a friendly line, and offer reset." }
+          ],
+          "task": "Add an error boundary for the products segment with a reset button.",
+          "starterCode": "// app/products/error.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["'use client'", "reset", "onClick"],
+          "hints": [
+            "Start the file with `'use client'` and accept `{ error, reset }`.",
+            "<button onClick={() => reset()}>Try again</button>"
+          ],
+          "solution": "// app/products/error.js\n'use client';\n\nexport default function ProductsError({ error, reset }) {\n  return (\n    <div>\n      <h2>Could not load products</h2>\n      <button onClick={() => reset()}>Try again</button>\n    </div>\n  );\n}\n",
+          "reflectionPrompt": "Why is showing the raw error message to users a security problem?"
+        },
+        {
+          "id": "nextjs-08-dynamic-route",
+          "title": "8. Dynamic routes",
+          "concept": "app/products/[id]/page.js",
+          "summary": "Brackets capture a URL segment, and params arrives as a promise in Next 15.",
+          "activities": [
+            {
+              "id": "nextjs-08-see",
+              "type": "worked-example",
+              "title": "Read the segment",
+              "instruction": "`[id]` captures that segment. In Next 15 the `params` prop is a promise, so `await` it before reading `id`.",
+              "example": "// app/products/[id]/page.js\nexport default async function ProductPage({ params }) {\n  const { id } = await params;\n  const res = await fetch(`https://api.example.com/products/${id}`);\n  const product = await res.json();\n  return <h1>{product.name}</h1>;\n}"
+            },
+            {
+              "id": "nextjs-08-predict",
+              "type": "prediction",
+              "title": "Async params",
+              "question": "In Next 15, what is `params` inside a page?",
+              "choices": [
+                "A plain object with the route values",
+                "A promise that must be awaited",
+                "A URLSearchParams instance"
+              ],
+              "answer": "A promise that must be awaited",
+              "explanation": "Next 15 made `params` and `searchParams` async so the page can start streaming before they resolve. Reading `params.id` directly warns or fails."
+            },
+            {
+              "id": "nextjs-08-edit",
+              "type": "edit",
+              "title": "Product page",
+              "instruction": "Create `app/products/[id]/page.js` that awaits `params`, fetches that product, and renders its name in an `h1`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Dynamic segments share one page file. The captured value tells the page which record to load." },
+            { "type": "code", "text": "export default async function ProductPage({ params }) {\n  const { id } = await params;\n  const res = await fetch(`https://api.example.com/products/${id}`);\n  const product = await res.json();\n  return <h1>{product.name}</h1>;\n}" },
+            { "type": "note", "text": "A missing record should call `notFound()` from `next/navigation`, not render an empty page with a 200 status." }
+          ],
+          "task": "Build a dynamic product page that awaits params and fetches the product.",
+          "starterCode": "// app/products/[id]/page.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["await params", "{ id }", "export default async function"],
+          "hints": [
+            "Destructure `params` from props, then `const { id } = await params;`.",
+            "export default async function ProductPage({ params }) {\n  const { id } = await params;\n}"
+          ],
+          "solution": "// app/products/[id]/page.js\nexport default async function ProductPage({ params }) {\n  const { id } = await params;\n  const res = await fetch(`https://api.example.com/products/${id}`);\n  const product = await res.json();\n  return <h1>{product.name}</h1>;\n}\n",
+          "reflectionPrompt": "Why should an unknown product id return notFound() instead of an empty page?"
+        }
+      ]
+    },
+    {
+      "id": "nextjs-mutations",
+      "name": "Mutations & Caching",
+      "language": "nextjs",
+      "description": "Write endpoints, mutate from forms, and refresh cached data.",
+      "lessons": [
+        {
+          "id": "nextjs-09-route-handler-get",
+          "title": "9. GET route handlers",
+          "concept": "app/api/…/route.js",
+          "summary": "A route.js file exports HTTP methods that back your API.",
+          "activities": [
+            {
+              "id": "nextjs-09-see",
+              "type": "worked-example",
+              "title": "Your own JSON endpoint",
+              "instruction": "`app/api/products/route.js` answers `/api/products`. Export a function per method and return a `Response` — `NextResponse.json()` is the convenience wrapper.",
+              "example": "import { NextResponse } from 'next/server';\n\nexport async function GET() {\n  const products = [{ id: 1, name: 'Keyboard' }];\n  return NextResponse.json(products);\n}"
+            },
+            {
+              "id": "nextjs-09-predict",
+              "type": "prediction",
+              "title": "Which export",
+              "question": "How does Next decide which HTTP methods `/api/products` supports?",
+              "choices": [
+                "From a `methods` array you export",
+                "From the exported function names: GET, POST, DELETE",
+                "It accepts all methods by default"
+              ],
+              "answer": "From the exported function names: GET, POST, DELETE",
+              "explanation": "Each exported method name becomes a handler. Methods you do not export answer 405."
+            },
+            {
+              "id": "nextjs-09-edit",
+              "type": "edit",
+              "title": "Products endpoint",
+              "instruction": "Create `app/api/products/route.js` exporting an async `GET` that returns a JSON array of products."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Route handlers are the App Router's server endpoints. They sit next to pages and use standard Request/Response objects." },
+            { "type": "code", "text": "import { NextResponse } from 'next/server';\n\nexport async function GET() {\n  return NextResponse.json([{ id: 1, name: 'Keyboard' }]);\n}" },
+            { "type": "note", "text": "Route handlers are not cached by default in Next 15. Say `export const dynamic = 'force-static'` if you really want static output." }
+          ],
+          "task": "Export a GET handler that returns JSON products.",
+          "starterCode": "// app/api/products/route.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export async function GET", "NextResponse.json"],
+          "hints": [
+            "Import `NextResponse` from `next/server`.",
+            "export async function GET() {\n  return NextResponse.json(products);\n}"
+          ],
+          "solution": "// app/api/products/route.js\nimport { NextResponse } from 'next/server';\n\nexport async function GET() {\n  const products = [{ id: 1, name: 'Keyboard' }];\n  return NextResponse.json(products);\n}\n",
+          "reflectionPrompt": "When would you fetch data directly in a server component instead of adding a route handler?"
+        },
+        {
+          "id": "nextjs-10-route-handler-post",
+          "title": "10. POST route handlers",
+          "concept": "request.json() / status",
+          "summary": "Read the body from the Request and answer with an explicit status.",
+          "activities": [
+            {
+              "id": "nextjs-10-see",
+              "type": "worked-example",
+              "title": "Validate, store, answer 201",
+              "instruction": "The handler receives a standard `Request`. `await request.json()` parses the body; return `NextResponse.json(created, { status: 201 })`.",
+              "example": "export async function POST(request) {\n  const body = await request.json();\n  if (!body.name) {\n    return NextResponse.json({ error: 'name is required' }, { status: 400 });\n  }\n  const product = { id: 1, name: body.name };\n  return NextResponse.json(product, { status: 201 });\n}"
+            },
+            {
+              "id": "nextjs-10-predict",
+              "type": "prediction",
+              "title": "Malformed JSON",
+              "question": "A client POSTs invalid JSON. What does `await request.json()` do?",
+              "choices": [
+                "Returns an empty object",
+                "Throws, so the request fails with a 500 unless you catch it",
+                "Returns null"
+              ],
+              "answer": "Throws, so the request fails with a 500 unless you catch it",
+              "explanation": "Parsing can throw. Wrap it in try/catch and answer 400 — bad client input is not a server error."
+            },
+            {
+              "id": "nextjs-10-edit",
+              "type": "edit",
+              "title": "Create endpoint",
+              "instruction": "Export an async `POST` that reads `request.json()`, rejects a missing name with 400, and otherwise returns the product with status 201."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Route handlers use the web-standard Request and Response APIs. Picking the right status is part of the contract your client codes against." },
+            { "type": "code", "text": "export async function POST(request) {\n  const body = await request.json();\n  return NextResponse.json({ id: 1, ...body }, { status: 201 });\n}" },
+            { "type": "note", "text": "Wrap `request.json()` in try/catch. Unhandled parse errors turn a client mistake into a 500 and a noisy log." }
+          ],
+          "task": "Export a POST handler that validates and returns 201.",
+          "starterCode": "// app/api/products/route.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["export async function POST", "await request.json()", "status: 201"],
+          "hints": [
+            "Take `request` as the argument and parse it with `await request.json()`.",
+            "return NextResponse.json(product, { status: 201 });"
+          ],
+          "solution": "// app/api/products/route.js\nexport async function POST(request) {\n  const body = await request.json();\n  if (!body.name) {\n    return NextResponse.json({ error: 'name is required' }, { status: 400 });\n  }\n  const product = { id: 1, name: body.name };\n  return NextResponse.json(product, { status: 201 });\n}\n",
+          "reflectionPrompt": "Why is a JSON parse failure a 400 and not a 500?"
+        },
+        {
+          "id": "nextjs-11-server-action",
+          "title": "11. Server actions",
+          "concept": "'use server' / revalidatePath",
+          "summary": "A server function called straight from a form, with no fetch in between.",
+          "activities": [
+            {
+              "id": "nextjs-11-see",
+              "type": "worked-example",
+              "title": "Mutate and revalidate",
+              "instruction": "A `'use server'` function runs on the server but can be passed to a form's `action`. After writing, call `revalidatePath` so the cached page shows the new data.",
+              "example": "'use server';\n\nimport { revalidatePath } from 'next/cache';\n\nexport async function createProduct(formData) {\n  const name = formData.get('name');\n  await db.products.create({ name });\n  revalidatePath('/products');\n}"
+            },
+            {
+              "id": "nextjs-11-predict",
+              "type": "prediction",
+              "title": "Why revalidate",
+              "question": "The action writes to the database but does not revalidate. What does the user see next?",
+              "choices": [
+                "The new product immediately",
+                "The previously cached products page",
+                "A 404"
+              ],
+              "answer": "The previously cached products page",
+              "explanation": "The route's cached output is still valid, so Next serves it. Revalidation marks it stale so the next request re-renders."
+            },
+            {
+              "id": "nextjs-11-edit",
+              "type": "edit",
+              "title": "Create product action",
+              "instruction": "Write a server action `createProduct` that reads `name` from `formData`, writes it, and revalidates `/products`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Server actions remove the hand-written fetch: the form posts to a function, the function runs on the server, and the UI refreshes." },
+            { "type": "code", "text": "'use server';\n\nimport { revalidatePath } from 'next/cache';\n\nexport async function createProduct(formData) {\n  await db.products.create({ name: formData.get('name') });\n  revalidatePath('/products');\n}" },
+            { "type": "note", "text": "A server action is a public endpoint. Validate the input and check the session, exactly as you would in an API route." }
+          ],
+          "task": "Write a server action that creates a product and revalidates the list.",
+          "starterCode": "// app/actions.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["'use server'", "revalidatePath", "formData.get"],
+          "hints": [
+            "Start the file with `'use server'` and import `revalidatePath` from `next/cache`.",
+            "export async function createProduct(formData) {\n  await db.products.create({ name: formData.get('name') });\n  revalidatePath('/products');\n}"
+          ],
+          "solution": "// app/actions.js\n'use server';\n\nimport { revalidatePath } from 'next/cache';\n\nexport async function createProduct(formData) {\n  const name = formData.get('name');\n  await db.products.create({ name });\n  revalidatePath('/products');\n}\n",
+          "reflectionPrompt": "Why is a server action not automatically safe just because it is not imported by the client?"
+        },
+        {
+          "id": "nextjs-12-client-form",
+          "title": "12. Client components",
+          "concept": "'use client' / useState",
+          "summary": "Interactivity needs a client boundary — the smallest one you can manage.",
+          "activities": [
+            {
+              "id": "nextjs-12-see",
+              "type": "worked-example",
+              "title": "Opt in to the browser",
+              "instruction": "Anything using state, effects, or event handlers needs `'use client'` at the top of its file. Keep the boundary around the form, not the whole page.",
+              "example": "'use client';\n\nimport { useState } from 'react';\n\nexport default function SearchBar({ onSearch }) {\n  const [query, setQuery] = useState('');\n\n  return (\n    <form onSubmit={(e) => { e.preventDefault(); onSearch(query); }}>\n      <input value={query} onChange={(e) => setQuery(e.target.value)} />\n    </form>\n  );\n}"
+            },
+            {
+              "id": "nextjs-12-predict",
+              "type": "prediction",
+              "title": "Boundary cost",
+              "question": "What does putting `'use client'` at the top of the root layout do?",
+              "choices": [
+                "Nothing measurable",
+                "Makes everything below it a client component, enlarging the JS bundle",
+                "Breaks routing"
+              ],
+              "answer": "Makes everything below it a client component, enlarging the JS bundle",
+              "explanation": "The directive marks the whole module graph below it. Server-only data access then disappears from those components."
+            },
+            {
+              "id": "nextjs-12-edit",
+              "type": "edit",
+              "title": "Search form",
+              "instruction": "Write a client `SearchBar` component with `useState`, an input bound to the value, and a form that prevents the default submit."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Server components cannot hold state or attach handlers. A client component is the seam where interactivity begins." },
+            { "type": "code", "text": "'use client';\n\nconst [query, setQuery] = useState('');\n<form onSubmit={(e) => { e.preventDefault(); onSearch(query); }}>" },
+            { "type": "note", "text": "Push `'use client'` down the tree. A server page can render a client form without becoming one itself." }
+          ],
+          "task": "Write a client search bar with state and a submit handler.",
+          "starterCode": "// app/search-bar.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["'use client'", "useState(", "onSubmit"],
+          "hints": [
+            "The directive must be the first line, before imports.",
+            "const [query, setQuery] = useState('');\n<form onSubmit={(e) => { e.preventDefault(); onSearch(query); }}>"
+          ],
+          "solution": "// app/search-bar.js\n'use client';\n\nimport { useState } from 'react';\n\nexport default function SearchBar({ onSearch }) {\n  const [query, setQuery] = useState('');\n\n  return (\n    <form onSubmit={(e) => { e.preventDefault(); onSearch(query); }}>\n      <input value={query} onChange={(e) => setQuery(e.target.value)} />\n    </form>\n  );\n}\n",
+          "reflectionPrompt": "How would you keep a page a server component while still giving the user an interactive search box?"
+        }
+      ]
+    }
+  ]
+}

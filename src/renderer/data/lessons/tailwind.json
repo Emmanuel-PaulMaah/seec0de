@@ -1,0 +1,389 @@
+{
+  "tracks": [
+    {
+      "id": "css-tailwind",
+      "name": "Tailwind CSS",
+      "language": "css",
+      "premium": true,
+      "description": "Build interfaces with utility classes instead of custom CSS.",
+      "lessons": [
+        {
+          "id": "tailwind-01-utilities",
+          "title": "1. Utility Classes and Setup",
+          "concept": "Tailwind CDN and utility classes",
+          "summary": "Load Tailwind and style your first element with utility classes.",
+          "activities": [
+            {
+              "id": "tailwind-01-see",
+              "type": "worked-example",
+              "title": "Chaining utility classes",
+              "instruction": "Tailwind styles an element by combining small utility classes in its `class` attribute. `p-4` adds padding, `bg-slate-900` sets a dark background, `text-white` makes the text readable, and `rounded-lg` softens the corners.",
+              "example": "<div class=\"p-4 bg-slate-900 text-white rounded-lg\">\n  <h1>Hello Tailwind</h1>\n</div>"
+            },
+            {
+              "id": "tailwind-01-predict",
+              "type": "prediction",
+              "title": "Which class rounds the corners?",
+              "question": "Which utility class gives an element large rounded corners?",
+              "choices": [
+                "text-lg",
+                "rounded-lg",
+                "border-lg"
+              ],
+              "answer": "rounded-lg",
+              "explanation": "The `rounded-*` utilities control corner radius. `text-lg` changes font size and `border-lg` is not a Tailwind class."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Tailwind CSS is a **utility-first** framework. Instead of writing custom CSS rules, you combine small single-purpose classes directly on your HTML elements."
+            },
+            {
+              "type": "p",
+              "text": "The quickest way to try Tailwind is the CDN build. Add this script inside `<head>`:"
+            },
+            {
+              "type": "code",
+              "text": "<script src=\"https://cdn.tailwindcss.com\"></script>"
+            },
+            {
+              "type": "p",
+              "text": "Now any Tailwind class you add is styled. Each class does one job, and you compose them to build the result:"
+            },
+            {
+              "type": "code",
+              "text": "<div class=\"p-4 bg-slate-900 text-white rounded-lg\">\n  <h1>Hello Tailwind</h1>\n</div>"
+            },
+            {
+              "type": "p",
+              "text": "That single `class` attribute replaces a block of custom CSS. `p-4` is padding, `bg-slate-900` is a near-black background, `text-white` is white text, and `rounded-lg` is a large corner radius."
+            },
+            {
+              "type": "note",
+              "text": "Utility classes only work when Tailwind is loaded. On a real project you would install Tailwind with a build step, but the CDN is perfect for learning and quick prototypes."
+            }
+          ],
+          "task": "Add the Tailwind CDN script to `<head>`, then create a `<div>` with the classes `p-4`, `bg-slate-900`, `text-white`, and `rounded-lg`. Put an `<h1>` saying 'Hello Tailwind' and a `<p>` saying 'Styled with utility classes.' inside it.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Utilities</title>\n  <!-- Add the Tailwind CDN script here -->\n</head>\n<body>\n  <!-- Add a div with p-4 bg-slate-900 text-white rounded-lg -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "cdn\\.tailwindcss\\.com",
+            "class=\"[^\"]*\\bp-4\\b",
+            "class=\"[^\"]*bg-slate-900",
+            "class=\"[^\"]*text-white",
+            "class=\"[^\"]*rounded-lg",
+            "Hello Tailwind",
+            "Styled with utility classes\\."
+          ],
+          "hints": [
+            "Add `<script src=\"https://cdn.tailwindcss.com\"></script>` inside `<head>`.",
+            "Give the div `class=\"p-4 bg-slate-900 text-white rounded-lg\"`.",
+            "Put the `<h1>` and `<p>` inside the div."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Utilities</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body>\n  <div class=\"p-4 bg-slate-900 text-white rounded-lg\">\n    <h1>Hello Tailwind</h1>\n    <p>Styled with utility classes.</p>\n  </div>\n</body>\n</html>"
+        },
+        {
+          "id": "tailwind-02-spacing-flex",
+          "title": "2. Spacing and Flexbox",
+          "concept": "flex items-center justify-between gap-4",
+          "summary": "Use the spacing scale and flex utilities to arrange a toolbar.",
+          "activities": [
+            {
+              "id": "tailwind-02-see",
+              "type": "worked-example",
+              "title": "A flex toolbar",
+              "instruction": "`flex` turns a container into a row. `items-center` aligns children vertically, `justify-between` pushes them to opposite ends, and `gap-4` adds space between them without margins.",
+              "example": "<div class=\"flex items-center justify-between gap-4 p-6\">\n  <h2>Team</h2>\n  <button class=\"px-4 py-2\">Invite</button>\n</div>"
+            },
+            {
+              "id": "tailwind-02-predict",
+              "type": "prediction",
+              "title": "What does gap-4 do?",
+              "question": "In a flex container, what does `gap-4` add?",
+              "choices": [
+                "Padding inside each child",
+                "Space between the flex children",
+                "A border around the container"
+              ],
+              "answer": "Space between the flex children",
+              "explanation": "`gap-*` controls the space between flex or grid children. It is usually cleaner than adding margins to every child."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Tailwind's spacing scale gives every value a number. `p-4` is padding, `px-4` is horizontal padding, `py-2` is vertical padding, and `m-2` is margin. Bigger numbers mean more space."
+            },
+            {
+              "type": "code",
+              "text": "<div class=\"p-6\">\n  <button class=\"px-4 py-2\">Invite</button>\n</div>"
+            },
+            {
+              "type": "p",
+              "text": "Flexbox utilities handle alignment. `flex` creates a row, `items-center` aligns items on the cross axis, `justify-between` spreads them apart, and `gap-4` spaces them evenly:"
+            },
+            {
+              "type": "code",
+              "text": "<div class=\"flex items-center justify-between gap-4 p-6\">\n  <h2 class=\"text-xl font-bold\">Team</h2>\n  <button class=\"px-4 py-2 bg-blue-600 text-white rounded-lg\">Invite</button>\n</div>"
+            },
+            {
+              "type": "note",
+              "text": "Use `gap-*` instead of margins when spacing a row or grid. There is no leftover margin on the first or last child."
+            }
+          ],
+          "task": "Create a team card using `<div class=\"flex items-center justify-between gap-4 p-6 bg-white rounded-xl shadow-md\">`. Add an `<h2>` with the classes `text-xl` and `font-bold` saying 'Team', and a `<button>` with the classes `px-4`, `py-2`, `bg-blue-600`, `text-white`, and `rounded-lg` saying 'Invite'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Flex</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100 p-8\">\n  <!-- Add a flex team card with an h2 and a button -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "class=\"[^\"]*\\bflex\\b",
+            "class=\"[^\"]*items-center",
+            "class=\"[^\"]*justify-between",
+            "class=\"[^\"]*gap-4",
+            "class=\"[^\"]*p-6",
+            "class=\"[^\"]*shadow-md",
+            "class=\"[^\"]*px-4",
+            "class=\"[^\"]*py-2",
+            "class=\"[^\"]*bg-blue-600",
+            "Team",
+            "Invite"
+          ],
+          "hints": [
+            "Start the card with `class=\"flex items-center justify-between gap-4 p-6 bg-white rounded-xl shadow-md\"`.",
+            "Give the heading `class=\"text-xl font-bold\"`.",
+            "Give the button `class=\"px-4 py-2 bg-blue-600 text-white rounded-lg\"`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Flex</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100 p-8\">\n  <div class=\"flex items-center justify-between gap-4 p-6 bg-white rounded-xl shadow-md\">\n    <h2 class=\"text-xl font-bold\">Team</h2>\n    <button class=\"px-4 py-2 bg-blue-600 text-white rounded-lg\">Invite</button>\n  </div>\n</body>\n</html>"
+        },
+        {
+          "id": "tailwind-03-type-borders",
+          "title": "3. Typography, Borders, and Shadows",
+          "concept": "text-2xl font-bold border shadow-lg",
+          "summary": "Style text, borders, and depth with utility classes.",
+          "activities": [
+            {
+              "id": "tailwind-03-see",
+              "type": "worked-example",
+              "title": "A profile card",
+              "instruction": "Typography utilities set size and weight, while border and shadow utilities add structure and depth. `text-2xl` is a large heading, `font-bold` adds weight, `border` draws a border, and `shadow-lg` lifts the card off the page.",
+              "example": "<article class=\"max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-lg\">\n  <h2 class=\"text-2xl font-bold text-slate-900\">Ada Lovelace</h2>\n  <p class=\"text-sm text-slate-500\">Mathematician</p>\n</article>"
+            },
+            {
+              "id": "tailwind-03-predict",
+              "type": "prediction",
+              "title": "Which class makes text larger?",
+              "question": "Which utility increases the font size of a heading?",
+              "choices": [
+                "font-bold",
+                "text-2xl",
+                "border-2"
+              ],
+              "answer": "text-2xl",
+              "explanation": "`text-*` controls font size (and can also set color). `font-bold` changes weight and `border-2` changes border width."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Tailwind includes a full color palette and a type scale. Use `text-slate-900` for strong text, `text-slate-500` for secondary text, and `text-2xl` or `text-sm` to control size."
+            },
+            {
+              "type": "code",
+              "text": "<h2 class=\"text-2xl font-bold text-slate-900\">Ada Lovelace</h2>\n<p class=\"text-sm font-medium text-slate-500\">Mathematician</p>"
+            },
+            {
+              "type": "p",
+              "text": "Borders and shadows separate content from the page. `border` adds a 1px border, `border-slate-200` colors it, `rounded-xl` rounds the corners, and `shadow-lg` adds depth:"
+            },
+            {
+              "type": "code",
+              "text": "<article class=\"max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-lg\">\n  <h2 class=\"text-2xl font-bold text-slate-900\">Ada Lovelace</h2>\n  <p class=\"text-sm font-medium text-slate-500\">Mathematician</p>\n  <span class=\"inline-flex px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full\">\n    Available\n  </span>\n</article>"
+            },
+            {
+              "type": "note",
+              "text": "`max-w-sm` caps the card width. Pair it with `p-6` and the card stays comfortable on both mobile and desktop."
+            }
+          ],
+          "task": "Build a profile card with `<article class=\"max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-lg\">`. Add an `<h2>` with `text-2xl font-bold text-slate-900` saying 'Ada Lovelace', a `<p>` with `text-sm font-medium text-slate-500` saying 'Mathematician', and a `<span>` with `inline-flex px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full` saying 'Available'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Profile Card</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100 p-8\">\n  <!-- Add a styled article, heading, paragraph, and badge -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "class=\"[^\"]*max-w-sm",
+            "class=\"[^\"]*\\bborder\\b",
+            "class=\"[^\"]*border-slate-200",
+            "class=\"[^\"]*rounded-xl",
+            "class=\"[^\"]*shadow-lg",
+            "class=\"[^\"]*text-2xl",
+            "class=\"[^\"]*font-bold",
+            "class=\"[^\"]*text-slate-500",
+            "class=\"[^\"]*bg-emerald-100",
+            "Ada Lovelace",
+            "Mathematician",
+            "Available"
+          ],
+          "hints": [
+            "Use `class=\"max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-lg\"` on the article.",
+            "Style the name with `text-2xl font-bold text-slate-900` and the role with `text-sm font-medium text-slate-500`.",
+            "Style the badge with `inline-flex px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full`."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Profile Card</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100 p-8\">\n  <article class=\"max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-lg\">\n    <h2 class=\"text-2xl font-bold text-slate-900\">Ada Lovelace</h2>\n    <p class=\"text-sm font-medium text-slate-500\">Mathematician</p>\n    <span class=\"inline-flex px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full\">\n      Available\n    </span>\n  </article>\n</body>\n</html>"
+        },
+        {
+          "id": "tailwind-04-states",
+          "title": "4. Hover and Focus States",
+          "concept": "hover: focus: transition",
+          "summary": "Add clear feedback to buttons and links with state variants.",
+          "activities": [
+            {
+              "id": "tailwind-04-see",
+              "type": "worked-example",
+              "title": "A button with feedback",
+              "instruction": "State variants apply a utility only in a specific situation. `hover:bg-indigo-700` darkens the button when the pointer is over it, while `focus:ring-2` draws a ring when the button has keyboard focus.",
+              "example": "<button class=\"px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition\">\n  Save changes\n</button>"
+            },
+            {
+              "id": "tailwind-04-predict",
+              "type": "prediction",
+              "title": "Which prefix means hover?",
+              "question": "Which class applies only while the pointer is over the element?",
+              "choices": [
+                "active:bg-indigo-700",
+                "hover:bg-indigo-700",
+                "focus:bg-indigo-700"
+              ],
+              "answer": "hover:bg-indigo-700",
+              "explanation": "The `hover:` prefix applies the utility on hover. `active:` is for the pressed state and `focus:` is for keyboard or click focus."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Interactive elements should tell the user when they are hovered or focused. Tailwind's state variants let you add a whole utility only for that state:"
+            },
+            {
+              "type": "code",
+              "text": "<button class=\"bg-indigo-600 hover:bg-indigo-700\">\n  Save changes\n</button>"
+            },
+            {
+              "type": "p",
+              "text": "Keyboard users need a visible focus ring too. `focus:ring-2` adds a ring and `focus:ring-indigo-300` sets its color. `focus:outline-none` removes the browser default so the Tailwind ring is the only indicator:"
+            },
+            {
+              "type": "code",
+              "text": "<button class=\"focus:outline-none focus:ring-2 focus:ring-indigo-300\">\n  Save changes\n</button>"
+            },
+            {
+              "type": "p",
+              "text": "Add `transition` so color and ring changes animate smoothly instead of snapping:"
+            },
+            {
+              "type": "code",
+              "text": "<button class=\"transition hover:bg-indigo-700 focus:ring-2\">\n  Save changes\n</button>"
+            },
+            {
+              "type": "note",
+              "text": "Never remove focus styles without replacing them. `focus:ring-*` is the accessible replacement for `outline: none`."
+            }
+          ],
+          "task": "Create a `<button>` with the classes `px-5`, `py-3`, `bg-indigo-600`, `text-white`, `font-semibold`, `rounded-lg`, `hover:bg-indigo-700`, `focus:outline-none`, `focus:ring-2`, `focus:ring-indigo-300`, and `transition`, saying 'Save changes'. Then add a link with `class=\"text-indigo-600 underline hover:text-indigo-800\"` saying 'Learn more'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind States</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100 p-8\">\n  <!-- Add a button with hover and focus classes, then a link -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "hover:bg-indigo-700",
+            "focus:ring-2",
+            "focus:ring-indigo-300",
+            "\\btransition\\b",
+            "hover:text-indigo-800",
+            "Save changes",
+            "Learn more"
+          ],
+          "hints": [
+            "Start the button with `class=\"px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg\"`.",
+            "Add the state classes: `hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition`.",
+            "Use `class=\"text-indigo-600 underline hover:text-indigo-800\"` on the link."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind States</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100 p-8\">\n  <button class=\"px-5 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition\">\n    Save changes\n  </button>\n  <a href=\"#\" class=\"text-indigo-600 underline hover:text-indigo-800\">Learn more</a>\n</body>\n</html>"
+        },
+        {
+          "id": "tailwind-05-responsive",
+          "title": "5. Responsive Layouts",
+          "concept": "sm: md: lg:",
+          "summary": "Build mobile-first layouts that change at Tailwind breakpoints.",
+          "activities": [
+            {
+              "id": "tailwind-05-see",
+              "type": "worked-example",
+              "title": "A responsive card grid",
+              "instruction": "Responsive prefixes apply a utility from a breakpoint upward. `grid-cols-1` is the mobile default, `sm:grid-cols-2` switches to two columns on small screens, and `lg:grid-cols-3` switches to three on large screens.",
+              "example": "<div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6\">\n  <div class=\"p-4 bg-white rounded-lg shadow\">Card One</div>\n  <div class=\"p-4 bg-white rounded-lg shadow\">Card Two</div>\n  <div class=\"p-4 bg-white rounded-lg shadow\">Card Three</div>\n</div>"
+            },
+            {
+              "id": "tailwind-05-predict",
+              "type": "prediction",
+              "title": "When does md: apply?",
+              "question": "What does `md:grid-cols-2` mean?",
+              "choices": [
+                "Use two columns only on screens smaller than the md breakpoint",
+                "Use two columns from the md breakpoint upward",
+                "Use two columns on every screen size"
+              ],
+              "answer": "Use two columns from the md breakpoint upward",
+              "explanation": "Tailwind is mobile-first. An unprefixed utility is the base style, and a prefixed utility like `md:` applies from that breakpoint upward."
+            }
+          ],
+          "teaching": [
+            {
+              "type": "p",
+              "text": "Tailwind layouts are **mobile-first**. Write the base layout with unprefixed classes, then add larger-screen refinements with `sm:`, `md:`, `lg:`, and `xl:`."
+            },
+            {
+              "type": "code",
+              "text": "<div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6\">\n  <!-- cards -->\n</div>"
+            },
+            {
+              "type": "p",
+              "text": "Default breakpoints:"
+            },
+            {
+              "type": "code",
+              "text": "/* sm:  640px and up */\n/* md:  768px and up */\n/* lg:  1024px and up */\n/* xl:  1280px and up */\n/* 2xl: 1536px and up */"
+            },
+            {
+              "type": "p",
+              "text": "Prefixes work with any utility, not just grid columns. This heading is large on mobile and larger from `md` upward:"
+            },
+            {
+              "type": "code",
+              "text": "<h1 class=\"text-xl md:text-3xl font-bold\">Responsive Cards</h1>"
+            },
+            {
+              "type": "note",
+              "text": "Because prefixes stack upward, you usually only need one class per breakpoint. `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` already covers every larger screen."
+            }
+          ],
+          "task": "Create a `<div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6\">` containing three cards with `class=\"p-4 bg-white rounded-lg shadow\"`. Give the cards the text 'Card One', 'Card Two', and 'Card Three'. Above the grid, add an `<h1>` with `class=\"text-xl md:text-3xl font-bold mb-4\"` saying 'Responsive Cards'.",
+          "starterCode": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Responsive</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100\">\n  <!-- Add a responsive heading and a three-card grid -->\n</body>\n</html>",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "class=\"[^\"]*\\bgrid\\b",
+            "class=\"[^\"]*grid-cols-1",
+            "class=\"[^\"]*sm:grid-cols-2",
+            "class=\"[^\"]*lg:grid-cols-3",
+            "class=\"[^\"]*md:text-3xl",
+            "class=\"[^\"]*gap-6",
+            "Responsive Cards",
+            "Card One",
+            "Card Two",
+            "Card Three"
+          ],
+          "hints": [
+            "Start the grid with `class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6\"`.",
+            "Give each card `class=\"p-4 bg-white rounded-lg shadow\"`.",
+            "Use `class=\"text-xl md:text-3xl font-bold mb-4\"` on the heading."
+          ],
+          "solution": "<!DOCTYPE html>\n<html>\n<head>\n  <title>Tailwind Responsive</title>\n  <script src=\"https://cdn.tailwindcss.com\"></script>\n</head>\n<body class=\"bg-slate-100\">\n  <h1 class=\"text-xl md:text-3xl font-bold mb-4\">Responsive Cards</h1>\n  <div class=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6\">\n    <div class=\"p-4 bg-white rounded-lg shadow\">Card One</div>\n    <div class=\"p-4 bg-white rounded-lg shadow\">Card Two</div>\n    <div class=\"p-4 bg-white rounded-lg shadow\">Card Three</div>\n  </div>\n</body>\n</html>"
+        }
+      ]
+    }
+  ]
+}

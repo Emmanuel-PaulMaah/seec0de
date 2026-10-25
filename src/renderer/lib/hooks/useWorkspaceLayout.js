@@ -4,6 +4,8 @@
 // 1. Editor width budget: the code editor never drops below MIN_EDITOR_WIDTH.
 //    Opening or expanding a panel that would break the budget collapses the
 //    least-recently-used open side panel and shows a toast offering Restore.
+//    Learn mode opts out (`budgetEnabled = false`): its three panes are the
+//    lesson surface, so nothing is auto-collapsed and no toast appears.
 // 2. Focus mode (Ctrl+.): hides every side panel; toggling back restores
 //    exactly what was open, because the raw state is never mutated.
 // 3. Persistence: visibility flags and widths live in localStorage, same keys
@@ -41,15 +43,16 @@ function readFlag(key) {
   return localStorage.getItem(key) === '1';
 }
 
-// Settings.showTerminal/showFileExplorer act as the default for fresh
-// installs; once the user toggles, the per-session key takes over.
+// Settings.showTerminal seeds the first render; changing the setting later
+// also applies immediately (see previousTerminalDefault below). Once the user
+// toggles the panel, the per-session key takes over.
 function initialPanelVisible(storageKey, defaultFromSettings) {
   const saved = localStorage.getItem(storageKey);
   if (saved === null) return !!defaultFromSettings;
   return saved === '1';
 }
 
-export function useWorkspaceLayout(defaultTerminalOpen) {
+export function useWorkspaceLayout(defaultTerminalOpen, budgetEnabled = true) {
   // Raw state — this is what gets persisted and what focus mode reads from.
   const [terminalVisible, setTerminalVisibleRaw] = useState(() => initialPanelVisible(K.terminal, defaultTerminalOpen));
   const [previewVisible, setPreviewVisibleRaw] = useState(() => initialPanelVisible(K.previewOpen, true));
@@ -63,6 +66,17 @@ export function useWorkspaceLayout(defaultTerminalOpen) {
   const [focusMode, setFocusMode] = useState(false);
   // { panel: 'instruction' | 'preview' | 'explanation' } while the toast is up.
   const [movedAside, setMovedAside] = useState(null);
+
+  // The Settings drawer's "Show terminal by default" checkbox should apply
+  // immediately, not just on a fresh install. Track the last value we saw so
+  // unrelated re-renders (or the user toggling the terminal itself) don't
+  // yank the panel back open.
+  const previousTerminalDefault = useRef(defaultTerminalOpen);
+  useEffect(() => {
+    if (previousTerminalDefault.current === defaultTerminalOpen) return;
+    previousTerminalDefault.current = defaultTerminalOpen;
+    setTerminalVisibleRaw(!!defaultTerminalOpen);
+  }, [defaultTerminalOpen]);
 
   // Persist raw values (never focus-mode-derived ones) synchronously with
   // state changes — replaces the eight per-value effects App.jsx used to run.
@@ -86,6 +100,10 @@ export function useWorkspaceLayout(defaultTerminalOpen) {
   const stateRef = useRef(null);
   stateRef.current = { previewVisible, previewWidth, instructionCollapsed, instructionWidth, explanationCollapsed, explanationWidth };
 
+  // Learn mode turns the budget off without rebuilding the public setters.
+  const budgetRef = useRef(budgetEnabled);
+  budgetRef.current = budgetEnabled;
+
   // Width each side panel currently occupies (rail when collapsed, 0 when hidden).
   const currentWidths = (s) => ({
     instruction: s.instructionCollapsed ? RAIL : s.instructionWidth,
@@ -96,6 +114,11 @@ export function useWorkspaceLayout(defaultTerminalOpen) {
   // Open `incoming` at full width; if that would push the editor below the
   // budget, collapse the least-recently-used other open panel first.
   const applyBudget = useCallback((incoming, open) => {
+    if (!budgetRef.current) {
+      open();
+      touch(incoming);
+      return;
+    }
     const s = stateRef.current;
     const opened = { ...currentWidths(s) };
     opened[incoming] = incoming === 'preview' ? s.previewWidth
@@ -191,7 +214,7 @@ export function useWorkspaceLayout(defaultTerminalOpen) {
     setLearnGuideWidth,
     focusMode,
     toggleFocusMode,
-    movedAside: focusMode ? null : movedAside,
+    movedAside: focusMode || !budgetEnabled ? null : movedAside,
     restoreMovedAside,
     dismissMovedAside,
     // Unguarded setters for callers that must force the layout open (the

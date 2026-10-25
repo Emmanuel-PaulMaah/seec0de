@@ -1,34 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
+  Award,
   BookOpen,
   CheckCircle2,
   ChevronLeft,
   Circle,
   GraduationCap,
   Hammer,
+  Lock,
+  Mic,
   Sparkles,
   Wrench,
 } from 'lucide-react';
 import lessonsData from '../data/lessons/index.js';
 import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
 import projects, { projectCheckpoint } from '../data/projects';
+import { languageBlurb, languageLabel } from '../data/languages';
 import { renderInline } from './InlineCode';
-
-const LANGUAGE_LABELS = {
-  python: 'Python',
-  javascript: 'JavaScript',
-  typescript: 'TypeScript',
-  react: 'React',
-  html: 'HTML',
-  css: 'CSS',
-  git: 'Git & GitHub',
-  nodejs: 'Node.js',
-};
-
-function languageLabel(language) {
-  return LANGUAGE_LABELS[language] || language;
-}
 
 // One tone per section, carried by the card's glyph. Projects matches the
 // --string-highlight used for its checkpoint phase labels.
@@ -53,6 +42,12 @@ export default function LearnHomeScreen({
   selectedProjectId,
   completedLessons = [],
   completedProjectCheckpoints = [],
+  hasPremiumCourses = false,
+  hasPortfolio = false,
+  hasInterview = false,
+  onUpgrade,
+  onOpenCertificate,
+  onStartInterview,
   onSelectLanguage,
   onSelectSection,
   onSelectProject,
@@ -67,7 +62,7 @@ export default function LearnHomeScreen({
   const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
     const available = Array.from(new Set(tracks.map((track) => track.language).filter(Boolean)));
-    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'git', 'nodejs'].filter((language) => available.includes(language));
+    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'git', 'nodejs', 'mongodb', 'express', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'].filter((language) => available.includes(language));
   }, [tracks]);
   const languageTracks = tracks.filter((track) => track.language === selectedLanguage);
   const languageExercises = exercises.filter((exercise) => exercise.language === selectedLanguage);
@@ -200,6 +195,21 @@ export default function LearnHomeScreen({
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        className="learn-interview-card"
+        onClick={() => (hasInterview ? onStartInterview?.() : onUpgrade?.())}
+      >
+        <span className="learn-interview-icon"><Mic size={17} /></span>
+        <span className="learn-interview-copy">
+          <strong>Interview practice</strong>
+          <span>Answer realistic {languageLabel(selectedLanguage)} questions and get structured feedback.</span>
+        </span>
+        <span className="learn-interview-action">
+          {hasInterview ? 'Start' : 'Pro'}
+          {hasInterview ? <ArrowRight size={12} /> : <Lock size={10} />}
+        </span>
+      </button>
     </>
   );
 
@@ -213,25 +223,30 @@ export default function LearnHomeScreen({
           const lessons = track.lessons || [];
           const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
           const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
+          const locked = !!track.premium && !hasPremiumCourses;
           return (
             <button
               key={track.id}
               type="button"
               className="learn-card learn-opt-card"
               style={{ '--opt-tone': COURSE_TONES[trackIndex % COURSE_TONES.length] }}
-              onClick={() => setActiveTrackId(track.id)}
+              onClick={() => (locked ? onUpgrade?.() : setActiveTrackId(track.id))}
             >
               <span className="learn-opt-head">
-                <BookOpen size={15} className="learn-opt-icon" aria-hidden="true" />
+                {locked
+                  ? <Lock size={15} className="learn-opt-icon" aria-hidden="true" />
+                  : <BookOpen size={15} className="learn-opt-icon" aria-hidden="true" />}
                 <span className="learn-opt-name">{track.name}</span>
-                <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />
+                {locked
+                  ? <span style={{ marginLeft: 'auto', color: 'var(--accent)', fontSize: 9, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase' }}>Pro</span>
+                  : <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />}
               </span>
               <span className="learn-opt-meta">{track.description}</span>
               <span className="learn-opt-progress">
                 <span className="learn-progress-track">
                   <span className="learn-progress-fill" style={{ width: `${pct}%` }} />
                 </span>
-                <span className="learn-opt-count">{done}/{lessons.length}</span>
+                <span className="learn-opt-count">{locked ? 'Unlock with Pro' : `${done}/${lessons.length}`}</span>
               </span>
             </button>
           );
@@ -240,16 +255,36 @@ export default function LearnHomeScreen({
     </>
   );
 
-  const renderLessonList = () => (
+  const renderLessonList = () => {
+    const trackLessons = activeTrack.lessons || [];
+    const allComplete = trackLessons.length > 0 && trackLessons.every((lesson) => completedLessons.includes(lesson.id));
+    return (
     <>
       <p style={{ maxWidth: 620, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
         {activeTrack.description}
       </p>
+      {allComplete && (
+        <div className="learn-certificate-banner">
+          <span className="learn-certificate-icon"><Award size={17} /></span>
+          <span className="learn-certificate-copy">
+            <strong>Course complete</strong>
+            <span>{hasPortfolio ? 'Your certificate is ready to download.' : 'Unlock a shareable certificate with Pro.'}</span>
+          </span>
+          <button
+            type="button"
+            className="learn-certificate-btn"
+            onClick={() => (hasPortfolio ? onOpenCertificate?.(activeTrack) : onUpgrade?.())}
+          >
+            {hasPortfolio ? 'View certificate' : 'Unlock'}
+            {hasPortfolio ? <ArrowRight size={11} /> : <Lock size={10} />}
+          </button>
+        </div>
+      )}
       <div style={{ display: 'grid', gap: 7, marginTop: 24 }}>
-        {(activeTrack.lessons || []).map((lesson) => {
+        {trackLessons.map((lesson) => {
           const complete = completedLessons.includes(lesson.id);
           return (
-            <button key={lesson.id} type="button" className="learn-lesson-row" onClick={() => onSelectLesson({ ...lesson, language: activeTrack.language })}>
+            <button key={lesson.id} type="button" className="learn-lesson-row" onClick={() => onSelectLesson({ ...lesson, language: activeTrack.language, premium: !!activeTrack.premium })}>
               {complete
                 ? <CheckCircle2 size={15} style={{ color: 'var(--success)', flexShrink: 0 }} />
                 : <Circle size={15} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />}
@@ -263,7 +298,8 @@ export default function LearnHomeScreen({
         })}
       </div>
     </>
-  );
+    );
+  };
 
   const renderChallengeTypeGrid = () => (
     <>
@@ -391,6 +427,10 @@ export default function LearnHomeScreen({
         <h1 ref={headingRef} tabIndex={-1} id="learn-home-heading" style={{ maxWidth: 760, margin: '12px 0 0', color: 'var(--text-primary)', fontSize: 'clamp(34px, 5vw, 60px)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1 }}>
           {heading}
         </h1>
+
+        {selectedLanguage && !selectedSection && languageBlurb(selectedLanguage) && (
+          <p className="learn-language-blurb">{languageBlurb(selectedLanguage)}</p>
+        )}
 
         {/* Language picker */}
         {!selectedLanguage && renderLanguageGrid()}

@@ -1,0 +1,472 @@
+{
+  "tracks": [
+    {
+      "id": "perf-frontend",
+      "name": "Frontend Performance",
+      "language": "performance",
+      "description": "Measure what users feel, then fix the slowest thing.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "perf-01-vitals",
+          "title": "1. Core Web Vitals",
+          "concept": "LCP / CLS / INP",
+          "summary": "Three numbers describe loading, stability and responsiveness.",
+          "activities": [
+            {
+              "id": "perf-01-see",
+              "type": "worked-example",
+              "title": "Measure the real page",
+              "instruction": "LCP is when the largest visible element finishes loading, CLS is how much the layout jumps, and INP is the delay between an interaction and the next frame. Track them in the field, because a fast laptop on office Wi-Fi is not your median user.",
+              "example": "new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log('LCP', Math.round(entry.startTime), 'ms');\n  }\n}).observe({ type: 'largest-contentful-paint', buffered: true });"
+            },
+            {
+              "id": "perf-01-predict",
+              "type": "prediction",
+              "title": "Which metric?",
+              "question": "Users say tapping a filter button feels unresponsive. Which metric measures that?",
+              "choices": [
+                "INP — interaction to next paint",
+                "LCP — largest contentful paint",
+                "CLS — cumulative layout shift"
+              ],
+              "answer": "INP — interaction to next paint",
+              "explanation": "INP times the work between an input event and the browser painting the result. Slow INP usually means a long task blocking the main thread, not a slow network."
+            },
+            {
+              "id": "perf-01-edit",
+              "type": "edit",
+              "title": "Observe LCP",
+              "instruction": "Use a `PerformanceObserver` to observe `largest-contentful-paint` entries and log their `startTime`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "One lab score is a starting point, not the truth. Field data at the 75th percentile is what search engines and users actually experience." },
+            { "type": "code", "text": "new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(entry.startTime);\n  }\n}).observe({ type: 'largest-contentful-paint', buffered: true });" },
+            { "type": "note", "text": "Optimise one metric at a time. Fixing LCP by lazy-loading the hero image usually makes LCP worse; measure before and after every change." }
+          ],
+          "task": "Observe largest-contentful-paint and log each entry's startTime.",
+          "starterCode": "// Report LCP as it is measured\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["performanceobserver", "largest-contentful-paint"],
+          "hints": [
+            "`PerformanceObserver` takes a callback; `.observe()` takes the entry type.",
+            "new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(entry.startTime);\n  }\n}).observe({ type: 'largest-contentful-paint', buffered: true });"
+          ],
+          "solution": "new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log('LCP', Math.round(entry.startTime), 'ms');\n  }\n}).observe({ type: 'largest-contentful-paint', buffered: true });\n",
+          "reflectionPrompt": "Why is the 75th percentile a better target than the average?"
+        },
+        {
+          "id": "perf-02-images",
+          "title": "2. Images and fonts",
+          "concept": "byte weight before code",
+          "summary": "Most slow pages are carrying megabytes of pictures and webfonts.",
+          "activities": [
+            {
+              "id": "perf-02-see",
+              "type": "worked-example",
+              "title": "Give the browser what it needs",
+              "instruction": "`srcSet` and `sizes` let the browser download the small variant on a phone. `width` and `height` reserve layout space so the page does not jump, and `loading=\"lazy\"` defers images below the fold while leaving the hero eager.",
+              "example": "<img\n  src=\"/img/hero-800.jpg\"\n  srcSet=\"/img/hero-400.jpg 400w, /img/hero-800.jpg 800w, /img/hero-1600.jpg 1600w\"\n  sizes=\"(max-width: 600px) 100vw, 800px\"\n  width=\"800\"\n  height=\"450\"\n  loading=\"lazy\"\n  decoding=\"async\"\n  alt=\"Dashboard preview\"\n/>"
+            },
+            {
+              "id": "perf-02-predict",
+              "type": "prediction",
+              "title": "Why width and height matter",
+              "question": "What do numeric `width` and `height` attributes on an image prevent?",
+              "choices": [
+                "Layout shift while the image downloads",
+                "The image being cached by the browser",
+                "The browser downloading the wrong srcSet variant"
+              ],
+              "answer": "Layout shift while the image downloads",
+              "explanation": "The browser reserves the correct box before the bytes arrive. Without it, the paragraph below jumps down — that jump is CLS."
+            },
+            {
+              "id": "perf-02-edit",
+              "type": "edit",
+              "title": "Make the hero responsive",
+              "instruction": "Add `width`, `height`, `loading=\"lazy\"` and `decoding=\"async\"` to the image."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A 5 MB PNG costs more time on a phone than every line of JavaScript you agonise over. Compression, correct dimensions and modern formats are the highest-leverage fixes available." },
+            { "type": "code", "text": "<img src=\"/hero-800.jpg\" width=\"800\" height=\"450\" loading=\"lazy\" decoding=\"async\" alt=\"...\" />" },
+            { "type": "note", "text": "Use `font-display: swap` and only the weights you actually use. Each extra weight is another blocking download that delays text." }
+          ],
+          "task": "Add the size and loading attributes to the hero image.",
+          "starterCode": "<img src=\"/img/hero-1600.jpg\" alt=\"Dashboard preview\" />\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["width=", "height=", "loading=", "decoding="],
+          "hints": [
+            "All four are attributes on the `<img>` tag.",
+            "<img src=\"/img/hero-800.jpg\" width=\"800\" height=\"450\" loading=\"lazy\" decoding=\"async\" alt=\"Dashboard preview\" />"
+          ],
+          "solution": "<img\n  src=\"/img/hero-800.jpg\"\n  width=\"800\"\n  height=\"450\"\n  loading=\"lazy\"\n  decoding=\"async\"\n  alt=\"Dashboard preview\"\n/>\n",
+          "reflectionPrompt": "Why should the hero image not be lazily loaded?"
+        },
+        {
+          "id": "perf-03-bundles",
+          "title": "3. Bundle budgets and splitting",
+          "concept": "code splitting",
+          "summary": "If it is in the entry bundle, every visitor pays for it.",
+          "activities": [
+            {
+              "id": "perf-03-see",
+              "type": "worked-example",
+              "title": "Load the editor when it's opened",
+              "instruction": "A static import puts a library in the bundle of every page that imports it. A dynamic import creates a separate chunk fetched on demand, so a heavy chart or editor only costs the people who use it. Set a budget in CI so this does not silently regress.",
+              "example": "import { lazy, Suspense } from 'react';\n\nconst Chart = lazy(() => import('./Chart'));\n\nexport function Dashboard({ showChart }) {\n  if (!showChart) return null;\n  return (\n    <Suspense fallback={<p>Loading chart…</p>}>\n      <Chart />\n    </Suspense>\n  );\n}"
+            },
+            {
+              "id": "perf-03-predict",
+              "type": "prediction",
+              "title": "Who pays for the import?",
+              "question": "A 300 KB chart library is imported at the top of your app shell. Who downloads it?",
+              "choices": [
+                "Every visitor, on every route",
+                "Only visitors who open the chart page",
+                "Nobody until the chart renders"
+              ],
+              "answer": "Every visitor, on every route",
+              "explanation": "A static import is part of the entry graph, so it delays first paint for users who never see a chart. Move it behind a dynamic import and the cost follows the feature."
+            },
+            {
+              "id": "perf-03-edit",
+              "type": "edit",
+              "title": "Split the chart",
+              "instruction": "Lazy-load `./Chart` with `lazy(() => import(...))` instead of a static import."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Bundle size is a product decision with a technical unit. Every dependency you add to the shell is paid for on the slowest device you support." },
+            { "type": "code", "text": "const Chart = lazy(() => import('./Chart'));" },
+            { "type": "note", "text": "Check for duplicate copies of the same library before splitting anything: two versions of a date library cost more than most features." }
+          ],
+          "task": "Lazy-load the Chart component with a dynamic import.",
+          "starterCode": "import Chart from './Chart';\n\nexport function Dashboard() {\n  return <Chart />;\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["lazy(", "import("],
+          "hints": [
+            "Import `lazy` from React and call it with a function that imports the module.",
+            "import { lazy } from 'react';\nconst Chart = lazy(() => import('./Chart'));"
+          ],
+          "solution": "import { lazy } from 'react';\n\nconst Chart = lazy(() => import('./Chart'));\n\nexport function Dashboard() {\n  return <Chart />;\n}\n",
+          "reflectionPrompt": "Why does splitting a rarely used feature help the users who never open it?"
+        }
+      ]
+    },
+    {
+      "id": "perf-caching",
+      "name": "Caching & Delivery",
+      "language": "performance",
+      "description": "Serve fewer bytes, less often, from closer to the user.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "perf-04-http-cache",
+          "title": "4. HTTP caching",
+          "concept": "Cache-Control / ETag",
+          "summary": "Hashed assets can live for a year; HTML must be rechecked.",
+          "activities": [
+            {
+              "id": "perf-04-see",
+              "type": "worked-example",
+              "title": "Cache the filename, not the page",
+              "instruction": "A file whose name contains a content hash can never change, so it is safe to cache for a year with `immutable`. HTML must be revalidated, or users keep loading last week's app shell and never see a deploy.",
+              "example": "// app.js -> app.9f2c1a.js\nres.setHeader('Cache-Control', 'public, max-age=31536000, immutable');\n\n// index.html\nres.setHeader('Cache-Control', 'no-cache');"
+            },
+            {
+              "id": "perf-04-predict",
+              "type": "prediction",
+              "title": "Which header skips the network?",
+              "question": "Which response lets the browser reuse a file without asking the server at all?",
+              "choices": [
+                "`Cache-Control: public, max-age=31536000, immutable`",
+                "`ETag: \"abc123\"`",
+                "`Cache-Control: no-cache`"
+              ],
+              "answer": "`Cache-Control: public, max-age=31536000, immutable`",
+              "explanation": "An ETag enables a conditional request — still a round trip, but often a 304 with no body. `no-cache` means store it but revalidate every time."
+            },
+            {
+              "id": "perf-04-edit",
+              "type": "edit",
+              "title": "Set asset headers",
+              "instruction": "Set a `Cache-Control` header for hashed assets: public, one year, immutable."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Caching policy is set by the response, not negotiated. Get the split right: immutable assets and short-lived HTML, one rule each." },
+            { "type": "code", "text": "res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');" },
+            { "type": "note", "text": "`no-cache` does not mean 'do not cache'. It means 'revalidate before use'. `no-store` is the one that forbids storage." }
+          ],
+          "task": "Set an immutable one-year cache header for hashed assets.",
+          "starterCode": "app.use('/assets', (req, res, next) => {\n  // Cache these files for a year\n  next();\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["cache-control", "immutable", "max-age"],
+          "hints": [
+            "Use `res.setHeader('Cache-Control', ...)`.",
+            "res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');"
+          ],
+          "solution": "app.use('/assets', (req, res, next) => {\n  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');\n  next();\n});\n",
+          "reflectionPrompt": "Why is it dangerous to cache `/index.html` for a year?"
+        },
+        {
+          "id": "perf-05-cdn",
+          "title": "5. CDNs and compression",
+          "concept": "edge delivery",
+          "summary": "Put bytes near the user, compress them, and never cache what's private.",
+          "activities": [
+            {
+              "id": "perf-05-see",
+              "type": "worked-example",
+              "title": "Compression and a correct cache key",
+              "instruction": "Text responses compress to a fraction of their size with brotli or gzip. A CDN then serves the compressed copy from a nearby edge, but only if the cache key includes everything that changes the response — the path plus `Vary` headers like `Accept-Encoding` and `Accept-Language`.",
+              "example": "import compression from 'compression';\n\napp.use(compression());\napp.use('/assets', express.static('public', {\n  maxAge: '1y',\n  immutable: true,\n}));"
+            },
+            {
+              "id": "perf-05-predict",
+              "type": "prediction",
+              "title": "The wrong cache key",
+              "question": "Your CDN caches `/dashboard` by URL only, and responses differ per `Accept-Language`. What do users see?",
+              "choices": [
+                "Other users' language versions of the page",
+                "A slower but correct page",
+                "A 500 from the origin"
+              ],
+              "answer": "Other users' language versions of the page",
+              "explanation": "Whatever varies the response must be part of the key. Send `Vary: Accept-Language` so the edge keeps a copy per language — or render the variant on the client."
+            },
+            {
+              "id": "perf-05-edit",
+              "type": "edit",
+              "title": "Compress and cache",
+              "instruction": "Add `compression()` middleware and serve `/assets` with a one-year immutable cache."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A CDN is a cache with a geography. Every rule you know about HTTP caching still applies, plus purge and invalidation at deploy time." },
+            { "type": "code", "text": "app.use(compression());\napp.use('/assets', express.static('public', { maxAge: '1y', immutable: true }));" },
+            { "type": "note", "text": "Never let a shared cache store authenticated responses. `Cache-Control: private` (or `no-store`) on anything keyed to a user." }
+          ],
+          "task": "Enable compression and immutable asset caching.",
+          "starterCode": "import express from 'express';\n\nconst app = express();\n\napp.use('/assets', express.static('public'));\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["compression()", "immutable"],
+          "hints": [
+            "Import `compression`, call it as middleware, and add static options.",
+            "app.use(compression());\napp.use('/assets', express.static('public', { maxAge: '1y', immutable: true }));"
+          ],
+          "solution": "import express from 'express';\nimport compression from 'compression';\n\nconst app = express();\n\napp.use(compression());\napp.use('/assets', express.static('public', {\n  maxAge: '1y',\n  immutable: true,\n}));\n",
+          "reflectionPrompt": "Why must a shared cache not store a page that contains a user's account data?"
+        },
+        {
+          "id": "perf-06-react-render",
+          "title": "6. Render cost in React",
+          "concept": "keys and memoization",
+          "summary": "A correct key and a stable component tree do more than a clever memo.",
+          "activities": [
+            {
+              "id": "perf-06-see",
+              "type": "worked-example",
+              "title": "Stable identity, stable work",
+              "instruction": "React matches list items by key. Using the array index makes it reuse the wrong component state when the order changes. Give each row its own id as the key, and memoize genuinely expensive rows instead of everything.",
+              "example": "const Row = memo(function Row({ item, onOpen }) {\n  return <li onClick={() => onOpen(item.id)}>{item.title}</li>;\n});\n\n<ul>\n  {items.map((item) => (\n    <Row key={item.id} item={item} onOpen={onOpen} />\n  ))}\n</ul>"
+            },
+            {
+              "id": "perf-06-predict",
+              "type": "prediction",
+              "title": "Reordering a list",
+              "question": "A sortable list uses the array index as its key. What goes wrong when the user reorders rows?",
+              "choices": [
+                "Rows keep the wrong local state and inputs appear to swap values",
+                "The list stops rendering",
+                "Nothing — keys only matter for performance"
+              ],
+              "answer": "Rows keep the wrong local state and inputs appear to swap values",
+              "explanation": "The key is the row's identity. With indexes, the identity stays put while the data moves, so React reuses the old component for the new item."
+            },
+            {
+              "id": "perf-06-edit",
+              "type": "edit",
+              "title": "Fix the key and memoize",
+              "instruction": "Use `item.id` as the key and wrap the row component in `memo`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Most React slowness is re-rendering work that did not need to happen: new array references, inline objects, or expensive children recreated on every parent render." },
+            { "type": "code", "text": "{items.map((item) => (\n  <Row key={item.id} item={item} onOpen={onOpen} />\n))}" },
+            { "type": "note", "text": "Measure with the React Profiler before adding memo. Wrapping everything hides the real cost and makes the code harder to change." }
+          ],
+          "task": "Give each row a stable key and memoize the row component.",
+          "starterCode": "function Row({ item }) {\n  return <li>{item.title}</li>;\n}\n\nfunction List({ items }) {\n  return (\n    <ul>\n      {items.map((item, index) => (\n        <Row key={index} item={item} />\n      ))}\n    </ul>\n  );\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["key={item.id}", "memo("],
+          "hints": [
+            "Import `memo` from React and replace `key={index}`.",
+            "const Row = memo(function Row({ item }) {\n  return <li>{item.title}</li>;\n});"
+          ],
+          "solution": "import { memo } from 'react';\n\nconst Row = memo(function Row({ item }) {\n  return <li>{item.title}</li>;\n});\n\nfunction List({ items }) {\n  return (\n    <ul>\n      {items.map((item) => (\n        <Row key={item.id} item={item} />\n      ))}\n    </ul>\n  );\n}\n",
+          "reflectionPrompt": "Why does memoizing a component whose props change every render accomplish nothing?"
+        }
+      ]
+    },
+    {
+      "id": "perf-backend",
+      "name": "Backend Speed",
+      "language": "performance",
+      "description": "Queries, pagination, and knowing when it is fast enough.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "perf-07-nplus1",
+          "title": "7. N+1 queries",
+          "concept": "eager loading",
+          "summary": "One query per row is a loop hiding in your data layer.",
+          "activities": [
+            {
+              "id": "perf-07-see",
+              "type": "worked-example",
+              "title": "One round trip instead of fifty",
+              "instruction": "Loading a list and then fetching a relation for each item multiplies database round trips by the number of rows. Batch the ids into a single `$in` query and join in memory. Watch for this whenever a handler awaits inside a loop.",
+              "example": "const posts = await Post.find().limit(50).lean();\nconst authorIds = [...new Set(posts.map((p) => p.authorId))];\nconst authors = await User.find({ _id: { $in: authorIds } }).lean();\nconst byId = new Map(authors.map((a) => [String(a._id), a]));\n\nconst feed = posts.map((post) => ({\n  ...post,\n  author: byId.get(String(post.authorId)) || null,\n}));"
+            },
+            {
+              "id": "perf-07-predict",
+              "type": "prediction",
+              "title": "Count the queries",
+              "question": "You load 50 posts, then await one author lookup per post. How many database round trips is that?",
+              "choices": [
+                "51 — one for the list, fifty for the authors",
+                "2 — one list query and one join",
+                "50 — the list query is free"
+              ],
+              "answer": "51 — one for the list, fifty for the authors",
+              "explanation": "Localhost hides it in milliseconds; a real network turns 51 sequential round trips into visible latency."
+            },
+            {
+              "id": "perf-07-edit",
+              "type": "edit",
+              "title": "Batch the lookup",
+              "instruction": "Replace the loop's per-post author query with one `$in` query, then map the results."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "N+1 is the default shape of naive ORM code. It passes tests at three rows and collapses at three hundred, which is exactly the kind of bug that reaches production." },
+            { "type": "code", "text": "const authors = await User.find({ _id: { $in: authorIds } });" },
+            { "type": "note", "text": "Add query logging in development and count the lines per request. A GET that issues a variable number of queries is a bug waiting for traffic." }
+          ],
+          "task": "Fetch all post authors with a single $in query.",
+          "starterCode": "const posts = await Post.find().limit(50).lean();\n\nfor (const post of posts) {\n  post.author = await User.findById(post.authorId);\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["$in", "find("],
+          "hints": [
+            "Collect the author ids first, deduplicated with a Set.",
+            "const authorIds = [...new Set(posts.map((p) => p.authorId))];\nconst authors = await User.find({ _id: { $in: authorIds } }).lean();"
+          ],
+          "solution": "const posts = await Post.find().limit(50).lean();\nconst authorIds = [...new Set(posts.map((p) => p.authorId))];\nconst authors = await User.find({ _id: { $in: authorIds } }).lean();\nconst byId = new Map(authors.map((a) => [String(a._id), a]));\n\nfor (const post of posts) {\n  post.author = byId.get(String(post.authorId)) || null;\n}\n",
+          "reflectionPrompt": "Why does an N+1 bug pass local testing and fail in production?"
+        },
+        {
+          "id": "perf-08-pagination",
+          "title": "8. Pagination that scales",
+          "concept": "keyset pagination",
+          "summary": "OFFSET counts rows; a cursor remembers where you stopped.",
+          "activities": [
+            {
+              "id": "perf-08-see",
+              "type": "worked-example",
+              "title": "Where you left off",
+              "instruction": "`OFFSET 10000` makes the database read and discard ten thousand rows. Cursor pagination asks for rows after a known value, which an index can seek to directly — and it does not skip or duplicate rows when new data arrives.",
+              "example": "SELECT id, title, created_at\nFROM posts\nWHERE created_at < $1\nORDER BY created_at DESC\nLIMIT 20;\n\n-- Next page: pass the last row's created_at as $1"
+            },
+            {
+              "id": "perf-08-predict",
+              "type": "prediction",
+              "title": "Page 500",
+              "question": "Why does page 500 (`OFFSET 10000 LIMIT 20`) get slower as the table grows?",
+              "choices": [
+                "The database walks and discards the first 10000 rows",
+                "The network has to transfer 10000 rows",
+                "The LIMIT clause is ignored after page 100"
+              ],
+              "answer": "The database walks and discards the first 10000 rows",
+              "explanation": "OFFSET is a count of rows to skip, so the cost grows with the page number. A cursor seeks straight to the starting row through the index."
+            },
+            {
+              "id": "perf-08-edit",
+              "type": "edit",
+              "title": "Write a cursor query",
+              "instruction": "Write a query returning 20 posts created before `$1`, newest first, using `created_at` as the cursor."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Pagination is part of the API contract, not a UI detail. Offset is fine for admin tables with small data; cursors are for feeds that grow forever." },
+            { "type": "code", "text": "WHERE created_at < $1\nORDER BY created_at DESC\nLIMIT 20" },
+            { "type": "note", "text": "Order by a unique tiebreaker (`created_at, id`) or rows with identical timestamps can be skipped between pages." }
+          ],
+          "task": "Write a keyset-paginated query for 20 posts before a cursor timestamp.",
+          "starterCode": "-- 20 newest posts before the cursor $1\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["where created_at <", "order by created_at desc", "limit 20"],
+          "hints": [
+            "Filter with the cursor, sort descending, then limit.",
+            "SELECT id, title, created_at\nFROM posts\nWHERE created_at < $1\nORDER BY created_at DESC\nLIMIT 20;"
+          ],
+          "solution": "SELECT id, title, created_at\nFROM posts\nWHERE created_at < $1\nORDER BY created_at DESC\nLIMIT 20;\n",
+          "reflectionPrompt": "Why does cursor pagination avoid duplicate rows when new posts are inserted between page loads?"
+        },
+        {
+          "id": "perf-09-capacity",
+          "title": "9. Load testing before launch",
+          "concept": "p95 and capacity",
+          "summary": "The average lies; the tail is where users live.",
+          "activities": [
+            {
+              "id": "perf-09-see",
+              "type": "worked-example",
+              "title": "A threshold, not a vibe",
+              "instruction": "A load test ramps virtual users and records latency. Judge it on p95, not the mean, and set a threshold so the test fails the build when the tail regresses. A p95 of 900 ms means one in twenty users waits almost a second.",
+              "example": "import http from 'k6/http';\nimport { check } from 'k6';\n\nexport const options = {\n  stages: [\n    { duration: '30s', target: 50 },\n    { duration: '1m', target: 50 },\n    { duration: '30s', target: 0 },\n  ],\n  thresholds: {\n    http_req_duration: ['p(95)<500'],\n    http_req_failed: ['rate<0.01'],\n  },\n};\n\nexport default function () {\n  const res = http.get('https://staging.example.com/api/products');\n  check(res, { 'status 200': (r) => r.status === 200 });\n}"
+            },
+            {
+              "id": "perf-09-predict",
+              "type": "prediction",
+              "title": "Average versus tail",
+              "question": "A report shows 80 ms average and 900 ms p95. What does that tell you?",
+              "choices": [
+                "About one in twenty requests takes close to a second",
+                "All requests take about 800 ms",
+                "The p95 can be ignored because the average is good"
+              ],
+              "answer": "About one in twenty requests takes close to a second",
+              "explanation": "Averages hide a bimodal distribution. The slow tail is often the users with the most data — the ones most likely to churn."
+            },
+            {
+              "id": "perf-09-edit",
+              "type": "edit",
+              "title": "Set a latency threshold",
+              "instruction": "Add a k6 `thresholds` block that fails when p95 latency exceeds 500 ms, plus a 50-user ramp."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Capacity is a number you measure: requests per second at an acceptable p95, on realistic data. Test the staging environment with production-shaped data, or you are measuring an empty database." },
+            { "type": "code", "text": "thresholds: {\n  http_req_duration: ['p(95)<500'],\n  http_req_failed: ['rate<0.01'],\n}" },
+            { "type": "note", "text": "Run the test until the system breaks, not until it passes. The interesting number is the load at which latency starts to climb." }
+          ],
+          "task": "Add k6 stages and a p95 latency threshold.",
+          "starterCode": "import http from 'k6/http';\n\nexport const options = {\n  // stages + thresholds\n};\n\nexport default function () {\n  http.get('https://staging.example.com/api/products');\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["stages", "thresholds", "p(95)"],
+          "hints": [
+            "`stages` takes `{ duration, target }` objects; `thresholds` maps metric names to conditions.",
+            "thresholds: { http_req_duration: ['p(95)<500'] }"
+          ],
+          "solution": "import http from 'k6/http';\n\nexport const options = {\n  stages: [\n    { duration: '30s', target: 50 },\n    { duration: '1m', target: 50 },\n    { duration: '30s', target: 0 },\n  ],\n  thresholds: {\n    http_req_duration: ['p(95)<500'],\n    http_req_failed: ['rate<0.01'],\n  },\n};\n\nexport default function () {\n  http.get('https://staging.example.com/api/products');\n}\n",
+          "reflectionPrompt": "Why is a load test against an empty staging database misleading?"
+        }
+      ]
+    }
+  ]
+}

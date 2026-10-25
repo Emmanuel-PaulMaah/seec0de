@@ -176,14 +176,18 @@ export default function LivePreviewPanel({
       if (!streamed && runnerOutput.stderr) push('stderr', runnerOutput.stderr.replace(/\n$/, ''));
       const ms = runnerOutput.durationMs ?? 0;
       const ok = runnerOutput.exitCode === 0;
-      push(ok ? 'meta' : 'stderr', `${ok ? '✓' : '✗'} exit ${runnerOutput.exitCode ?? '?'} · ${ms}ms`);
+      if (runnerOutput.stopped) {
+        push('meta', `■ stopped · ${ms}ms`);
+      } else {
+        push(ok ? 'meta' : 'stderr', `${ok ? '✓' : '✗'} exit ${runnerOutput.exitCode ?? '?'} · ${ms}ms`);
+      }
       return out.length > MAX_LOG_ENTRIES ? out.slice(-MAX_LOG_ENTRIES) : out;
     });
     // Error Message Translator: every failed run gets a fresh set of
     // cards covering every error we recognise in the stderr (not just the
     // first one). Dismissals are reset per-run so a fix attempt that
     // still errors still surfaces the translation.
-    const failed = (runnerOutput.exitCode ?? 0) !== 0;
+    const failed = !runnerOutput.stopped && (runnerOutput.exitCode ?? 0) !== 0;
     const runLang = runnerOutput.language || language;
     const runId = ++runIdRef.current; // claim this run's slot
 

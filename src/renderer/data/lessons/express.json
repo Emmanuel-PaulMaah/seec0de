@@ -1,0 +1,608 @@
+{
+  "tracks": [
+    {
+      "id": "express-foundations",
+      "name": "Express Foundations",
+      "language": "express",
+      "description": "Create a server, define routes, and read input from the URL.",
+      "lessons": [
+        {
+          "id": "express-01-server",
+          "title": "1. Your first server",
+          "concept": "express() / app.listen()",
+          "summary": "An Express app is a request handler you hand to an HTTP server.",
+          "activities": [
+            {
+              "id": "express-01-see",
+              "type": "worked-example",
+              "title": "From app to listening socket",
+              "instruction": "`express()` creates an application object. The app collects routes and middleware; `app.listen(port)` starts the HTTP server and keeps the process alive.",
+              "example": "const express = require('express');\n\nconst app = express();\n\napp.get('/', (req, res) => {\n  res.send('Hello from Express');\n});\n\napp.listen(3000, () => {\n  console.log('Server ready on port 3000');\n});"
+            },
+            {
+              "id": "express-01-predict",
+              "type": "prediction",
+              "title": "What does listen do?",
+              "question": "What does `app.listen(3000)` do?",
+              "choices": [
+                "Defines a route on port 3000",
+                "Starts an HTTP server bound to port 3000",
+                "Connects Express to a database"
+              ],
+              "answer": "Starts an HTTP server bound to port 3000",
+              "explanation": "Routes describe what to answer. `listen()` opens the port and starts accepting connections."
+            },
+            {
+              "id": "express-01-edit",
+              "type": "edit",
+              "title": "Start a server",
+              "instruction": "Start an Express server on port 4000 and log 'API ready' once it is listening."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "An Express app is a function that receives `(req, res)`. Routes and middleware are stored on it; `app.listen()` hands that function to Node's HTTP server." },
+            { "type": "code", "text": "const app = express();\n\napp.listen(4000, () => {\n  console.log('API ready');\n});" },
+            { "type": "note", "text": "`listen()` returns the server object. If you need to close it later — in tests, for example — keep that return value." }
+          ],
+          "task": "Start an Express server on port 4000 and log 'API ready'.",
+          "starterCode": "const express = require('express');\n\nconst app = express();\n\n// Start the server on port 4000\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["app.listen(4000", "API ready"],
+          "hints": [
+            "`app.listen(port, callback)` starts the server; the callback runs once the port is open.",
+            "app.listen(4000, () => {\n  console.log('API ready');\n});"
+          ],
+          "solution": "const express = require('express');\n\nconst app = express();\n\napp.listen(4000, () => {\n  console.log('API ready');\n});\n",
+          "reflectionPrompt": "Why does an Express script that only defines routes and never calls listen() exit immediately?"
+        },
+        {
+          "id": "express-02-get-route",
+          "title": "2. GET routes",
+          "concept": "app.get / res.send",
+          "summary": "Map a method and path to a handler that writes the response.",
+          "activities": [
+            {
+              "id": "express-02-see",
+              "type": "worked-example",
+              "title": "One route, one response",
+              "instruction": "`app.get(path, handler)` matches GET requests. The handler must end the response — `res.send()` or `res.json()` — or the client waits forever.",
+              "example": "app.get('/health', (req, res) => {\n  res.send('ok');\n});\n\napp.get('/version', (req, res) => {\n  res.json({ version: '1.0.0' });\n});"
+            },
+            {
+              "id": "express-02-predict",
+              "type": "prediction",
+              "title": "Missing response",
+              "question": "What happens if a route handler never calls `res.send()` or `res.json()`?",
+              "choices": [
+                "Express sends an empty 200 automatically",
+                "The request hangs until it times out",
+                "Express throws an error immediately"
+              ],
+              "answer": "The request hangs until it times out",
+              "explanation": "Express does not invent a response. If no handler ends the request, the socket stays open until the client or server times out."
+            },
+            {
+              "id": "express-02-edit",
+              "type": "edit",
+              "title": "Add a health check",
+              "instruction": "Add a GET route for `/health` that responds with the plain text `ok`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A route is a method plus a path plus a handler. The path is matched exactly unless you add parameters (`:id`) or wildcards." },
+            { "type": "code", "text": "app.get('/health', (req, res) => {\n  res.send('ok');\n});" },
+            { "type": "note", "text": "`res.send()` guesses the content type from the value. Pass an object to `res.json()` when you want JSON explicitly." }
+          ],
+          "task": "Add a GET route for `/health` that responds with `ok`.",
+          "starterCode": "const app = require('./app');\n\n// GET /health should respond with ok\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["app.get('/health'", "res.send('ok')"],
+          "hints": [
+            "The first argument is the path, the second is the handler.",
+            "app.get('/health', (req, res) => {\n  res.send('ok');\n});"
+          ],
+          "solution": "const app = require('./app');\n\napp.get('/health', (req, res) => {\n  res.send('ok');\n});\n",
+          "reflectionPrompt": "When would you return `res.send('ok')` instead of `res.json({ status: 'ok' })`?"
+        },
+        {
+          "id": "express-03-route-params",
+          "title": "3. Route parameters",
+          "concept": "req.params",
+          "summary": "Turn part of the path into a named value your handler can read.",
+          "activities": [
+            {
+              "id": "express-03-see",
+              "type": "worked-example",
+              "title": "The colon marks a slot",
+              "instruction": "A `:name` segment in the path becomes a key on `req.params`. The same route handles every id, so the handler can look up the right record.",
+              "example": "app.get('/users/:id', (req, res) => {\n  const id = req.params.id;\n  res.json({ id });\n});\n\n// GET /users/42 -> { \"id\": \"42\" }"
+            },
+            {
+              "id": "express-03-predict",
+              "type": "prediction",
+              "title": "Types in params",
+              "question": "For `GET /users/42`, what is `req.params.id`?",
+              "choices": [
+                "The number 42",
+                "The string '42'",
+                "undefined until you parse it"
+              ],
+              "answer": "The string '42'",
+              "explanation": "URL segments are always strings. Convert with `Number(...)` before comparing to a numeric id."
+            },
+            {
+              "id": "express-03-edit",
+              "type": "edit",
+              "title": "Echo the id",
+              "instruction": "Add a GET route for `/users/:id` that responds with `{ id }` using the value from the URL."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Everything in a URL is a string. `req.params.id` is `'42'`, not `42`, which matters when your database uses numbers." },
+            { "type": "code", "text": "app.get('/users/:id', (req, res) => {\n  res.json({ id: req.params.id });\n});" },
+            { "type": "note", "text": "Register specific paths like `/users/me` before `/users/:id`, or `me` will be swallowed as an id." }
+          ],
+          "task": "Add a GET route for `/users/:id` that responds with `{ id }`.",
+          "starterCode": "const app = require('./app');\n\n// GET /users/:id should respond with the id from the path\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["req.params.id", "res.json({ id"],
+          "hints": [
+            "Read the value from `req.params.id` and put it straight into the JSON body.",
+            "app.get('/users/:id', (req, res) => {\n  res.json({ id: req.params.id });\n});"
+          ],
+          "solution": "const app = require('./app');\n\napp.get('/users/:id', (req, res) => {\n  res.json({ id: req.params.id });\n});\n",
+          "reflectionPrompt": "What happens to a request for `/users/me` if `/users/:id` is registered first?"
+        },
+        {
+          "id": "express-04-query",
+          "title": "4. Query strings",
+          "concept": "req.query",
+          "summary": "Optional filters live after the `?`, and every value arrives as a string.",
+          "activities": [
+            {
+              "id": "express-04-see",
+              "type": "worked-example",
+              "title": "Defaults for optional input",
+              "instruction": "`req.query` holds the parsed query string. Because every field is optional, give each one a default with `||` or `??`.",
+              "example": "app.get('/products', (req, res) => {\n  const limit = Number(req.query.limit) || 20;\n  res.json({ limit });\n});\n\n// GET /products?limit=5 -> { \"limit\": 5 }"
+            },
+            {
+              "id": "express-04-predict",
+              "type": "prediction",
+              "title": "Repeated keys",
+              "question": "What is `req.query.tag` for `?tag=js&tag=node`?",
+              "choices": [
+                "An array ['js', 'node']",
+                "The string 'node'",
+                "The string 'js,node'"
+              ],
+              "answer": "An array ['js', 'node']",
+              "explanation": "Express collects repeated keys into an array. Code that assumes a string breaks the first time a client sends two values."
+            },
+            {
+              "id": "express-04-edit",
+              "type": "edit",
+              "title": "Read a limit",
+              "instruction": "Add a GET route for `/products` that reads `?limit=`, defaults to 20, and responds with `{ limit }` as a number."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Query strings are for optional modifiers: filtering, sorting, pagination. Path parameters identify a resource; query parameters tune the response." },
+            { "type": "code", "text": "const limit = Number(req.query.limit) || 20;\nconst page = Number(req.query.page) || 1;\nres.json({ limit, page });" },
+            { "type": "note", "text": "Clamp user-supplied numbers. `?limit=100000` will happily ask your database for the whole table." }
+          ],
+          "task": "Add a GET route for `/products` that reads `?limit=`, defaults to 20, and responds with `{ limit }`.",
+          "starterCode": "const app = require('./app');\n\n// GET /products?limit=5 should respond with { limit: 5 }\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["req.query.limit", "Number("],
+          "hints": [
+            "Read `req.query.limit` and convert it with `Number(...)` so the JSON body holds a number.",
+            "const limit = Number(req.query.limit) || 20;\nres.json({ limit });"
+          ],
+          "solution": "const app = require('./app');\n\napp.get('/products', (req, res) => {\n  const limit = Number(req.query.limit) || 20;\n  res.json({ limit });\n});\n",
+          "reflectionPrompt": "Why is defaulting `limit` safer than trusting whatever number the client sends?"
+        }
+      ]
+    },
+    {
+      "id": "express-rest-apis",
+      "name": "Building REST APIs",
+      "language": "express",
+      "description": "Create, update, and delete resources with the right status codes.",
+      "lessons": [
+        {
+          "id": "express-05-json-body",
+          "title": "5. Reading JSON bodies",
+          "concept": "express.json()",
+          "summary": "Express does not parse request bodies until you add the JSON middleware.",
+          "activities": [
+            {
+              "id": "express-05-see",
+              "type": "worked-example",
+              "title": "Opt in to parsing",
+              "instruction": "`express.json()` is middleware that reads the raw request body, parses JSON, and exposes it as `req.body`. Register it once with `app.use()` before the routes that need it.",
+              "example": "const app = express();\n\napp.use(express.json());\n\napp.post('/echo', (req, res) => {\n  res.json(req.body);\n});"
+            },
+            {
+              "id": "express-05-predict",
+              "type": "prediction",
+              "title": "Without the middleware",
+              "question": "What is `req.body` in a POST handler if `express.json()` was never registered?",
+              "choices": [
+                "The parsed JSON object",
+                "undefined",
+                "An empty object"
+              ],
+              "answer": "undefined",
+              "explanation": "No parser ran, so there is no body to read. `req.body` stays undefined and `req.body.name` throws a TypeError."
+            },
+            {
+              "id": "express-05-edit",
+              "type": "edit",
+              "title": "Echo the body",
+              "instruction": "Register the JSON body parser, then add a POST route for `/echo` that responds with `req.body`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The request body arrives as a stream of bytes. Middleware turns it into an object; without it there is nothing on `req.body`." },
+            { "type": "code", "text": "app.use(express.json());\n\napp.post('/echo', (req, res) => {\n  res.json(req.body);\n});" },
+            { "type": "note", "text": "`express.json()` only parses `application/json`. Form posts need `express.urlencoded({ extended: true })` as well." }
+          ],
+          "task": "Register `express.json()` and add a POST route for `/echo` that responds with the parsed body.",
+          "starterCode": "const express = require('express');\nconst app = express();\n\n// Parse JSON bodies, then echo them back from POST /echo\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["express.json()", "req.body"],
+          "hints": [
+            "`app.use(express.json())` goes above the routes.",
+            "app.use(express.json());\napp.post('/echo', (req, res) => {\n  res.json(req.body);\n});"
+          ],
+          "solution": "const express = require('express');\nconst app = express();\n\napp.use(express.json());\n\napp.post('/echo', (req, res) => {\n  res.json(req.body);\n});\n",
+          "reflectionPrompt": "Why is body parsing middleware rather than something Express always does?"
+        },
+        {
+          "id": "express-06-post-create",
+          "title": "6. Creating with POST",
+          "concept": "app.post / 201",
+          "summary": "POST creates a resource and answers 201 with what was created.",
+          "activities": [
+            {
+              "id": "express-06-see",
+              "type": "worked-example",
+              "title": "Add and return",
+              "instruction": "A create handler validates input, stores the new record, and responds with status 201 plus the stored resource so the client learns its id.",
+              "example": "const products = [];\n\napp.post('/products', (req, res) => {\n  const product = { id: products.length + 1, name: req.body.name };\n  products.push(product);\n  res.status(201).json(product);\n});"
+            },
+            {
+              "id": "express-06-predict",
+              "type": "prediction",
+              "title": "201 vs 200",
+              "question": "Which status best describes a successful POST that created a record?",
+              "choices": ["200 OK", "201 Created", "204 No Content"],
+              "answer": "201 Created",
+              "explanation": "201 says a new resource exists. Include it in the body, or at least a `Location` header pointing at its URL."
+            },
+            {
+              "id": "express-06-edit",
+              "type": "edit",
+              "title": "Create a product",
+              "instruction": "Add a POST route for `/products` that pushes `req.body` onto the `products` array and responds 201 with the created product."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "POST is not idempotent: two identical requests create two resources. PUT and DELETE are expected to be repeatable." },
+            { "type": "code", "text": "app.post('/products', (req, res) => {\n  const product = { id: nextId++, ...req.body };\n  products.push(product);\n  res.status(201).json(product);\n});" },
+            { "type": "note", "text": "Never spread `req.body` straight into a database write without checking fields. It lets a client set anything your schema allows, including ownership." }
+          ],
+          "task": "Add a POST route for `/products` that stores the body and responds 201.",
+          "starterCode": "const products = [];\n\n// POST /products should store the body and respond 201\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["app.post('/products'", "products.push(", "res.status(201)"],
+          "hints": [
+            "Push the new object onto the array, then `res.status(201).json(...)` it back.",
+            "app.post('/products', (req, res) => {\n  const product = { id: products.length + 1, ...req.body };\n  products.push(product);\n  res.status(201).json(product);\n});"
+          ],
+          "solution": "const products = [];\n\napp.post('/products', (req, res) => {\n  const product = { id: products.length + 1, ...req.body };\n  products.push(product);\n  res.status(201).json(product);\n});\n",
+          "reflectionPrompt": "Why does the response body matter to a client that just created a record?"
+        },
+        {
+          "id": "express-07-put-update",
+          "title": "7. Updating with PUT",
+          "concept": "app.put / 404",
+          "summary": "Find the record, change it, or say clearly that it is missing.",
+          "activities": [
+            {
+              "id": "express-07-see",
+              "type": "worked-example",
+              "title": "Find, replace, respond",
+              "instruction": "Locate the record with `findIndex`, keep its id, replace the rest, and respond with the updated object. If the index is -1, answer 404.",
+              "example": "app.put('/products/:id', (req, res) => {\n  const index = products.findIndex((p) => p.id === Number(req.params.id));\n  if (index === -1) return res.status(404).json({ error: 'Not found' });\n  products[index] = { ...req.body, id: products[index].id };\n  res.json(products[index]);\n});"
+            },
+            {
+              "id": "express-07-predict",
+              "type": "prediction",
+              "title": "No match",
+              "question": "`findIndex` returns -1. Which response fits best?",
+              "choices": ["500 Internal Server Error", "404 Not Found", "400 Bad Request"],
+              "answer": "404 Not Found",
+              "explanation": "The request was valid; the resource simply isn't there. 400 would blame the client's input, 500 the server."
+            },
+            {
+              "id": "express-07-edit",
+              "type": "edit",
+              "title": "Update a product",
+              "instruction": "Add a PUT route for `/products/:id` that updates the matching product, responds with it, and answers 404 when no product matches."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "PUT means replace the resource with what I sent. PATCH means change only the fields present. Either way the id comes from the URL, never from the body." },
+            { "type": "code", "text": "const index = products.findIndex((p) => p.id === Number(req.params.id));\nif (index === -1) return res.status(404).json({ error: 'Not found' });\nproducts[index] = { ...req.body, id: products[index].id };" },
+            { "type": "note", "text": "Spreading `...req.body` over the record also overwrites the id. Put the id back last, as above." }
+          ],
+          "task": "Add a PUT route for `/products/:id` that updates or returns 404.",
+          "starterCode": "const products = [];\n\n// PUT /products/:id updates one product; 404 if it is missing\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["app.put('/products/:id'", "findIndex", "res.status(404)"],
+          "hints": [
+            "Compare `Number(req.params.id)` to each product id with `findIndex`.",
+            "const index = products.findIndex((p) => p.id === Number(req.params.id));\nif (index === -1) return res.status(404).json({ error: 'Not found' });"
+          ],
+          "solution": "const products = [];\n\napp.put('/products/:id', (req, res) => {\n  const index = products.findIndex((p) => p.id === Number(req.params.id));\n  if (index === -1) return res.status(404).json({ error: 'Not found' });\n  products[index] = { ...req.body, id: products[index].id };\n  res.json(products[index]);\n});\n",
+          "reflectionPrompt": "What breaks if you let the request body decide which record gets updated?"
+        },
+        {
+          "id": "express-08-delete",
+          "title": "8. Deleting with DELETE",
+          "concept": "app.delete / 204",
+          "summary": "Remove the record and answer with no body at all.",
+          "activities": [
+            {
+              "id": "express-08-see",
+              "type": "worked-example",
+              "title": "Splice it out",
+              "instruction": "`splice(index, 1)` removes one element in place. A successful delete has nothing to say, so respond 204 and stop.",
+              "example": "app.delete('/products/:id', (req, res) => {\n  const index = products.findIndex((p) => p.id === Number(req.params.id));\n  if (index === -1) return res.status(404).json({ error: 'Not found' });\n  products.splice(index, 1);\n  res.status(204).end();\n});"
+            },
+            {
+              "id": "express-08-predict",
+              "type": "prediction",
+              "title": "Body on a 204",
+              "question": "A 204 response has `res.json({ ok: true })` attached. What does the client receive?",
+              "choices": [
+                "The JSON body, as usual",
+                "No body — 204 means no content",
+                "A 500 error"
+              ],
+              "answer": "No body — 204 means no content",
+              "explanation": "204 is defined as having no content. Sending a body either gets dropped or confuses strict clients; use `res.status(204).end()`."
+            },
+            {
+              "id": "express-08-edit",
+              "type": "edit",
+              "title": "Delete a product",
+              "instruction": "Add a DELETE route for `/products/:id` that removes the matching product, responds 204, and answers 404 when it is missing."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Deleting is a state change like any other, so it is a normal route — protected by the same auth and ownership checks as an update." },
+            { "type": "code", "text": "const index = products.findIndex((p) => p.id === Number(req.params.id));\nif (index === -1) return res.status(404).json({ error: 'Not found' });\nproducts.splice(index, 1);\nres.status(204).end();" },
+            { "type": "note", "text": "Prefer 204 over `200 { success: true }`. Clients already know a 2xx delete worked from the status." }
+          ],
+          "task": "Add a DELETE route for `/products/:id` that removes the product and responds 204.",
+          "starterCode": "const products = [];\n\n// DELETE /products/:id removes one product and responds 204\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["app.delete('/products/:id'", "splice(", "res.status(204)"],
+          "hints": [
+            "Find the index, `splice` it out, then send an empty 204.",
+            "products.splice(index, 1);\nres.status(204).end();"
+          ],
+          "solution": "const products = [];\n\napp.delete('/products/:id', (req, res) => {\n  const index = products.findIndex((p) => p.id === Number(req.params.id));\n  if (index === -1) return res.status(404).json({ error: 'Not found' });\n  products.splice(index, 1);\n  res.status(204).end();\n});\n",
+          "reflectionPrompt": "Why should a delete route check ownership before removing a record?"
+        }
+      ]
+    },
+    {
+      "id": "express-middleware-errors",
+      "name": "Middleware & Errors",
+      "language": "express",
+      "description": "Share logic between routes and fail in a way clients can handle.",
+      "lessons": [
+        {
+          "id": "express-09-middleware",
+          "title": "9. Middleware",
+          "concept": "app.use / next",
+          "summary": "Middleware runs before your handler and decides whether to continue.",
+          "activities": [
+            {
+              "id": "express-09-see",
+              "type": "worked-example",
+              "title": "A logger in the pipeline",
+              "instruction": "Every middleware receives `(req, res, next)`. Calling `next()` passes control to the next layer; never calling it leaves the request hanging.",
+              "example": "app.use((req, res, next) => {\n  console.log(req.method, req.url);\n  next();\n});\n\napp.get('/health', (req, res) => {\n  res.send('ok');\n});"
+            },
+            {
+              "id": "express-09-predict",
+              "type": "prediction",
+              "title": "Order matters",
+              "question": "A route is registered above `app.use(logger)`. Does the logger run for that route?",
+              "choices": [
+                "Yes, middleware always runs",
+                "No — Express runs layers in registration order",
+                "Only if the request fails"
+              ],
+              "answer": "No — Express runs layers in registration order",
+              "explanation": "The stack is ordered. Middleware registered after a route never sees requests the route already answered."
+            },
+            {
+              "id": "express-09-edit",
+              "type": "edit",
+              "title": "Log every request",
+              "instruction": "Add a middleware that logs the method and URL, then continues, and register it for every request."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Middleware is just a function with three arguments. A request travels through them in order until something responds." },
+            { "type": "code", "text": "app.use((req, res, next) => {\n  console.log(req.method, req.url);\n  next();\n});" },
+            { "type": "note", "text": "Reading a body or user in middleware only helps routes registered after it — put shared setup at the top of the file." }
+          ],
+          "task": "Write a logger middleware and register it for every request.",
+          "starterCode": "const app = require('./app');\n\n// Log the method and URL of every request, then continue\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["app.use((req, res, next)", "console.log(req.method", "next()"],
+          "hints": [
+            "Register it with `app.use((req, res, next) => { ... })`.",
+            "app.use((req, res, next) => {\n  console.log(req.method, req.url);\n  next();\n});"
+          ],
+          "solution": "const app = require('./app');\n\napp.use((req, res, next) => {\n  console.log(req.method, req.url);\n  next();\n});\n",
+          "reflectionPrompt": "What happens to a request if a middleware returns early without calling next() and without responding?"
+        },
+        {
+          "id": "express-10-validation",
+          "title": "10. Validation middleware",
+          "concept": "400 / early return",
+          "summary": "Reject bad input in one place instead of in every handler.",
+          "activities": [
+            {
+              "id": "express-10-see",
+              "type": "worked-example",
+              "title": "Reject before the handler",
+              "instruction": "A validation middleware answers 400 when input is invalid and calls `next()` when it is fine. The route then only sees valid requests.",
+              "example": "function requireName(req, res, next) {\n  if (!req.body.name) {\n    return res.status(400).json({ error: 'name is required' });\n  }\n  next();\n}\n\napp.post('/products', requireName, (req, res) => {\n  res.status(201).json(req.body);\n});"
+            },
+            {
+              "id": "express-10-predict",
+              "type": "prediction",
+              "title": "Forgotten return",
+              "question": "A validator sends a 400 response but does not return, then calls `next()`. What happens?",
+              "choices": [
+                "The 400 is sent and the route still runs",
+                "Nothing happens at all",
+                "Express rejects the response"
+              ],
+              "answer": "The 400 is sent and the route still runs",
+              "explanation": "The route still executes, which usually triggers \"Cannot set headers after they are sent\". Always `return res.status(...)` in middleware."
+            },
+            {
+              "id": "express-10-edit",
+              "type": "edit",
+              "title": "Require a name",
+              "instruction": "Write a `requireName` middleware that responds 400 with an error when `req.body.name` is missing, otherwise calls `next()`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Validating in middleware keeps handlers short and guarantees every route using it sees the same rules." },
+            { "type": "code", "text": "function requireName(req, res, next) {\n  if (!req.body.name) {\n    return res.status(400).json({ error: 'name is required' });\n  }\n  next();\n}" },
+            { "type": "note", "text": "400 tells the client to fix the request. 422 is the alternative when the JSON parsed but the values are semantically wrong." }
+          ],
+          "task": "Write a `requireName` middleware that returns 400 or calls `next()`.",
+          "starterCode": "// Reject requests without req.body.name\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["req.body.name", "res.status(400)", "next()"],
+          "hints": [
+            "Check the field, return a 400 response, and only call `next()` on the happy path.",
+            "if (!req.body.name) {\n  return res.status(400).json({ error: 'name is required' });\n}\nnext();"
+          ],
+          "solution": "function requireName(req, res, next) {\n  if (!req.body.name) {\n    return res.status(400).json({ error: 'name is required' });\n  }\n  next();\n}\n",
+          "reflectionPrompt": "Why must a validation middleware return after sending an error response?"
+        },
+        {
+          "id": "express-11-error-handler",
+          "title": "11. The error handler",
+          "concept": "4-argument middleware",
+          "summary": "One place to turn thrown errors into a safe response.",
+          "activities": [
+            {
+              "id": "express-11-see",
+              "type": "worked-example",
+              "title": "Four arguments, last in line",
+              "instruction": "Express recognises an error handler by its four parameters. Register it after all routes so every `next(err)` and thrown error lands here.",
+              "example": "app.use((err, req, res, next) => {\n  console.error(err);\n  res.status(500).json({ error: 'Something went wrong' });\n});"
+            },
+            {
+              "id": "express-11-predict",
+              "type": "prediction",
+              "title": "Leaking errors",
+              "question": "Why not send `err.message` and `err.stack` to every client?",
+              "choices": [
+                "They are always empty",
+                "They can leak file paths, queries, and internals",
+                "JSON cannot hold them"
+              ],
+              "answer": "They can leak file paths, queries, and internals",
+              "explanation": "Stack traces and driver errors expose internals to attackers. Log the details server-side; send a generic message."
+            },
+            {
+              "id": "express-11-edit",
+              "type": "edit",
+              "title": "Add a safe error handler",
+              "instruction": "Add a 4-argument error handler at the end of the app that logs the error and responds 500 with a generic message."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`next(err)` skips every normal middleware and jumps to the error handler. That is how a deep helper can report failure without knowing about HTTP." },
+            { "type": "code", "text": "app.use((err, req, res, next) => {\n  console.error(err);\n  res.status(500).json({ error: 'Something went wrong' });\n});" },
+            { "type": "note", "text": "The fourth argument must be present even if unused. Remove `next` and Express treats the function as ordinary middleware." }
+          ],
+          "task": "Add an error handler that logs the failure and responds 500.",
+          "starterCode": "const app = require('./app');\n\n// Add the 4-argument error handler last\n",
+          "matchType": "source-regex",
+          "sourceChecks": ["app\\.use\\(\\(err, req, res, next\\)", "console\\.error\\(", "res\\.status\\(500\\)"],
+          "hints": [
+            "Signature must be `(err, req, res, next)` — all four arguments.",
+            "app.use((err, req, res, next) => {\n  console.error(err);\n  res.status(500).json({ error: 'Something went wrong' });\n});"
+          ],
+          "solution": "const app = require('./app');\n\napp.use((err, req, res, next) => {\n  console.error(err);\n  res.status(500).json({ error: 'Something went wrong' });\n});\n",
+          "reflectionPrompt": "Which details of a production error would you keep in the server log but never in the response?"
+        },
+        {
+          "id": "express-12-async-errors",
+          "title": "12. Async errors",
+          "concept": "try / catch / next(err)",
+          "summary": "A rejected promise in a handler does not reach Express on its own in Express 4.",
+          "activities": [
+            {
+              "id": "express-12-see",
+              "type": "worked-example",
+              "title": "Catch and forward",
+              "instruction": "Wrap awaits in `try`/`catch` and call `next(err)`. The error handler then produces the response, so every route fails the same way.",
+              "example": "app.get('/users/:id', async (req, res, next) => {\n  try {\n    const user = await db.users.findById(req.params.id);\n    if (!user) return res.status(404).json({ error: 'Not found' });\n    res.json(user);\n  } catch (err) {\n    next(err);\n  }\n});"
+            },
+            {
+              "id": "express-12-predict",
+              "type": "prediction",
+              "title": "Unhandled rejection",
+              "question": "An async handler awaits a promise that rejects, with no try/catch. What does the client see?",
+              "choices": [
+                "A 500 from your error handler",
+                "The request hangs until it times out",
+                "A 404"
+              ],
+              "answer": "The request hangs until it times out",
+              "explanation": "Express 4 does not observe the returned promise, so the rejection becomes an unhandled rejection and the response is never sent."
+            },
+            {
+              "id": "express-12-edit",
+              "type": "edit",
+              "title": "Forward the failure",
+              "instruction": "Write an async GET `/users/:id` handler that awaits a lookup and forwards any failure with `next(err)`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Synchronous throws are caught by Express automatically. Rejected promises in Express 4 are not, which is the source of many hung requests." },
+            { "type": "code", "text": "app.get('/users/:id', async (req, res, next) => {\n  try {\n    const user = await db.users.findById(req.params.id);\n    if (!user) return res.status(404).json({ error: 'Not found' });\n    res.json(user);\n  } catch (err) {\n    next(err);\n  }\n});" },
+            { "type": "note", "text": "Express 5 forwards rejected promises for you, but an explicit try/catch still reads better and works on both versions." }
+          ],
+          "task": "Write an async route that forwards failures to the error handler.",
+          "starterCode": "const app = require('./app');\n\n// GET /users/:id — await a lookup, forward errors with next(err)\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["async (req, res, next)", "await ", "next(err)"],
+          "hints": [
+            "Accept `next` as the third argument and call `next(err)` from the catch block.",
+            "try {\n  const user = await db.users.findById(req.params.id);\n  res.json(user);\n} catch (err) {\n  next(err);\n}"
+          ],
+          "solution": "const app = require('./app');\n\napp.get('/users/:id', async (req, res, next) => {\n  try {\n    const user = await db.users.findById(req.params.id);\n    if (!user) return res.status(404).json({ error: 'Not found' });\n    res.json(user);\n  } catch (err) {\n    next(err);\n  }\n});\n",
+          "reflectionPrompt": "Why does adding `next` to the handler signature matter for error handling?"
+        }
+      ]
+    }
+  ]
+}

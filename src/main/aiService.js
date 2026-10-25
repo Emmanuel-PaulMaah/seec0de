@@ -1,9 +1,11 @@
 const { ipcMain, safeStorage, app } = require('electron');
 const https = require('https');
+const http = require('http');
 const { URL } = require('url');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { API_BASE: BILLING_API_BASE } = require('./billingConfig');
 
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -118,7 +120,7 @@ const REQUEST_TIMEOUT_MS = 60_000;
 function classifyNetworkError(err) {
   const code = err && err.code;
   const msg = (err && err.message) || String(err);
-
+3
   if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') {
     return "Can't reach AI right now — looks like your internet is disconnected. Check your Wi-Fi or try turning it off and on.";
   }
@@ -139,7 +141,7 @@ function classifyNetworkError(err) {
 
 async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
   return new Promise((resolve, reject) => {
-    const parsed = new URL(`${API_BASE}/${model}:generateContent?key=${apiKey}`);
+    const parsed = new URL(`${API_BASE}/${model}:generateContent`);
     const bodyStr = JSON.stringify(bodyObj);
 
     const options = {
@@ -150,6 +152,9 @@ async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        // Header auth works for both legacy (AIza…) and new auth (AQ.…) keys,
+        // and keeps the key out of URLs/logs.
+        'x-goog-api-key': apiKey,
         // Explicit Content-Length avoids chunked-encoding edge cases
         // that some intercepting proxies/AVs choke on.
         'Content-Length': Buffer.byteLength(bodyStr),
@@ -169,8 +174,22 @@ async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           try {
             const json = JSON.parse(data);
-            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!text) return reject(new Error('The AI came back empty — try again.'));
+            const candidate = json?.candidates?.[0];
+            const text = (candidate?.content?.parts || [])
+              .map((part) => part?.text)
+              .filter(Boolean)
+              .join('');
+            if (candidate?.finishReason === 'MAX_TOKENS') {
+              const err = new Error("The AI's reply was cut off before it finished. Try again, or ask for something a little smaller.");
+              err.isTruncated = true;
+              return reject(err);
+            }
+            if (!text) {
+              if (json?.promptFeedback?.blockReason) {
+                return reject(new Error('The AI declined this request. Try rephrasing it.'));
+              }
+              return reject(new Error('The AI came back empty — try again.'));
+            }
             resolve(text);
           } catch {
             reject(new Error('The AI returned something unexpected — try again.'));
@@ -218,9 +237,87 @@ async function tryModel(model, apiKey, bodyObj, { ipFamily } = {}) {
   });
 }
 
+function callManagedAi(prompt, systemInstruction) {
+  const { getInstallId } = require('./billingService');
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try {
+      parsed = new URL('api/billing/ai', `${BILLING_API_BASE}/`);
+    } catch {
+      reject(new Error('The managed AI service URL is invalid.'));
+      return;
+    }
+    const bodyStr = JSON.stringify({
+      installId: getInstallId(),
+      prompt,
+      systemInstruction,
+    });
+    const lib = parsed.protocol === 'https:' ? https : http;
+    const req = lib.request({
+      method: 'POST',
+      hostname: parsed.hostname,
+      path: `${parsed.pathname}${parsed.search}`,
+      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'Content-Length': Buffer.byteLength(bodyStr),
+        'User-Agent': `seec0de/${app.getVersion()} (Electron ${process.versions.electron})`,
+      },
+    }, (res) => {
+      let data = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        let json = null;
+        try { json = data ? JSON.parse(data) : null; } catch { }
+        if (res.statusCode >= 200 && res.statusCode < 300 && json?.text) {
+          resolve(json.text);
+          return;
+        }
+        const message = json?.error
+          || (res.statusCode === 402 || res.statusCode === 403
+            ? 'Managed AI needs an active Pro plan.'
+            : res.statusCode === 429
+              ? 'Your managed AI limit is used up for this month. Add your own Gemini key or try again next month.'
+              : `Managed AI returned ${res.statusCode}. Try again in a moment.`);
+        const error = new Error(message);
+        error.statusCode = res.statusCode;
+        error.isOverloaded = res.statusCode === 429 || res.statusCode === 503;
+        error.isPlanRequired = res.statusCode === 402 || res.statusCode === 403;
+        reject(error);
+      });
+    });
+    req.setTimeout(REQUEST_TIMEOUT_MS, () => {
+      const err = new Error('Managed AI took too long to respond — try again.');
+      err.code = 'ETIMEDOUT';
+      req.destroy(err);
+    });
+    req.on('error', (err) => {
+      const friendly = classifyNetworkError(err);
+      if (friendly) {
+        const wrapped = new Error(friendly);
+        wrapped.isNetwork = true;
+        wrapped.originalCode = err.code;
+        return reject(wrapped);
+      }
+      reject(err);
+    });
+    req.write(bodyStr);
+    req.end();
+  });
+}
+
 async function callGemini(prompt, systemInstruction) {
   const apiKey = getApiKey();
-  if (!apiKey) throw new Error('No Gemini API key found. Add one in Settings to use AI features.');
+  if (!apiKey) {
+    const { getStoredEntitlement } = require('./billingService');
+    const entitlement = getStoredEntitlement();
+    if (entitlement.plan === 'pro' && entitlement.features.includes('managedAI')) {
+      return await callManagedAi(prompt, systemInstruction);
+    }
+    throw new Error('No Gemini API key found. Add one in Settings to use AI features.');
+  }
 
   const body = {
     // NOTE: `parts` must be an ARRAY per Gemini's schema. The old code
@@ -232,7 +329,13 @@ async function callGemini(prompt, systemInstruction) {
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: 0.4,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 16384,
+      // Every caller expects strict JSON. Asking for it at the API level
+      // removes fences/preamble, and disabling thinking keeps the whole
+      // budget for the answer — thinking tokens were truncating replies
+      // mid-JSON, which surfaced as "sent back something unexpected".
+      responseMimeType: 'application/json',
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 
@@ -278,7 +381,7 @@ function validateApiKey(key) {
   return new Promise((resolve) => {
     let parsed;
     try {
-      parsed = new URL(`${API_BASE}?key=${encodeURIComponent(key)}&pageSize=1`);
+      parsed = new URL(`${API_BASE}?pageSize=1`);
     } catch {
       resolve({ ok: false, reason: 'invalid' });
       return;
@@ -291,6 +394,7 @@ function validateApiKey(key) {
       port: 443,
       headers: {
         Accept: 'application/json',
+        'x-goog-api-key': key,
         'User-Agent': `seec0de/${app.getVersion()} (Electron ${process.versions.electron})`,
       },
     }, (res) => {

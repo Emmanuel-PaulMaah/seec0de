@@ -1,0 +1,472 @@
+{
+  "tracks": [
+    {
+      "id": "cicd-pipeline",
+      "name": "Pipelines",
+      "language": "cicd",
+      "description": "Every push gets the same answer, in minutes.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "cicd-01-first",
+          "title": "1. Your first pipeline",
+          "concept": "continuous integration",
+          "summary": "Install from the lockfile, then check what you would block a merge on.",
+          "activities": [
+            {
+              "id": "cicd-01-see",
+              "type": "worked-example",
+              "title": "A workflow that gates the merge",
+              "instruction": "A CI workflow runs on pull requests and pushes. It installs dependencies reproducibly with `npm ci`, then runs the checks you actually trust: lint, typecheck, tests. If any step exits non-zero, the job fails and the branch is not mergeable.",
+              "example": "name: ci\n\non:\n  pull_request:\n  push:\n    branches: [main]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n          cache: npm\n      - run: npm ci\n      - run: npm run lint\n      - run: npm test"
+            },
+            {
+              "id": "cicd-01-predict",
+              "type": "prediction",
+              "title": "ci or install",
+              "question": "Why does CI use `npm ci` rather than `npm install`?",
+              "choices": [
+                "It installs exactly what the lockfile pins and fails if they disagree",
+                "It installs faster because it downloads fewer packages",
+                "It updates dependencies to their newest patch versions"
+              ],
+              "answer": "It installs exactly what the lockfile pins and fails if they disagree",
+              "explanation": "Reproducibility is the point. If `package.json` and the lockfile drift, `npm ci` fails instead of quietly producing a different tree than the one tested on your machine."
+            },
+            {
+              "id": "cicd-01-edit",
+              "type": "edit",
+              "title": "Add the test step",
+              "instruction": "In the `test` job, check out the repo, install with `npm ci` and run `npm test`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "CI is a shared, automatic judge. Its value comes from being the same judge for every pull request, so 'it works on my machine' stops being an argument." },
+            { "type": "code", "text": "- run: npm ci\n- run: npm test" },
+            { "type": "note", "text": "Make the required checks fast. A ten-minute pipeline gets bypassed; a two-minute one gets respected." }
+          ],
+          "task": "Write a job that installs and tests on every pull request.",
+          "starterCode": "name: ci\n\non:\n  pull_request:\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      # checkout, install, test\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["npm ci", "npm test", "runs-on"],
+          "hints": [
+            "Use `actions/checkout` first, then `npm ci`, then `npm test`.",
+            "- uses: actions/checkout@v4\n- run: npm ci\n- run: npm test"
+          ],
+          "solution": "name: ci\n\non:\n  pull_request:\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n          cache: npm\n      - run: npm ci\n      - run: npm run lint\n      - run: npm test\n",
+          "reflectionPrompt": "Which check would you refuse to let a teammate bypass on a Friday deploy?"
+        },
+        {
+          "id": "cicd-02-speed",
+          "title": "2. Fast feedback",
+          "concept": "caching and matrices",
+          "summary": "Cache what rarely changes and test the versions you support.",
+          "activities": [
+            {
+              "id": "cicd-02-see",
+              "type": "worked-example",
+              "title": "Cache dependencies, matrix the runtime",
+              "instruction": "Most of a cold pipeline is dependency download. Cache the package manager's directory keyed by the lockfile hash, and use a matrix to run the same steps on the runtime versions you claim to support. Fail-fast keeps a red build from burning time on the rest.",
+              "example": "jobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      fail-fast: false\n      matrix:\n        node: [20, 22]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: ${{ matrix.node }}\n          cache: npm\n      - run: npm ci\n      - run: npm test"
+            },
+            {
+              "id": "cicd-02-predict",
+              "type": "prediction",
+              "title": "Cache invalidation",
+              "question": "What should the dependency cache key include so stale packages are never restored?",
+              "choices": [
+                "A hash of the lockfile",
+                "The current date",
+                "The branch name only"
+              ],
+              "answer": "A hash of the lockfile",
+              "explanation": "The cache must change exactly when dependencies change. A date busts it constantly; a branch name restores one branch's cache into another."
+            },
+            {
+              "id": "cicd-02-edit",
+              "type": "edit",
+              "title": "Add a matrix and caching",
+              "instruction": "Run the job on Node 20 and 22 using a matrix, with npm caching enabled."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Pipeline time is developer time multiplied by change frequency. Cache dependencies, shard slow test suites, and stop on the first failure unless you need the full matrix." },
+            { "type": "code", "text": "strategy:\n  matrix:\n    node: [20, 22]\nwith:\n  node-version: ${{ matrix.node }}\n  cache: npm" },
+            { "type": "note", "text": "Test the versions you actually run in production. A matrix over five versions nobody deploys is a slower pipeline for false confidence." }
+          ],
+          "task": "Add a Node version matrix and dependency caching to the job.",
+          "starterCode": "jobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm ci\n      - run: npm test\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["matrix:", "node-version", "cache: npm"],
+          "hints": [
+            "`strategy.matrix` defines the values; reference them with `${{ matrix.node }}`.",
+            "strategy:\n  matrix:\n    node: [20, 22]\n# then node-version: ${{ matrix.node }} and cache: npm"
+          ],
+          "solution": "jobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      fail-fast: false\n      matrix:\n        node: [20, 22]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: ${{ matrix.node }}\n          cache: npm\n      - run: npm ci\n      - run: npm test\n",
+          "reflectionPrompt": "Why can a cache that never invalidates be worse than no cache at all?"
+        },
+        {
+          "id": "cicd-03-artifacts",
+          "title": "3. Build once, promote",
+          "concept": "immutable artifacts",
+          "summary": "The thing you tested is the thing you deploy, byte for byte.",
+          "activities": [
+            {
+              "id": "cicd-03-see",
+              "type": "worked-example",
+              "title": "Tag by commit, deploy by digest",
+              "instruction": "Build the container image once in CI and tag it with the commit SHA. Promote that same image through staging and production by digest. Rebuilding per environment produces a different artifact, and then you are testing one thing and shipping another.",
+              "example": "docker build -t ghcr.io/acme/api:$GITHUB_SHA .\ndocker push ghcr.io/acme/api:$GITHUB_SHA\n\n# Deploy the exact digest that passed staging\ndocker pull ghcr.io/acme/api@sha256:9f2c1a...\n"
+            },
+            {
+              "id": "cicd-03-predict",
+              "type": "prediction",
+              "title": "Rebuilding for production",
+              "question": "Your pipeline builds a fresh image for each environment. What is the risk?",
+              "choices": [
+                "The production image may differ from the one that passed tests",
+                "The image will be larger",
+                "Nothing — the Dockerfile is the same"
+              ],
+              "answer": "The production image may differ from the one that passed tests",
+              "explanation": "Base image tags move, build args differ, and caches drift. A commit SHA tag plus promotion of the tested digest removes the gap."
+            },
+            {
+              "id": "cicd-03-edit",
+              "type": "edit",
+              "title": "Tag and push the image",
+              "instruction": "Build the image tagged with `$GITHUB_SHA` and push it to the registry."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "An artifact is anything you deploy: a container image, a bundle, a migration bundle. Its name should identify its source exactly; a mutable tag like `latest` cannot." },
+            { "type": "code", "text": "docker build -t ghcr.io/acme/api:$GITHUB_SHA .\ndocker push ghcr.io/acme/api:$GITHUB_SHA" },
+            { "type": "note", "text": "Never deploy `latest` to production. Rollback needs a previous, named artifact to return to." }
+          ],
+          "task": "Build and push an image tagged with the commit SHA.",
+          "starterCode": "# Build the image and push it\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["docker build", "github_sha", "docker push"],
+          "hints": [
+            "Use the commit SHA as the tag in both commands.",
+            "docker build -t ghcr.io/acme/api:$GITHUB_SHA .\ndocker push ghcr.io/acme/api:$GITHUB_SHA"
+          ],
+          "solution": "docker build -t ghcr.io/acme/api:$GITHUB_SHA .\ndocker push ghcr.io/acme/api:$GITHUB_SHA\n",
+          "reflectionPrompt": "Why is a SHA tag more useful than `latest` when you need to roll back?"
+        }
+      ]
+    },
+    {
+      "id": "cicd-deploy",
+      "name": "Deployments",
+      "language": "cicd",
+      "description": "Ship without dropping requests or corrupting data.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "cicd-04-config",
+          "title": "4. Config and environments",
+          "concept": "twelve-factor config",
+          "summary": "Same artifact, different settings — never different code.",
+          "activities": [
+            {
+              "id": "cicd-04-see",
+              "type": "worked-example",
+              "title": "Config from the platform",
+              "instruction": "Configuration belongs in the environment: database URLs, feature endpoints, log levels. Secrets go in the platform's secret store, never in the repository or the image. Validate the required values at boot so a bad deploy fails immediately instead of on the first request.",
+              "example": "const required = ['DATABASE_URL', 'SESSION_SECRET', 'REDIS_URL'];\nconst missing = required.filter((name) => !process.env[name]);\nif (missing.length) {\n  throw new Error(`Missing env: ${missing.join(', ')}`);\n}"
+            },
+            {
+              "id": "cicd-04-predict",
+              "type": "prediction",
+              "title": "Where secrets live",
+              "question": "Where should a production database password live?",
+              "choices": [
+                "In the platform's secret store, injected as an environment variable",
+                "In a committed `.env.production` file",
+                "Baked into the image at build time"
+              ],
+              "answer": "In the platform's secret store, injected as an environment variable",
+              "explanation": "A committed file is in history; a value baked into the image is in the registry and every cache layer. Both spread the secret far beyond the environment that needs it."
+            },
+            {
+              "id": "cicd-04-edit",
+              "type": "edit",
+              "title": "Fail fast at boot",
+              "instruction": "Check `DATABASE_URL`, `SESSION_SECRET` and `REDIS_URL` at startup and throw listing any that are missing."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The same image should run in staging and production. If the code differs, the staging test tells you less than you think." },
+            { "type": "code", "text": "const missing = required.filter((name) => !process.env[name]);\nif (missing.length) throw new Error(`Missing env: ${missing.join(', ')}`);" },
+            { "type": "note", "text": "Log the names of missing variables, never their values. An error message is a log line too." }
+          ],
+          "task": "Validate required environment variables at startup.",
+          "starterCode": "// Validate the environment before the server starts\nconst required = ['DATABASE_URL', 'SESSION_SECRET', 'REDIS_URL'];\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["process.env", "missing", "throw new error"],
+          "hints": [
+            "Filter the required names by whether they are set.",
+            "const missing = required.filter((name) => !process.env[name]);\nif (missing.length) throw new Error(`Missing env: ${missing.join(', ')}`);"
+          ],
+          "solution": "const required = ['DATABASE_URL', 'SESSION_SECRET', 'REDIS_URL'];\nconst missing = required.filter((name) => !process.env[name]);\nif (missing.length) {\n  throw new Error(`Missing env: ${missing.join(', ')}`);\n}\n",
+          "reflectionPrompt": "Why should a missing environment variable crash the process at boot?"
+        },
+        {
+          "id": "cicd-05-migrations",
+          "title": "5. Migrations in the deploy",
+          "concept": "expand and contract",
+          "summary": "Old and new code run at the same time, so schema changes must be compatible with both.",
+          "activities": [
+            {
+              "id": "cicd-05-see",
+              "type": "worked-example",
+              "title": "Add, fill, switch, drop",
+              "instruction": "During a rolling deploy, old and new instances share one database. Renaming a column in one step breaks the old instances. Expand instead: add the new column (nullable), write to both, backfill, switch reads, then drop the old column in a later release.",
+              "example": "-- Release 1: expand\nALTER TABLE users ADD COLUMN display_name text;\nCREATE INDEX users_display_name_idx ON users (display_name);\n\n-- Backfill in a job, write to both columns in the app\n-- Release 2: switch reads to display_name\n-- Release 3: contract\nALTER TABLE users DROP COLUMN name;"
+            },
+            {
+              "id": "cicd-05-predict",
+              "type": "prediction",
+              "title": "The one-step rename",
+              "question": "You rename `name` to `display_name` in a single migration during a rolling deploy. What happens?",
+              "choices": [
+                "Instances still running the old code fail when they query `name`",
+                "The deploy waits for all instances to restart",
+                "Postgres keeps both columns automatically"
+              ],
+              "answer": "Instances still running the old code fail when they query `name`",
+              "explanation": "The database is shared, so a migration applies to code that has not been updated yet. Expand/contract keeps every intermediate state readable by both versions."
+            },
+            {
+              "id": "cicd-05-edit",
+              "type": "edit",
+              "title": "Write the expand step",
+              "instruction": "Write a migration that adds a nullable `display_name` column and an index on it."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A deploy is a race between versions. Migrations should be backward compatible for at least one release, and destructive changes belong to a later deploy than the code that stopped using them." },
+            { "type": "code", "text": "ALTER TABLE users ADD COLUMN display_name text;\nCREATE INDEX users_display_name_idx ON users (display_name);" },
+            { "type": "note", "text": "Run migrations as a separate step from app start when you can. Multiple replicas all trying to migrate at boot is a race you do not want to debug." }
+          ],
+          "task": "Write the additive migration for a rename.",
+          "starterCode": "-- Expand: add the new column first\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["add column", "create index"],
+          "hints": [
+            "Add the column as nullable and index it.",
+            "ALTER TABLE users ADD COLUMN display_name text;\nCREATE INDEX users_display_name_idx ON users (display_name);"
+          ],
+          "solution": "ALTER TABLE users ADD COLUMN display_name text;\nCREATE INDEX users_display_name_idx ON users (display_name);\n",
+          "reflectionPrompt": "Why does a destructive migration belong in a later release than the code change?"
+        },
+        {
+          "id": "cicd-06-zerodowntime",
+          "title": "6. Zero-downtime deploys",
+          "concept": "health checks and draining",
+          "summary": "Start new instances only when ready, and let old ones finish their work.",
+          "activities": [
+            {
+              "id": "cicd-06-see",
+              "type": "worked-example",
+              "title": "Ready is not alive",
+              "instruction": "A liveness probe says the process is up. A readiness probe says it can serve traffic — database reachable, migrations applied, caches warm. On shutdown, stop accepting new connections on SIGTERM, finish in-flight requests, then exit. The load balancer does the rest.",
+              "example": "app.get('/healthz', (req, res) => res.status(200).send('ok'));\n\napp.get('/readyz', async (req, res) => {\n  try {\n    await db.query('SELECT 1');\n    res.status(200).send('ready');\n  } catch {\n    res.status(503).send('not ready');\n  }\n});\n\nprocess.on('SIGTERM', () => {\n  server.close(() => process.exit(0));\n});"
+            },
+            {
+              "id": "cicd-06-predict",
+              "type": "prediction",
+              "title": "What readiness checks",
+              "question": "What should `/readyz` report?",
+              "choices": [
+                "Whether this instance can serve requests right now",
+                "Whether the process has started",
+                "Whether the last deploy succeeded"
+              ],
+              "answer": "Whether this instance can serve requests right now",
+              "explanation": "Traffic routing keys off readiness. If it reports 'process started' while the database is unreachable, the load balancer sends users to a broken instance."
+            },
+            {
+              "id": "cicd-06-edit",
+              "type": "edit",
+              "title": "Drain on shutdown",
+              "instruction": "Handle `SIGTERM` by closing the HTTP server and exiting once in-flight requests finish."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Zero downtime is a combination of three things: readiness before traffic, more than one instance during the swap, and a graceful drain after shutdown starts." },
+            { "type": "code", "text": "process.on('SIGTERM', () => {\n  server.close(() => process.exit(0));\n});" },
+            { "type": "note", "text": "Match the drain timeout to your longest request. A 30-second job with a 10-second grace period is a failed request every deploy." }
+          ],
+          "task": "Add readiness and SIGTERM handling.",
+          "starterCode": "app.get('/healthz', (req, res) => res.send('ok'));\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["readyz", "sigterm", "server.close"],
+          "hints": [
+            "Add a `/readyz` route that checks the database, and a SIGTERM handler that closes the server.",
+            "process.on('SIGTERM', () => {\n  server.close(() => process.exit(0));\n});"
+          ],
+          "solution": "app.get('/healthz', (req, res) => res.status(200).send('ok'));\n\napp.get('/readyz', async (req, res) => {\n  try {\n    await db.query('SELECT 1');\n    res.status(200).send('ready');\n  } catch {\n    res.status(503).send('not ready');\n  }\n});\n\nprocess.on('SIGTERM', () => {\n  server.close(() => process.exit(0));\n});\n",
+          "reflectionPrompt": "Why does adding an instance before removing one remove most deploy downtime?"
+        }
+      ]
+    },
+    {
+      "id": "cicd-safety",
+      "name": "Release Safety",
+      "language": "cicd",
+      "description": "Make bad releases boring.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "cicd-07-flags",
+          "title": "7. Feature flags",
+          "concept": "deploy is not release",
+          "summary": "Ship the code dark, then choose who turns it on.",
+          "activities": [
+            {
+              "id": "cicd-07-see",
+              "type": "worked-example",
+              "title": "A switch you can flip",
+              "instruction": "Deploying code and releasing a feature are different events. A flag lets the code reach production while behaviour stays off, enables it for internal users or a percentage, and turns it off in seconds if something looks wrong — without a deploy.",
+              "example": "if (flags.enabled('new-checkout', { userId: req.user.id })) {\n  return newCheckout(req, res);\n}\nreturn oldCheckout(req, res);"
+            },
+            {
+              "id": "cicd-07-predict",
+              "type": "prediction",
+              "title": "Why flag it",
+              "question": "What is the main operational benefit of a feature flag?",
+              "choices": [
+                "You can change behaviour without another deploy",
+                "It removes the need for tests",
+                "It makes the code smaller"
+              ],
+              "answer": "You can change behaviour without another deploy",
+              "explanation": "Rollback becomes a config change rather than a build. That buys you a fast kill switch and gradual rollout at the same time."
+            },
+            {
+              "id": "cicd-07-edit",
+              "type": "edit",
+              "title": "Put the new path behind a flag",
+              "instruction": "Wrap the new checkout in a flag check, falling back to the old one."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Flags separate risk into two decisions: is the artifact good, and is the feature ready. Treat the second one as data, with an owner and an expiry." },
+            { "type": "code", "text": "if (flags.enabled('new-checkout', { userId })) {\n  return newCheckout(req, res);\n}" },
+            { "type": "note", "text": "Delete flags once a rollout completes. A codebase full of stale switches is its own kind of outage." }
+          ],
+          "task": "Gate the new checkout path behind a flag.",
+          "starterCode": "app.post('/checkout', async (req, res) => {\n  return newCheckout(req, res);\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["enabled(", "new-checkout", "oldcheckout"],
+          "hints": [
+            "Check the flag first and keep the old implementation as the fallback.",
+            "if (flags.enabled('new-checkout', { userId: req.user.id })) {\n  return newCheckout(req, res);\n}\nreturn oldCheckout(req, res);"
+          ],
+          "solution": "app.post('/checkout', async (req, res) => {\n  if (flags.enabled('new-checkout', { userId: req.user.id })) {\n    return newCheckout(req, res);\n  }\n  return oldCheckout(req, res);\n});\n",
+          "reflectionPrompt": "Why does a flag need an owner and an expiry date?"
+        },
+        {
+          "id": "cicd-08-rollback",
+          "title": "8. Canaries and rollback",
+          "concept": "progressive delivery",
+          "summary": "Send a little traffic first, and decide with numbers.",
+          "activities": [
+            {
+              "id": "cicd-08-see",
+              "type": "worked-example",
+              "title": "Five percent, then watch",
+              "instruction": "A canary sends a small slice of traffic to the new version and compares error rate and latency against the baseline. If the canary is worse, abort and keep the old version; if it matches, promote. This is only safe when the schema change works for both versions.",
+              "example": "deploy:\n  strategy: canary\n  steps:\n    - setWeight: 5\n    - pause: 5m\n    - analysis:\n        metrics: [error_rate, p95_latency]\n        abortOn: error_rate > baseline * 1.5\n    - setWeight: 50\n    - pause: 10m\n    - setWeight: 100"
+            },
+            {
+              "id": "cicd-08-predict",
+              "type": "prediction",
+              "title": "Rollback limits",
+              "question": "When is rolling back to the previous version unsafe?",
+              "choices": [
+                "After a migration that dropped a column the old code still reads",
+                "When the previous image is more than a week old",
+                "Whenever the canary shows higher latency"
+              ],
+              "answer": "After a migration that dropped a column the old code still reads",
+              "explanation": "Code rolls back; destructive schema changes do not. That is why the destructive step is separated into a later release."
+            },
+            {
+              "id": "cicd-08-edit",
+              "type": "edit",
+              "title": "Write the canary stages",
+              "instruction": "Write canary steps that send 5%, pause, then 50%, then 100%, aborting on an error-rate spike."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Progressive delivery turns a binary deploy into a measurement. The automation should be able to stop itself; a human watching a dashboard at midnight will not." },
+            { "type": "code", "text": "metrics: [error_rate, p95_latency]\nabortOn: error_rate > baseline * 1.5" },
+            { "type": "note", "text": "Decide the abort threshold before you start. Choosing it while the graph is red is how teams talk themselves into an outage." }
+          ],
+          "task": "Write canary steps with an automatic abort rule.",
+          "starterCode": "deploy:\n  # canary stages\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["canary", "error_rate", "100"],
+          "hints": [
+            "Set weights in stages, pausing between them.",
+            "steps:\n  - setWeight: 5\n  - pause: 5m\n  - setWeight: 100"
+          ],
+          "solution": "deploy:\n  strategy: canary\n  steps:\n    - setWeight: 5\n    - pause: 5m\n    - analysis:\n        metrics: [error_rate, p95_latency]\n        abortOn: error_rate > baseline * 1.5\n    - setWeight: 50\n    - pause: 10m\n    - setWeight: 100\n",
+          "reflectionPrompt": "Why can automation abort a bad canary faster than a person can react?"
+        },
+        {
+          "id": "cicd-09-release",
+          "title": "9. The release checklist",
+          "concept": "versioning and traceability",
+          "summary": "Every release should be identifiable, documented and reversible.",
+          "activities": [
+            {
+              "id": "cicd-09-see",
+              "type": "worked-example",
+              "title": "A tag, a note, a way back",
+              "instruction": "A release has a semantic version, a changelog entry written for humans, and a deploy record linking the version to the commit and the artifact digest. The checklist is short on purpose: it is the list of things that have caused incidents before.",
+              "example": "# 1.4.2 — 2026-10-23\n\n## Fixed\n- Checkout retries no longer double-charge (idempotency key).\n\n## Rollback\n- `deploy --image ghcr.io/acme/api@sha256:previous`\n- No migrations in this release."
+            },
+            {
+              "id": "cicd-09-predict",
+              "type": "prediction",
+              "title": "Which version bump?",
+              "question": "You remove a field from an API response that clients read. Which semver bump fits?",
+              "choices": [
+                "Major",
+                "Minor",
+                "Patch"
+              ],
+              "answer": "Major",
+              "explanation": "Removing something clients depend on is a breaking change, so it is major. Adding a new optional field is minor; a fix is patch."
+            },
+            {
+              "id": "cicd-09-edit",
+              "type": "edit",
+              "title": "Write the release note",
+              "instruction": "Write a release section with the version, a human changelog entry and a rollback line."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Traceability is the difference between 'something broke' and 'version 1.4.2 broke it at 14:02, here is the commit and the image'. It costs one line per release." },
+            { "type": "code", "text": "# 1.4.2\n\n## Fixed\n- ...\n\n## Rollback\n- deploy previous digest" },
+            { "type": "note", "text": "Write the changelog for the person on call, not for the marketing site. What changed, what to watch, how to undo." }
+          ],
+          "task": "Write a release note with version, change and rollback.",
+          "starterCode": "# Release notes\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["## fixed", "rollback", "1."],
+          "hints": [
+            "Include the version heading, what changed, and how to undo it.",
+            "# 1.4.2\n\n## Fixed\n- ...\n\n## Rollback\n- deploy the previous digest"
+          ],
+          "solution": "# 1.4.2 — 2026-10-23\n\n## Fixed\n- Checkout retries no longer double-charge (idempotency key).\n\n## Rollback\n- `deploy --image ghcr.io/acme/api@sha256:previous`\n- No migrations in this release.\n",
+          "reflectionPrompt": "Why is a rollback plan the most valuable part of a release note?"
+        }
+      ]
+    }
+  ]
+}

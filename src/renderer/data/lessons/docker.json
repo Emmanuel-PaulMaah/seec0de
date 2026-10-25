@@ -1,0 +1,616 @@
+{
+  "tracks": [
+    {
+      "id": "docker-images",
+      "name": "Images & Containers",
+      "language": "docker",
+      "description": "Package an app so it runs the same everywhere.",
+      "lessons": [
+        {
+          "id": "docker-01-dockerfile",
+          "title": "1. Your first Dockerfile",
+          "concept": "FROM / WORKDIR / CMD",
+          "summary": "An image is a filesystem plus the command that starts it.",
+          "activities": [
+            {
+              "id": "docker-01-see",
+              "type": "worked-example",
+              "title": "Instructions, top to bottom",
+              "instruction": "`FROM` picks the base image, `WORKDIR` sets the working directory for later instructions, and `CMD` is the default process when a container starts.",
+              "example": "FROM node:20-alpine\n\nWORKDIR /app\n\nCOPY . .\n\nRUN npm ci --omit=dev\n\nEXPOSE 3000\n\nCMD [\"node\", \"server.js\"]"
+            },
+            {
+              "id": "docker-01-predict",
+              "type": "prediction",
+              "title": "Image vs container",
+              "question": "What is the relationship between an image and a container?",
+              "choices": [
+                "They are the same thing",
+                "A container is a running instance of an image",
+                "An image is a running instance of a container"
+              ],
+              "answer": "A container is a running instance of an image",
+              "explanation": "The image is the built artifact — layers of files plus metadata. A container adds a writable layer and a process."
+            },
+            {
+              "id": "docker-01-edit",
+              "type": "edit",
+              "title": "Write a Dockerfile",
+              "instruction": "Write a Dockerfile that starts from `node:20-alpine`, sets `/app` as the workdir, and runs `node server.js` by default."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A Dockerfile is a recipe: each instruction adds a layer, and the result is an image you can run anywhere Docker is installed." },
+            { "type": "code", "text": "FROM node:20-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci --omit=dev\nCMD [\"node\", \"server.js\"]" },
+            { "type": "note", "text": "Use the exec form `CMD [\"node\", \"server.js\"]`. The shell form runs through `/bin/sh`, which swallows SIGTERM and delays graceful shutdown." }
+          ],
+          "task": "Write a Dockerfile for a Node app with a workdir and a start command.",
+          "starterCode": "# Dockerfile\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["FROM node", "WORKDIR", "CMD"],
+          "hints": [
+            "Pin a base image tag, then set where the app lives.",
+            "FROM node:20-alpine\nWORKDIR /app\nCMD [\"node\", \"server.js\"]"
+          ],
+          "solution": "FROM node:20-alpine\n\nWORKDIR /app\n\nCOPY . .\n\nRUN npm ci --omit=dev\n\nEXPOSE 3000\n\nCMD [\"node\", \"server.js\"]\n",
+          "reflectionPrompt": "Why does the exec form of CMD make a clean shutdown easier?"
+        },
+        {
+          "id": "docker-02-build-run",
+          "title": "2. Build and run",
+          "concept": "docker build / docker run",
+          "summary": "Build the image, then publish its port to the host.",
+          "activities": [
+            {
+              "id": "docker-02-see",
+              "type": "worked-example",
+              "title": "Two commands",
+              "instruction": "`docker build -t name .` builds from the Dockerfile in the current folder. `docker run -p host:container` maps a host port to the port the app listens on inside.",
+              "example": "docker build -t shop-api .\n\ndocker run --rm -p 3000:3000 shop-api"
+            },
+            {
+              "id": "docker-02-predict",
+              "type": "prediction",
+              "title": "Port mapping",
+              "question": "The app listens on 3000 and you run `-p 8080:3000`. Which URL reaches it from your machine?",
+              "choices": [
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "Neither — you must use the container IP"
+              ],
+              "answer": "http://localhost:8080",
+              "explanation": "The left side is the host port, the right side the container port. Only the host side is reachable from your machine."
+            },
+            {
+              "id": "docker-02-edit",
+              "type": "edit",
+              "title": "Build and publish",
+              "instruction": "Build the current folder as `shop-api`, then run it in the background on host port 3000."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Building records the image locally. Running it starts a container with an isolated network namespace, so ports must be published explicitly." },
+            { "type": "code", "text": "docker build -t shop-api .\ndocker run --rm -p 3000:3000 shop-api" },
+            { "type": "note", "text": "`--rm` deletes the container when it exits. Without it, stopped containers pile up until the disk fills." }
+          ],
+          "task": "Build an image and run it with port 3000 published.",
+          "starterCode": "# Build and run the API\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["docker build", "docker run", "-p 3000:3000"],
+          "hints": [
+            "`-t` names the image; the trailing dot is the build context.",
+            "docker build -t shop-api .\ndocker run --rm -p 3000:3000 shop-api"
+          ],
+          "solution": "docker build -t shop-api .\n\ndocker run --rm -p 3000:3000 shop-api\n",
+          "reflectionPrompt": "Why is publishing a port required even when the app listens correctly inside the container?"
+        },
+        {
+          "id": "docker-03-layer-cache",
+          "title": "3. Layer caching",
+          "concept": "COPY package.json first",
+          "summary": "Copy manifests, install, then copy source — so code edits don't reinstall.",
+          "activities": [
+            {
+              "id": "docker-03-see",
+              "type": "worked-example",
+              "title": "Cache invalidation is the whole game",
+              "instruction": "Docker caches each layer and reuses it while the instruction and its inputs are unchanged. Copying `package.json` separately keeps the install cached when only source files change.",
+              "example": "FROM node:20-alpine\nWORKDIR /app\n\nCOPY package.json package-lock.json ./\nRUN npm ci --omit=dev\n\nCOPY . .\n\nCMD [\"node\", \"server.js\"]"
+            },
+            {
+              "id": "docker-03-predict",
+              "type": "prediction",
+              "title": "Which layer reruns",
+              "question": "With the layout above, you edit `server.js` and rebuild. What reruns?",
+              "choices": [
+                "npm ci and COPY . .",
+                "Only COPY . .",
+                "Nothing, the image is reused"
+              ],
+              "answer": "Only COPY . .",
+              "explanation": "`package.json` did not change, so the install layer is still valid. `COPY . .` changes, and every layer after it reruns."
+            },
+            {
+              "id": "docker-03-edit",
+              "type": "edit",
+              "title": "Cache the install",
+              "instruction": "Write Dockerfile steps that copy the lockfile first, install with `npm ci`, then copy the rest of the source."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every instruction is a cache key. Put the things that change rarely at the top and the things that change every commit at the bottom." },
+            { "type": "code", "text": "COPY package.json package-lock.json ./\nRUN npm ci --omit=dev\n\nCOPY . ." },
+            { "type": "note", "text": "`npm ci` installs exactly the lockfile and fails if it is out of sync. `npm install` may rewrite it inside the image, which is not what you want in a build." }
+          ],
+          "task": "Order the instructions so installing dependencies is cached.",
+          "starterCode": "# Dockerfile\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["COPY package", "npm ci", "COPY . ."],
+          "hints": [
+            "The install must come after copying only the manifests.",
+            "COPY package.json package-lock.json ./\nRUN npm ci --omit=dev\nCOPY . ."
+          ],
+          "solution": "FROM node:20-alpine\nWORKDIR /app\n\nCOPY package.json package-lock.json ./\nRUN npm ci --omit=dev\n\nCOPY . .\n\nCMD [\"node\", \"server.js\"]\n",
+          "reflectionPrompt": "Why does a single `COPY . .` before `npm ci` make every code change reinstall dependencies?"
+        },
+        {
+          "id": "docker-04-dockerignore",
+          "title": "4. .dockerignore",
+          "concept": "build context",
+          "summary": "Keep node_modules, secrets, and git history out of the build.",
+          "activities": [
+            {
+              "id": "docker-04-see",
+              "type": "worked-example",
+              "title": "Send less to the daemon",
+              "instruction": "The build context is everything sent to the daemon before the build starts. `.dockerignore` trims it, which speeds the build and stops stale local state leaking into the image.",
+              "example": "# .dockerignore\nnode_modules\n.git\n.env\nnpm-debug.log\ndist"
+            },
+            {
+              "id": "docker-04-predict",
+              "type": "prediction",
+              "title": "Copying node_modules",
+              "question": "Why should `node_modules` be ignored in the build context?",
+              "choices": [
+                "It is too large only",
+                "Host binaries may not match the image, and they overwrite the installed dependencies",
+                "Docker refuses the build"
+              ],
+              "answer": "Host binaries may not match the image, and they overwrite the installed dependencies",
+              "explanation": "Native modules are compiled per platform. A host `node_modules` can also hide a missing dependency in the Dockerfile."
+            },
+            {
+              "id": "docker-04-edit",
+              "type": "edit",
+              "title": "Ignore the right files",
+              "instruction": "Write a `.dockerignore` that excludes `node_modules`, `.env`, and `.git`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Ignoring files is both a speed and a security measure. A layered image can be inspected, so an ignored `.env` never ends up in one." },
+            { "type": "code", "text": "node_modules\n.env\n.git\ndist\nnpm-debug.log" },
+            { "type": "note", "text": "Never pass secrets with `ARG` or `ENV` at build time — they stay in image history. Inject them at runtime." }
+          ],
+          "task": "Exclude node_modules, .env, and .git from the build context.",
+          "starterCode": "# .dockerignore\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["node_modules", ".env", ".git"],
+          "hints": [
+            "One pattern per line, no commas.",
+            "node_modules\n.env\n.git"
+          ],
+          "solution": "# .dockerignore\nnode_modules\n.env\n.git\ndist\n",
+          "reflectionPrompt": "Why is a secret passed as a build ARG still exposed after the build finishes?"
+        }
+      ]
+    },
+    {
+      "id": "docker-compose",
+      "name": "Compose & Services",
+      "language": "docker",
+      "description": "Run the app and its database together with one command.",
+      "lessons": [
+        {
+          "id": "docker-05-compose-app",
+          "title": "5. The compose file",
+          "concept": "services / build / ports",
+          "summary": "Compose describes the containers your project needs.",
+          "activities": [
+            {
+              "id": "docker-05-see",
+              "type": "worked-example",
+              "title": "One file, many containers",
+              "instruction": "`services:` maps a name to a container definition. `build:` points at a Dockerfile, `ports:` publishes it, and `docker compose up` starts the whole set.",
+              "example": "services:\n  api:\n    build: .\n    ports:\n      - \"3000:3000\"\n    environment:\n      NODE_ENV: production"
+            },
+            {
+              "id": "docker-05-predict",
+              "type": "prediction",
+              "title": "DNS by service name",
+              "question": "How does the `api` service reach a service named `db` on the compose network?",
+              "choices": [
+                "By its container IP",
+                "By the hostname `db`",
+                "Only through localhost"
+              ],
+              "answer": "By the hostname `db`",
+              "explanation": "Compose puts all services on one network with DNS entries named after the service, so `postgres://db:5432/app` works."
+            },
+            {
+              "id": "docker-05-edit",
+              "type": "edit",
+              "title": "Define the api service",
+              "instruction": "Write a compose file with an `api` service that builds from `.` and publishes port 3000."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Compose is for local development and small deployments. It replaces a pile of `docker run` flags with a file you can commit." },
+            { "type": "code", "text": "services:\n  api:\n    build: .\n    ports:\n      - \"3000:3000\"" },
+            { "type": "note", "text": "Quote port mappings. Unquoted `3000:3000` is read as a base-60 number in YAML and becomes a confusing value." }
+          ],
+          "task": "Define an api service that builds from the current directory.",
+          "starterCode": "# docker-compose.yml\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["services:", "build:", "ports:"],
+          "hints": [
+            "Everything sits under `services:` at two levels of indentation.",
+            "services:\n  api:\n    build: .\n    ports:\n      - \"3000:3000\""
+          ],
+          "solution": "services:\n  api:\n    build: .\n    ports:\n      - \"3000:3000\"\n    environment:\n      NODE_ENV: production\n",
+          "reflectionPrompt": "Why does `localhost` inside a container not point at your machine?"
+        },
+        {
+          "id": "docker-06-compose-db",
+          "title": "6. Adding a database",
+          "concept": "depends_on / postgres",
+          "summary": "The database is just another service with its own image.",
+          "activities": [
+            {
+              "id": "docker-06-see",
+              "type": "worked-example",
+              "title": "Compose the stack",
+              "instruction": "The `db` service uses the official `postgres` image with credentials from the environment. `depends_on` starts it before `api`, though not necessarily before it is ready to accept connections.",
+              "example": "services:\n  api:\n    build: .\n    depends_on:\n      - db\n    environment:\n      POSTGRES_URL: postgres://app:secret@db:5432/app\n  db:\n    image: postgres:16-alpine\n    environment:\n      POSTGRES_USER: app\n      POSTGRES_PASSWORD: secret\n      POSTGRES_DB: app"
+            },
+            {
+              "id": "docker-06-predict",
+              "type": "prediction",
+              "title": "Startup order",
+              "question": "`depends_on: [db]` starts the db container first. Does that guarantee Postgres is ready?",
+              "choices": [
+                "Yes, Compose waits for readiness",
+                "No — it only starts the container earlier",
+                "Yes, if the image has a healthcheck"
+              ],
+              "answer": "No — it only starts the container earlier",
+              "explanation": "Start order is not readiness. Add a healthcheck with `condition: service_healthy`, or retry the connection in the app."
+            },
+            {
+              "id": "docker-06-edit",
+              "type": "edit",
+              "title": "Add Postgres",
+              "instruction": "Add a `db` service using `postgres:16-alpine` with user, password, and database set, and make `api` depend on it."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The database does not need a Dockerfile — official images are configured entirely through environment variables and volumes." },
+            { "type": "code", "text": "db:\n  image: postgres:16-alpine\n  environment:\n    POSTGRES_USER: app\n    POSTGRES_PASSWORD: secret\n    POSTGRES_DB: app" },
+            { "type": "note", "text": "Table names, ports, and credentials in the compose file are a starting point for local work. Production needs real secrets, not committed defaults." }
+          ],
+          "task": "Add a Postgres service and make the api depend on it.",
+          "starterCode": "# docker-compose.yml\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["postgres", "depends_on", "POSTGRES_USER"],
+          "hints": [
+            "Give the database service `image: postgres:16-alpine` and environment credentials.",
+            "depends_on:\n  - db\n\nenvironment:\n  POSTGRES_USER: app"
+          ],
+          "solution": "services:\n  api:\n    build: .\n    depends_on:\n      - db\n    environment:\n      POSTGRES_URL: postgres://app:secret@db:5432/app\n  db:\n    image: postgres:16-alpine\n    environment:\n      POSTGRES_USER: app\n      POSTGRES_PASSWORD: secret\n      POSTGRES_DB: app\n",
+          "reflectionPrompt": "Why is start order not the same as readiness?"
+        },
+        {
+          "id": "docker-07-env",
+          "title": "7. Environment variables",
+          "concept": "env_file / .env",
+          "summary": "Keep configuration out of the image and load it at runtime.",
+          "activities": [
+            {
+              "id": "docker-07-see",
+              "type": "worked-example",
+              "title": "Config from outside",
+              "instruction": "`env_file` loads a file of key=value pairs into the container. The same image then runs in dev, staging, and production with different configuration.",
+              "example": "services:\n  api:\n    build: .\n    env_file:\n      - .env\n    environment:\n      MONGODB_URI: mongodb://db:27017/shop"
+            },
+            {
+              "id": "docker-07-predict",
+              "type": "prediction",
+              "title": "Baked-in config",
+              "question": "Why not `COPY .env .env` in the Dockerfile?",
+              "choices": [
+                "It is slower",
+                "The file becomes part of the image and travels to every environment",
+                "Docker blocks .env files"
+              ],
+              "answer": "The file becomes part of the image and travels to every environment",
+              "explanation": "Anything copied into an image is readable from it. Secrets then leak through registries and shared builds."
+            },
+            {
+              "id": "docker-07-edit",
+              "type": "edit",
+              "title": "Load the env file",
+              "instruction": "Configure the `api` service to load `.env` and set `MONGODB_URI` to `mongodb://db:27017/shop`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Configuration belongs outside the artifact. One immutable image plus different environment variables is the whole idea behind \"build once, deploy many\"." },
+            { "type": "code", "text": "env_file:\n  - .env\nenvironment:\n  MONGODB_URI: mongodb://db:27017/shop" },
+            { "type": "note", "text": "Commit `.env.example`, never `.env`. Add `.env` to both `.gitignore` and `.dockerignore`." }
+          ],
+          "task": "Load .env and set MONGODB_URI for the api service.",
+          "starterCode": "# docker-compose.yml\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["env_file:", "MONGODB_URI"],
+          "hints": [
+            "`env_file` takes a list of paths.",
+            "env_file:\n  - .env\nenvironment:\n  MONGODB_URI: mongodb://db:27017/shop"
+          ],
+          "solution": "services:\n  api:\n    build: .\n    env_file:\n      - .env\n    environment:\n      MONGODB_URI: mongodb://db:27017/shop\n",
+          "reflectionPrompt": "Why does copying .env into an image count as publishing the secret?"
+        },
+        {
+          "id": "docker-08-volumes",
+          "title": "8. Volumes",
+          "concept": "named volumes",
+          "summary": "Containers are disposable; volumes are where data survives.",
+          "activities": [
+            {
+              "id": "docker-08-see",
+              "type": "worked-example",
+              "title": "Keep the data",
+              "instruction": "Declare a named volume and mount it at the database's data directory. Removing and recreating the container then keeps the data intact.",
+              "example": "services:\n  db:\n    image: postgres:16-alpine\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n\nvolumes:\n  pgdata:"
+            },
+            {
+              "id": "docker-08-predict",
+              "type": "prediction",
+              "title": "Container removal",
+              "question": "You run `docker compose down` and then `up` again with the volume above. What happens to the data?",
+              "choices": [
+                "It is gone with the container",
+                "It is still there — the named volume survived",
+                "It is restored from the image"
+              ],
+              "answer": "It is still there — the named volume survived",
+              "explanation": "`down` removes containers, not named volumes. `down -v` is the command that deletes them."
+            },
+            {
+              "id": "docker-08-edit",
+              "type": "edit",
+              "title": "Persist Postgres",
+              "instruction": "Mount a named volume `pgdata` at `/var/lib/postgresql/data` and declare it at the top level."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A container's writable layer disappears with the container. A volume is storage managed by Docker, mounted into whichever container needs it." },
+            { "type": "code", "text": "volumes:\n  - pgdata:/var/lib/postgresql/data\n\nvolumes:\n  pgdata:" },
+            { "type": "note", "text": "Bind mounts (`./src:/app/src`) are great for development hot reload and wrong for production, where they couple the container to host paths." }
+          ],
+          "task": "Mount a pgdata volume into the database.",
+          "starterCode": "# docker-compose.yml\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["volumes:", "pgdata", "/var/lib/postgresql/data"],
+          "hints": [
+            "The container path comes after the colon: `pgdata:/var/lib/postgresql/data`.",
+            "volumes:\n  - pgdata:/var/lib/postgresql/data\n\nvolumes:\n  pgdata:"
+          ],
+          "solution": "services:\n  db:\n    image: postgres:16-alpine\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n\nvolumes:\n  pgdata:\n",
+          "reflectionPrompt": "What does `docker compose down -v` do that `docker compose down` does not?"
+        }
+      ]
+    },
+    {
+      "id": "docker-shipping",
+      "name": "Shipping to Production",
+      "language": "docker",
+      "description": "Build smaller, run safer, and deploy without surprises.",
+      "lessons": [
+        {
+          "id": "docker-09-multistage",
+          "title": "9. Multi-stage builds",
+          "concept": "AS build / COPY --from",
+          "summary": "Build with dev dependencies, ship only the output.",
+          "activities": [
+            {
+              "id": "docker-09-see",
+              "type": "worked-example",
+              "title": "Two images, one Dockerfile",
+              "instruction": "Name the build stage, compile there, then copy only the built files into a fresh runtime stage. Dev dependencies, source maps, and the compiler never reach the final image.",
+              "example": "FROM node:20-alpine AS build\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\nFROM node:20-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --omit=dev\nCOPY --from=build /app/dist ./dist\nCMD [\"node\", \"dist/server.js\"]"
+            },
+            {
+              "id": "docker-09-predict",
+              "type": "prediction",
+              "title": "What ships",
+              "question": "What does the final stage of a multi-stage build contain?",
+              "choices": [
+                "Everything from the build stage",
+                "Only the base image plus the files you copy in",
+                "The build stage's node_modules"
+              ],
+              "answer": "Only the base image plus the files you copy in",
+              "explanation": "Stages are independent. Nothing carries over unless you `COPY --from=build` it."
+            },
+            {
+              "id": "docker-09-edit",
+              "type": "edit",
+              "title": "Split build and runtime",
+              "instruction": "Add a `build` stage that runs `npm run build`, then copy `/app/dist` into a production stage."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Smaller images pull faster, start faster, and expose less. Multi-stage builds are the standard way to get there with one Dockerfile." },
+            { "type": "code", "text": "FROM node:20-alpine AS build\nRUN npm run build\n\nFROM node:20-alpine\nCOPY --from=build /app/dist ./dist" },
+            { "type": "note", "text": "Copy the lockfile into the runtime stage and run `npm ci --omit=dev` there. Copying dev `node_modules` across defeats the point." }
+          ],
+          "task": "Use a build stage and copy only the compiled output.",
+          "starterCode": "# Dockerfile\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["AS build", "npm run build", "COPY --from=build"],
+          "hints": [
+            "Name the first stage with `AS build`.",
+            "FROM node:20-alpine AS build\nRUN npm run build\n\nCOPY --from=build /app/dist ./dist"
+          ],
+          "solution": "FROM node:20-alpine AS build\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\nFROM node:20-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --omit=dev\nCOPY --from=build /app/dist ./dist\nCMD [\"node\", \"dist/server.js\"]\n",
+          "reflectionPrompt": "Why is copying node_modules from the build stage into the runtime stage a mistake?"
+        },
+        {
+          "id": "docker-10-nonroot",
+          "title": "10. Don't run as root",
+          "concept": "USER / ownership",
+          "summary": "A container process should not be able to rewrite its own app.",
+          "activities": [
+            {
+              "id": "docker-10-see",
+              "type": "worked-example",
+              "title": "Drop privileges after copying",
+              "instruction": "Copy files as root, hand ownership to the built-in `node` user, then switch with `USER node`. Anything the app can exploit now runs without root inside the container.",
+              "example": "FROM node:20-alpine\nWORKDIR /app\n\nCOPY --chown=node:node . .\n\nUSER node\n\nCMD [\"node\", \"server.js\"]"
+            },
+            {
+              "id": "docker-10-predict",
+              "type": "prediction",
+              "title": "Root in a container",
+              "question": "Why does running as root inside a container still matter?",
+              "choices": [
+                "It does not — containers are isolated",
+                "Container root combined with a kernel or mount escape becomes host root",
+                "It only affects image size"
+              ],
+              "answer": "Container root combined with a kernel or mount escape becomes host root",
+              "explanation": "Isolation is strong but not absolute. Least privilege limits what a container breakout can do."
+            },
+            {
+              "id": "docker-10-edit",
+              "type": "edit",
+              "title": "Switch to node",
+              "instruction": "Change the Dockerfile so the app runs as the `node` user and owns its files."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Most base images default to root. The official `node` image already includes an unprivileged `node` user, so switching is one line." },
+            { "type": "code", "text": "COPY --chown=node:node . .\nUSER node" },
+            { "type": "note", "text": "If the app writes uploads or logs, create those directories and chown them before switching users, or it will fail at runtime with EACCES." }
+          ],
+          "task": "Run the container as the node user.",
+          "starterCode": "# Dockerfile\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["USER node", "chown"],
+          "hints": [
+            "`COPY --chown=node:node . .` fixes ownership without a separate chown layer.",
+            "COPY --chown=node:node . .\nUSER node"
+          ],
+          "solution": "FROM node:20-alpine\nWORKDIR /app\n\nCOPY --chown=node:node . .\n\nUSER node\n\nCMD [\"node\", \"server.js\"]\n",
+          "reflectionPrompt": "Why must writable directories be created before `USER node`?"
+        },
+        {
+          "id": "docker-11-healthcheck",
+          "title": "11. Healthchecks",
+          "concept": "HEALTHCHECK / EXPOSE",
+          "summary": "A running container is not the same as a working app.",
+          "activities": [
+            {
+              "id": "docker-11-see",
+              "type": "worked-example",
+              "title": "Ask the app if it is alive",
+              "instruction": "`HEALTHCHECK` runs a command inside the container on an interval and records healthy or unhealthy. `EXPOSE` documents the port; it does not publish it.",
+              "example": "EXPOSE 3000\n\nHEALTHCHECK --interval=30s --timeout=3s --retries=3 \\\n  CMD node -e \"fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+            },
+            {
+              "id": "docker-11-predict",
+              "type": "prediction",
+              "title": "EXPOSE",
+              "question": "What does `EXPOSE 3000` do on its own?",
+              "choices": [
+                "Publishes port 3000 to the host",
+                "Documents the port; publishing still needs `-p`",
+                "Opens the container firewall"
+              ],
+              "answer": "Documents the port; publishing still needs `-p`",
+              "explanation": "EXPOSE is metadata. Ports become reachable only when published, or when another container on the same network connects."
+            },
+            {
+              "id": "docker-11-edit",
+              "type": "edit",
+              "title": "Add a healthcheck",
+              "instruction": "Document port 3000 and add a healthcheck that fetches `/health` every 30 seconds."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Orchestrators restart or replace unhealthy containers. Without a healthcheck they can only see whether the process exists, not whether it serves requests." },
+            { "type": "code", "text": "EXPOSE 3000\n\nHEALTHCHECK --interval=30s --timeout=3s --retries=3 \\\n  CMD node -e \"fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1))\"" },
+            { "type": "note", "text": "The health endpoint should check real dependencies — database included — but stay cheap. A healthcheck that queries every table will time out under load." }
+          ],
+          "task": "Add EXPOSE and a HEALTHCHECK hitting /health.",
+          "starterCode": "# Dockerfile\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["EXPOSE 3000", "HEALTHCHECK", "/health"],
+          "hints": [
+            "`HEALTHCHECK CMD ...` must exit 0 for healthy.",
+            "EXPOSE 3000\nHEALTHCHECK --interval=30s CMD node -e \"fetch('http://localhost:3000/health')\""
+          ],
+          "solution": "FROM node:20-alpine\nWORKDIR /app\nCOPY . .\nEXPOSE 3000\n\nHEALTHCHECK --interval=30s --timeout=3s --retries=3 \\\n  CMD node -e \"fetch('http://localhost:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\"\n\nCMD [\"node\", \"server.js\"]\n",
+          "reflectionPrompt": "Why does a container whose process is running still need a healthcheck?"
+        },
+        {
+          "id": "docker-12-deploy",
+          "title": "12. Deploying",
+          "concept": "release checklist",
+          "summary": "Build once, migrate, start detached, then watch the logs.",
+          "activities": [
+            {
+              "id": "docker-12-see",
+              "type": "worked-example",
+              "title": "A repeatable release",
+              "instruction": "Pull the built image on the server, run migrations before the new code starts, bring the stack up detached, and follow the logs. Roll back by pointing at the previous tag.",
+              "example": "docker compose pull\ndocker compose run --rm api npm run migrate\ndocker compose up -d\ndocker compose logs -f api"
+            },
+            {
+              "id": "docker-12-predict",
+              "type": "prediction",
+              "title": "Migrations first",
+              "question": "Why run migrations before starting the new app version?",
+              "choices": [
+                "It is faster",
+                "New code may read columns that do not exist yet",
+                "Docker requires it"
+              ],
+              "answer": "New code may read columns that do not exist yet",
+              "explanation": "Schema changes must land before code depends on them. For zero-downtime, use backward-compatible migrations in two releases."
+            },
+            {
+              "id": "docker-12-edit",
+              "type": "edit",
+              "title": "Release script",
+              "instruction": "Write the release steps: pull images, run migrations, start the stack detached, and follow the api logs."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Deployment is a sequence, not a single command. The order protects the database and makes failures visible." },
+            { "type": "code", "text": "docker compose pull\ndocker compose run --rm api npm run migrate\ndocker compose up -d\ndocker compose logs -f api" },
+            { "type": "note", "text": "Tag images with the commit SHA and keep the previous tag. Rolling back is then a tag change, not a rebuild under pressure." }
+          ],
+          "task": "Write the pull, migrate, start, and log steps for a release.",
+          "starterCode": "# Release the new version\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["docker compose pull", "migrate", "docker compose up -d", "logs"],
+          "hints": [
+            "Migrations run in a throwaway container: `docker compose run --rm api ...`.",
+            "docker compose run --rm api npm run migrate"
+          ],
+          "solution": "docker compose pull\n\ndocker compose run --rm api npm run migrate\n\ndocker compose up -d\n\ndocker compose logs -f api\n",
+          "reflectionPrompt": "Why does keeping the previous image tag make a rollback safer than rebuilding from the branch?"
+        }
+      ]
+    }
+  ]
+}

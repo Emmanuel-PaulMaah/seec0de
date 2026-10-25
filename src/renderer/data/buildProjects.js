@@ -11,11 +11,27 @@
 // This is the schema the plan (docs/build-panel.md) defines; lesson
 // projects (data/projects.js) can migrate onto it later.
 
+import chatter from './chatter';
+import shopfront from './shopfront';
+import linkbox from './linkbox';
+import ledger from './ledger';
+import gatehouse from './gatehouse';
+
+// The sample library is grouped by experience level. Every hand-written
+// project declares one of these ids; unknown/missing levels fall back to
+// 'mid' in the picker so an older project still appears.
+export const BUILD_LEVELS = [
+  { id: 'junior', label: 'Junior' },
+  { id: 'mid', label: 'Mid-level' },
+  { id: 'expert', label: 'Expert' },
+];
+
 const buildProjects = [
   {
     id: 'quiz-engine',
     title: 'Quiz Engine',
     language: 'javascript',
+    level: 'mid',
     summary: 'Build a quiz scorer that validates answers, fixes case bugs, and awards partial credit.',
     brief: 'Model questions as data, score submissions, make scoring case-insensitive, and add partial credit.',
     concepts: ['arrays', 'objects', 'functions', 'conditionals', 'loops'],
@@ -192,6 +208,7 @@ console.log("Review needed: " + (scoreQuiz(questions, submitted) < 2));
     id: 'study-log',
     title: 'Study Log',
     language: 'python',
+    level: 'junior',
     summary: 'Build a study log that sums minutes, filters by subject, and reports hours against a goal.',
     brief: 'Record sessions, total the time, total one subject, then convert everything to hours and check a goal.',
     concepts: ['lists', 'dictionaries', 'functions', 'loops', 'conditionals'],
@@ -383,6 +400,7 @@ print("Goal reached:", hours >= 2)
     id: 'countdown-timer',
     title: 'Countdown Timer',
     language: 'python',
+    level: 'junior',
     summary: 'Build a launch countdown that prints T-minus seconds and reports when the launch is complete.',
     brief: 'Count down from a number, wrap the countdown in a function, add T-minus formatting, and report the launch.',
     concepts: ['loops', 'functions', 'strings', 'booleans'],
@@ -524,6 +542,7 @@ launch_report(start)
     id: 'fizzbuzz',
     title: 'FizzBuzz',
     language: 'javascript',
+    level: 'junior',
     summary: 'Build the classic FizzBuzz starter: swap multiples of 3, 5, and 15 for words, then count them.',
     brief: 'Print the Fizz/Buzz rules for 1–15, extract a function, run to a custom limit, then count the words.',
     concepts: ['loops', 'functions', 'conditionals', 'modulo'],
@@ -682,6 +701,7 @@ fizzbuzzUpTo(20);
     id: 'temperature-converter',
     title: 'Temperature Converter',
     language: 'python',
+    level: 'junior',
     summary: 'Build a temperature converter that turns Celsius into Fahrenheit (and back) with a single convert function.',
     brief: 'Convert C→F with the formula, extract functions, add the reverse direction, then route both through one function.',
     concepts: ['functions', 'arithmetic', 'conditionals', 'floats'],
@@ -806,6 +826,7 @@ print("100 C is " + str(convert(100, "C")) + " F")
     id: 'palindrome-checker',
     title: 'Palindrome Checker',
     language: 'javascript',
+    level: 'junior',
     summary: 'Build a palindrome checker that reverses words, ignores capitals, and handles whole phrases.',
     brief: 'Compare a word to its reverse, extract a function, ignore case, then strip spaces from phrases.',
     concepts: ['strings', 'functions', 'arrays', 'booleans'],
@@ -928,6 +949,7 @@ console.log("never odd or even is a palindrome: " + isPalindrome("never odd or e
     id: 'realtime-chat',
     title: 'Realtime Chat',
     language: 'javascript',
+    level: 'mid',
     summary: 'Build a WebSocket chat server with the ws package and a demo client that sends and receives live messages.',
     brief: 'Serve an HTTP endpoint, attach WebSockets, broadcast JSON messages to every client, and verify the round-trip with a demo client.',
     concepts: ['http', 'websockets', 'events', 'json', 'modules', 'npm'],
@@ -1193,6 +1215,7 @@ if (require.main === module) {
     id: 'notes-api',
     title: 'Notes API',
     language: 'javascript',
+    level: 'mid',
     summary: 'Build a REST API with Express — list, create, and delete notes over JSON.',
     brief: 'Serve the notes list, accept new notes with JSON bodies, and delete by id — all exercised by a demo client.',
     concepts: ['express', 'rest', 'json', 'http', 'routing', 'npm'],
@@ -1458,6 +1481,11 @@ if (require.main === module) {
     ],
     reflectionPrompt: 'Why is each note stored as an object with an id, and why must the DELETE route handle a missing id?',
   },
+  linkbox,
+  ledger,
+  gatehouse,
+  shopfront,
+  chatter,
 ];
 
 // ---------------------------------------------------------------------------

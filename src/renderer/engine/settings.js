@@ -20,7 +20,7 @@
 //     languagesUsing, languagesLearning,   // "languages I use / I'm learning"
 //     pinHash,                              // optional local lock (see below)
 //     experienceLevel, practicalLanguage, comparisonLanguages,
-//     showFileExplorer, showTerminal, completedLessons,
+//     showTerminal, completedLessons,
 //     learnMode, learningSession,
 //     createdAt, updatedAt,
 //   }
@@ -79,8 +79,7 @@ export const PROFILE_FIELD_DEFAULTS = Object.freeze({
   practicalLanguage:   'python',
   // Additional generator tabs shown alongside the practical language.
   comparisonLanguages: ['javascript'],
-  // Whether the file explorer + terminal are visible by default.
-  showFileExplorer:    false,
+  // Whether the terminal is visible by default.
   showTerminal:        false,
   // List of lesson IDs the user has completed.
   completedLessons:    [],
@@ -463,7 +462,6 @@ function migrate(parsed) {
     practicalLanguage:   parsed.practicalLanguage || 'python',
     comparisonLanguages: parsed.comparisonLanguages || defaultComparisonFor(parsed.practicalLanguage || 'python'),
     languagesUsing:      dedupeLangs([parsed.practicalLanguage, ...(parsed.comparisonLanguages || [])]),
-    showFileExplorer:    !!parsed.showFileExplorer,
     showTerminal:        !!parsed.showTerminal,
     completedLessons:    parsed.completedLessons || [],
   });

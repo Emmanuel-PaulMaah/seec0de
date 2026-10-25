@@ -97,6 +97,24 @@ function spawnTool(cmd, args, opts) {
   return spawn(cmd, args, opts);
 }
 
+// Killing only the direct child leaves grandchildren alive (cmd.exe shims
+// like tsx/npm, and any process the learner's program spawned). taskkill /T
+// walks the whole tree on Windows; elsewhere try SIGTERM, then SIGKILL.
+function killProcessTree(child) {
+  if (!child || child.exitCode !== null) return;
+  if (IS_WINDOWS && child.pid) {
+    try {
+      spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true })
+        .on('error', () => { /* ignore */ });
+    } catch { /* ignore */ }
+    return;
+  }
+  try { child.kill('SIGTERM'); } catch { /* ignore */ }
+  setTimeout(() => {
+    try { child.kill('SIGKILL'); } catch { /* ignore */ }
+  }, 1500);
+}
+
 async function firstAvailable(names) {
   for (const n of names) {
     // eslint-disable-next-line no-await-in-loop
@@ -458,7 +476,7 @@ function execProcessLive({ cmd, args, cwd, timeout, sender, id, command, tool })
     child.stderr.on('data', (b) => onData('stderr', b));
 
     const timer = setTimeout(() => {
-      try { child.kill('SIGKILL'); } catch { /* ignore */ }
+      killProcessTree(child);
       const note = `\n[seec0de] killed after ${timeout}ms`;
       stderr += note;
       emit('runner:output', { id, stream: 'stderr', chunk: note });
@@ -466,9 +484,10 @@ function execProcessLive({ cmd, args, cwd, timeout, sender, id, command, tool })
 
     const finish = (exitCode, durationMs, error) => {
       clearTimeout(timer);
+      const stopped = !!activeRuns.get(id)?.stopped;
       activeRuns.delete(id);
       if (truncated) stderr += `\n[seec0de] output truncated at ${MAX_OUTPUT_BYTES} bytes`;
-      emit('runner:exit', { id, stdout, stderr, exitCode, durationMs, command, tool, error: error ?? null });
+      emit('runner:exit', { id, stdout, stderr, exitCode, durationMs, command, tool, stopped, error: error ?? null });
       resolve();
     };
 
@@ -479,7 +498,10 @@ function execProcessLive({ cmd, args, cwd, timeout, sender, id, command, tool })
       finish(-1, Date.now() - start, note);
     });
 
-    activeRuns.set(id, { child, timer });
+    activeRuns.set(id, { ...(activeRuns.get(id) || {}), child, timer });
+    // A stop request can land between runner:start returning the id and the
+    // process actually spawning (e.g. while C/C++ compiles). Honour it now.
+    if (activeRuns.get(id)?.stopped) killProcessTree(child);
   });
 }
 
@@ -868,8 +890,10 @@ function registerRunnerServiceHandlers() {
   });
   ipcMain.on('runner:stop', (_e, { id }) => {
     const entry = activeRuns.get(id);
-    if (!entry || !entry.child) return;
-    try { entry.child.kill('SIGTERM'); } catch { /* ignore */ }
+    if (!entry) return;
+    entry.stopped = true;
+    if (!entry.child) return; // still preparing; nothing spawned yet
+    killProcessTree(entry.child);
   });
   ipcMain.handle('runner:check-toolchains', async () => {
     try { return await checkToolchains(); }

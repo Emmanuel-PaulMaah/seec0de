@@ -1,0 +1,472 @@
+{
+  "tracks": [
+    {
+      "id": "observability-signals",
+      "name": "Signals",
+      "language": "observability",
+      "description": "Logs, metrics and traces — and what each one answers.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "obs-01-logs",
+          "title": "1. Structured logs",
+          "concept": "one JSON line per event",
+          "summary": "Log fields, not sentences, so a machine can group and filter them.",
+          "activities": [
+            {
+              "id": "obs-01-see",
+              "type": "worked-example",
+              "title": "Fields become queries",
+              "instruction": "A string like 'user 42 failed payment' can only be grepped. A JSON event can be filtered by `event`, grouped by `userId` and charted over time. Emit one line per event with a timestamp and a level, and never build the message by concatenating user input.",
+              "example": "function logEvent(level, event, fields = {}) {\n  console.log(JSON.stringify({\n    ts: new Date().toISOString(),\n    level,\n    event,\n    ...fields,\n  }));\n}\n\nlogEvent('warn', 'payment_failed', { userId, requestId, durationMs: 184 });"
+            },
+            {
+              "id": "obs-01-predict",
+              "type": "prediction",
+              "title": "Why JSON",
+              "question": "What does a structured log buy you over a formatted sentence?",
+              "choices": [
+                "Individual fields you can filter, group and alert on",
+                "Smaller log files",
+                "Automatic error tracking"
+              ],
+              "answer": "Individual fields you can filter, group and alert on",
+              "explanation": "Once fields are parsed, 'show me payment_failed for this user in the last hour' is a query instead of a scrolling exercise."
+            },
+            {
+              "id": "obs-01-edit",
+              "type": "edit",
+              "title": "Write logEvent",
+              "instruction": "Write `logEvent(level, event, fields)` that prints one JSON line with a timestamp, level, event and the extra fields."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Logs are an event stream, not a diary. Design the fields you will want at 2am before you need them: request id, user id, route, duration, outcome." },
+            { "type": "code", "text": "console.log(JSON.stringify({ ts, level, event, ...fields }));" },
+            { "type": "note", "text": "Log at boundaries — incoming request, outgoing call, job start and finish — and stay quiet in the hot loop." }
+          ],
+          "task": "Write logEvent that emits one JSON line per event.",
+          "starterCode": "function logEvent(level, event, fields = {}) {\n  // Print one JSON line\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["json.stringify", "isostring"],
+          "hints": [
+            "`new Date().toISOString()` gives the timestamp; spread `fields` into the object.",
+            "console.log(JSON.stringify({\n  ts: new Date().toISOString(),\n  level,\n  event,\n  ...fields,\n}));"
+          ],
+          "solution": "function logEvent(level, event, fields = {}) {\n  console.log(JSON.stringify({\n    ts: new Date().toISOString(),\n    level,\n    event,\n    ...fields,\n  }));\n}\n",
+          "reflectionPrompt": "Which five fields would you want on every request log?"
+        },
+        {
+          "id": "obs-02-metrics",
+          "title": "2. Metrics that answer questions",
+          "concept": "rate, errors, duration",
+          "summary": "Count requests, count failures, time the successful ones.",
+          "activities": [
+            {
+              "id": "obs-02-see",
+              "type": "worked-example",
+              "title": "The three numbers per endpoint",
+              "instruction": "RED — rate, errors, duration — covers most service health questions. A counter tracks how often something happens; a histogram records the distribution of durations so you can compute p50 and p95. Keep labels to bounded values: route, method, status class.",
+              "example": "const requests = new Counter({\n  name: 'http_requests_total',\n  help: 'HTTP requests',\n  labelNames: ['route', 'method', 'status'],\n});\n\nconst duration = new Histogram({\n  name: 'http_request_duration_seconds',\n  help: 'Request duration',\n  labelNames: ['route'],\n  buckets: [0.05, 0.1, 0.3, 0.5, 1, 3],\n});\n\nconst end = duration.startTimer({ route: req.path });\nres.on('finish', () => {\n  requests.inc({ route: req.path, method: req.method, status: res.statusCode });\n  end();\n});"
+            },
+            {
+              "id": "obs-02-predict",
+              "type": "prediction",
+              "title": "Which signal?",
+              "question": "Which metric would tell you that users are currently being affected?",
+              "choices": [
+                "The error rate for the endpoint they call",
+                "CPU usage of the host",
+                "The number of deployed pods"
+              ],
+              "answer": "The error rate for the endpoint they call",
+              "explanation": "CPU can be high while users are fine, and low while everything fails. Alert on symptoms users feel; use resource metrics to explain them afterwards."
+            },
+            {
+              "id": "obs-02-edit",
+              "type": "edit",
+              "title": "Time the request",
+              "instruction": "Create a histogram for request duration and record `res.statusCode` and the elapsed seconds when the response finishes."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A metric is a number over time with a small set of dimensions. Every label value multiplies the series count, so never label by user id, email or full URL." },
+            { "type": "code", "text": "const end = duration.startTimer({ route });\nres.on('finish', () => end());" },
+            { "type": "note", "text": "Counting errors by status class (2xx, 4xx, 5xx) is enough for an alert. Per-error-code labels are usually a query problem, not a metric one." }
+          ],
+          "task": "Record an HTTP request duration histogram.",
+          "starterCode": "// Track request duration\napp.use((req, res, next) => {\n  next();\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["histogram", "observe", "finish"],
+          "hints": [
+            "Start a timer on the way in, stop it when the response finishes.",
+            "const start = process.hrtime.bigint();\nres.on('finish', () => {\n  const seconds = Number(process.hrtime.bigint() - start) / 1e9;\n  duration.observe({ route: req.path }, seconds);\n});"
+          ],
+          "solution": "const duration = new Histogram({\n  name: 'http_request_duration_seconds',\n  help: 'Request duration',\n  labelNames: ['route'],\n  buckets: [0.05, 0.1, 0.3, 0.5, 1, 3],\n});\n\napp.use((req, res, next) => {\n  const start = process.hrtime.bigint();\n  res.on('finish', () => {\n    const seconds = Number(process.hrtime.bigint() - start) / 1e9;\n    duration.observe({ route: req.path }, seconds);\n  });\n  next();\n});\n",
+          "reflectionPrompt": "Why is user id a dangerous metric label?"
+        },
+        {
+          "id": "obs-03-tracing",
+          "title": "3. Tracing across services",
+          "concept": "correlation ids",
+          "summary": "One id carried through every hop turns scattered logs into a story.",
+          "activities": [
+            {
+              "id": "obs-03-see",
+              "type": "worked-example",
+              "title": "Accept it or make one",
+              "instruction": "The gateway generates a request id if the client did not send one, logs it, and forwards it in the headers of every internal call. Downstream services read it and put it on their own logs. When a user reports a failure, the id they see in the error becomes a filter across every system.",
+              "example": "app.use((req, res, next) => {\n  req.id = req.get('x-request-id') || crypto.randomUUID();\n  res.setHeader('x-request-id', req.id);\n  next();\n});\n\nawait fetch('http://billing:3001/charge', {\n  headers: { 'x-request-id': req.id },\n});"
+            },
+            {
+              "id": "obs-03-predict",
+              "type": "prediction",
+              "title": "No id, no story",
+              "question": "Three services log the same failure but no shared id. What is the consequence?",
+              "choices": [
+                "You cannot prove which lines belong to the same request",
+                "The logs will not be written",
+                "The request will be retried"
+              ],
+              "answer": "You cannot prove which lines belong to the same request",
+              "explanation": "Timestamps and user ids narrow it down, but concurrent requests make that guesswork. A correlation id is the join key."
+            },
+            {
+              "id": "obs-03-edit",
+              "type": "edit",
+              "title": "Propagate the id",
+              "instruction": "Read `x-request-id` or generate one, return it in the response header, and forward it on the internal call."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Traces are the same idea with structure: each hop is a span with a parent, so you can see where the time went instead of only that it was slow." },
+            { "type": "code", "text": "req.id = req.get('x-request-id') || crypto.randomUUID();\nres.setHeader('x-request-id', req.id);" },
+            { "type": "note", "text": "Show the request id in user-facing error pages. It turns a screenshot into a search query." }
+          ],
+          "task": "Propagate a request id through the gateway.",
+          "starterCode": "app.use((req, res, next) => {\n  next();\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["x-request-id", "crypto.randomuuid", "setheader"],
+          "hints": [
+            "Reuse the incoming header, or generate a UUID when it is missing.",
+            "req.id = req.get('x-request-id') || crypto.randomUUID();\nres.setHeader('x-request-id', req.id);"
+          ],
+          "solution": "app.use((req, res, next) => {\n  req.id = req.get('x-request-id') || crypto.randomUUID();\n  res.setHeader('x-request-id', req.id);\n  next();\n});\n\nawait fetch('http://billing:3001/charge', {\n  headers: { 'x-request-id': req.id },\n});\n",
+          "reflectionPrompt": "Why should the gateway trust a client-supplied request id only as a correlation value, not as a permission?"
+        }
+      ]
+    },
+    {
+      "id": "observability-debug",
+      "name": "Debugging Production",
+      "language": "observability",
+      "description": "From symptom to cause, without guessing.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "obs-04-errors",
+          "title": "4. Reading a stack trace",
+          "concept": "frames and causes",
+          "summary": "Find the first frame in your code, then keep the original error.",
+          "activities": [
+            {
+              "id": "obs-04-see",
+              "type": "worked-example",
+              "title": "Keep the cause",
+              "instruction": "A stack trace reads bottom-up: the deepest frame is where the throw happened, and the first frame in your code is usually where to look. Wrap and rethrow with `cause` so the original message, stack and code survive the trip to your error handler.",
+              "example": "try {\n  await db.query('SELECT * FROM orders WHERE id = $1', [id]);\n} catch (err) {\n  throw new AppError('order_lookup_failed', 500, { cause: err });\n}"
+            },
+            {
+              "id": "obs-04-predict",
+              "type": "prediction",
+              "title": "Where to look",
+              "question": "The top of a stack trace points into `node_modules`. Where do you look first?",
+              "choices": [
+                "The first frame in your own code that called into the library",
+                "The last line of the trace",
+                "The library's issue tracker"
+              ],
+              "answer": "The first frame in your own code that called into the library",
+              "explanation": "The library is usually doing what it was told. Your call site holds the wrong input, state or ordering that made the library fail."
+            },
+            {
+              "id": "obs-04-edit",
+              "type": "edit",
+              "title": "Preserve the original",
+              "instruction": "Rethrow the failure as an `AppError` with code `order_lookup_failed` and the original error attached as `cause`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "An error that loses its cause costs an hour of guessing. `cause` keeps the chain, and source maps turn minified frames back into real files and line numbers." },
+            { "type": "code", "text": "throw new AppError('order_lookup_failed', 500, { cause: err });" },
+            { "type": "note", "text": "Log the stack once, at the boundary. Logging and rethrowing at every layer gives you the same trace five times and hides the real one." }
+          ],
+          "task": "Wrap the database error without losing it.",
+          "starterCode": "try {\n  await db.query('SELECT * FROM orders WHERE id = $1', [id]);\n} catch (err) {\n  throw new Error('lookup failed');\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["cause", "apperror"],
+          "hints": [
+            "Pass the original error in the options object.",
+            "throw new AppError('order_lookup_failed', 500, { cause: err });"
+          ],
+          "solution": "try {\n  await db.query('SELECT * FROM orders WHERE id = $1', [id]);\n} catch (err) {\n  throw new AppError('order_lookup_failed', 500, { cause: err });\n}\n",
+          "reflectionPrompt": "Why is the first frame in your own code usually the most informative?"
+        },
+        {
+          "id": "obs-05-slow",
+          "title": "5. Why the request got slow",
+          "concept": "measure the spans",
+          "summary": "Break one slow request into timed steps before changing anything.",
+          "activities": [
+            {
+              "id": "obs-05-see",
+              "type": "worked-example",
+              "title": "Time each dependency",
+              "instruction": "A slow endpoint is usually one slow dependency plus everything waiting on it. Time the database call, the cache lookup and each external request separately, emit them as spans or log fields, and compare p95 per step. Optimise the step with the largest tail, not the one that feels suspicious.",
+              "example": "const t0 = performance.now();\nconst user = await db.users.findById(id);\nconst t1 = performance.now();\nconst prefs = await prefsService.get(id);\nconst t2 = performance.now();\n\nlogEvent('info', 'profile_loaded', {\n  requestId: req.id,\n  dbMs: Math.round(t1 - t0),\n  prefsMs: Math.round(t2 - t1),\n  totalMs: Math.round(t2 - t0),\n});"
+            },
+            {
+              "id": "obs-05-predict",
+              "type": "prediction",
+              "title": "Average looks fine",
+              "question": "p50 is 120 ms but p95 is 1.2 s. What should you investigate?",
+              "choices": [
+                "The tail: contention, queueing, cold caches or one slow dependency",
+                "The average response size",
+                "Nothing — p50 is the typical user"
+              ],
+              "answer": "The tail: contention, queueing, cold caches or one slow dependency",
+              "explanation": "A wide gap between p50 and p95 points at resource contention or a subset of requests with expensive work, not a uniformly slow endpoint."
+            },
+            {
+              "id": "obs-05-edit",
+              "type": "edit",
+              "title": "Instrument the steps",
+              "instruction": "Time the database and preferences calls with `performance.now()` and log both durations."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Instrumentation is evidence. Without per-step timings, every optimisation is a guess that costs a deploy to test." },
+            { "type": "code", "text": "const t0 = performance.now();\nawait db.users.findById(id);\nconst dbMs = performance.now() - t0;" },
+            { "type": "note", "text": "Correlate the slow span with connection-pool saturation and CPU. The slow query is often a symptom of waiting for a free connection." }
+          ],
+          "task": "Time and log the database and preferences lookups.",
+          "starterCode": "async function loadProfile(req) {\n  const user = await db.users.findById(req.params.id);\n  const prefs = await prefsService.get(req.params.id);\n  return { user, prefs };\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["performance.now()", "dbms", "prefsms"],
+          "hints": [
+            "Take a timestamp before and after each await.",
+            "const t0 = performance.now();\nconst user = await db.users.findById(id);\nconst dbMs = Math.round(performance.now() - t0);"
+          ],
+          "solution": "async function loadProfile(req) {\n  const t0 = performance.now();\n  const user = await db.users.findById(req.params.id);\n  const t1 = performance.now();\n  const prefs = await prefsService.get(req.params.id);\n  const t2 = performance.now();\n\n  logEvent('info', 'profile_loaded', {\n    requestId: req.id,\n    dbMs: Math.round(t1 - t0),\n    prefsMs: Math.round(t2 - t1),\n    totalMs: Math.round(t2 - t0),\n  });\n\n  return { user, prefs };\n}\n",
+          "reflectionPrompt": "Why does optimising the slowest average step sometimes fail to improve p95?"
+        },
+        {
+          "id": "obs-06-reproduce",
+          "title": "6. Reproduce from logs",
+          "concept": "replayable context",
+          "summary": "Log the inputs and state that make a bug happen again.",
+          "activities": [
+            {
+              "id": "obs-06-see",
+              "type": "worked-example",
+              "title": "Sample the expensive detail",
+              "instruction": "Verbose payload logging on every request is too costly and too risky. Log the request id and a hash of the input always, and full detail on a small sample plus every slow or failed request. That gives you a reproducible case without storing personal data at scale.",
+              "example": "const detailed =\n  Math.random() < 0.01 || res.statusCode >= 500 || elapsedMs > 1000;\n\nlogEvent('info', 'checkout_attempt', {\n  requestId: req.id,\n  inputHash: hash(JSON.stringify(req.body)),\n  ...(detailed ? { cart: redact(req.body.cart) } : {}),\n});"
+            },
+            {
+              "id": "obs-06-predict",
+              "type": "prediction",
+              "title": "What makes a bug reproducible?",
+              "question": "What does a reproducible bug report need most?",
+              "choices": [
+                "The exact input and the state it ran against",
+                "A screenshot of the screen",
+                "The user's browser version"
+              ],
+              "answer": "The exact input and the state it ran against",
+              "explanation": "Screenshots show the symptom. The input and the data state let you run it again, which is the only way to prove a fix."
+            },
+            {
+              "id": "obs-06-edit",
+              "type": "edit",
+              "title": "Sample the detail",
+              "instruction": "Log the request id and input hash always, and include the cart only when the request is slow, failed, or in the 1% sample."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Debugging production is a data problem before it is a code problem. The cheapest investment is logging enough context to replay the request in staging." },
+            { "type": "code", "text": "const detailed = Math.random() < 0.01 || res.statusCode >= 500 || elapsedMs > 1000;" },
+            { "type": "note", "text": "Hash identifiers you do not need, redact payloads you do, and set a retention window on verbose logs." }
+          ],
+          "task": "Add conditional detail logging to the checkout handler.",
+          "starterCode": "logEvent('info', 'checkout_attempt', {\n  requestId: req.id,\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["math.random()", "inputhash", "detailed"],
+          "hints": [
+            "Decide whether this request is detailed, then spread the extra fields conditionally.",
+            "const detailed = Math.random() < 0.01 || res.statusCode >= 500;\nlogEvent('info', 'checkout_attempt', {\n  requestId: req.id,\n  inputHash: hash(JSON.stringify(req.body)),\n  ...(detailed ? { cart: redact(req.body.cart) } : {}),\n});"
+          ],
+          "solution": "const detailed =\n  Math.random() < 0.01 || res.statusCode >= 500 || elapsedMs > 1000;\n\nlogEvent('info', 'checkout_attempt', {\n  requestId: req.id,\n  inputHash: hash(JSON.stringify(req.body)),\n  ...(detailed ? { cart: redact(req.body.cart) } : {}),\n});\n",
+          "reflectionPrompt": "Why sample verbose logs instead of recording every payload?"
+        }
+      ]
+    },
+    {
+      "id": "observability-operate",
+      "name": "Operating",
+      "language": "observability",
+      "description": "Alerts people trust and reviews that change something.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "obs-07-slo",
+          "title": "7. SLOs and alerts",
+          "concept": "symptom-based alerting",
+          "summary": "Alert on users being unhappy, not on a gauge being high.",
+          "activities": [
+            {
+              "id": "obs-07-see",
+              "type": "worked-example",
+              "title": "A budget you can spend",
+              "instruction": "An SLO states the reliability users should get — 99.9% of requests succeed — and the error budget is the 0.1% you may spend. Alert on burn rate: how fast you are spending that budget. A slow burn is a ticket; a fast burn is a page.",
+              "example": "slo:\n  name: api_availability\n  target: 0.999\n  window: 30d\n\nalerts:\n  - name: ApiFastBurn\n    condition: error_rate_1h > 14.4 * (1 - 0.999)\n    severity: page\n  - name: ApiSlowBurn\n    condition: error_rate_6h > 6 * (1 - 0.999)\n    severity: ticket"
+            },
+            {
+              "id": "obs-07-predict",
+              "type": "prediction",
+              "title": "CPU at 90%",
+              "question": "CPU is at 90% but error rate and latency are normal. Should this page someone?",
+              "choices": [
+                "No — alert on user-visible symptoms; investigate CPU as context",
+                "Yes — 90% is always an emergency",
+                "Yes, but only at night"
+              ],
+              "answer": "No — alert on user-visible symptoms; investigate CPU as context",
+              "explanation": "High utilization with healthy users is a capacity note. Paging on it trains people to ignore pages, which is how a real incident gets missed."
+            },
+            {
+              "id": "obs-07-edit",
+              "type": "edit",
+              "title": "Define the SLO",
+              "instruction": "Write an SLO for 99.9% availability over 30 days, plus a page alert on the one-hour error rate breaching the budget."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every alert should have an owner, a threshold you can justify and a first action. If nobody knows what to do when it fires, it is a dashboard, not an alert." },
+            { "type": "code", "text": "condition: error_rate_1h > 14.4 * (1 - 0.999)" },
+            { "type": "note", "text": "Multi-window burn rates catch fast outages and slow leaks without double-paging for the same incident." }
+          ],
+          "task": "Write an SLO and a fast-burn alert.",
+          "starterCode": "slo:\n  # target and window\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["0.999", "error_rate", "page"],
+          "hints": [
+            "State the target as a proportion and compare the measured error rate against the budget.",
+            "slo:\n  target: 0.999\n  window: 30d\nalerts:\n  - condition: error_rate_1h > 14.4 * (1 - 0.999)\n    severity: page"
+          ],
+          "solution": "slo:\n  name: api_availability\n  target: 0.999\n  window: 30d\n\nalerts:\n  - name: ApiFastBurn\n    condition: error_rate_1h > 14.4 * (1 - 0.999)\n    severity: page\n  - name: ApiSlowBurn\n    condition: error_rate_6h > 6 * (1 - 0.999)\n    severity: ticket\n",
+          "reflectionPrompt": "Why does paging on resource usage rather than user symptoms cause missed incidents?"
+        },
+        {
+          "id": "obs-08-dashboards",
+          "title": "8. Dashboards",
+          "concept": "one screen, one question",
+          "summary": "Build the view you need during an incident, not every chart you can draw.",
+          "activities": [
+            {
+              "id": "obs-08-see",
+              "type": "worked-example",
+              "title": "Four panels that answer 'is it us?'",
+              "instruction": "A service dashboard should show request rate, error ratio, latency percentiles and saturation, with deploy markers on the time axis. That is enough to say whether the problem is traffic, code, dependencies or capacity — and the deploy marker is often the answer by itself.",
+              "example": "panels:\n  - title: Request rate\n    query: sum(rate(http_requests_total[5m]))\n  - title: Error ratio\n    query: sum(rate(http_requests_total{status=~\"5..\"}[5m]))\n         / sum(rate(http_requests_total[5m]))\n  - title: Latency p95\n    query: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))\n  - title: Saturation\n    query: avg(container_cpu_usage_seconds_total)"
+            },
+            {
+              "id": "obs-08-predict",
+              "type": "prediction",
+              "title": "Deploy markers",
+              "question": "Why annotate dashboards with deploy times?",
+              "choices": [
+                "It makes 'it started at 14:02' a one-glance correlation with a release",
+                "It improves query performance",
+                "It is required for alerting"
+              ],
+              "answer": "It makes 'it started at 14:02' a one-glance correlation with a release",
+              "explanation": "Most regressions are recent changes. A marker turns 'when did this start?' into a visible line next to a release record."
+            },
+            {
+              "id": "obs-08-edit",
+              "type": "edit",
+              "title": "Write the dashboard",
+              "instruction": "Write four panels: request rate, error ratio, latency p95 and saturation."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Dashboards are for answering questions under pressure. Every panel should have a question it answers and a threshold that makes it interesting." },
+            { "type": "code", "text": "query: sum(rate(http_requests_total{status=~\"5..\"}[5m]))\n     / sum(rate(http_requests_total[5m]))" },
+            { "type": "note", "text": "Put the deploy marker and the alert threshold on the same axis. A chart without a threshold is decoration." }
+          ],
+          "task": "Write the four-panel service dashboard spec.",
+          "starterCode": "panels:\n  # one panel per signal\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["rate", "error", "latency", "saturation"],
+          "hints": [
+            "One panel per golden signal, each with a query.",
+            "panels:\n  - title: Request rate\n    query: sum(rate(http_requests_total[5m]))"
+          ],
+          "solution": "panels:\n  - title: Request rate\n    query: sum(rate(http_requests_total[5m]))\n  - title: Error ratio\n    query: sum(rate(http_requests_total{status=~\"5..\"}[5m]))\n         / sum(rate(http_requests_total[5m]))\n  - title: Latency p95\n    query: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))\n  - title: Saturation\n    query: avg(container_cpu_usage_seconds_total)\n",
+          "reflectionPrompt": "Which question should a service dashboard answer in its first three seconds?"
+        },
+        {
+          "id": "obs-09-incident",
+          "title": "9. Incidents and postmortems",
+          "concept": "mitigate, communicate, learn",
+          "summary": "Stop the bleeding first; the cause can wait until users are safe.",
+          "activities": [
+            {
+              "id": "obs-09-see",
+              "type": "worked-example",
+              "title": "Timeline, impact, actions",
+              "instruction": "During an incident, one person coordinates and one communicates. The first move is mitigation: roll back, disable the flag, fail over. The postmortem then states the impact in user terms, the timeline from the logs, and a small set of owned actions with dates.",
+              "example": "# Checkout outage — 2026-10-21\n\n## Impact\n4,120 checkout attempts failed over 38 minutes; no payments were lost.\n\n## Timeline\n- 14:02 deploy 1.4.2\n- 14:05 error alerts fire\n- 14:07 rollback started\n- 14:12 error rate normal\n\n## Action items\n- [ ] Add canary abort on error rate — @ana — 2026-10-28\n- [ ] Add idempotency test to CI — @sam — 2026-11-04"
+            },
+            {
+              "id": "obs-09-predict",
+              "type": "prediction",
+              "title": "First move",
+              "question": "An incident is ongoing and the cause is unclear. What comes first?",
+              "choices": [
+                "Mitigate the user impact",
+                "Find the exact root cause",
+                "Write the postmortem"
+              ],
+              "answer": "Mitigate the user impact",
+              "explanation": "Rollback or a flag flip ends the harm. Root-causing first extends the outage while you investigate the system users are still failing on."
+            },
+            {
+              "id": "obs-09-edit",
+              "type": "edit",
+              "title": "Write the postmortem",
+              "instruction": "Write a postmortem with Impact, Timeline and Action items, including an owner and a date on each action."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A blameless postmortem assumes people acted reasonably with the information they had. The output is not a culprit; it is a system change that makes the same failure harder." },
+            { "type": "code", "text": "## Impact\n## Timeline\n## Action items" },
+            { "type": "note", "text": "Actions without an owner and a date do not happen. Two completed actions beat ten aspirational ones." }
+          ],
+          "task": "Write a blameless postmortem for a checkout outage.",
+          "starterCode": "# Incident postmortem\n\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["## impact", "## timeline", "## action items"],
+          "hints": [
+            "Impact in user terms, timeline from logs, actions with owners.",
+            "## Impact\n4,120 checkouts failed over 38 minutes.\n\n## Timeline\n- 14:02 deploy\n- 14:07 rollback\n\n## Action items\n- [ ] Add canary abort — @ana — 2026-10-28"
+          ],
+          "solution": "# Checkout outage — 2026-10-21\n\n## Impact\n4,120 checkout attempts failed over 38 minutes; no payments were lost.\n\n## Timeline\n- 14:02 deploy 1.4.2\n- 14:05 error alerts fire\n- 14:07 rollback started\n- 14:12 error rate normal\n\n## Action items\n- [ ] Add canary abort on error rate — @ana — 2026-10-28\n- [ ] Add idempotency test to CI — @sam — 2026-11-04\n",
+          "reflectionPrompt": "Why do postmortem actions need dates as well as owners?"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,616 @@
+{
+  "tracks": [
+    {
+      "id": "testing-unit",
+      "name": "Unit Tests",
+      "language": "testing",
+      "description": "Test functions in isolation, including the awkward inputs.",
+      "lessons": [
+        {
+          "id": "testing-01-first-test",
+          "title": "1. Your first test",
+          "concept": "describe / it / expect",
+          "summary": "Arrange the input, act, then assert on the result.",
+          "activities": [
+            {
+              "id": "testing-01-see",
+              "type": "worked-example",
+              "title": "One behaviour per test",
+              "instruction": "`describe` groups related tests, `it` states one behaviour, and `expect` asserts. A failing test should tell you which behaviour broke without opening the source.",
+              "example": "import { describe, it, expect } from 'vitest';\nimport { addToCart } from './cart.js';\n\ndescribe('addToCart', () => {\n  it('adds a new item', () => {\n    const cart = addToCart([], { id: 1, qty: 1 });\n    expect(cart).toHaveLength(1);\n  });\n});"
+            },
+            {
+              "id": "testing-01-predict",
+              "type": "prediction",
+              "title": "Naming tests",
+              "question": "Which test name gives the most useful failure message?",
+              "choices": [
+                "works",
+                "rejects a quantity of zero",
+                "test cart 2"
+              ],
+              "answer": "rejects a quantity of zero",
+              "explanation": "The name should describe the behaviour. A failure then reads as a sentence: `addToCart › rejects a quantity of zero`."
+            },
+            {
+              "id": "testing-01-edit",
+              "type": "edit",
+              "title": "Test a function",
+              "instruction": "Write a `describe` containing one `it` that calls `addToCart([], item)` and asserts the cart has length 1."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Tests are executable documentation. Each one sets up a state, calls the code, and asserts on the outcome." },
+            { "type": "code", "text": "describe('addToCart', () => {\n  it('adds a new item', () => {\n    const cart = addToCart([], { id: 1, qty: 1 });\n    expect(cart).toHaveLength(1);\n  });\n});" },
+            { "type": "note", "text": "A test with several unrelated assertions hides which one failed. Split it, or use `it.each` for the same assertion over many inputs." }
+          ],
+          "task": "Write a describe/it test for addToCart.",
+          "starterCode": "import { describe, it, expect } from 'vitest';\n\n// Test addToCart\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["describe(", "it(", "expect("],
+          "hints": [
+            "You need a description, a callback, and at least one assertion.",
+            "describe('addToCart', () => {\n  it('adds a new item', () => {\n    expect(addToCart([], item)).toHaveLength(1);\n  });\n});"
+          ],
+          "solution": "import { describe, it, expect } from 'vitest';\nimport { addToCart } from './cart.js';\n\ndescribe('addToCart', () => {\n  it('adds a new item', () => {\n    const cart = addToCart([], { id: 1, qty: 1 });\n    expect(cart).toHaveLength(1);\n  });\n});\n",
+          "reflectionPrompt": "What does a good failure message tell you before you open the source file?"
+        },
+        {
+          "id": "testing-02-edge-cases",
+          "title": "2. Edge cases",
+          "concept": "table-driven tests",
+          "summary": "Feed the same assertion a table of inputs, including the ugly ones.",
+          "activities": [
+            {
+              "id": "testing-02-see",
+              "type": "worked-example",
+              "title": "The table is the spec",
+              "instruction": "Loop over cases and assert on each. Empty input, one item, duplicates, and the maximum all belong in the table — those are where bugs live.",
+              "example": "const cases = [\n  { input: [], expected: 0 },\n  { input: [{ price: 10, qty: 2 }], expected: 20 },\n  { input: [{ price: 0, qty: 5 }], expected: 0 }\n];\n\ncases.forEach(({ input, expected }) => {\n  it(`totals ${expected}`, () => {\n    expect(cartTotal(input)).toBe(expected);\n  });\n});"
+            },
+            {
+              "id": "testing-02-predict",
+              "type": "prediction",
+              "title": "Happy path only",
+              "question": "Every test uses a cart with at least one item. What class of bug gets through?",
+              "choices": [
+                "Syntax errors",
+                "Empty-input and boundary bugs, which are the common ones",
+                "Nothing, coverage is what matters"
+              ],
+              "answer": "Empty-input and boundary bugs, which are the common ones",
+              "explanation": "Real bugs cluster at zero, one, maximum, and malformed input. A test suite that only exercises the normal path misses them."
+            },
+            {
+              "id": "testing-02-edit",
+              "type": "edit",
+              "title": "Table of cases",
+              "instruction": "Write a cases array with an empty cart and a one-item cart, then assert each with `forEach`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A table-driven test keeps the assertion fixed and varies the input. Adding a case is one line, which is why people actually add them." },
+            { "type": "code", "text": "cases.forEach(({ input, expected }) => {\n  it(`totals ${expected}`, () => {\n    expect(cartTotal(input)).toBe(expected);\n  });\n});" },
+            { "type": "note", "text": "Include the empty case explicitly. `reduce` without an initial value throws on an empty array — that bug ships constantly." }
+          ],
+          "task": "Test an empty cart and a one-item cart from a cases array.",
+          "starterCode": "const cases = [\n  // add cases\n];\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["cases.forEach", "expect(", "[]"],
+          "hints": [
+            "Each case needs an input and an expected total.",
+            "cases.forEach(({ input, expected }) => {\n  it(`totals ${expected}`, () => {\n    expect(cartTotal(input)).toBe(expected);\n  });\n});"
+          ],
+          "solution": "const cases = [\n  { input: [], expected: 0 },\n  { input: [{ price: 10, qty: 2 }], expected: 20 }\n];\n\ncases.forEach(({ input, expected }) => {\n  it(`totals ${expected}`, () => {\n    expect(cartTotal(input)).toBe(expected);\n  });\n});\n",
+          "reflectionPrompt": "Which boundary values would you add for a function that paginates a list?"
+        },
+        {
+          "id": "testing-03-mocking",
+          "title": "3. Mocking a dependency",
+          "concept": "vi.mock / mockResolvedValue",
+          "summary": "Replace the database so a unit test stays fast and deterministic.",
+          "activities": [
+            {
+              "id": "testing-03-see",
+              "type": "worked-example",
+              "title": "Stub the boundary",
+              "instruction": "Mock the module at the edge of your code, not the function under test. `mockResolvedValue` makes an async dependency resolve to a fixed value.",
+              "example": "import { vi, it, expect } from 'vitest';\nimport { findUser } from './users.js';\nimport { db } from './db.js';\n\nvi.mock('./db.js', () => ({\n  db: { users: { findById: vi.fn() } }\n}));\n\nit('returns null when missing', async () => {\n  db.users.findById.mockResolvedValue(null);\n  await expect(findUser(1)).resolves.toBeNull();\n});"
+            },
+            {
+              "id": "testing-03-predict",
+              "type": "prediction",
+              "title": "Mocking too much",
+              "question": "A test mocks the function it is supposed to be testing. What does it prove?",
+              "choices": [
+                "That the function works",
+                "Nothing — the assertion now tests the mock",
+                "That the dependency exists"
+              ],
+              "answer": "Nothing — the assertion now tests the mock",
+              "explanation": "Mock the boundary (database, HTTP, clock) and assert on your own code's behaviour through it."
+            },
+            {
+              "id": "testing-03-edit",
+              "type": "edit",
+              "title": "Mock the database",
+              "instruction": "Mock `./db.js` with a `findById` mock and make it resolve to null in a test."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Mocks remove the slow, flaky parts: network, database, filesystem, time. They also let you test the failure paths you cannot trigger against a real service." },
+            { "type": "code", "text": "vi.mock('./db.js', () => ({\n  db: { users: { findById: vi.fn() } }\n}));\n\ndb.users.findById.mockResolvedValue(null);" },
+            { "type": "note", "text": "Clear mocks between tests (`vi.clearAllMocks()` or `clearMocks: true`). A leftover `mockResolvedValue` is a classic order-dependent failure." }
+          ],
+          "task": "Mock the db module and make findById resolve to null.",
+          "starterCode": "import { vi, it } from 'vitest';\n\n// Mock ./db.js\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["vi.mock(", "mockResolvedValue"],
+          "hints": [
+            "The factory returns the module shape you need.",
+            "vi.mock('./db.js', () => ({ db: { users: { findById: vi.fn() } } }));\ndb.users.findById.mockResolvedValue(null);"
+          ],
+          "solution": "import { vi, it, expect } from 'vitest';\nimport { findUser } from './users.js';\nimport { db } from './db.js';\n\nvi.mock('./db.js', () => ({\n  db: { users: { findById: vi.fn() } }\n}));\n\nit('returns null when missing', async () => {\n  db.users.findById.mockResolvedValue(null);\n  await expect(findUser(1)).resolves.toBeNull();\n});\n",
+          "reflectionPrompt": "Why does mocking the function under test make a green suite worthless?"
+        },
+        {
+          "id": "testing-04-assertions",
+          "title": "4. Choosing an assertion",
+          "concept": "toBe / toEqual / toThrow",
+          "summary": "The wrong matcher turns a real failure into a pass.",
+          "activities": [
+            {
+              "id": "testing-04-see",
+              "type": "worked-example",
+              "title": "Same shape, different check",
+              "instruction": "`toBe` compares identity — fine for primitives, wrong for objects. `toEqual` compares structure. `toThrow` checks that a call fails, optionally with a message.",
+              "example": "expect(cartTotal([{ price: 5, qty: 2 }])).toBe(10);\nexpect(parseOrder({ id: 1 })).toEqual({ id: 1, items: [] });\nexpect(() => parseOrder(null)).toThrow('order must be an object');"
+            },
+            {
+              "id": "testing-04-predict",
+              "type": "prediction",
+              "title": "toBe on objects",
+              "question": "`expect({ a: 1 }).toBe({ a: 1 })` — does it pass?",
+              "choices": [
+                "Yes, the values match",
+                "No — they are two different objects",
+                "Only in strict mode"
+              ],
+              "answer": "No — they are two different objects",
+              "explanation": "`toBe` uses Object.is. Two literals are distinct references, so use `toEqual` for structure."
+            },
+            {
+              "id": "testing-04-edit",
+              "type": "edit",
+              "title": "Match the value and the throw",
+              "instruction": "Assert that `parseOrder({ id: 1 })` deep-equals `{ id: 1, items: [] }`, and that `parseOrder(null)` throws."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Matchers encode intent. `toEqual` for data, `toBe` for identity, `toBeCloseTo` for floats, `toThrow` for errors." },
+            { "type": "code", "text": "expect(parseOrder({ id: 1 })).toEqual({ id: 1, items: [] });\nexpect(() => parseOrder(null)).toThrow('order must be an object');" },
+            { "type": "note", "text": "Pass a function to `toThrow`, not the result: `expect(fn())` runs the throw before the assertion and fails the test differently." }
+          ],
+          "task": "Use toEqual for the result and toThrow for invalid input.",
+          "starterCode": "import { expect, it } from 'vitest';\n\nit('parses an order', () => {\n  // assert the shape and the error\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["toEqual", "toThrow"],
+          "hints": [
+            "Wrap the throwing call in an arrow function.",
+            "expect(parseOrder(null)).toThrow('order must be an object');"
+          ],
+          "solution": "import { expect, it } from 'vitest';\n\nit('parses an order', () => {\n  expect(parseOrder({ id: 1 })).toEqual({ id: 1, items: [] });\n  expect(() => parseOrder(null)).toThrow('order must be an object');\n});\n",
+          "reflectionPrompt": "Why does `expect(fn())` fail to test a thrown error the way `expect(() => fn())` does?"
+        }
+      ]
+    },
+    {
+      "id": "testing-api",
+      "name": "API Tests",
+      "language": "testing",
+      "description": "Exercise real routes without starting a server by hand.",
+      "lessons": [
+        {
+          "id": "testing-05-supertest",
+          "title": "5. Testing a route",
+          "concept": "supertest / request(app)",
+          "summary": "Send a request to the app object and read the response.",
+          "activities": [
+            {
+              "id": "testing-05-see",
+              "type": "worked-example",
+              "title": "No port needed",
+              "instruction": "`request(app)` starts an ephemeral server for the request and closes it. That keeps tests parallel-safe, unlike binding port 3000 in every worker.",
+              "example": "import request from 'supertest';\nimport { app } from './app.js';\n\nit('responds ok', async () => {\n  const res = await request(app).get('/health');\n  expect(res.status).toBe(200);\n  expect(res.text).toBe('ok');\n});"
+            },
+            {
+              "id": "testing-05-predict",
+              "type": "prediction",
+              "title": "Why not listen()",
+              "question": "Why should tests import the app without calling `app.listen()`?",
+              "choices": [
+                "listen is slower",
+                "Two test files would fight over the same port",
+                "Supertest cannot reach a listening server"
+              ],
+              "answer": "Two test files would fight over the same port",
+              "explanation": "Supertest handles the socket for you. Hard-coding a port makes parallel runs conflict and leaves handles open."
+            },
+            {
+              "id": "testing-05-edit",
+              "type": "edit",
+              "title": "Call the health route",
+              "instruction": "Write a test that GETs `/health` with supertest and expects status 200."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "API tests are the sweet spot for a full-stack app: they exercise routing, middleware, validation, and serialization without a browser." },
+            { "type": "code", "text": "const res = await request(app).get('/health');\nexpect(res.status).toBe(200);" },
+            { "type": "note", "text": "Export the app from a module and start the server in a separate entry file. Importing a file that listens opens a port as a side effect." }
+          ],
+          "task": "Test GET /health with supertest, expecting 200.",
+          "starterCode": "import request from 'supertest';\nimport { app } from './app.js';\n\n// GET /health\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["request(app)", "get('/health'", "expect(res.status)"],
+          "hints": [
+            "`request(app).get(path)` returns a thenable, so await it.",
+            "const res = await request(app).get('/health');\nexpect(res.status).toBe(200);"
+          ],
+          "solution": "import request from 'supertest';\nimport { app } from './app.js';\n\nit('responds ok', async () => {\n  const res = await request(app).get('/health');\n  expect(res.status).toBe(200);\n  expect(res.text).toBe('ok');\n});\n",
+          "reflectionPrompt": "What does an API test cover that a unit test of the handler function does not?"
+        },
+        {
+          "id": "testing-06-status-body",
+          "title": "6. Status and body",
+          "concept": "response assertions",
+          "summary": "A route can be right about the status and wrong about the payload.",
+          "activities": [
+            {
+              "id": "testing-06-see",
+              "type": "worked-example",
+              "title": "Assert the contract",
+              "instruction": "Check the status, then the fields the client depends on. Asserting the whole object is brittle; asserting `id` and `name` catches real regressions.",
+              "example": "it('creates a product', async () => {\n  const res = await request(app)\n    .post('/products')\n    .send({ name: 'Keyboard' });\n\n  expect(res.status).toBe(201);\n  expect(res.body.name).toBe('Keyboard');\n  expect(res.body.id).toBeDefined();\n});"
+            },
+            {
+              "id": "testing-06-predict",
+              "type": "prediction",
+              "title": "Brittle assertion",
+              "question": "Why is `expect(res.body).toEqual(exactFixture)` fragile?",
+              "choices": [
+                "toEqual is slow",
+                "Any harmless new field breaks the test",
+                "It cannot compare nested data"
+              ],
+              "answer": "Any harmless new field breaks the test",
+              "explanation": "Assert the fields the client relies on. Whole-object snapshots turn additive changes into failing tests."
+            },
+            {
+              "id": "testing-06-edit",
+              "type": "edit",
+              "title": "Assert the created product",
+              "instruction": "POST `{ name: 'Keyboard' }` to `/products`, expect 201, and assert the body has that name and a defined id."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The response body is your API's contract. Test the parts clients read, plus the status codes they branch on." },
+            { "type": "code", "text": "expect(res.status).toBe(201);\nexpect(res.body.name).toBe('Keyboard');\nexpect(res.body.id).toBeDefined();" },
+            { "type": "note", "text": "Also test the error shape once: 400 with `{ error }`. Clients switch on it, and it silently changes when validation moves." }
+          ],
+          "task": "Assert the POST /products status and body.",
+          "starterCode": "import request from 'supertest';\nimport { app } from './app.js';\n\n// POST /products with a Keyboard\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["expect(res.status).toBe(201)", "expect(res.body.name", "toBeDefined()"],
+          "hints": [
+            "Chain `.send({ name: 'Keyboard' })` onto the request.",
+            "expect(res.body.name).toBe('Keyboard');"
+          ],
+          "solution": "import request from 'supertest';\nimport { app } from './app.js';\n\nit('creates a product', async () => {\n  const res = await request(app)\n    .post('/products')\n    .send({ name: 'Keyboard' });\n\n  expect(res.status).toBe(201);\n  expect(res.body.name).toBe('Keyboard');\n  expect(res.body.id).toBeDefined();\n});\n",
+          "reflectionPrompt": "Why is asserting two fields better than asserting the entire response object?"
+        },
+        {
+          "id": "testing-07-db-setup",
+          "title": "7. Database setup and teardown",
+          "concept": "beforeEach / afterAll",
+          "summary": "Every test should start from a known database state.",
+          "activities": [
+            {
+              "id": "testing-07-see",
+              "type": "worked-example",
+              "title": "Clean slate per test",
+              "instruction": "`beforeEach` resets the data before each test, and `afterAll` closes the pool so the process can exit. Shared state between tests creates failures that depend on order.",
+              "example": "beforeEach(async () => {\n  await db.products.deleteMany({});\n});\n\nafterAll(async () => {\n  await client.close();\n});"
+            },
+            {
+              "id": "testing-07-predict",
+              "type": "prediction",
+              "title": "Leaked connections",
+              "question": "Tests pass but the run hangs after the last file. What is the usual cause?",
+              "choices": [
+                "Too many assertions",
+                "An open database or server handle that is never closed",
+                "Missing coverage config"
+              ],
+              "answer": "An open database or server handle that is never closed",
+              "explanation": "Node exits when the event loop is empty. An open connection pool keeps it alive; close it in `afterAll`."
+            },
+            {
+              "id": "testing-07-edit",
+              "type": "edit",
+              "title": "Reset and clean up",
+              "instruction": "Add a `beforeEach` that clears the products collection and an `afterAll` that closes the client."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Tests must not depend on each other. Resetting state before each test costs milliseconds and removes whole classes of flakiness." },
+            { "type": "code", "text": "beforeEach(async () => {\n  await db.products.deleteMany({});\n});\n\nafterAll(async () => {\n  await client.close();\n});" },
+            { "type": "note", "text": "Never point the test suite at your development database. A mis-scoped `deleteMany({})` would erase real work." }
+          ],
+          "task": "Reset the collection before each test and close the client after all.",
+          "starterCode": "// Set up and tear down the database\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["beforeEach", "deleteMany", "afterAll"],
+          "hints": [
+            "Hooks are async — await the cleanup inside them.",
+            "beforeEach(async () => {\n  await db.products.deleteMany({});\n});"
+          ],
+          "solution": "beforeEach(async () => {\n  await db.products.deleteMany({});\n});\n\nafterAll(async () => {\n  await client.close();\n});\n",
+          "reflectionPrompt": "Why can tests pass individually but fail when the whole suite runs in a different order?"
+        },
+        {
+          "id": "testing-08-auth-request",
+          "title": "8. Testing protected routes",
+          "concept": "Authorization header",
+          "summary": "Requests need credentials, and the rejection path needs a test too.",
+          "activities": [
+            {
+              "id": "testing-08-see",
+              "type": "worked-example",
+              "title": "Sign in, then call",
+              "instruction": "Get a token from the login route (or sign one in the test), attach it with `.set('Authorization', \\`Bearer ${token}\\`)`, and call the protected route.",
+              "example": "const login = await request(app)\n  .post('/login')\n  .send({ email: 'a@b.c', password: 'secret' });\n\nconst res = await request(app)\n  .get('/orders')\n  .set('Authorization', `Bearer ${login.body.token}`);\n\nexpect(res.status).toBe(200);"
+            },
+            {
+              "id": "testing-08-predict",
+              "type": "prediction",
+              "title": "Missing test",
+              "question": "Which case is most often forgotten in protected-route tests?",
+              "choices": [
+                "A valid request returning 200",
+                "The request with no token, which must return 401",
+                "The response being JSON"
+              ],
+              "answer": "The request with no token, which must return 401",
+              "explanation": "The happy path is easy to remember. The unauthenticated case is the security property, so it needs its own test."
+            },
+            {
+              "id": "testing-08-edit",
+              "type": "edit",
+              "title": "Attach a token",
+              "instruction": "Call GET `/orders` with a Bearer token from `login.body.token` and expect 200."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Auth tests should cover three requests: no credentials, valid credentials, and insufficient permission. Each maps to a different status." },
+            { "type": "code", "text": "const res = await request(app)\n  .get('/orders')\n  .set('Authorization', `Bearer ${token}`);" },
+            { "type": "note", "text": "Sign test tokens with the test secret and short expiry. Never reuse a real user's credentials in the suite." }
+          ],
+          "task": "Test a protected route with a Bearer token.",
+          "starterCode": "import request from 'supertest';\nimport { app } from './app.js';\n\n// GET /orders as a signed-in user\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["set('Authorization'", "Bearer ", "res.status).toBe(200"],
+          "hints": [
+            "`.set(header, value)` adds a request header.",
+            ".set('Authorization', `Bearer ${token}`)"
+          ],
+          "solution": "import request from 'supertest';\nimport { app } from './app.js';\n\nit('lists orders for a signed-in user', async () => {\n  const login = await request(app)\n    .post('/login')\n    .send({ email: 'a@b.c', password: 'secret' });\n\n  const res = await request(app)\n    .get('/orders')\n    .set('Authorization', `Bearer ${login.body.token}`);\n\n  expect(res.status).toBe(200);\n});\n",
+          "reflectionPrompt": "Why is the unauthenticated request the most important case to test on a protected route?"
+        }
+      ]
+    },
+    {
+      "id": "testing-e2e",
+      "name": "End-to-End",
+      "language": "testing",
+      "description": "Drive the real app in a real browser like a user would.",
+      "lessons": [
+        {
+          "id": "testing-09-playwright",
+          "title": "9. Your first browser test",
+          "concept": "page.goto / expect(page)",
+          "summary": "Playwright launches a browser, navigates, and waits for assertions.",
+          "activities": [
+            {
+              "id": "testing-09-see",
+              "type": "worked-example",
+              "title": "A real browser",
+              "instruction": "`page.goto` navigates, and `await expect(locator)` retries until it passes or times out. That auto-waiting is why Playwright tests rarely need sleeps.",
+              "example": "import { test, expect } from '@playwright/test';\n\ntest('home page loads', async ({ page }) => {\n  await page.goto('/');\n  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();\n});"
+            },
+            {
+              "id": "testing-09-predict",
+              "type": "prediction",
+              "title": "Why no sleep",
+              "question": "Why does `await expect(locator).toBeVisible()` beat `await page.waitForTimeout(1000)`?",
+              "choices": [
+                "It is shorter to type",
+                "It retries until the condition holds, and fails fast instead of always waiting a second",
+                "It runs on the server"
+              ],
+              "answer": "It retries until the condition holds, and fails fast instead of always waiting a second",
+              "explanation": "Fixed sleeps make suites slow and still flaky. Web-first assertions poll and fail with a useful message."
+            },
+            {
+              "id": "testing-09-edit",
+              "type": "edit",
+              "title": "Load the home page",
+              "instruction": "Write a test that goes to `/` and asserts the heading 'Welcome' is visible."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "E2E tests are slow and valuable: they prove the assembled app works in a browser, including routing, forms, and auth." },
+            { "type": "code", "text": "await page.goto('/');\nawait expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();" },
+            { "type": "note", "text": "Keep the E2E set small and focused on critical journeys. Everything below that belongs in an API or unit test, where failures are cheaper to diagnose." }
+          ],
+          "task": "Visit / and assert the Welcome heading is visible.",
+          "starterCode": "import { test, expect } from '@playwright/test';\n\n// Load the home page\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["page.goto", "await expect(page", "toBeVisible"],
+          "hints": [
+            "The test receives `{ page }` as a fixture.",
+            "await page.goto('/');\nawait expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();"
+          ],
+          "solution": "import { test, expect } from '@playwright/test';\n\ntest('home page loads', async ({ page }) => {\n  await page.goto('/');\n  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();\n});\n",
+          "reflectionPrompt": "Which user journeys deserve an E2E test when each one costs seconds per run?"
+        },
+        {
+          "id": "testing-10-locators",
+          "title": "10. Locators and actions",
+          "concept": "getByRole / fill / click",
+          "summary": "Query the way a user perceives the page, not by CSS class.",
+          "activities": [
+            {
+              "id": "testing-10-see",
+              "type": "worked-example",
+              "title": "Accessible names first",
+              "instruction": "`getByRole` finds elements by the role and label assistive tech sees. `.fill` types into a field and `.click` activates a control. Both auto-wait for the element to be actionable.",
+              "example": "await page.getByRole('link', { name: 'Sign in' }).click();\nawait page.getByLabel('Email').fill('a@b.c');\nawait page.getByLabel('Password').fill('secret');\nawait page.getByRole('button', { name: 'Log in' }).click();"
+            },
+            {
+              "id": "testing-10-predict",
+              "type": "prediction",
+              "title": "CSS selectors",
+              "question": "Why avoid `page.locator('.btn-primary:nth-child(2)')`?",
+              "choices": [
+                "It is slower",
+                "It breaks on styling or layout changes that do not affect behaviour",
+                "Playwright does not support CSS"
+              ],
+              "answer": "It breaks on styling or layout changes that do not affect behaviour",
+              "explanation": "Role and label locators describe what the user sees. Class and position selectors couple the test to the implementation."
+            },
+            {
+              "id": "testing-10-edit",
+              "type": "edit",
+              "title": "Fill the login form",
+              "instruction": "Click the 'Sign in' link, fill the Email and Password fields, and click the 'Log in' button."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Locators that mirror the accessible tree also push you toward a more accessible UI — a useful side effect." },
+            { "type": "code", "text": "await page.getByLabel('Email').fill('a@b.c');\nawait page.getByRole('button', { name: 'Log in' }).click();" },
+            { "type": "note", "text": "If a control is hard to locate by role or label, that usually means a screen-reader user cannot find it either." }
+          ],
+          "task": "Fill the login form using role and label locators.",
+          "starterCode": "// Sign in with the form\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["getByRole(", "getByLabel(", ".fill("],
+          "hints": [
+            "`getByLabel` matches the label text associated with an input.",
+            "await page.getByLabel('Email').fill('a@b.c');"
+          ],
+          "solution": "await page.getByRole('link', { name: 'Sign in' }).click();\nawait page.getByLabel('Email').fill('a@b.c');\nawait page.getByLabel('Password').fill('secret');\nawait page.getByRole('button', { name: 'Log in' }).click();\n",
+          "reflectionPrompt": "Why does a button without an accessible name make a Playwright test harder to write?"
+        },
+        {
+          "id": "testing-11-login-flow",
+          "title": "11. Testing the whole journey",
+          "concept": "navigation assertions",
+          "summary": "One test walks signup to a signed-in page and checks the URL.",
+          "activities": [
+            {
+              "id": "testing-11-see",
+              "type": "worked-example",
+              "title": "Assert where the user landed",
+              "instruction": "After submitting, assert the URL and something only a signed-in user can see. Checking the URL alone can pass while the page is still an error screen.",
+              "example": "await page.getByLabel('Email').fill('a@b.c');\nawait page.getByLabel('Password').fill('secret');\nawait page.getByRole('button', { name: 'Log in' }).click();\n\nawait expect(page).toHaveURL('/dashboard');\nawait expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();"
+            },
+            {
+              "id": "testing-11-predict",
+              "type": "prediction",
+              "title": "URL only",
+              "question": "The URL becomes /dashboard but the page shows \"Unauthorized\". Would a URL-only assertion catch it?",
+              "choices": [
+                "Yes, the URL is correct",
+                "No — assert visible content as well",
+                "Only with a screenshot"
+              ],
+              "answer": "No — assert visible content as well",
+              "explanation": "Client-side routing can change the URL before data arrives or after an auth failure. Assert what the user sees."
+            },
+            {
+              "id": "testing-11-edit",
+              "type": "edit",
+              "title": "Login journey",
+              "instruction": "Submit the login form, then assert the URL is `/dashboard` and the 'Dashboard' heading is visible."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The login journey covers the most integration points in one test: form, API, cookie, session, redirect, and protected render." },
+            { "type": "code", "text": "await expect(page).toHaveURL('/dashboard');\nawait expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();" },
+            { "type": "note", "text": "Seed the test user through the API or a fixture, not the signup form. That keeps this test about logging in." }
+          ],
+          "task": "Test login through to the dashboard.",
+          "starterCode": "// Log in and land on the dashboard\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["getByLabel(", "toHaveURL(", "toBeVisible"],
+          "hints": [
+            "`await expect(page).toHaveURL('/dashboard')` waits for the navigation.",
+            "await expect(page).toHaveURL('/dashboard');"
+          ],
+          "solution": "await page.getByLabel('Email').fill('a@b.c');\nawait page.getByLabel('Password').fill('secret');\nawait page.getByRole('button', { name: 'Log in' }).click();\n\nawait expect(page).toHaveURL('/dashboard');\nawait expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();\n",
+          "reflectionPrompt": "Why should this test start from a seeded user rather than signing up through the UI?"
+        },
+        {
+          "id": "testing-12-ci",
+          "title": "12. Running in CI",
+          "concept": "GitHub Actions workflow",
+          "summary": "Tests only protect you if they run on every push.",
+          "activities": [
+            {
+              "id": "testing-12-see",
+              "type": "worked-example",
+              "title": "One workflow, every push",
+              "instruction": "A workflow checks out the code, installs dependencies, installs browsers, and runs the suite. `npm ci` plus a lockfile makes the run reproducible.",
+              "example": "name: test\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npx playwright install --with-deps\n      - run: npx playwright test"
+            },
+            {
+              "id": "testing-12-predict",
+              "type": "prediction",
+              "title": "Uploading failures",
+              "question": "Why upload the Playwright report as an artifact on failure?",
+              "choices": [
+                "To make the run faster",
+                "Traces and screenshots explain a failure you cannot reproduce locally",
+                "CI requires it"
+              ],
+              "answer": "Traces and screenshots explain a failure you cannot reproduce locally",
+              "explanation": "A trace records DOM snapshots and network calls per step, which is usually enough to diagnose a flaky CI failure without re-running."
+            },
+            {
+              "id": "testing-12-edit",
+              "type": "edit",
+              "title": "Add the workflow",
+              "instruction": "Write a workflow triggered on push that checks out the code, runs `npm ci`, and runs `npx playwright test`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "CI is the enforcement point: tests, type checks, and builds run on a clean machine before anything merges." },
+            { "type": "code", "text": "on: [push, pull_request]\nsteps:\n  - uses: actions/checkout@v4\n  - run: npm ci\n  - run: npx playwright install --with-deps\n  - run: npx playwright test" },
+            { "type": "note", "text": "Start the app for E2E tests through `webServer` in the Playwright config. A manually started server is the most common source of CI-only failures." }
+          ],
+          "task": "Add a GitHub Actions workflow that installs deps and runs Playwright.",
+          "starterCode": "name: test\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["on:", "actions/checkout", "npm ci", "npx playwright test"],
+          "hints": [
+            "Start with `on: [push, pull_request]` and a `jobs:` block.",
+            "- run: npx playwright test"
+          ],
+          "solution": "name: test\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npx playwright install --with-deps\n      - run: npx playwright test\n",
+          "reflectionPrompt": "Why does `npm ci` make CI runs more reproducible than `npm install`?"
+        }
+      ]
+    }
+  ]
+}

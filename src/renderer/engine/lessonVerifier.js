@@ -67,7 +67,7 @@ export function flattenLessons(lessonsData) {
   const out = [];
   (lessonsData?.tracks || []).forEach((track) => {
     (track.lessons || []).forEach((lesson) => {
-      out.push({ ...lesson, trackId: track.id, language: track.language });
+        out.push({ ...lesson, trackId: track.id, language: track.language, premium: !!track.premium });
     });
   });
   return out;

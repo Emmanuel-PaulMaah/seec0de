@@ -1,0 +1,472 @@
+{
+  "tracks": [
+    {
+      "id": "security-injection",
+      "name": "Input & Injection",
+      "language": "security",
+      "description": "Treat every request as hostile until a validator proves otherwise.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "security-01-boundary",
+          "title": "1. Validate at the boundary",
+          "concept": "input validation",
+          "summary": "Parse once at the edge, then pass trusted values down.",
+          "activities": [
+            {
+              "id": "security-01-see",
+              "type": "worked-example",
+              "title": "One gate, one shape",
+              "instruction": "A route handler should receive values it can trust. Validate types, ranges and formats in one place, and throw a 400 before any business logic runs. Client-side checks are UX; they are not a security control, because the client is not yours.",
+              "example": "function parseSignup(body) {\n  const email = String(body.email ?? '').trim().toLowerCase();\n  const age = Number(body.age);\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    throw new HttpError(400, 'invalid email');\n  }\n  if (!Number.isInteger(age) || age < 13 || age > 120) {\n    throw new HttpError(400, 'invalid age');\n  }\n  return { email, age };\n}"
+            },
+            {
+              "id": "security-01-predict",
+              "type": "prediction",
+              "title": "A missing field",
+              "question": "A request arrives without `age`. What should the handler do?",
+              "choices": [
+                "Throw a 400 before touching the database",
+                "Treat a missing value as 0 and continue",
+                "Let the database constraint reject it later"
+              ],
+              "answer": "Throw a 400 before touching the database",
+              "explanation": "Rejecting early keeps unknown data out of your logs, queries and business rules, and gives the caller one clear error instead of a stack trace from three layers down."
+            },
+            {
+              "id": "security-01-edit",
+              "type": "edit",
+              "title": "Parse an age",
+              "instruction": "Write `parseAge(raw)` that converts the input with `Number`, and throws `new HttpError(400, ...)` unless the result is an integer from 13 to 120."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every request body, query string, header and cookie arrives as untrusted text. The boundary is the only place you convert that text into the values the rest of the program assumes." },
+            { "type": "code", "text": "const age = Number(body.age);\nif (!Number.isInteger(age) || age < 13 || age > 120) {\n  throw new HttpError(400, 'invalid age');\n}" },
+            { "type": "note", "text": "Do the conversion and the check in the same function. A validator that returns a value the caller can forget to unwrap eventually gets bypassed." }
+          ],
+          "task": "Write parseAge(raw) that returns a validated integer or throws a 400 HttpError.",
+          "starterCode": "function parseAge(raw) {\n  // Convert, validate, or throw new HttpError(400, 'invalid age')\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["number(raw)", "number.isinteger", "throw new httperror(400"],
+          "hints": [
+            "`Number(raw)` returns NaN for text like `'abc'`, and `Number.isInteger` rejects NaN and decimals.",
+            "const age = Number(raw);\nif (!Number.isInteger(age) || age < 13 || age > 120) {\n  throw new HttpError(400, 'invalid age');\n}\nreturn age;"
+          ],
+          "solution": "function parseAge(raw) {\n  const age = Number(raw);\n  if (!Number.isInteger(age) || age < 13 || age > 120) {\n    throw new HttpError(400, 'invalid age');\n  }\n  return age;\n}\n",
+          "reflectionPrompt": "Why is a check in the browser never enough on its own?"
+        },
+        {
+          "id": "security-02-sqli",
+          "title": "2. SQL injection",
+          "concept": "parameterized queries",
+          "summary": "Values travel separately from the query text, so data can never become code.",
+          "activities": [
+            {
+              "id": "security-02-see",
+              "type": "worked-example",
+              "title": "Two ways to build a query",
+              "instruction": "String concatenation mixes user text into the query's structure. A parameterized query sends the SQL and the value on separate channels; the driver binds the value as data no matter what it contains.",
+              "example": "// Never do this\nconst bad = `SELECT * FROM users WHERE email = '${email}'`;\n\n// Do this\nconst good = await db.query(\n  'SELECT id, email FROM users WHERE email = $1',\n  [email]\n);"
+            },
+            {
+              "id": "security-02-predict",
+              "type": "prediction",
+              "title": "The classic payload",
+              "question": "What does the input `' OR '1'='1` do to the concatenated query above?",
+              "choices": [
+                "Returns every row, because the WHERE clause becomes always true",
+"Only searches for that literal email address",
+                "Raises a syntax error and changes nothing"
+              ],
+              "answer": "Returns every row, because the WHERE clause becomes always true",
+              "explanation": "The quote closes the string, so `OR '1'='1'` joins the query logic. The same trick with `UNION SELECT` reads other tables, and with `; DROP` it writes."
+            },
+            {
+              "id": "security-02-edit",
+              "type": "edit",
+              "title": "Parameterize it",
+              "instruction": "Rewrite the query so the email is passed as a parameter instead of being concatenated."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Injection happens when data is interpreted as syntax. SQL is the classic case, but the same flaw shows up in shell commands, LDAP filters and template engines." },
+            { "type": "code", "text": "await db.query(\n  'SELECT id, email FROM users WHERE email = $1',\n  [email]\n);" },
+            { "type": "note", "text": "Placeholders only work for values. You cannot parameterize a column or table name — accept those from a fixed allow-list instead." }
+          ],
+          "task": "Replace the concatenated email with a $1 placeholder and pass the value separately.",
+          "starterCode": "async function findUser(db, email) {\n  const sql = \"SELECT id, email FROM users WHERE email = '\" + email + \"'\";\n  const result = await db.query(sql);\n  return result.rows[0] || null;\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["where email = $1", "[email]"],
+          "hints": [
+            "Keep the SQL a single string with `$1` where the value belongs.",
+            "const result = await db.query(\n  'SELECT id, email FROM users WHERE email = $1',\n  [email]\n);"
+          ],
+          "solution": "async function findUser(db, email) {\n  const result = await db.query(\n    'SELECT id, email FROM users WHERE email = $1',\n    [email]\n  );\n  return result.rows[0] || null;\n}\n",
+          "reflectionPrompt": "Why can't a table name be passed as a query parameter?"
+        },
+        {
+          "id": "security-03-xss",
+          "title": "3. XSS and escaping",
+          "concept": "output encoding",
+          "summary": "Render user text as text. Only inject HTML you generated yourself.",
+          "activities": [
+            {
+              "id": "security-03-see",
+              "type": "worked-example",
+              "title": "Text is not markup",
+              "instruction": "React escapes any string you place in JSX, so `<img onerror=...>` shows up as literal characters. The moment you switch to raw HTML injection, that guarantee is gone and the browser executes whatever the string contains.",
+              "example": "// Safe: rendered as text\n<p>{comment}</p>\n\n// Unsafe: the string becomes markup\n<p dangerouslySetInnerHTML={{ __html: comment }} />"
+            },
+            {
+              "id": "security-03-predict",
+              "type": "prediction",
+              "title": "What gets executed?",
+              "question": "A comment contains `<img src=x onerror=\"alert(1)\">`. You render it with `<p>{comment}</p>`. What happens?",
+              "choices": [
+                "The text is displayed; no script runs",
+                "The image loads and the handler fires",
+                "React throws an error on the angle brackets"
+              ],
+              "answer": "The text is displayed; no script runs",
+              "explanation": "JSX interpolation escapes HTML entities. The angle brackets never become a tag, which is exactly why developers reach for raw HTML injection to 'fix' displayed markup — and reopen the hole."
+            },
+            {
+              "id": "security-03-edit",
+              "type": "edit",
+              "title": "Render it safely",
+              "instruction": "Change the comment card so the comment is rendered as text, not as HTML."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Escaping has to match the context: HTML text, an attribute, a URL, a script block, a CSS value. A string that is safe in one place can break out of another." },
+            { "type": "code", "text": "function CommentCard({ comment }) {\n  return <p className=\"comment\">{comment}</p>;\n}" },
+            { "type": "note", "text": "If rich text is a real product requirement, store structured content and render it with your own components. A sanitizer is a fallback, not a plan." }
+          ],
+          "task": "Replace the raw HTML injection with a plain JSX text node.",
+          "starterCode": "function CommentCard({ comment }) {\n  return (\n    <p\n      className=\"comment\"\n      dangerouslySetInnerHTML={{ __html: comment }}\n    />\n  );\n}\n",
+          "matchType": "source-regex",
+          "sourceChecks": ["\\{comment\\}", "^(?![\\s\\S]*dangerouslySetInnerHTML)"],
+          "hints": [
+            "JSX renders a string inside braces as escaped text.",
+            "return (\n  <p className=\"comment\">{comment}</p>\n);"
+          ],
+          "solution": "function CommentCard({ comment }) {\n  return (\n    <p className=\"comment\">{comment}</p>\n  );\n}\n",
+          "reflectionPrompt": "Why is escaping in the component safer than sanitizing on the way into the database?"
+        }
+      ]
+    },
+    {
+      "id": "security-browser",
+      "name": "Browser Defenses",
+      "language": "security",
+      "description": "The protections the browser offers — and how to switch them on.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "security-04-csrf",
+          "title": "4. CSRF and SameSite",
+          "concept": "cross-site request forgery",
+          "summary": "A browser sends cookies automatically, so requests need a second proof.",
+          "activities": [
+            {
+              "id": "security-04-see",
+              "type": "worked-example",
+              "title": "The automatic cookie",
+              "instruction": "An attacker's site can submit a form to your domain, and the browser attaches your session cookie. Cookies must be `httpOnly`, `secure`, and `sameSite` — and state-changing routes still deserve a CSRF token as defence in depth.",
+              "example": "res.cookie('session', token, {\n  httpOnly: true,\n  secure: true,\n  sameSite: 'lax',\n  maxAge: 1000 * 60 * 60 * 24 * 7,\n});"
+            },
+            {
+              "id": "security-04-predict",
+              "type": "prediction",
+              "title": "Lax across sites",
+              "question": "With `sameSite: 'lax'`, does a cross-site form POST carry the session cookie?",
+              "choices": [
+                "No — Lax cookies are withheld on cross-site POST",
+                "Yes — any request to the domain sends the cookie",
+                "Only if the request is over HTTPS"
+              ],
+              "answer": "No — Lax cookies are withheld on cross-site POST",
+              "explanation": "Lax allows top-level navigations (a clicked link) but not cross-site subrequests or form POSTs. That blocks the basic attack, though subdomain holes and older clients still argue for a token."
+            },
+            {
+              "id": "security-04-edit",
+              "type": "edit",
+              "title": "Harden the session cookie",
+              "instruction": "Set the session cookie with `httpOnly`, `secure` and `sameSite: 'lax'`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "CSRF exploits ambient authority: the browser volunteers credentials the attacker cannot read. The fix is to require something the attacker cannot cause the browser to send — a token tied to the session." },
+            { "type": "code", "text": "app.post('/transfer', requireCsrf, (req, res) => {\n  transfer(req.user.id, req.body.amount);\n  res.status(204).end();\n});" },
+            { "type": "note", "text": "`httpOnly` keeps JavaScript from reading the cookie, which limits the damage of an XSS bug to the page it runs on." }
+          ],
+          "task": "Configure the session cookie with httpOnly, secure and sameSite 'lax'.",
+          "starterCode": "res.cookie('session', token, {\n  maxAge: ONE_WEEK,\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["httponly", "secure", "samesite"],
+          "hints": [
+            "Add three properties to the options object.",
+            "res.cookie('session', token, {\n  httpOnly: true,\n  secure: true,\n  sameSite: 'lax',\n  maxAge: ONE_WEEK,\n});"
+          ],
+          "solution": "res.cookie('session', token, {\n  httpOnly: true,\n  secure: true,\n  sameSite: 'lax',\n  maxAge: ONE_WEEK,\n});\n",
+          "reflectionPrompt": "Why does a CSRF token still matter when cookies are already SameSite?"
+        },
+        {
+          "id": "security-05-headers",
+          "title": "5. Security headers and CSP",
+          "concept": "Content-Security-Policy",
+          "summary": "One response header can block whole classes of injected script.",
+          "activities": [
+            {
+              "id": "security-05-see",
+              "type": "worked-example",
+              "title": "A policy, not a suggestion",
+              "instruction": "A CSP lists which sources may load scripts, styles, images and frames. Start strict — `default-src 'self'` — and add specific origins only when something breaks. Add HSTS and `X-Content-Type-Options: nosniff` for the same reason: make the browser refuse anything ambiguous.",
+              "example": "app.use((req, res, next) => {\n  res.setHeader('Content-Security-Policy', \"default-src 'self'\");\n  res.setHeader('X-Content-Type-Options', 'nosniff');\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');\n  next();\n});"
+            },
+            {
+              "id": "security-05-predict",
+              "type": "prediction",
+              "title": "What CSP is for",
+              "question": "An attacker manages to inject `<script src=\"https://evil.example/x.js\">` into your page. What does `default-src 'self'` do?",
+              "choices": [
+                "Blocks the script because its origin is not allowed",
+                "Escapes the script tag before it reaches the browser",
+                "Nothing — CSP only covers styles and images"
+              ],
+              "answer": "Blocks the script because its origin is not allowed",
+              "explanation": "CSP is a second line of defence. It does not remove the injected markup, but it stops that markup from loading code. Inline scripts need `'unsafe-inline'`, which is why CSP and escaping are complements."
+            },
+            {
+              "id": "security-05-edit",
+              "type": "edit",
+              "title": "Add the policy",
+              "instruction": "Set a `Content-Security-Policy` header of `default-src 'self'` in the middleware."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Headers are cheap, central and apply to every response. Set them once in middleware instead of remembering them in each route." },
+            { "type": "code", "text": "res.setHeader('Content-Security-Policy', \"default-src 'self'\");\nres.setHeader('X-Content-Type-Options', 'nosniff');" },
+            { "type": "note", "text": "Deploy CSP in report-only mode first (`Content-Security-Policy-Report-Only`) to find blocked resources without breaking users." }
+          ],
+          "task": "Set a Content-Security-Policy header of default-src 'self'.",
+          "starterCode": "app.use((req, res, next) => {\n  // Add the security headers here\n  next();\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["content-security-policy", "default-src 'self'"],
+          "hints": [
+            "Use `res.setHeader(name, value)`.",
+            "res.setHeader('Content-Security-Policy', \"default-src 'self'\");"
+          ],
+          "solution": "app.use((req, res, next) => {\n  res.setHeader('Content-Security-Policy', \"default-src 'self'\");\n  next();\n});\n",
+          "reflectionPrompt": "Why would you ship a CSP in report-only mode before enforcing it?"
+        },
+        {
+          "id": "security-06-secrets",
+          "title": "6. Secrets stay out of the repo",
+          "concept": "configuration vs secrets",
+          "summary": "Read credentials from the environment and fail loudly when they are missing.",
+          "activities": [
+            {
+              "id": "security-06-see",
+              "type": "worked-example",
+              "title": "Fail at boot, not at checkout",
+              "instruction": "A secret pasted into source is in the git history forever, even after you delete the line. Read it from the environment, check it once at startup, and keep a committed `.env.example` with names but no values.",
+              "example": "const stripeKey = process.env.STRIPE_SECRET_KEY;\nif (!stripeKey) {\n  throw new Error('STRIPE_SECRET_KEY is not set');\n}\n\nconst stripe = new Stripe(stripeKey);"
+            },
+            {
+              "id": "security-06-predict",
+              "type": "prediction",
+              "title": "Deleted isn't gone",
+              "question": "A key is committed and then removed in the next commit. Is it safe now?",
+              "choices": [
+                "No — the commit still exists and is one `git log` away",
+                "Yes — the current tree no longer contains it",
+                "Only if the repository is private"
+              ],
+              "answer": "No — the commit still exists and is one `git log` away",
+              "explanation": "History is the point of git. Treat any committed credential as compromised: revoke it, rotate it, and check for use before assuming the exposure was harmless."
+            },
+            {
+              "id": "security-06-edit",
+              "type": "edit",
+              "title": "Read it from the environment",
+              "instruction": "Replace the hardcoded key with `process.env.STRIPE_SECRET_KEY` and throw an error when it is missing."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A secret is anything that grants access: API keys, signing keys, database URLs with passwords, webhook secrets. Code is reviewed and copied; secrets should be injected per environment and never logged." },
+            { "type": "code", "text": "const key = process.env.STRIPE_SECRET_KEY;\nif (!key) throw new Error('STRIPE_SECRET_KEY is not set');" },
+            { "type": "note", "text": "Validate every required variable at startup. A missing key discovered at 2am on the payment path is an outage; one discovered at boot is a failed deploy." }
+          ],
+          "task": "Read STRIPE_SECRET_KEY from the environment and throw if it is missing.",
+          "starterCode": "const stripe = new Stripe('sk_live_51H8examplekey');\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["process.env.stripe_secret_key", "throw new error"],
+          "hints": [
+            "Assign the environment variable to a constant first.",
+            "const key = process.env.STRIPE_SECRET_KEY;\nif (!key) throw new Error('STRIPE_SECRET_KEY is not set');\nconst stripe = new Stripe(key);"
+          ],
+          "solution": "const key = process.env.STRIPE_SECRET_KEY;\nif (!key) throw new Error('STRIPE_SECRET_KEY is not set');\n\nconst stripe = new Stripe(key);\n",
+          "reflectionPrompt": "Why is a committed key compromised even if the repository is deleted?"
+        }
+      ]
+    },
+    {
+      "id": "security-access",
+      "name": "Access & Supply Chain",
+      "language": "security",
+      "description": "Who can do what, and what you are really shipping under the hood.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "security-07-authz",
+          "title": "7. Check the object, not just the login",
+          "concept": "object-level authorization",
+          "summary": "Being signed in says nothing about owning this particular row.",
+          "activities": [
+            {
+              "id": "security-07-see",
+              "type": "worked-example",
+              "title": "Scope the query",
+              "instruction": "The most common API authorization bug is fetching by id and trusting the session to be enough. Put the owner filter in the query itself so a missing check cannot slip through a new route.",
+              "example": "// Vulnerable: any signed-in user can read any invoice\nconst invoice = await Invoice.findById(req.params.id);\n\n// Scoped: the query returns nothing for someone else's invoice\nconst invoice = await Invoice.findOne({\n  _id: req.params.id,\n  userId: req.user.id,\n});\nif (!invoice) return res.status(404).end();"
+            },
+            {
+              "id": "security-07-predict",
+              "type": "prediction",
+              "title": "Which check stops IDOR?",
+              "question": "Which change actually stops a user from reading another user's invoice?",
+              "choices": [
+                "Filtering the query by the session's user id",
+                "Checking that a session exists",
+                "Returning 403 whenever the id is a number"
+              ],
+              "answer": "Filtering the query by the session's user id",
+              "explanation": "Authentication answers 'who are you'. Authorization answers 'may you touch this row'. Only the second check knows which object was requested."
+            },
+            {
+              "id": "security-07-edit",
+              "type": "edit",
+              "title": "Scope the read",
+              "instruction": "Change the lookup so it only returns an invoice that belongs to `req.user.id`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every route that takes an id from the client is an authorization checkpoint. Apply the same rule to updates and deletes: the owner filter belongs in the `WHERE` clause, not in a branch above it." },
+            { "type": "code", "text": "const invoice = await Invoice.findOne({\n  _id: req.params.id,\n  userId: req.user.id,\n});" },
+            { "type": "note", "text": "Return 404 for someone else's resource. A 403 confirms the id exists, which is a small but free piece of information for an attacker." }
+          ],
+          "task": "Scope the invoice lookup to the current user.",
+          "starterCode": "app.get('/invoices/:id', requireAuth, async (req, res) => {\n  const invoice = await Invoice.findById(req.params.id);\n  if (!invoice) return res.status(404).end();\n  res.json(invoice);\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["userid: req.user.id", "findone("],
+          "hints": [
+            "Replace `findById` with `findOne` and add the owner filter.",
+            "const invoice = await Invoice.findOne({\n  _id: req.params.id,\n  userId: req.user.id,\n});"
+          ],
+          "solution": "app.get('/invoices/:id', requireAuth, async (req, res) => {\n  const invoice = await Invoice.findOne({\n    _id: req.params.id,\n    userId: req.user.id,\n  });\n  if (!invoice) return res.status(404).end();\n  res.json(invoice);\n});\n",
+          "reflectionPrompt": "Why is a query-level owner filter safer than an `if` that compares ids afterwards?"
+        },
+        {
+          "id": "security-08-deps",
+          "title": "8. Dependencies you didn't write",
+          "concept": "supply chain hygiene",
+          "summary": "Most of your production code was installed, so audit what gets installed.",
+          "activities": [
+            {
+              "id": "security-08-see",
+              "type": "worked-example",
+              "title": "Lock it and check it",
+              "instruction": "A lockfile pins exact resolved versions so every machine installs the same tree. `npm ci` uses it and refuses to drift; `npm audit` flags known advisories. Both belong in CI, and a new dependency deserves a quick look at its maintainers, download count and install scripts.",
+              "example": "npm ci\nnpm audit --omit=dev --audit-level=high"
+            },
+            {
+              "id": "security-08-predict",
+              "type": "prediction",
+              "title": "What the lockfile promises",
+              "question": "What does a committed lockfile guarantee?",
+              "choices": [
+                "The same resolved versions and integrity hashes on every install",
+                "That every package in the tree is free of vulnerabilities",
+                "That no dependency runs install scripts"
+              ],
+              "answer": "The same resolved versions and integrity hashes on every install",
+              "explanation": "Reproducibility is not safety. The lockfile tells you what you have; an audit and a review tell you whether you want it."
+            },
+            {
+              "id": "security-08-edit",
+              "type": "edit",
+              "title": "Gate the build",
+              "instruction": "Write the two install/audit commands a CI step should run for a production dependency check."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every added package runs with your server's privileges and can read your environment. That is a reasonable trade for a well-maintained library and a bad one for an unmaintained package with two downloads." },
+            { "type": "code", "text": "npm ci\nnpm audit --omit=dev --audit-level=high" },
+            { "type": "note", "text": "Typosquats rely on you typing `cross-env` as `crossenv`. Paste package names from the registry page instead of typing them from memory." }
+          ],
+          "task": "Write the reproducibility install and the audit command CI should run.",
+          "starterCode": "# Production dependency checks\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["npm ci", "npm audit"],
+          "hints": [
+            "`npm ci` installs exactly what the lockfile says.",
+            "npm ci\nnpm audit --omit=dev --audit-level=high"
+          ],
+          "solution": "npm ci\nnpm audit --omit=dev --audit-level=high\n",
+          "reflectionPrompt": "Why is `npm install` a poor choice for a clean CI build?"
+        },
+        {
+          "id": "security-09-incident",
+          "title": "9. When a key leaks",
+          "concept": "exposure response",
+          "summary": "Revoke first, investigate second, and keep credentials out of your logs.",
+          "activities": [
+            {
+              "id": "security-09-see",
+              "type": "worked-example",
+              "title": "Redact before you log",
+              "instruction": "Logs are shipped, copied and retained, so a token in a log line is a leaked token. Write the redaction once and route every log through it. If a real leak happens, the order is: revoke, rotate, then read the audit log for what was used.",
+              "example": "function redact(line) {\n  return String(line).replace(\n    /(sk_live_|AIza)[A-Za-z0-9_-]+/g,\n    '[redacted]'\n  );\n}\n\nconsole.log(redact(`auth failed for ${key}`));"
+            },
+            {
+              "id": "security-09-predict",
+              "type": "prediction",
+              "title": "First move",
+              "question": "A production API key appears in a public error report. What is the first action?",
+              "choices": [
+                "Revoke and rotate the key",
+                "Delete the report and monitor",
+                "Wait to see whether anyone uses it"
+              ],
+              "answer": "Revoke and rotate the key",
+              "explanation": "You cannot un-publish a secret. Revoking ends the exposure immediately; investigation is still worth doing, but it happens after the credential is dead."
+            },
+            {
+              "id": "security-09-edit",
+              "type": "edit",
+              "title": "Redact the log",
+              "instruction": "Write `redact(line)` that replaces any `sk_live_…` or `AIza…` token with `[redacted]`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Incidents are normal; unmanaged incidents are not. Write the response down before you need it: who revokes, who rotates, who checks usage, who talks to customers." },
+            { "type": "code", "text": "return String(line).replace(/(sk_live_|AIza)[A-Za-z0-9_-]+/g, '[redacted]');" },
+            { "type": "note", "text": "After rotating, search the code, CI config, logs and browser bundles for the old value. Keys hide in error trackers and screenshots too." }
+          ],
+          "task": "Write a redact function that masks sk_live_ and AIza tokens.",
+          "starterCode": "function redact(line) {\n  // Replace sk_live_… and AIza… tokens with [redacted]\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["replace(", "redacted"],
+          "hints": [
+            "One regular expression can match both prefixes, and `replace` with the `g` flag handles every occurrence.",
+            "return String(line).replace(/(sk_live_|AIza)[A-Za-z0-9_-]+/g, '[redacted]');"
+          ],
+          "solution": "function redact(line) {\n  return String(line).replace(\n    /(sk_live_|AIza)[A-Za-z0-9_-]+/g,\n    '[redacted]'\n  );\n}\n",
+          "reflectionPrompt": "Why is revoking a leaked key more urgent than finding out who leaked it?"
+        }
+      ]
+    }
+  ]
+}

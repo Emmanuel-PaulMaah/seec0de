@@ -130,6 +130,7 @@
   /* ── Borders ─────────────────────────────────────────────────────────── */
   --border:         rgba(255, 255, 255, 0.06);
   --border-strong:  rgba(255, 255, 255, 0.10);
+  --border-subtle:  rgba(255, 255, 255, 0.04);
   --border-focus:   #c8ff4d;
 
   /* ── Text ────────────────────────────────────────────────────────────── */
@@ -210,16 +211,19 @@
   --bg-hover:       var(--bg-tertiary);
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
-  --border:         rgba(0, 0, 0, 0.06);
-  --border-strong:  rgba(0, 0, 0, 0.10);
+  --border:         rgba(0, 0, 0, 0.08);
+  --border-strong:  rgba(0, 0, 0, 0.14);
+  --border-subtle:  rgba(0, 0, 0, 0.05);
   --border-focus:   #4f46e5;
 
   /* ── Text ────────────────────────────────────────────────────────────── */
-  --text-primary:   #18181b;
+  --text-primary:   #151518;
   /* All three text levels clear WCAG AA (4.5:1) on every light surface,
-   * including --bg-input and --bg-surface. */
-  --text-secondary: #52525b;
-  --text-muted:     #686871;
+   * including --bg-input and --bg-surface. Light text renders thinner than
+   * dark text, so the lower tiers sit darker here than their dark-mode
+   * counterparts. */
+  --text-secondary: #3f3f46;
+  --text-muted:     #5b5b66;
 
   /* ── Accent ──────────────────────────────────────────────────────────── */
   /* indigo-600: white text on it is 6.3:1 (indigo-500 was 4.47:1). Hover
@@ -244,7 +248,7 @@
   --keyword-highlight:  #4f46e5;
   --string-highlight:   #c2410c;
   --function-highlight: #0f766e;
-  --comment-highlight:  #64748b;
+  --comment-highlight:  #475569;
   --number-highlight:   #0f766e;
   --type-highlight:     #0e7490;
   --keyword-soft:       rgba(79, 70, 229, 0.06);
@@ -553,13 +557,13 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 
 .workspace-editor-shell {
   display: flex;
-  flex: 1;
-  /* Floor the editor so the fixed-width panels around it (guide,
-   * instruction, preview, explanation) can never squeeze it to zero —
-   * when their combined widths exceed the window, the editor used to
-   * collapse entirely and the preview looked like it was sitting "on
-   * top of" the code. With a floor, the workspace overflows instead and
-   * scrolls horizontally (see .app-workspace overflow rules). */
+  /* Basis = the floor, not 0, so when the row is squeezed the flanks shrink
+   * and the editor's minimum is part of the calculation. */
+  flex: 1 1 220px;
+  /* Floor the editor so the panels around it (guide, instruction, preview,
+   * explanation) can never squeeze it to zero. When the window (or zoom)
+   * leaves too little room, those flanking panels shrink instead — see their
+   * shell styles — so the row always fits and nothing is pushed off-screen. */
   min-width: 220px;
   min-height: 0;
   overflow: hidden;
@@ -1085,13 +1089,11 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 }
 
 @media (max-width: 1100px) {
+  /* Keep the workspace a single compressible row at narrow widths and high
+   * zoom — side panels shrink (see their shell styles), so the explanation
+   * panel can never be pushed past the right edge. */
   .app-workspace:not(.learn-mode-workspace) {
-    overflow-x: auto !important;
-  }
-
-  .app-workspace:not(.learn-mode-workspace) .workspace-editor-shell {
-    flex: 0 0 420px;
-    min-width: 420px;
+    overflow-x: hidden !important;
   }
 }
 
@@ -1115,4 +1117,881 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
   }
+}
+
+.ui-dialog.upgrade-dialog {
+  width: min(100%, 560px);
+  max-height: min(86vh, 760px);
+  overflow-y: auto;
+}
+
+.upgrade-plan-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+
+.upgrade-active-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border-subtle));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-secondary));
+}
+
+.upgrade-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  background: var(--bg-tertiary, var(--bg-secondary));
+  color: var(--text-primary);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upgrade-checkout-note {
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.upgrade-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+.learn-language-blurb {
+  max-width: 640px;
+  margin: 16px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.learn-certificate-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-secondary));
+}
+
+.learn-certificate-icon {
+  display: inline-flex;
+  color: var(--accent);
+}
+
+.learn-certificate-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.learn-certificate-copy strong {
+  color: var(--text-primary);
+  font-size: 11.5px;
+}
+
+.learn-certificate-copy span {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.learn-certificate-btn,
+.certificate-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--on-accent, #07110a);
+  font-size: 10.5px;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.certificate-download:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.certificate-dialog {
+  max-width: 720px;
+  width: min(720px, calc(100vw - 32px));
+}
+
+.certificate-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  aspect-ratio: 1.58;
+  margin: 2px 0 14px;
+  padding: 34px 40px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, #1e2a24);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(72, 214, 140, 0.16), transparent 42%),
+    linear-gradient(145deg, #0e1714 0%, #0b0f14 52%, #101a16 100%);
+  color: #edf7f1;
+  text-align: center;
+}
+
+.certificate-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(72, 214, 140, 0.5);
+  border-radius: 50%;
+  color: #48d68c;
+}
+
+.certificate-brand {
+  margin-top: 8px;
+  color: #48d68c;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: lowercase;
+}
+
+.certificate-kicker {
+  margin-top: 18px;
+  color: #8ea99c;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+}
+
+.certificate-name {
+  margin-top: 8px;
+  color: #ffffff;
+  font-size: clamp(20px, 3.2vw, 31px);
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.certificate-copy {
+  margin: 12px 0 0;
+  color: #93a79c;
+  font-size: 11.5px;
+}
+
+.certificate-course {
+  max-width: 92%;
+  margin-top: 5px;
+  color: #48d68c;
+  font-size: clamp(15px, 2.1vw, 20px);
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.certificate-meta {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 20px;
+  color: #b6c8be;
+  font-size: 10.5px;
+}
+
+.certificate-foot {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(142, 169, 156, 0.22);
+  color: #6f877b;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.7px;
+}
+
+.certificate-error {
+  margin: 0 0 10px;
+  color: #e5484d;
+  font-size: 11px;
+}
+
+.learn-interview-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 10px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 8%, var(--bg-secondary)), var(--bg-secondary));
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.learn-interview-card:hover {
+  border-color: var(--accent);
+}
+
+.learn-interview-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.learn-interview-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.learn-interview-copy strong {
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+.learn-interview-copy span {
+  color: var(--text-secondary);
+  font-size: 10.8px;
+  line-height: 1.45;
+}
+
+.learn-interview-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.interview-dialog {
+  max-width: 620px;
+  width: min(620px, calc(100vw - 32px));
+}
+
+.interview-setup,
+.interview-session,
+.interview-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.interview-setup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.interview-label {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.interview-segment {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+
+.interview-segment button {
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.interview-segment button.is-active {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.interview-brief {
+  display: flex;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.interview-brief svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.interview-brief p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.interview-primary,
+.interview-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.interview-primary {
+  align-self: flex-end;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #07110a);
+}
+
+.interview-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.interview-ghost {
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.interview-ghost:hover {
+  color: var(--text-primary);
+}
+
+.interview-session-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.interview-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.interview-category {
+  color: var(--accent);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.interview-question {
+  margin: -4px 0 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.interview-hint {
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  padding: 7px 9px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 10.5px;
+}
+
+.interview-hint summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.interview-hint p {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.interview-answer {
+  width: 100%;
+  min-height: 130px;
+  padding: 9px 10px;
+  resize: vertical;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.interview-answer:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.interview-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.interview-actions .interview-primary {
+  align-self: auto;
+}
+
+.interview-error {
+  margin: 0;
+  color: var(--danger-text, #e5484d);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.interview-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  padding: 12px 0 4px;
+  color: var(--accent);
+}
+
+.interview-score strong {
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.interview-score span {
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.interview-feedback-block {
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
+
+.interview-feedback-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-primary);
+  font-size: 10.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.interview-feedback-block ul {
+  margin: 7px 0 0;
+  padding-left: 17px;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+.interview-followup {
+  padding: 10px 12px;
+  border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.interview-followup span {
+  color: var(--text-muted);
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.interview-followup p {
+  margin: 4px 0 0;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.interview-summary-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 8px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.interview-summary-score strong {
+  color: var(--accent);
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.interview-summary-score small {
+  margin-left: 2px;
+  color: var(--text-muted);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.interview-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.interview-summary-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 10.8px;
+  line-height: 1.45;
+}
+
+.interview-summary-row strong {
+  flex: 0 0 auto;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.lesson-tutor {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  height: 290px;
+  min-height: 0;
+  border-top: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.lesson-tutor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.lesson-tutor__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.lesson-tutor__context {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lesson-tutor__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lesson-tutor__ghost,
+.lesson-tutor__icon {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.lesson-tutor__ghost {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 5px;
+}
+
+.lesson-tutor__icon {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.lesson-tutor__ghost:hover,
+.lesson-tutor__icon:hover {
+  color: var(--text-primary);
+}
+
+.lesson-tutor__scope {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  color: var(--text-secondary);
+  font-size: 9.8px;
+  line-height: 1.4;
+}
+
+.lesson-tutor__messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+
+.lesson-tutor__empty p {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: 10.8px;
+  line-height: 1.5;
+}
+
+.lesson-tutor__starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.lesson-tutor__starter {
+  padding: 5px 7px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 9.8px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lesson-tutor__starter:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.lesson-tutor__message {
+  max-width: 92%;
+  padding: 7px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.lesson-tutor__message--user {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-secondary));
+  color: var(--text-primary);
+  border-bottom-right-radius: 3px;
+}
+
+.lesson-tutor__message--assistant {
+  align-self: flex-start;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-bottom-left-radius: 3px;
+}
+
+.lesson-tutor__thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.lesson-tutor__error {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--danger, #e5484d) 9%, var(--bg-secondary));
+  color: var(--danger-text, #e5484d);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.lesson-tutor__composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.lesson-tutor__composer textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 92px;
+  padding: 7px 8px;
+  resize: vertical;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.lesson-tutor__composer textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.lesson-tutor__send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--on-accent, #07110a);
+  cursor: pointer;
+}
+
+.lesson-tutor__send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ============================================================================
+ * LIGHT THEME TYPOGRAPHY
+ *
+ * Grayscale antialiasing makes dark text on light surfaces look thinner than
+ * the same weight in dark mode. Keep the geometry the same, but restore weight
+ * and darken supporting text so labels, hints, and secondary copy stay legible.
+ * ========================================================================== */
+
+:root[data-theme="light"] body {
+  font-weight: 450;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+:root[data-theme="light"] .ui-btn,
+:root[data-theme="light"] .ui-field__label {
+  font-weight: 600;
+}
+
+:root[data-theme="light"] .ui-dialog__title,
+:root[data-theme="light"] .learn-opt-name,
+:root[data-theme="light"] .learn-interview-copy strong,
+:root[data-theme="light"] .bulletin-card-title {
+  font-weight: 650;
+}
+
+:root[data-theme="light"] .learn-chip,
+:root[data-theme="light"] .lesson-tutor__starter,
+:root[data-theme="light"] .interview-segment button {
+  font-weight: 600;
+}
+
+:root[data-theme="light"] .ui-dialog__body,
+:root[data-theme="light"] .learn-opt-meta,
+:root[data-theme="light"] .bulletin-card-desc,
+:root[data-theme="light"] .bulletin-date,
+:root[data-theme="light"] .learn-opt-count,
+:root[data-theme="light"] .learn-language-blurb,
+:root[data-theme="light"] .learn-interview-copy span,
+:root[data-theme="light"] .lesson-tutor__scope,
+:root[data-theme="light"] .lesson-tutor__thinking,
+:root[data-theme="light"] .lesson-tutor__message,
+:root[data-theme="light"] .interview-brief p,
+:root[data-theme="light"] .interview-summary-row,
+:root[data-theme="light"] .ui-field__hint {
+  font-weight: 500;
+}
+
+:root[data-theme="light"] .learn-lesson-row span {
+  font-weight: 500;
+}
+
+:root[data-theme="light"] .ui-input,
+:root[data-theme="light"] .interview-answer,
+:root[data-theme="light"] .lesson-tutor__composer textarea {
+  font-weight: 450;
+}
+
+:root[data-theme="light"] .ui-input::placeholder,
+:root[data-theme="light"] .interview-answer::placeholder,
+:root[data-theme="light"] .lesson-tutor__composer textarea::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
 }

@@ -403,7 +403,7 @@ function StepApiKey({ value, onChange, onBack, onFinish, onSkip }) {
           type="password"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="AIza…  (paste here, or skip)"
+          placeholder="AIza… or AQ…  (paste here, or skip)"
           style={styles.keyInput}
           autoComplete="off"
           spellCheck={false}
@@ -425,7 +425,7 @@ function StepApiKey({ value, onChange, onBack, onFinish, onSkip }) {
         )}
         {!checking && errorMessage && <span style={styles.keyError}>{errorMessage}</span>}
         {!checking && formatBad && (
-          <span style={styles.keyError}>Keys start with “AIza” — make sure you copied the whole key.</span>
+          <span style={styles.keyError}>Keys start with “AIza” (legacy) or “AQ.” (new). Make sure you copied the whole key.</span>
         )}
       </div>
 

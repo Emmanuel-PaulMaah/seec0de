@@ -1,0 +1,472 @@
+{
+  "tracks": [
+    {
+      "id": "a11y-semantics",
+      "name": "Semantics First",
+      "language": "accessibility",
+      "description": "Use the element that already does the job.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "a11y-01-native",
+          "title": "1. Native elements",
+          "concept": "button, not div",
+          "summary": "The browser ships keyboard support, focus and semantics for free.",
+          "activities": [
+            {
+              "id": "a11y-01-see",
+              "type": "worked-example",
+              "title": "The free version",
+              "instruction": "A real `<button>` is focusable, responds to Enter and Space, exposes its role to assistive technology and shows the right cursor. A `div` with an `onClick` has none of that. Reach for the native element before adding ARIA or key handlers.",
+              "example": "// No role, no focus, no keyboard\n<div className=\"card\" onClick={open}>Open</div>\n\n// All of it for free\n<button type=\"button\" className=\"card\" onClick={open}>Open</button>"
+            },
+            {
+              "id": "a11y-01-predict",
+              "type": "prediction",
+              "title": "Keyboard by default",
+              "question": "Which element activates on the Enter key without any JavaScript of your own?",
+              "choices": [
+                "`<button>`",
+                "`<div onClick={...}>`",
+                "`<span role=\"button\">`"
+              ],
+              "answer": "`<button>`",
+              "explanation": "Native controls implement the full interaction pattern. A role tells assistive technology what something is; it does not make the browser behave as if it were that control."
+            },
+            {
+              "id": "a11y-01-edit",
+              "type": "edit",
+              "title": "Use the real button",
+              "instruction": "Replace the clickable `div` (and its role and tabIndex) with a `<button type=\"button\">`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Semantic HTML is the cheapest accessibility work you will ever do. It is also the most reliable, because the behaviour is implemented by the browser rather than re-created by you." },
+            { "type": "code", "text": "<button type=\"button\" className=\"card\" onClick={open}>Open</button>" },
+            { "type": "note", "text": "If a click navigates, use a link. A link opens in a new tab and exposes a URL; a button performs an action. Choose by behaviour, not by styling." }
+          ],
+          "task": "Replace the div-based button with a native button.",
+          "starterCode": "<div role=\"button\" tabIndex={0} onClick={open} className=\"card\">\n  Open\n</div>\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["<button", "</button>", "onclick"],
+          "hints": [
+            "The native element takes the click handler and keeps its own behaviour.",
+            "<button type=\"button\" className=\"card\" onClick={open}>\n  Open\n</button>"
+          ],
+          "solution": "<button type=\"button\" className=\"card\" onClick={open}>\n  Open\n</button>\n",
+          "reflectionPrompt": "Why does `role=\"button\"` on a div not give you a button's behaviour?"
+        },
+        {
+          "id": "a11y-02-forms",
+          "title": "2. Forms people can finish",
+          "concept": "labels, errors, autocomplete",
+          "summary": "Every field needs a persistent name and an error it can announce.",
+          "activities": [
+            {
+              "id": "a11y-02-see",
+              "type": "worked-example",
+              "title": "Label above, error beside",
+              "instruction": "A `<label htmlFor>` is announced with the input and stays visible while typing. `aria-describedby` points at the error text so it is read when the field is focused, and `aria-invalid` signals the state. Add `autoComplete` so password managers and mobile keyboards can help.",
+              "example": "<label htmlFor=\"email\">Email</label>\n<input\n  id=\"email\"\n  type=\"email\"\n  autoComplete=\"email\"\n  aria-invalid={Boolean(error)}\n  aria-describedby={error ? 'email-error' : undefined}\n/>\n{error && <p id=\"email-error\" role=\"alert\">{error}</p>}"
+            },
+            {
+              "id": "a11y-02-predict",
+              "type": "prediction",
+              "title": "Placeholder labels",
+              "question": "Why is a placeholder a poor substitute for a label?",
+              "choices": [
+                "It disappears once the user types and is not reliably announced",
+                "It is not translated by browsers",
+                "It cannot be styled"
+              ],
+              "answer": "It disappears once the user types and is not reliably announced",
+              "explanation": "The label has to survive typing and be available to assistive technology. The placeholder is a hint, not a name."
+            },
+            {
+              "id": "a11y-02-edit",
+              "type": "edit",
+              "title": "Label the email field",
+              "instruction": "Add a `<label>` with `htmlFor=\"email\"` and connect the error paragraph with `aria-describedby`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A form is a conversation. Each field announces its name, its state and what went wrong, and the error text says how to fix it instead of only that it is invalid." },
+            { "type": "code", "text": "<label htmlFor=\"email\">Email</label>\n<input id=\"email\" type=\"email\" aria-describedby=\"email-error\" />" },
+            { "type": "note", "text": "Do not rely on colour alone for errors. Add text and an icon, and never clear the user's input when validation fails." }
+          ],
+          "task": "Add a label and connect the error message.",
+          "starterCode": "<input id=\"email\" type=\"email\" placeholder=\"Email\" />\n\n{error && <p id=\"email-error\">{error}</p>}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["<label", "htmlfor", "aria-describedby"],
+          "hints": [
+            "The label needs `htmlFor` matching the input's id.",
+            "<label htmlFor=\"email\">Email</label>\n<input id=\"email\" type=\"email\" aria-describedby=\"email-error\" />"
+          ],
+          "solution": "<label htmlFor=\"email\">Email</label>\n<input\n  id=\"email\"\n  type=\"email\"\n  autoComplete=\"email\"\n  aria-invalid={Boolean(error)}\n  aria-describedby={error ? 'email-error' : undefined}\n/>\n{error && <p id=\"email-error\" role=\"alert\">{error}</p>}\n",
+          "reflectionPrompt": "Why should an error message be announced when it appears as well as when the field is focused?"
+        },
+        {
+          "id": "a11y-03-keyboard",
+          "title": "3. Keyboard and focus",
+          "concept": "tab order and visible focus",
+          "summary": "If it cannot be reached and seen with a keyboard, it does not work.",
+          "activities": [
+            {
+              "id": "a11y-03-see",
+              "type": "worked-example",
+              "title": "Skip the nav, see the focus",
+              "instruction": "Tab order follows DOM order, so keep the markup in reading order and never use positive `tabindex`. A skip link lets keyboard users jump past navigation, and `:focus-visible` keeps a strong focus ring for keyboard users without showing it on mouse clicks.",
+              "example": "<a className=\"skip-link\" href=\"#main\">Skip to content</a>\n<nav>...</nav>\n<main id=\"main\" tabIndex={-1}>...</main>\n\n<style>{`\n  .skip-link { position: absolute; left: -9999px; }\n  .skip-link:focus { left: 1rem; top: 1rem; }\n  :focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }\n`}</style>"
+            },
+            {
+              "id": "a11y-03-predict",
+              "type": "prediction",
+              "title": "Positive tabindex",
+              "question": "What does `tabindex=\"1\"` do to an element in the middle of the page?",
+              "choices": [
+                "Moves it ahead of every element with tabindex 0, out of visual order",
+                "Makes it focusable but keeps normal order",
+                "Prevents it from receiving focus"
+              ],
+              "answer": "Moves it ahead of every element with tabindex 0, out of visual order",
+              "explanation": "Positive tabindex creates a second tab order that almost never matches the layout. Use 0 and -1 only."
+            },
+            {
+              "id": "a11y-03-edit",
+              "type": "edit",
+              "title": "Add the skip link",
+              "instruction": "Add a \"Skip to content\" link to `#main` and a `:focus-visible` outline rule."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Keyboard access is the baseline. Test it by putting the mouse away and tabbing through the page: can you reach every control, see where you are, and get out of every widget?" },
+            { "type": "code", "text": ":focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }" },
+            { "type": "note", "text": "Never remove the focus outline without replacing it. An invisible focus ring makes the page unusable for anyone who is not using a mouse." }
+          ],
+          "task": "Add a skip link and a visible focus style.",
+          "starterCode": "<nav>\n  <a href=\"/\">Home</a>\n  <a href=\"/docs\">Docs</a>\n</nav>\n<main id=\"main\">...</main>\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["skip to content", "focus-visible"],
+          "hints": [
+            "The skip link is the first element in the body and points at the main id.",
+            "<a className=\"skip-link\" href=\"#main\">Skip to content</a>\n\n:focus-visible { outline: 2px solid #7c3aed; }"
+          ],
+          "solution": "<a className=\"skip-link\" href=\"#main\">Skip to content</a>\n<nav>\n  <a href=\"/\">Home</a>\n  <a href=\"/docs\">Docs</a>\n</nav>\n<main id=\"main\" tabIndex={-1}>...</main>\n\n<style>{`\n  :focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }\n`}</style>\n",
+          "reflectionPrompt": "Why does a visible focus ring matter even on a page with no forms?"
+        }
+      ]
+    },
+    {
+      "id": "a11y-widgets",
+      "name": "Custom Widgets",
+      "language": "accessibility",
+      "description": "When you must build custom UI, get the behaviour right.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "a11y-04-aria",
+          "title": "4. ARIA, used sparingly",
+          "concept": "state attributes",
+          "summary": "ARIA describes state. The browser still has to do the work.",
+          "activities": [
+            {
+              "id": "a11y-04-see",
+              "type": "worked-example",
+              "title": "Announce the state",
+              "instruction": "A disclosure button should expose whether its panel is open and which element it controls. `aria-expanded` and `aria-controls` are the whole contract. Do not add `aria-label` when the visible text already names the control — it overrides that text and creates a mismatch for voice users.",
+              "example": "<button\n  type=\"button\"\n  aria-expanded={open}\n  aria-controls=\"details-panel\"\n  onClick={() => setOpen(!open)}\n>\n  Shipping details\n</button>\n<div id=\"details-panel\" hidden={!open}>\n  Ships in 2–3 business days.\n</div>"
+            },
+            {
+              "id": "a11y-04-predict",
+              "type": "prediction",
+              "title": "Overriding the name",
+              "question": "A button says \"Save\" but has `aria-label=\"Submit form\"`. What does a screen reader announce?",
+              "choices": [
+                "\"Submit form\"",
+                "\"Save\"",
+                "\"Save, Submit form\""
+              ],
+              "answer": "\"Submit form\"",
+              "explanation": "aria-label replaces the accessible name. Voice-control users who say the visible word can no longer activate the control."
+            },
+            {
+              "id": "a11y-04-edit",
+              "type": "edit",
+              "title": "Expose the disclosure state",
+              "instruction": "Add `aria-expanded` and `aria-controls` to the toggle button."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The first rule of ARIA is not to use it: a native element that already exposes the state is better. When you do use it, wire the state to the same variable that renders the UI." },
+            { "type": "code", "text": "<button aria-expanded={open} aria-controls=\"details-panel\">...</button>\n<div id=\"details-panel\" hidden={!open}>...</div>" },
+            { "type": "note", "text": "If the state can get out of sync with the visual, it will. Derive both from the same boolean." }
+          ],
+          "task": "Add aria-expanded and aria-controls to the disclosure.",
+          "starterCode": "<button type=\"button\" onClick={() => setOpen(!open)}>\n  Shipping details\n</button>\n<div id=\"details-panel\" hidden={!open}>...</div>\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["aria-expanded", "aria-controls"],
+          "hints": [
+            "Both attributes go on the button; `aria-controls` references the panel id.",
+            "<button aria-expanded={open} aria-controls=\"details-panel\" onClick={() => setOpen(!open)}>"
+          ],
+          "solution": "<button\n  type=\"button\"\n  aria-expanded={open}\n  aria-controls=\"details-panel\"\n  onClick={() => setOpen(!open)}\n>\n  Shipping details\n</button>\n<div id=\"details-panel\" hidden={!open}>\n  Ships in 2–3 business days.\n</div>\n",
+          "reflectionPrompt": "Why is a visible label better than an aria-label when both are possible?"
+        },
+        {
+          "id": "a11y-05-modal",
+          "title": "5. Modals and focus",
+          "concept": "focus management",
+          "summary": "A dialog moves focus in, keeps it there, and gives it back.",
+          "activities": [
+            {
+              "id": "a11y-05-see",
+              "type": "worked-example",
+              "title": "Enter, stay, return",
+              "instruction": "When a dialog opens, move focus into it. While it is open, keyboard focus must not wander to the page behind it. On close, return focus to the element that opened the dialog, so the user continues where they were. Escape must close it.",
+              "example": "useEffect(() => {\n  if (!open) return;\n  triggerRef.current = document.activeElement;\n  dialogRef.current?.focus();\n\n  const onKey = (event) => {\n    if (event.key === 'Escape') onClose();\n  };\n  document.addEventListener('keydown', onKey);\n\n  return () => {\n    document.removeEventListener('keydown', onKey);\n    triggerRef.current?.focus();\n  };\n}, [open, onClose]);"
+            },
+            {
+              "id": "a11y-05-predict",
+              "type": "prediction",
+              "title": "After close",
+              "question": "Where should focus go when a modal closes?",
+              "choices": [
+                "Back to the element that opened it",
+                "To the top of the document",
+                "Nowhere — focus can stay undefined"
+              ],
+              "answer": "Back to the element that opened it",
+              "explanation": "Returning focus puts the keyboard user back where they left off. Dropping focus to the body makes them tab from the top of the page again."
+            },
+            {
+              "id": "a11y-05-edit",
+              "type": "edit",
+              "title": "Handle Escape and restore focus",
+              "instruction": "Close on Escape and return focus to the trigger when the dialog unmounts."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A modal is a promise that the rest of the page is unavailable. Focus management is how you keep that promise for keyboard and screen-reader users." },
+            { "type": "code", "text": "triggerRef.current = document.activeElement;\ndialogRef.current?.focus();\n// on cleanup\ntriggerRef.current?.focus();" },
+            { "type": "note", "text": "Prefer the native `<dialog>` element with `showModal()`. It gives you the focus trap, Escape handling and backdrop for free." }
+          ],
+          "task": "Add Escape-to-close and focus restoration to the dialog effect.",
+          "starterCode": "useEffect(() => {\n  if (!open) return;\n  dialogRef.current?.focus();\n}, [open]);\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["escape", "focus()"],
+          "hints": [
+            "Listen for keydown while open and clean up the listener afterwards.",
+            "if (event.key === 'Escape') onClose();\n// on cleanup\ntriggerRef.current?.focus();"
+          ],
+          "solution": "useEffect(() => {\n  if (!open) return;\n  triggerRef.current = document.activeElement;\n  dialogRef.current?.focus();\n\n  const onKey = (event) => {\n    if (event.key === 'Escape') onClose();\n  };\n  document.addEventListener('keydown', onKey);\n\n  return () => {\n    document.removeEventListener('keydown', onKey);\n    triggerRef.current?.focus();\n  };\n}, [open, onClose]);\n",
+          "reflectionPrompt": "Why is a modal that traps focus but never restores it still broken?"
+        },
+        {
+          "id": "a11y-06-visual",
+          "title": "6. Contrast and motion",
+          "concept": "perception settings",
+          "summary": "Text must be readable, and animation must respect the user's settings.",
+          "activities": [
+            {
+              "id": "a11y-06-see",
+              "type": "worked-example",
+              "title": "Readable by default",
+              "instruction": "Body text needs a 4.5:1 contrast ratio against its background; large text can go to 3:1. That is a floor, not a goal. Respect `prefers-reduced-motion` by disabling non-essential animation, and never use colour as the only way to show state.",
+              "example": "@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n}\n\n.nav-link[aria-current=\"page\"] {\n  text-decoration: underline;\n  text-underline-offset: 3px;\n}"
+            },
+            {
+              "id": "a11y-06-predict",
+              "type": "prediction",
+              "title": "Large text",
+              "question": "A heading has 3.2:1 contrast. Is that acceptable?",
+              "choices": [
+                "Only if it counts as large text (about 24px, or 18.66px bold)",
+                "Yes, headings are exempt from contrast",
+                "No, everything needs 7:1"
+              ],
+              "answer": "Only if it counts as large text (about 24px, or 18.66px bold)",
+              "explanation": "AA sets 3:1 for large text and 4.5:1 for normal text. Size and weight decide which applies, not the element name."
+            },
+            {
+              "id": "a11y-06-edit",
+              "type": "edit",
+              "title": "Respect motion settings",
+              "instruction": "Add a `prefers-reduced-motion` block that removes non-essential animation, and underline the current nav item so state is not colour-only."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Visual accessibility is mostly defaults: a readable palette, real text instead of images of text, and state that survives colour blindness or a bright screen outdoors." },
+            { "type": "code", "text": "@media (prefers-reduced-motion: reduce) {\n  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }\n}" },
+            { "type": "note", "text": "Check contrast in both themes. A colour that passes on white can fail on a dark surface, and vice versa." }
+          ],
+          "task": "Add reduced-motion support and a non-colour state cue.",
+          "starterCode": ".nav-link[aria-current=\"page\"] {\n  color: #7c3aed;\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["prefers-reduced-motion", "text-decoration"],
+          "hints": [
+            "Add a media query for the motion preference.",
+            "@media (prefers-reduced-motion: reduce) {\n  * { animation-duration: 0.01ms !important; }\n}\n.nav-link[aria-current=\"page\"] { text-decoration: underline; }"
+          ],
+          "solution": "@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n}\n\n.nav-link[aria-current=\"page\"] {\n  text-decoration: underline;\n  text-underline-offset: 3px;\n}\n",
+          "reflectionPrompt": "Why is colour alone an unreliable way to communicate state?"
+        }
+      ]
+    },
+    {
+      "id": "a11y-verify",
+      "name": "Verifying",
+      "language": "accessibility",
+      "description": "Catch what automation cannot see.",
+      "premium": true,
+      "lessons": [
+        {
+          "id": "a11y-07-testing",
+          "title": "7. Test like a keyboard user",
+          "concept": "accessible names and roles",
+          "summary": "Query the page the way assistive technology would.",
+          "activities": [
+            {
+              "id": "a11y-07-see",
+              "type": "worked-example",
+              "title": "Find it by role and name",
+              "instruction": "A test that searches by role and accessible name fails when the semantics break, which is exactly what you want. `getByLabelText` for fields and `getByRole('button', { name: /save/i })` for controls keep the test tied to what a user perceives rather than to a CSS class.",
+              "example": "import { render, screen } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\ntest('saves the draft from the keyboard', async () => {\n  render(<Editor />);\n\n  const save = screen.getByRole('button', { name: /save/i });\n  await userEvent.tab();\n  await userEvent.keyboard('{Enter}');\n\n  expect(save).toHaveFocus;\n  expect(await screen.findByRole('status')).toHaveTextContent(/saved/i);\n});"
+            },
+            {
+              "id": "a11y-07-predict",
+              "type": "prediction",
+              "title": "Zero violations",
+              "question": "An automated audit reports zero violations. Is the page accessible?",
+              "choices": [
+                "Not necessarily — automation misses reading order, meaning and focus flow",
+                "Yes — the tool covers the WCAG criteria",
+                "Only if it also ran in CI"
+              ],
+              "answer": "Not necessarily — automation misses reading order, meaning and focus flow",
+              "explanation": "Automated rules catch perhaps a third of real issues. They cannot tell whether a label makes sense or whether the keyboard journey is usable."
+            },
+            {
+              "id": "a11y-07-edit",
+              "type": "edit",
+              "title": "Query by role and name",
+              "instruction": "Write an assertion that finds the save button by its role and accessible name `/save/i`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Tests that query by role and name double as accessibility checks: if the name disappears, the test fails, and so would a screen reader user. Keep a manual keyboard pass in the definition of done." },
+            { "type": "code", "text": "const save = screen.getByRole('button', { name: /save/i });" },
+            { "type": "note", "text": "Prefer `userEvent` over `fireEvent`. It produces the full sequence of events a real keyboard or pointer interaction generates." }
+          ],
+          "task": "Write a testing-library query for the save button.",
+          "starterCode": "import { render, screen } from '@testing-library/react';\n\ntest('finds the save button', () => {\n  render(<Editor />);\n  // query by role and name\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["getbyrole", "name:"],
+          "hints": [
+            "`getByRole` takes the role first, then an options object with `name`.",
+            "const save = screen.getByRole('button', { name: /save/i });"
+          ],
+          "solution": "import { render, screen } from '@testing-library/react';\n\ntest('finds the save button', () => {\n  render(<Editor />);\n\n  const save = screen.getByRole('button', { name: /save/i });\n  expect(save).toBeInTheDocument();\n});\n",
+          "reflectionPrompt": "Why does a test that queries by role and name catch more than a test that queries by class?"
+        },
+        {
+          "id": "a11y-08-automation",
+          "title": "8. Automation and its limits",
+          "concept": "axe in CI",
+          "summary": "Automate what can be automated, and schedule the rest.",
+          "activities": [
+            {
+              "id": "a11y-08-see",
+              "type": "worked-example",
+              "title": "A scan on every page",
+              "instruction": "In Playwright, inject axe and run it against the rendered page after navigation. It catches missing names, bad ARIA, contrast and landmark problems. Treat violations as test failures so they cannot accumulate, and keep the manual checklist for what it cannot see.",
+              "example": "import AxeBuilder from '@axe-core/playwright';\n\ntest('checkout has no accessibility violations', async ({ page }) => {\n  await page.goto('/checkout');\n\n  const results = await new AxeBuilder({ page })\n    .withTags(['wcag2a', 'wcag2aa'])\n    .analyze();\n\n  expect(results.violations).toEqual([]);\n});"
+            },
+            {
+              "id": "a11y-08-predict",
+              "type": "prediction",
+              "title": "What automation misses",
+              "question": "Which problem will an automated axe scan not find?",
+              "choices": [
+                "A keyboard focus order that jumps around the page",
+                "A missing image alt attribute",
+                "A form input with no label"
+              ],
+              "answer": "A keyboard focus order that jumps around the page",
+              "explanation": "Focus order depends on interaction and layout. Automation checks the markup, not the journey."
+            },
+            {
+              "id": "a11y-08-edit",
+              "type": "edit",
+              "title": "Add the axe scan",
+              "instruction": "Run an AxeBuilder scan against `/checkout` and assert there are no violations."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Automation is a floor. It keeps a codebase from regressing on the mechanical rules, which frees review time for the judgement calls it cannot make." },
+            { "type": "code", "text": "const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();\nexpect(results.violations).toEqual([]);" },
+            { "type": "note", "text": "Scope the scan per page or component, not once for the whole app. A single 'somewhere on the site' failure is hard to own." }
+          ],
+          "task": "Add an axe accessibility assertion to the checkout test.",
+          "starterCode": "test('checkout is accessible', async ({ page }) => {\n  await page.goto('/checkout');\n  // run axe and assert no violations\n});\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["axe", "expect("],
+          "hints": [
+            "Construct `new AxeBuilder({ page })`, call `.analyze()`, and assert on `results.violations`.",
+            "const results = await new AxeBuilder({ page }).analyze();\nexpect(results.violations).toEqual([]);"
+          ],
+          "solution": "import AxeBuilder from '@axe-core/playwright';\n\ntest('checkout is accessible', async ({ page }) => {\n  await page.goto('/checkout');\n\n  const results = await new AxeBuilder({ page })\n    .withTags(['wcag2a', 'wcag2aa'])\n    .analyze();\n\n  expect(results.violations).toEqual([]);\n});\n",
+          "reflectionPrompt": "Why is a passing automated audit not evidence that a page is accessible?"
+        },
+        {
+          "id": "a11y-09-team",
+          "title": "9. Making it stick",
+          "concept": "definition of done",
+          "summary": "Accessibility is a checklist item and a review habit, not a project.",
+          "activities": [
+            {
+              "id": "a11y-09-see",
+              "type": "worked-example",
+              "title": "A checklist in the pull request",
+              "instruction": "The cheapest place to fix accessibility is the design and component stage; the most expensive is an audit after launch. Put a short checklist in the PR template — keyboard pass, contrast, labels, no focus traps — and name WCAG AA as the target so the bar is not renegotiated per feature.",
+              "example": "## Accessibility\n- [ ] Keyboard: every control reachable, focus visible, Escape closes overlays\n- [ ] Contrast: text meets 4.5:1 (3:1 for large text) in both themes\n- [ ] Names: inputs labelled, images have alt text, icon buttons named\n- [ ] Motion: respects `prefers-reduced-motion`\n- [ ] Target: WCAG 2.2 AA"
+            },
+            {
+              "id": "a11y-09-predict",
+              "type": "prediction",
+              "title": "Cheapest moment",
+              "question": "When is an accessibility problem cheapest to fix?",
+              "choices": [
+                "While the component is being designed and built",
+                "During the pre-launch audit",
+                "After a user complains"
+              ],
+              "answer": "While the component is being designed and built",
+              "explanation": "Semantics, focus order and labels are structural. Retrofitting them means reopening layout, state and copy decisions across every screen that uses the component."
+            },
+            {
+              "id": "a11y-09-edit",
+              "type": "edit",
+              "title": "Write the checklist",
+              "instruction": "Write the accessibility section of a PR template: keyboard, contrast, names and the WCAG target."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Teams do what their process checks. A checklist in the template and one manual keyboard pass per feature beat an annual audit for output and cost." },
+            { "type": "code", "text": "- [ ] Keyboard reachable, focus visible\n- [ ] Contrast meets 4.5:1\n- [ ] WCAG 2.2 AA" },
+            { "type": "note", "text": "Keep a testing environment with a screen reader and a keyboard-only browser window. If it is not in your normal loop, it will not be tested." }
+          ],
+          "task": "Write an accessibility section for the PR template.",
+          "starterCode": "## Accessibility\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["keyboard", "contrast", "wcag"],
+          "hints": [
+            "Cover the four things a reviewer can check quickly.",
+            "## Accessibility\n- [ ] Keyboard: reachable, focus visible\n- [ ] Contrast: 4.5:1\n- [ ] Target: WCAG 2.2 AA"
+          ],
+          "solution": "## Accessibility\n- [ ] Keyboard: every control reachable, focus visible, Escape closes overlays\n- [ ] Contrast: text meets 4.5:1 (3:1 for large text) in both themes\n- [ ] Names: inputs labelled, images have alt text, icon buttons named\n- [ ] Motion: respects `prefers-reduced-motion`\n- [ ] Target: WCAG 2.2 AA\n",
+          "reflectionPrompt": "Why does a per-feature checklist outperform a one-off accessibility project?"
+        }
+      ]
+    }
+  ]
+}

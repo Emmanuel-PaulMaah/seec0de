@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
-import { Lock, Pencil, X, Play, Lightbulb, Check, ChevronRight, Search } from 'lucide-react';
+import { Lock, Pencil, X, Play, Lightbulb, Check, ChevronRight, Search, Square } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import SandboxTerminal from './SandboxTerminal';
 import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
@@ -45,12 +45,38 @@ const LANGUAGE_MONACO_MAP = {
   python: 'python', javascript: 'javascript', java: 'java', cpp: 'cpp',
   csharp: 'csharp', go: 'go', rust: 'rust', typescript: 'typescript', c: 'c', react: 'javascript',
   nodejs: 'javascript',
+  mongodb: 'javascript',
+  express: 'javascript',
+  sql: 'sql',
+  nextjs: 'javascript',
+  auth: 'javascript',
+  docker: 'dockerfile',
+  testing: 'javascript',
+  security: 'javascript',
+  performance: 'javascript',
+  systemdesign: 'javascript',
+  cicd: 'yaml',
+  observability: 'javascript',
+  accessibility: 'javascript',
 };
 
 const LANGUAGE_LABELS = {
   python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
   csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C', react: 'React',
   nodejs: 'Node.js',
+  mongodb: 'MongoDB',
+  express: 'Express',
+  sql: 'SQL & PostgreSQL',
+  nextjs: 'Next.js',
+  auth: 'Auth & Sessions',
+  docker: 'Docker & Deployment',
+  testing: 'Testing',
+  security: 'Web Security',
+  performance: 'Performance & Caching',
+  systemdesign: 'System Design',
+  cicd: 'CI/CD & Release',
+  observability: 'Observability',
+  accessibility: 'Accessibility',
 };
 
 // ---- HTML auto-close completions -------------------------------------------
@@ -222,6 +248,7 @@ export default function CodePanel({
   onFileContentChange,
   // runner props
   onRunCode,
+  onStopCode,
   runLoading = false,
   runAttempt = 0,
   runOutcome = null,
@@ -521,6 +548,17 @@ export default function CodePanel({
     }
   }, [canRun, onRunCode, runLanguage, value, runFilename, isGitLesson]);
 
+  const [stopRequested, setStopRequested] = useState(false);
+  useEffect(() => {
+    if (!runLoading) setStopRequested(false);
+  }, [runLoading]);
+
+  const handleStop = useCallback(() => {
+    if (!onStopCode) return;
+    setStopRequested(true);
+    onStopCode();
+  }, [onStopCode]);
+
   // Run from the editor with the familiar build-tool shortcut. Ignore other
   // text inputs (for example the instruction panel) even though this listener
   // is attached to window.
@@ -650,7 +688,20 @@ export default function CodePanel({
               A+
             </button>
           </div>
-          {canRun && (
+          {runLoading && !isSourceCheck && onStopCode ? (
+            <button
+              type="button"
+              className="ui-toolbar-button"
+              style={{ ...styles.runBtn, ...styles.stopBtn, ...(stopRequested ? styles.stopBtnDisabled : {}) }}
+              onClick={handleStop}
+              disabled={stopRequested}
+              title="Stop the running program"
+              aria-label="Stop the running program"
+            >
+              <Square size={11} fill="currentColor" />
+              {stopRequested ? 'Stopping…' : 'Stop'}
+            </button>
+          ) : canRun && (
             <StatefulButton
               state={runButtonState}
               size="sm"
@@ -1190,6 +1241,16 @@ const styles = {
     padding: '0 var(--space-3)',
     margin: 0,
     whiteSpace: 'nowrap',
+  },
+  stopBtn: {
+    gap: 6,
+    background: 'var(--danger, #d64545)',
+    borderColor: 'var(--danger, #d64545)',
+    color: '#fff',
+  },
+  stopBtnDisabled: {
+    opacity: 0.65,
+    cursor: 'default',
   },
   fontGroup: {
     display: 'inline-flex',

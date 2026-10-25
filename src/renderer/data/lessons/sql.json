@@ -1,0 +1,612 @@
+{
+  "tracks": [
+    {
+      "id": "sql-querying",
+      "name": "Querying Tables",
+      "language": "sql",
+      "description": "Read rows, filter them, and summarise them with PostgreSQL.",
+      "lessons": [
+        {
+          "id": "sql-01-select",
+          "title": "1. SELECT and FROM",
+          "concept": "SELECT … FROM",
+          "summary": "A query names the columns it wants and the table it reads from.",
+          "activities": [
+            {
+              "id": "sql-01-see",
+              "type": "worked-example",
+              "title": "Columns, then table",
+              "instruction": "`SELECT` lists the columns; `FROM` names the table. `*` means every column, which is convenient in the shell and rarely what you want in application code.",
+              "example": "SELECT name, price\nFROM products;\n\n-- every column\nSELECT *\nFROM products;"
+            },
+            {
+              "id": "sql-01-predict",
+              "type": "prediction",
+              "title": "Column order",
+              "question": "What order are columns returned in for `SELECT price, name FROM products`?",
+              "choices": [
+                "The order they appear in the table",
+                "The order you listed them",
+                "Alphabetical order"
+              ],
+              "answer": "The order you listed them",
+              "explanation": "The select list controls the output order. Rows without `ORDER BY` have no guaranteed order, but columns do."
+            },
+            {
+              "id": "sql-01-edit",
+              "type": "edit",
+              "title": "Read two columns",
+              "instruction": "Return the `name` and `price` of every product."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "SQL reads like a sentence: select these columns from this table. The database returns a result set — rows of the columns you asked for." },
+            { "type": "code", "text": "SELECT name, price\nFROM products;" },
+            { "type": "note", "text": "Name the columns you use. `SELECT *` breaks quietly when someone adds a column, and it moves more data than the client needs." }
+          ],
+          "task": "Return the name and price of every product.",
+          "starterCode": "-- Return the name and price of every product\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["select name, price", "from products"],
+          "hints": [
+            "List `name, price` after `SELECT` and `products` after `FROM`.",
+            "SELECT name, price\nFROM products;"
+          ],
+          "solution": "SELECT name, price\nFROM products;\n",
+          "reflectionPrompt": "Why does `SELECT *` become a problem once a table has a large text or binary column?"
+        },
+        {
+          "id": "sql-02-where",
+          "title": "2. Filtering with WHERE",
+          "concept": "WHERE / comparison operators",
+          "summary": "WHERE keeps only the rows whose condition is true.",
+          "activities": [
+            {
+              "id": "sql-02-see",
+              "type": "worked-example",
+              "title": "One condition",
+              "instruction": "`WHERE` runs per row and keeps the ones that evaluate true. Combine conditions with `AND` and `OR`, and group them with parentheses when mixing the two.",
+              "example": "SELECT name, price\nFROM products\nWHERE price > 50;\n\nSELECT name\nFROM products\nWHERE price > 50 AND category = 'audio';"
+            },
+            {
+              "id": "sql-02-predict",
+              "type": "prediction",
+              "title": "NULL comparisons",
+              "question": "How many rows does `WHERE discount = NULL` match?",
+              "choices": [
+                "Every row where discount is empty",
+                "None — NULL needs IS NULL",
+                "Only rows where discount is 0"
+              ],
+              "answer": "None — NULL needs IS NULL",
+              "explanation": "Any comparison with NULL is unknown, so it never passes WHERE. Use `IS NULL` or `IS NOT NULL`."
+            },
+            {
+              "id": "sql-02-edit",
+              "type": "edit",
+              "title": "Expensive products",
+              "instruction": "Return the `name` and `price` of products priced above 50."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Filtering in SQL happens in the database, close to the data. Pulling a whole table into JavaScript to filter it is slower and transfers far more." },
+            { "type": "code", "text": "SELECT name, price\nFROM products\nWHERE price > 50;" },
+            { "type": "note", "text": "Three-valued logic trips people up: `NULL = NULL` is unknown, not true. Always use `IS NULL`." }
+          ],
+          "task": "Return the name and price of products priced above 50.",
+          "starterCode": "-- Products that cost more than 50\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["select name, price", "where price > 50"],
+          "hints": [
+            "Add a `WHERE` clause after `FROM products`.",
+            "SELECT name, price\nFROM products\nWHERE price > 50;"
+          ],
+          "solution": "SELECT name, price\nFROM products\nWHERE price > 50;\n",
+          "reflectionPrompt": "Why is filtering in the query usually better than filtering the array in JavaScript afterwards?"
+        },
+        {
+          "id": "sql-03-order-limit",
+          "title": "3. ORDER BY and LIMIT",
+          "concept": "ORDER BY / LIMIT",
+          "summary": "Sort the result and take just the first few rows.",
+          "activities": [
+            {
+              "id": "sql-03-see",
+              "type": "worked-example",
+              "title": "The three cheapest",
+              "instruction": "`ORDER BY column DESC` sorts descending. `LIMIT n` keeps the first n rows *after* sorting, which is what makes \"top n\" queries work.",
+              "example": "SELECT name, price\nFROM products\nORDER BY price ASC\nLIMIT 3;"
+            },
+            {
+              "id": "sql-03-predict",
+              "type": "prediction",
+              "title": "LIMIT without ORDER BY",
+              "question": "What does `SELECT * FROM products LIMIT 3` return without an ORDER BY?",
+              "choices": [
+                "The three most recently inserted rows",
+                "Three arbitrary rows in no guaranteed order",
+                "An error"
+              ],
+              "answer": "Three arbitrary rows in no guaranteed order",
+              "explanation": "Without ORDER BY, row order is undefined. It may look stable in testing and change once the planner picks another plan."
+            },
+            {
+              "id": "sql-03-edit",
+              "type": "edit",
+              "title": "Top three",
+              "instruction": "Return the `name` and `price` of the three most expensive products."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`ORDER BY` sorts by one or more expressions. Add `NULLS LAST` when a nullable column should not lead the list." },
+            { "type": "code", "text": "SELECT name, price\nFROM products\nORDER BY price DESC\nLIMIT 3;" },
+            { "type": "note", "text": "For pagination use `LIMIT 20 OFFSET 40`. Past a few thousand rows, keyset pagination (`WHERE id > $1`) beats OFFSET." }
+          ],
+          "task": "Return the name and price of the three most expensive products.",
+          "starterCode": "-- Three most expensive products\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["order by price desc", "limit 3"],
+          "hints": [
+            "Sort descending on `price`, then keep three rows.",
+            "SELECT name, price\nFROM products\nORDER BY price DESC\nLIMIT 3;"
+          ],
+          "solution": "SELECT name, price\nFROM products\nORDER BY price DESC\nLIMIT 3;\n",
+          "reflectionPrompt": "Why can paginating with a large OFFSET get slower as the page number grows?"
+        },
+        {
+          "id": "sql-04-group-by",
+          "title": "4. Counting and grouping",
+          "concept": "COUNT / GROUP BY / HAVING",
+          "summary": "GROUP BY collapses rows into one per group; HAVING filters those groups.",
+          "activities": [
+            {
+              "id": "sql-04-see",
+              "type": "worked-example",
+              "title": "One row per category",
+              "instruction": "Every non-aggregated column in the select list must appear in `GROUP BY`. `WHERE` filters rows before grouping; `HAVING` filters groups after.",
+              "example": "SELECT category, COUNT(*) AS total\nFROM products\nGROUP BY category\nHAVING COUNT(*) > 3\nORDER BY total DESC;"
+            },
+            {
+              "id": "sql-04-predict",
+              "type": "prediction",
+              "title": "WHERE or HAVING",
+              "question": "You want only categories with more than three products. Which clause takes `COUNT(*) > 3`?",
+              "choices": ["WHERE", "HAVING", "LIMIT"],
+              "answer": "HAVING",
+              "explanation": "The count only exists after grouping, so it must be filtered with HAVING. WHERE cannot see aggregates."
+            },
+            {
+              "id": "sql-04-edit",
+              "type": "edit",
+              "title": "Busy categories",
+              "instruction": "Return each `category` and `COUNT(*)` as `total`, keeping only categories with more than 3 products."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Aggregates turn many rows into one: `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`. Grouping decides what \"one row\" is grouped by." },
+            { "type": "code", "text": "SELECT category, COUNT(*) AS total\nFROM products\nGROUP BY category\nHAVING COUNT(*) > 3;" },
+            { "type": "note", "text": "`COUNT(*)` counts rows. `COUNT(column)` skips NULLs in that column — the difference matters in reports." }
+          ],
+          "task": "Return each category with its product count, keeping categories with more than 3 products.",
+          "starterCode": "-- Category totals, only busy categories\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["count(*)", "group by category", "having"],
+          "hints": [
+            "Group by `category`, count the rows, then filter with `HAVING`.",
+            "SELECT category, COUNT(*) AS total\nFROM products\nGROUP BY category\nHAVING COUNT(*) > 3;"
+          ],
+          "solution": "SELECT category, COUNT(*) AS total\nFROM products\nGROUP BY category\nHAVING COUNT(*) > 3;\n",
+          "reflectionPrompt": "Why must every non-aggregated column in the select list appear in GROUP BY?"
+        }
+      ]
+    },
+    {
+      "id": "sql-relationships",
+      "name": "Relationships & Joins",
+      "language": "sql",
+      "description": "Model related tables and combine them in one query.",
+      "lessons": [
+        {
+          "id": "sql-05-keys",
+          "title": "5. Primary and foreign keys",
+          "concept": "PRIMARY KEY / REFERENCES",
+          "summary": "Keys make relationships enforceable instead of hopeful.",
+          "activities": [
+            {
+              "id": "sql-05-see",
+              "type": "worked-example",
+              "title": "The database enforces the link",
+              "instruction": "A primary key uniquely identifies a row. A foreign key points at another table's primary key and makes the database reject rows that reference nothing.",
+              "example": "CREATE TABLE customers (\n  id SERIAL PRIMARY KEY,\n  email TEXT NOT NULL UNIQUE\n);\n\nCREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  customer_id INTEGER NOT NULL REFERENCES customers(id),\n  total NUMERIC(10, 2) NOT NULL\n);"
+            },
+            {
+              "id": "sql-05-predict",
+              "type": "prediction",
+              "title": "Orphan rows",
+              "question": "What happens when you insert an order with `customer_id = 999` that no customer has?",
+              "choices": [
+                "It is stored with a null customer",
+                "The insert fails with a foreign-key violation",
+                "A customer is created automatically"
+              ],
+              "answer": "The insert fails with a foreign-key violation",
+              "explanation": "The foreign key is a constraint, not documentation. The database refuses rows whose reference does not exist."
+            },
+            {
+              "id": "sql-05-edit",
+              "type": "edit",
+              "title": "Create the orders table",
+              "instruction": "Create an `orders` table with an `id` primary key and a `customer_id` that references `customers(id)`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Relational databases stay consistent because the schema states the rules: unique keys, required columns, valid references." },
+            { "type": "code", "text": "CREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  customer_id INTEGER NOT NULL REFERENCES customers(id),\n  total NUMERIC(10, 2) NOT NULL\n);" },
+            { "type": "note", "text": "Decide what a deleted customer means for their orders. `ON DELETE CASCADE` deletes them; the default refuses the delete while orders exist." }
+          ],
+          "task": "Create an `orders` table with a primary key and a foreign key to customers.",
+          "starterCode": "-- Create the orders table\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["primary key", "references customers"],
+          "hints": [
+            "`id SERIAL PRIMARY KEY` gives each order an id.",
+            "customer_id INTEGER NOT NULL REFERENCES customers(id)"
+          ],
+          "solution": "CREATE TABLE orders (\n  id SERIAL PRIMARY KEY,\n  customer_id INTEGER NOT NULL REFERENCES customers(id),\n  total NUMERIC(10, 2) NOT NULL\n);\n",
+          "reflectionPrompt": "What should happen to a customer's orders when the customer row is deleted?"
+        },
+        {
+          "id": "sql-06-inner-join",
+          "title": "6. INNER JOIN",
+          "concept": "INNER JOIN … ON",
+          "summary": "Join keeps only the pairs where both sides match.",
+          "activities": [
+            {
+              "id": "sql-06-see",
+              "type": "worked-example",
+              "title": "Two tables, one result",
+              "instruction": "`JOIN` combines rows using the `ON` condition. An inner join drops rows with no match on either side.",
+              "example": "SELECT orders.id, customers.email, orders.total\nFROM orders\nINNER JOIN customers ON customers.id = orders.customer_id;"
+            },
+            {
+              "id": "sql-06-predict",
+              "type": "prediction",
+              "title": "What gets dropped",
+              "question": "A customer has no orders. What does the inner join above return for that customer?",
+              "choices": [
+                "A row with NULL order fields",
+                "Nothing — inner joins drop unmatched rows",
+                "An error"
+              ],
+              "answer": "Nothing — inner joins drop unmatched rows",
+              "explanation": "Inner joins only keep matched pairs. To keep customers without orders, use a LEFT JOIN from customers."
+            },
+            {
+              "id": "sql-06-edit",
+              "type": "edit",
+              "title": "Orders with customer email",
+              "instruction": "Return each order's `id`, `total`, and the customer's `email` by joining `orders` to `customers`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The `ON` clause states how the two tables relate — almost always a foreign key to a primary key." },
+            { "type": "code", "text": "SELECT orders.id, customers.email, orders.total\nFROM orders\nINNER JOIN customers ON customers.id = orders.customer_id;" },
+            { "type": "note", "text": "Qualify columns with the table name once more than one table is in play. `id` alone is ambiguous and the database will refuse it." }
+          ],
+          "task": "Return order id, total, and customer email with an inner join.",
+          "starterCode": "-- Orders with their customer's email\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["inner join customers", "orders.customer_id"],
+          "hints": [
+            "Join `customers` and match its id to `orders.customer_id`.",
+            "FROM orders\nINNER JOIN customers ON customers.id = orders.customer_id"
+          ],
+          "solution": "SELECT orders.id, orders.total, customers.email\nFROM orders\nINNER JOIN customers ON customers.id = orders.customer_id;\n",
+          "reflectionPrompt": "Why does an inner join make a customer with zero orders invisible in a report?"
+        },
+        {
+          "id": "sql-07-left-join",
+          "title": "7. LEFT JOIN",
+          "concept": "LEFT JOIN / IS NULL",
+          "summary": "LEFT JOIN keeps every row from the left table, matched or not.",
+          "activities": [
+            {
+              "id": "sql-07-see",
+              "type": "worked-example",
+              "title": "Find the customers with no orders",
+              "instruction": "With a left join, unmatched right-side columns come back NULL. Filtering `WHERE orders.id IS NULL` is the standard way to find missing relationships.",
+              "example": "SELECT customers.email\nFROM customers\nLEFT JOIN orders ON orders.customer_id = customers.id\nWHERE orders.id IS NULL;"
+            },
+            {
+              "id": "sql-07-predict",
+              "type": "prediction",
+              "title": "Filter placement",
+              "question": "Where must `orders.id IS NULL` go to keep unmatched customers?",
+              "choices": [
+                "In the WHERE clause after the join",
+                "In the ON clause",
+                "Either place works the same"
+              ],
+              "answer": "In the WHERE clause after the join",
+              "explanation": "A condition in `ON` only decides matching; it does not remove left-side rows. Filtering after the join is what selects the unmatched ones."
+            },
+            {
+              "id": "sql-07-edit",
+              "type": "edit",
+              "title": "Customers without orders",
+              "instruction": "Return the `email` of every customer who has no orders, using a LEFT JOIN."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Which table is \"left\" is decided by write order: `FROM customers LEFT JOIN orders` keeps all customers." },
+            { "type": "code", "text": "SELECT customers.email\nFROM customers\nLEFT JOIN orders ON orders.customer_id = customers.id\nWHERE orders.id IS NULL;" },
+            { "type": "note", "text": "For a count per customer, `COUNT(orders.id)` returns 0 for customers with no orders, while `COUNT(*)` wrongly returns 1." }
+          ],
+          "task": "Return the emails of customers with no orders.",
+          "starterCode": "-- Customers who never ordered\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["left join orders", "is null"],
+          "hints": [
+            "Left join orders onto customers, then keep the rows where the order side is NULL.",
+            "LEFT JOIN orders ON orders.customer_id = customers.id\nWHERE orders.id IS NULL"
+          ],
+          "solution": "SELECT customers.email\nFROM customers\nLEFT JOIN orders ON orders.customer_id = customers.id\nWHERE orders.id IS NULL;\n",
+          "reflectionPrompt": "Why does COUNT(*) report 1 for a customer with no orders in a left join?"
+        },
+        {
+          "id": "sql-08-many-to-many",
+          "title": "8. Many-to-many joins",
+          "concept": "junction tables",
+          "summary": "Two joins bridge orders to the products inside them.",
+          "activities": [
+            {
+              "id": "sql-08-see",
+              "type": "worked-example",
+              "title": "Through the join table",
+              "instruction": "A junction table (`order_items`) holds one row per product in an order. Joining through it answers questions about both sides at once.",
+              "example": "SELECT orders.id, SUM(order_items.quantity * products.price) AS total\nFROM orders\nJOIN order_items ON order_items.order_id = orders.id\nJOIN products ON products.id = order_items.product_id\nGROUP BY orders.id;"
+            },
+            {
+              "id": "sql-08-predict",
+              "type": "prediction",
+              "title": "Why store quantity",
+              "question": "Why does `order_items` need `quantity` instead of one row per item?",
+              "choices": [
+                "To save disk space only",
+                "So the same product can appear once with a count",
+                "Because PostgreSQL requires it"
+              ],
+              "answer": "So the same product can appear once with a count",
+              "explanation": "The pair (order_id, product_id) is unique, and quantity records how many. That also makes the composite primary key meaningful."
+            },
+            {
+              "id": "sql-08-edit",
+              "type": "edit",
+              "title": "Order totals",
+              "instruction": "Return each order `id` with its total value, joining `order_items` and `products` and summing quantity × price."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Many-to-many needs a third table. Each row in it is one pairing, often with extra columns such as quantity or price at purchase time." },
+            { "type": "code", "text": "SELECT orders.id, SUM(order_items.quantity * products.price) AS total\nFROM orders\nJOIN order_items ON order_items.order_id = orders.id\nJOIN products ON products.id = order_items.product_id\nGROUP BY orders.id;" },
+            { "type": "note", "text": "Store the price paid on `order_items` if prices change. Recomputing historical totals from today's product price silently rewrites history." }
+          ],
+          "task": "Return each order id and its total value through the join table.",
+          "starterCode": "-- Total value of each order\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["join order_items", "join products", "sum("],
+          "hints": [
+            "Join orders → order_items → products, then sum quantity × price per order.",
+            "SUM(order_items.quantity * products.price) AS total"
+          ],
+          "solution": "SELECT orders.id, SUM(order_items.quantity * products.price) AS total\nFROM orders\nJOIN order_items ON order_items.order_id = orders.id\nJOIN products ON products.id = order_items.product_id\nGROUP BY orders.id;\n",
+          "reflectionPrompt": "Why is storing the price paid on the order line more reliable than joining to today's product price?"
+        }
+      ]
+    },
+    {
+      "id": "sql-changing-data",
+      "name": "Changing Data Safely",
+      "language": "sql",
+      "description": "Insert, update, and delete rows without losing the ones you meant to keep.",
+      "lessons": [
+        {
+          "id": "sql-09-insert",
+          "title": "9. INSERT",
+          "concept": "INSERT INTO … VALUES",
+          "summary": "Insert one row or many, and ask for the generated id back.",
+          "activities": [
+            {
+              "id": "sql-09-see",
+              "type": "worked-example",
+              "title": "Write a row and read its id",
+              "instruction": "`INSERT INTO table (columns) VALUES (...)` writes a row. `RETURNING` hands back generated values so you do not need a second query.",
+              "example": "INSERT INTO products (name, price, category)\nVALUES ('Webcam', 35, 'video')\nRETURNING id, name;"
+            },
+            {
+              "id": "sql-09-predict",
+              "type": "prediction",
+              "title": "String building",
+              "question": "Why build inserts with parameters (`VALUES ($1, $2)`) instead of template strings?",
+              "choices": [
+                "Parameters are faster to type",
+                "Parameters prevent SQL injection and handle quoting",
+                "PostgreSQL requires them"
+              ],
+              "answer": "Parameters prevent SQL injection and handle quoting",
+              "explanation": "Values sent separately from the SQL are never parsed as code, so a name containing quotes — or an attack — stays data."
+            },
+            {
+              "id": "sql-09-edit",
+              "type": "edit",
+              "title": "Add a product",
+              "instruction": "Insert a product named 'Webcam' priced 35 in category 'video', returning its `id`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Inserts list columns explicitly so the statement keeps working when the table gains a nullable column." },
+            { "type": "code", "text": "INSERT INTO products (name, price, category)\nVALUES ('Webcam', 35, 'video')\nRETURNING id;" },
+            { "type": "note", "text": "Multi-row insert: `VALUES (...), (...), (...)`. One statement for many rows is far faster than a loop of single inserts." }
+          ],
+          "task": "Insert a Webcam product at 35 in category video and return its id.",
+          "starterCode": "-- Add the Webcam product\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["insert into products", "values", "returning id"],
+          "hints": [
+            "Name the columns, then supply values in the same order.",
+            "INSERT INTO products (name, price, category)\nVALUES ('Webcam', 35, 'video')\nRETURNING id;"
+          ],
+          "solution": "INSERT INTO products (name, price, category)\nVALUES ('Webcam', 35, 'video')\nRETURNING id;\n",
+          "reflectionPrompt": "Why is a single multi-row INSERT better than calling INSERT in a loop?"
+        },
+        {
+          "id": "sql-10-update",
+          "title": "10. UPDATE",
+          "concept": "UPDATE … SET … WHERE",
+          "summary": "An UPDATE without WHERE rewrites every row in the table.",
+          "activities": [
+            {
+              "id": "sql-10-see",
+              "type": "worked-example",
+              "title": "Target one row",
+              "instruction": "`SET` lists the new values; `WHERE` chooses the rows. Check the row count before committing, and write the WHERE clause before you write SET.",
+              "example": "UPDATE products\nSET price = price * 0.9\nWHERE id = 3\nRETURNING id, price;"
+            },
+            {
+              "id": "sql-10-predict",
+              "type": "prediction",
+              "title": "Forgotten WHERE",
+              "question": "What does `UPDATE products SET price = 0` do with no WHERE clause?",
+              "choices": [
+                "Nothing, PostgreSQL blocks it",
+                "Sets every product's price to 0",
+                "Updates only the first row"
+              ],
+              "answer": "Sets every product's price to 0",
+              "explanation": "There is no implicit limit. The statement applies to every row in the table."
+            },
+            {
+              "id": "sql-10-edit",
+              "type": "edit",
+              "title": "Discount one product",
+              "instruction": "Set product 3's price to 90% of its current price and return the new `id` and `price`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "UPDATE is the highest-risk everyday statement. Always run the same WHERE in a SELECT first and count the rows." },
+            { "type": "code", "text": "UPDATE products\nSET price = price * 0.9\nWHERE id = 3\nRETURNING id, price;" },
+            { "type": "note", "text": "Wrap risky changes in `BEGIN;` … `COMMIT;` so you can `ROLLBACK;` after seeing the affected count." }
+          ],
+          "task": "Discount product 3 by 10% and return its new id and price.",
+          "starterCode": "-- Give product 3 a 10% discount\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["update products", "set price", "where id = 3"],
+          "hints": [
+            "`SET price = price * 0.9` uses the old value while computing the new one.",
+            "UPDATE products\nSET price = price * 0.9\nWHERE id = 3\nRETURNING id, price;"
+          ],
+          "solution": "UPDATE products\nSET price = price * 0.9\nWHERE id = 3\nRETURNING id, price;\n",
+          "reflectionPrompt": "What is your routine for making a bulk UPDATE safe in production?"
+        },
+        {
+          "id": "sql-11-delete",
+          "title": "11. DELETE",
+          "concept": "DELETE FROM … WHERE",
+          "summary": "Delete deliberately, and let foreign keys tell you what else depends on the row.",
+          "activities": [
+            {
+              "id": "sql-11-see",
+              "type": "worked-example",
+              "title": "Remove the cart's lines",
+              "instruction": "`DELETE FROM table WHERE ...` removes matching rows. `RETURNING` shows exactly what disappeared, which is the cheapest audit trail.",
+              "example": "DELETE FROM cart_items\nWHERE cart_id = 7\nRETURNING product_id, quantity;"
+            },
+            {
+              "id": "sql-11-predict",
+              "type": "prediction",
+              "title": "TRUNCATE vs DELETE",
+              "question": "How does `TRUNCATE products` differ from `DELETE FROM products`?",
+              "choices": [
+                "They are identical",
+                "TRUNCATE removes all rows at once and cannot be filtered by WHERE",
+                "TRUNCATE only removes the schema"
+              ],
+              "answer": "TRUNCATE removes all rows at once and cannot be filtered by WHERE",
+              "explanation": "TRUNCATE is a bulk operation that empties the table. DELETE can target rows and fire per-row triggers."
+            },
+            {
+              "id": "sql-11-edit",
+              "type": "edit",
+              "title": "Empty a cart",
+              "instruction": "Delete the rows in `cart_items` for `cart_id = 7`, returning the deleted `product_id` values."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Deletes are permanent unless you have a backup or a soft-delete column. Prefer `deleted_at` timestamps when users might need to undo." },
+            { "type": "code", "text": "DELETE FROM cart_items\nWHERE cart_id = 7\nRETURNING product_id;" },
+            { "type": "note", "text": "A foreign key without `ON DELETE CASCADE` will block the delete while children exist — that is the constraint doing its job." }
+          ],
+          "task": "Delete cart 7's items and return the deleted product ids.",
+          "starterCode": "-- Clear cart 7\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["delete from cart_items", "where cart_id = 7", "returning"],
+          "hints": [
+            "Delete from `cart_items`, filtering on `cart_id`.",
+            "DELETE FROM cart_items\nWHERE cart_id = 7\nRETURNING product_id;"
+          ],
+          "solution": "DELETE FROM cart_items\nWHERE cart_id = 7\nRETURNING product_id;\n",
+          "reflectionPrompt": "When would a soft delete with a deleted_at column be a better choice than DELETE?"
+        },
+        {
+          "id": "sql-12-transactions-indexes",
+          "title": "12. Transactions and indexes",
+          "concept": "BEGIN / COMMIT / CREATE INDEX",
+          "summary": "Group changes so they all land or none do, and index the columns you filter on.",
+          "activities": [
+            {
+              "id": "sql-12-see",
+              "type": "worked-example",
+              "title": "All or nothing",
+              "instruction": "A transaction groups statements. `COMMIT` makes them permanent together; `ROLLBACK` discards them. Indexes make the lookups inside those statements fast.",
+              "example": "BEGIN;\n\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE id = 2;\n\nCOMMIT;\n\nCREATE INDEX orders_customer_id_idx ON orders (customer_id);"
+            },
+            {
+              "id": "sql-12-predict",
+              "type": "prediction",
+              "title": "Half a transfer",
+              "question": "The second UPDATE fails inside a transaction. What is the state after `ROLLBACK`?",
+              "choices": [
+                "Only the first update is saved",
+                "Neither update is saved",
+                "Both updates are saved"
+              ],
+              "answer": "Neither update is saved",
+              "explanation": "The transaction rolls back as a unit. That is exactly why money transfers belong in one."
+            },
+            {
+              "id": "sql-12-edit",
+              "type": "edit",
+              "title": "Atomic transfer",
+              "instruction": "Move 100 from account 1 to account 2 inside a transaction, then add an index on `orders(customer_id)`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Transactions protect invariants that span rows. Indexes protect response time: without one, a filter on a large table means a full scan." },
+            { "type": "code", "text": "BEGIN;\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE id = 2;\nCOMMIT;\n\nCREATE INDEX orders_customer_id_idx ON orders (customer_id);" },
+            { "type": "note", "text": "Foreign keys do not index the child column automatically in PostgreSQL. Add the index yourself or every parent lookup scans." }
+          ],
+          "task": "Transfer 100 between two accounts in a transaction and index orders.customer_id.",
+          "starterCode": "-- Move 100 from account 1 to account 2, then index orders\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["begin;", "commit;", "create index"],
+          "hints": [
+            "Wrap both updates in `BEGIN;` … `COMMIT;`.",
+            "BEGIN;\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE id = 2;\nCOMMIT;"
+          ],
+          "solution": "BEGIN;\n\nUPDATE accounts SET balance = balance - 100 WHERE id = 1;\nUPDATE accounts SET balance = balance + 100 WHERE id = 2;\n\nCOMMIT;\n\nCREATE INDEX orders_customer_id_idx ON orders (customer_id);\n",
+          "reflectionPrompt": "Why does a foreign key alone not make lookups on the child column fast?"
+        }
+      ]
+    }
+  ]
+}
