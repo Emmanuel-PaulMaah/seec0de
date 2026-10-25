@@ -8,8 +8,11 @@
     "start": "electron .",
     "dev": "concurrently \"webpack serve --config webpack.renderer.js\" \"wait-on http://localhost:9000 && electron .\"",
     "build:renderer": "webpack --config webpack.renderer.js --mode production",
-    "dist:win": "npm run build:renderer && electron-builder --win",
-    "release:win": "npm run build:renderer && electron-builder --win --publish always"
+    "preflight": "node scripts/release-preflight.mjs",
+    "build:landing": "node scripts/build-landing-css.mjs",
+    "dist:win": "npm run preflight && npm run build:renderer && electron-builder --win",
+    "release:win": "npm run preflight && npm run build:renderer && electron-builder --win --publish always",
+    "release:win:workaround": "npm run build:renderer && electron-builder --win --publish always -c.directories.output=release-workaround"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
