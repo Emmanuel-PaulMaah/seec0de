@@ -1,0 +1,14 @@
+{
+  "name": "seec0de-billing",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bachs checkout, webhook, and license service for seec0de",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

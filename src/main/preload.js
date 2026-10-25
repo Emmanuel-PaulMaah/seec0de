@@ -92,4 +92,13 @@ contextBridge.exposeInMainWorld('seecode', {
     getStatus:  ()         => ipcRenderer.invoke('preview:get-status'),
     openDetached: (opts)   => ipcRenderer.invoke('preview:open-detached', opts),
   },
+  billing: {
+    getInstallId:      ()               => ipcRenderer.invoke('billing:get-install-id'),
+    getEntitlement:    ()               => ipcRenderer.invoke('billing:get-entitlement'),
+    refreshEntitlement:()               => ipcRenderer.invoke('billing:refresh-entitlement'),
+    getPlans:          ()               => ipcRenderer.invoke('billing:get-plans'),
+    startCheckout:     (payload)        => ipcRenderer.invoke('billing:start-checkout', payload),
+    openPortal:        ()               => ipcRenderer.invoke('billing:open-portal'),
+    clearLicense:      ()               => ipcRenderer.invoke('billing:clear-license'),
+  },
 });

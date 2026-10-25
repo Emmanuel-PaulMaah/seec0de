@@ -8,6 +8,9 @@ import TerminalPanel from './components/TerminalPanel';
 import LivePreviewPanel from './components/LivePreviewPanel';
 import OnboardingModal from './components/OnboardingModal';
 import SettingsDrawer, { ProfileManagerCard } from './components/SettingsDrawer';
+import UpgradeModal from './components/UpgradeModal';
+import CertificateModal from './components/CertificateModal';
+import InterviewModal from './components/InterviewModal';
 import ProfileGate from './components/ProfileGate';
 import HomeScreen from './components/HomeScreen';
 import LearnHomeScreen from './components/LearnHomeScreen';
@@ -18,7 +21,8 @@ import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeG
 import { explainCode } from './engine/codeExplainer';
 import { generateCodeWithAI, explainCodeWithAI, hasApiKey, refreshHasApiKey } from './engine/aiService';
 import { loadSettings, updateSettings, listProfiles, switchProfile, deleteProfile } from './engine/settings';
-import { fileInfo, basename, joinPath } from './engine/fileLanguage';
+import { useEntitlement } from './engine/entitlements';
+import { fileInfo, basename, dirname, joinPath } from './engine/fileLanguage';
 import { verifyLessonOutput, verifyLessonSource, nextLessonAfter, flattenLessons } from './engine/lessonVerifier';
 import { translateError } from './engine/errorTranslator';
 import { playLessonSound, playProjectCompleteSound } from './engine/sounds';
@@ -34,9 +38,9 @@ import { useWorkspaceLayout, PANEL_LABELS } from './lib/hooks/useWorkspaceLayout
 import confetti from 'canvas-confetti';
 
 // Per-session UI state lives in localStorage so the layout the user shaped
-// last time comes back the next time. Settings.showTerminal/showFileExplorer
-// act as the *default* for fresh installs; once the user toggles, the
-// per-session keys take over so we don't fight their last action.
+// last time comes back the next time. Settings.showTerminal seeds the first
+// render and applies when changed; once the user toggles the terminal, the
+// per-session key takes over so we don't fight their last action.
 const STORAGE_KEY_FOLDER             = 'seec0de.lastFolder';
 
 // Languages the runner service can actually execute. Mirrors runnerService.js.
@@ -157,6 +161,9 @@ export default function App() {
   const [learnMode, setLearnMode] = useState(() => !!loadSettings().learnMode);
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [certificateTrack, setCertificateTrack] = useState(null);
+  const [showInterview, setShowInterview] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [learningLibraryView, setLearningLibraryView] = useState(null);
   const [reminderClock, setReminderClock] = useState(() => Date.now());
@@ -177,11 +184,25 @@ export default function App() {
     () => restoredLearningState().lesson?.projectId || null
   );
   const confirm = useConfirm();
+  const billing = useEntitlement();
+  const hasPremiumCourses = billing.entitlement.plan === 'pro'
+    && (billing.entitlement.features || []).includes('premiumCourses');
+  const hasAiTutor = billing.entitlement.plan === 'pro'
+    && (billing.entitlement.features || []).includes('aiTutor');
+  const hasPortfolio = billing.entitlement.plan === 'pro'
+    && (billing.entitlement.features || []).includes('portfolio');
+  const hasInterview = billing.entitlement.plan === 'pro'
+    && (billing.entitlement.features || []).includes('interview');
+
+  useEffect(() => {
+    refreshHasApiKey();
+  }, [billing.entitlement.plan, billing.entitlement.currentPeriodEnd]);
 
   useEffect(() => {
     const mode = settings.colorMode || 'dark';
     document.documentElement.dataset.theme = mode === 'light' ? 'light' : '';
   }, [settings.colorMode]);
+
 
   useEffect(() => {
     const timer = setInterval(() => setReminderClock(Date.now()), 30000);
@@ -242,6 +263,12 @@ export default function App() {
   const [activeConceptNote, setActiveConceptNote] = useState(
     () => loadSettings().conceptNotes?.[restoredLearningState().lesson?.id] || ''
   );
+  useEffect(() => {
+    if (billing.loading || !activeLesson?.premium || hasPremiumCourses) return;
+    setActiveLesson(null);
+    setLearnGeneratedCode({ pseudocode: '', code: {} });
+    setLearnPhase('learn');
+  }, [billing.loading, hasPremiumCourses, activeLesson]);
   const [learnAnnouncement, setLearnAnnouncement] = useState('');
   // Sandbox command history for Git lessons — tracks all commands and their
   // output so they can be verified against sourceChecks.
@@ -273,6 +300,10 @@ export default function App() {
   // the lesson but leaves the editor as-is (so the learner can still
   // tinker with their last attempt).
   const handleSelectLesson = useCallback((lesson) => {
+    if (lesson?.premium && !hasPremiumCourses) {
+      setShowUpgrade(true);
+      return;
+    }
     if (lesson?.language) {
       setLearnCatalogLanguage(lesson.language);
       setLearnCatalogSection(learningSectionFor(lesson));
@@ -311,7 +342,7 @@ export default function App() {
       setActivePath(null);
       setInstruction('');
     }
-  }, []);
+  }, [hasPremiumCourses]);
 
   const handleResetLessonCode = useCallback(() => {
     if (!activeLesson) return;
@@ -436,7 +467,7 @@ export default function App() {
   // ---- panel visibility ------------------------------------------------
   // All panel visibility/width state, the editor width budget and Ctrl+.
   // focus mode live in one hook (lib/hooks/useWorkspaceLayout.js).
-  const layout = useWorkspaceLayout(loadSettings().showTerminal);
+  const layout = useWorkspaceLayout(settings.showTerminal, !learnMode);
   const {
     terminalVisible, setTerminalVisible,
     // Live preview is the headline feature post-v2.4 — defaults ON unless
@@ -656,6 +687,23 @@ export default function App() {
       ));
     }
   }, []);
+
+  // Build steps can target a file that does not exist yet (a new migration, a
+  // Dockerfile, a CI workflow). Opening a missing file read-only would block
+  // the learner, so create the step's file (and its folder) first.
+  const openBuildStepFile = useCallback(async (filePath) => {
+    try {
+      const exists = await window.seecode.fs.pathExists(filePath);
+      if (!exists) {
+        const parent = dirname(filePath);
+        if (parent) await window.seecode.fs.createDir(parent);
+        await window.seecode.fs.createFile(filePath);
+      }
+    } catch (err) {
+      console.warn('[seec0de] could not create the step file:', err?.message || err);
+    }
+    await handleOpenFile(filePath);
+  }, [handleOpenFile]);
 
   const handleCloseFile = useCallback((filePath) => {
     setOpenFiles((prev) => {
@@ -979,11 +1027,11 @@ export default function App() {
     if (nextStep) {
       const base = session.projectDir ? joinPath(rootPath, session.projectDir) : rootPath;
       const p = joinPath(base, nextStep.file);
-      handleOpenFile(p);
+      openBuildStepFile(p);
       setActivePath(p);
       ensureStepSetup(nextStep, session.projectDir || '');
     }
-  }, [rootPath, handleOpenFile, setSettings, ensureStepSetup, fireCompletionConfetti]);
+  }, [rootPath, openBuildStepFile, setSettings, ensureStepSetup, fireCompletionConfetti]);
 
   // The "My Projects" list is a lightweight history of builds the learner has
   // started (sample or AI-generated). Kept in settings so it survives restarts
@@ -1024,9 +1072,14 @@ export default function App() {
     }
     for (const f of project.scaffold || []) {
       try {
+        // Multi-file projects can scaffold nested folders (routes/, public/).
+        // The FS bridge does not create parents implicitly, so do it here.
+        const target = joinPath(base, f.file);
+        const parent = dirname(target);
+        if (parent && parent !== base) await window.seecode.fs.createDir(parent);
         // With starter files off we still create EMPTY files so the editor
-        // opens cleanly — the learner writes everything from scratch.
-        await window.seecode.fs.writeFile(joinPath(base, f.file), writeScaffold ? f.content : '');
+        // opens cleanly �?" the learner writes everything from scratch.
+        await window.seecode.fs.writeFile(target, writeScaffold ? f.content : '');
       } catch (err) {
         console.warn('[seec0de] build scaffold write failed:', err?.message || err);
       }
@@ -1034,7 +1087,7 @@ export default function App() {
     const firstStep = project.steps[0];
     if (firstStep) {
       const p = joinPath(base, firstStep.file);
-      await handleOpenFile(p);
+      await openBuildStepFile(p);
       setActivePath(p);
     }
     const session = {
@@ -1055,7 +1108,7 @@ export default function App() {
       await runSetupCommands(`Setup: ${project.title}`, project.setup, projectDir);
     }
     if (firstStep?.setup?.length) await ensureStepSetup(firstStep, projectDir);
-  }, [rootPath, handleOpenFile, setSettings, recordRecentBuild, runSetupCommands, ensureStepSetup]);
+  }, [rootPath, openBuildStepFile, setSettings, recordRecentBuild, runSetupCommands, ensureStepSetup]);
 
   // Resume a previous build from "My Projects". Unlike handleStartBuild this
   // does NOT rewrite the scaffold — the files should already be in the folder
@@ -1085,11 +1138,11 @@ export default function App() {
     const nextStep = project.steps.find((s) => !completedIds.includes(s.id));
     if (nextStep) {
       const p = joinPath(base, nextStep.file);
-      await handleOpenFile(p);
+      await openBuildStepFile(p);
       setActivePath(p);
       if (nextStep?.setup?.length) await ensureStepSetup(nextStep, projectDir);
     }
-  }, [rootPath, settings.recentBuilds, handleOpenFile, setSettings, ensureStepSetup]);
+  }, [rootPath, settings.recentBuilds, openBuildStepFile, setSettings, ensureStepSetup]);
 
   // ---- Build setup commands (npm install, pip install, …) --------------
   // Runs shell commands inside the build's project folder and surfaces live
@@ -1209,10 +1262,10 @@ export default function App() {
     const step = project.steps[idx];
     const base = session.projectDir ? joinPath(rootPath, session.projectDir) : rootPath;
     const p = joinPath(base, step.file);
-    handleOpenFile(p);
+    openBuildStepFile(p);
     setActivePath(p);
     ensureStepSetup(step, session.projectDir || ''); // skips if its setup already ran
-  }, [rootPath, handleOpenFile, setSettings, ensureStepSetup]);
+  }, [rootPath, openBuildStepFile, setSettings, ensureStepSetup]);
 
   // Debounced content check: as the learner edits the target file, re-run
   // the current step's content checks. Steps that also need output stay
@@ -1242,7 +1295,7 @@ export default function App() {
     if (step) {
       const base = buildSession.projectDir ? joinPath(rootPath, buildSession.projectDir) : rootPath;
       const p = joinPath(base, step.file);
-      handleOpenFile(p);
+      openBuildStepFile(p);
       setActivePath(p);
       ensureStepSetup(step, buildSession.projectDir || '');
     }
@@ -1419,6 +1472,13 @@ export default function App() {
     setRunnerInputReady(false);
   }, []);
 
+  const handleStopCode = useCallback(() => {
+    const id = activeRunIdRef.current;
+    if (!id) return;
+    setRunnerInputReady(false);
+    window.seecode.runner.stop(id);
+  }, []);
+
   const handleRunCode = useCallback(async (payloadOverride) => {
     const base = payloadOverride || (
       RUNNABLE.has(livePreview.language)
@@ -1512,8 +1572,16 @@ export default function App() {
         exitCode: result.exitCode ?? -1,
         durationMs: result.durationMs ?? 0,
         language: payload.language,
+        stopped: !!result.stopped,
       };
       setRunnerOutput(normalisedOutput);
+
+      // Stopping is a neutral action: keep the last lesson verdict and don't
+      // treat it as a failed attempt (or re-verify a build step).
+      if (normalisedOutput.stopped) {
+        if (inLessonMode) setLearnAnnouncement('Run stopped.');
+        return;
+      }
 
       // Lesson verification: compare the program's actual stdout against
       // the lesson's expectedOutput. Passing requires the program to
@@ -2155,6 +2223,12 @@ const beginExplanationResize = useCallback((event) => {
           selectedProjectId={learnCatalogProjectId}
           completedLessons={completedLessons}
           completedProjectCheckpoints={completedProjectCheckpoints}
+          hasPremiumCourses={hasPremiumCourses}
+          hasPortfolio={hasPortfolio}
+          hasInterview={hasInterview}
+          onUpgrade={() => setShowUpgrade(true)}
+          onOpenCertificate={setCertificateTrack}
+          onStartInterview={() => setShowInterview(true)}
           onSelectLanguage={setLearnCatalogLanguage}
           onSelectSection={setLearnCatalogSection}
           onSelectProject={setLearnCatalogProjectId}
@@ -2211,6 +2285,10 @@ const beginExplanationResize = useCallback((event) => {
                 onNextLesson={handleNextLesson}
                 onStartExercise={handleStartLessonExercise}
                 focused={lessonTeachingVisible}
+                hasTutor={hasAiTutor}
+                onUpgrade={() => setShowUpgrade(true)}
+                lessonCode={activeLesson ? (learnGeneratedCode.code?.[activeLesson.language] || '') : ''}
+                runOutput={runnerOutput}
               />
             ) : (
               <InstructionPanel
@@ -2301,9 +2379,10 @@ const beginExplanationResize = useCallback((event) => {
               onCloseFile={handleCloseFileWithConfirm}
               onFileContentChange={handleFileContentChange}
               onRunCode={handleRunCode}
+              onStopCode={handleStopCode}
               runLoading={runLoading}
               runAttempt={runAttempt}
-              runOutcome={inLessonMode ? lessonStatus : runnerOutput?.exitCode}
+              runOutcome={runnerOutput?.stopped ? null : inLessonMode ? lessonStatus : runnerOutput?.exitCode}
               activeGeneratedTab={activeGeneratedTab}
               onActivateGeneratedTab={setActiveGeneratedTab}
               folderOpen={!learnMode && !!rootPath}
@@ -2435,6 +2514,28 @@ const beginExplanationResize = useCallback((event) => {
         onSettingsChange={handleSettingsChange}
         onRerunOnboarding={handleRerunOnboarding}
         onRunInTerminal={handleRunInTerminal}
+        onUpgrade={() => { setShowSettings(false); setShowUpgrade(true); }}
+      />
+
+      <UpgradeModal
+        open={showUpgrade}
+        onClose={() => setShowUpgrade(false)}
+        entitlement={billing.entitlement}
+        onRefresh={billing.refresh}
+      />
+
+      <CertificateModal
+        open={!!certificateTrack}
+        onClose={() => setCertificateTrack(null)}
+        track={certificateTrack}
+        lessons={certificateTrack?.lessons || []}
+        profileName={settings.username}
+      />
+
+      <InterviewModal
+        open={showInterview}
+        onClose={() => setShowInterview(false)}
+        language={learnCatalogLanguage || 'javascript'}
       />
 
       <ProfileManagerCard
@@ -2492,6 +2593,9 @@ function describeAiError(err) {
       kind: 'no-key',
     };
   }
+  if (/managed ai/i.test(raw)) {
+    return { message: raw, kind: 'no-key' };
+  }
   if (/api key not valid|invalid.*api key|api key.*invalid|permission denied|forbidden|unauthor/i.test(raw)) {
     return {
       message: "That API key didn't work. Open Settings and paste a fresh one — you can get a free key at aistudio.google.com/apikey.",
@@ -2508,6 +2612,12 @@ function describeAiError(err) {
     return {
       message: "Can't reach the AI right now — check your internet connection and try again.",
       kind: 'network',
+    };
+  }
+  if (err?.isTruncated || /cut off|truncated|max.?tokens/i.test(raw)) {
+    return {
+      message: "The AI's reply was cut off before it finished. Try again, or ask for something a little smaller.",
+      kind: 'parse',
     };
   }
   if (/json|parse|unexpected response|no response/i.test(raw)) {
@@ -2643,36 +2753,36 @@ const styles = {
   workspace: {
     display: 'flex',
     flex: 1,
-    /* Horizontal scroll instead of clipping when fixed-width panels + the
-     * floored editor exceed the window width (editor min-width lives in
-     * global.css .workspace-editor-shell). */
-    overflowX: 'auto',
+    /* No horizontal scroll. Side panels shrink (see the shell styles) so a
+     * zoomed-in window compresses the layout instead of pushing the right-
+     * hand panels out of view. The editor keeps its own floor in global.css. */
+    overflowX: 'hidden',
     overflowY: 'hidden',
     minHeight: 0,
   },
-instructionShell: {
-  flexShrink: 0,
-  display: 'flex',
-  minWidth: 32,
-  maxWidth: 520,
-  overflow: 'hidden',
-},
+  instructionShell: {
+    flexShrink: 1,
+    display: 'flex',
+    minWidth: 32,
+    maxWidth: 520,
+    overflow: 'hidden',
+  },
 
-explanationShell: {
-  flexShrink: 0,
-  display: 'flex',
-  minWidth: 32,
-  maxWidth: 520,
-  overflow: 'hidden',
-},
+  explanationShell: {
+    flexShrink: 1,
+    display: 'flex',
+    minWidth: 32,
+    maxWidth: 520,
+    overflow: 'hidden',
+  },
 
-previewShell: {
-  flexShrink: 0,
-  display: 'flex',
-  minWidth: 32,
-  maxWidth: 680,
-  overflow: 'hidden',
-},
+  previewShell: {
+    flexShrink: 1,
+    display: 'flex',
+    minWidth: 32,
+    maxWidth: 680,
+    overflow: 'hidden',
+  },
 
 verticalResizeHandle: {
   width: 5,
