@@ -9,7 +9,7 @@ Date: 2026-10-08. Verified with `npm run build:renderer` (webpack production bui
 ## Part 1 — Session work (this round of edits)
 
 ### 1. Onboarding copy simplified
-`src/renderer/components/OnboardingModal.jsx`
+`src/renderer/components/Onboarding`Modal.jsx`
 - Shortened every step's subtitle/choice text: profile ("Saved on *this device* — no account needed."), experience ("Sets how detailed explanations are."), language ("Used to run and save your work…"), API key ("Everything works offline. A free Google AI key adds smarter code generation…"), and the language-step helper line.
 - No behavior changes — steps, validation, Esc/skip, and profile persistence untouched.
 
