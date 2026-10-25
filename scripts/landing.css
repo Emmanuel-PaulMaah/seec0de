@@ -1,0 +1,138 @@
+/*
+ * Source styles for the static landing page (index.html).
+ * Compiled to index-style.css with: npm run build:landing
+ */
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "../guide.html";
+
+/* Class-based dark mode so the header toggle can switch themes. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+  --paper: #f8f7f4;
+  --panel: #eeede8;
+  --ink: #191919;
+  --ink-soft: #45443f;
+  --muted: #6b6963;
+  --line: #dedcd5;
+  --line-strong: #c6c4bc;
+  --brand: #b6f04a;
+  --brand-ink: #101507;
+  --frame: #0a0c0a;
+}
+
+.dark {
+  color-scheme: dark;
+  --paper: #080909;
+  --panel: #101211;
+  --ink: #f2f0e9;
+  --ink-soft: #cfcdc6;
+  --muted: #92938d;
+  --line: #232620;
+  --line-strong: #353a30;
+  --brand: #c8ff4d;
+  --brand-ink: #101507;
+  --frame: #0b0d0c;
+}
+
+@theme inline {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-frame: var(--frame);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  ul,
+  ol,
+  figure {
+    margin: 0;
+  }
+
+  ul,
+  ol {
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: var(--brand-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      transition-duration: 1ms !important;
+      animation-duration: 1ms !important;
+    }
+  }
+}
+
+@utility display {
+  font-weight: 600;
+  letter-spacing: -0.075em;
+  line-height: 0.98;
+}
+
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
