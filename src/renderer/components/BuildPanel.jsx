@@ -785,6 +785,19 @@ function StepCard({ step, index, isDone, isCurrent, check, projectDir = '', buil
   const anyPending = check?.details?.some((d) => d.pending) || false;
   const failures = check?.details?.filter((d) => !d.pass && !d.pending) || [];
 
+  // "Shape looks right" is only honest when every content check passed AND the
+  // learner has written something. The debounced content check runs as soon as
+  // a step opens, and a starter scaffold often already satisfies a content
+  // check or two (it imports the module, it has a package.json), so without
+  // these guards the hint showed up before the learner typed a line.
+  const shapeLooksRight = anyPending && failures.length === 0 && !check?.untouched;
+  // Terminal-style steps (npm install etc.) have no runnable output — Check
+  // step verifies them without a file run, so keep the button even while the
+  // target file is still the scaffold.
+  const canCheckStep = !!onCheckStep && anyPending && !!step.checks?.some((c) => c.type === 'runCommand');
+  const showCheckBox = !!check && check.stepId === step.id
+    && (check.pass || failures.length > 0 || shapeLooksRight || canCheckStep);
+
   return (
     <div style={{ ...styles.stepCard, ...styles.stepCardCurrent }}>
       <div style={styles.stepHead}>
@@ -906,7 +919,7 @@ function StepCard({ step, index, isDone, isCurrent, check, projectDir = '', buil
       )}
 
       {/* check status */}
-      {check && check.stepId === step.id && (
+      {showCheckBox && (
         <div style={{ ...styles.checkBox, ...(check.pass ? styles.checkBoxPass : styles.checkBoxFail) }}>
           {check.pass ? (
             <div style={styles.checkLine}>
@@ -915,7 +928,7 @@ function StepCard({ step, index, isDone, isCurrent, check, projectDir = '', buil
             </div>
           ) : (
             <>
-              {anyPending && (
+              {shapeLooksRight && (
                 <div style={styles.checkLine}>
                   <Play size={11} style={{ flexShrink: 0 }} />
                   <span style={{ marginLeft: 6 }}>Code shape looks right — press Run to verify the output.</span>
@@ -927,9 +940,7 @@ function StepCard({ step, index, isDone, isCurrent, check, projectDir = '', buil
                   <span style={{ marginLeft: 6 }}>{f.message}</span>
                 </div>
               ))}
-              {/* Terminal-style steps (npm install etc.) have no runnable
-                  output — Check step verifies them without a file run. */}
-              {anyPending && onCheckStep && step.checks?.some((c) => c.type === 'runCommand') && (
+              {canCheckStep && (
                 <button type="button" className="ui-toolbar-button" style={styles.checkStepBtn} onClick={() => onCheckStep(step.id)}>
                   <Check size={11} />
                   <span style={{ marginLeft: 5 }}>Check step</span>

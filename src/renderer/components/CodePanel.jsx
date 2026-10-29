@@ -58,6 +58,7 @@ const LANGUAGE_MONACO_MAP = {
   cicd: 'yaml',
   observability: 'javascript',
   accessibility: 'javascript',
+  http: 'javascript',
 };
 
 const LANGUAGE_LABELS = {
@@ -77,6 +78,7 @@ const LANGUAGE_LABELS = {
   cicd: 'CI/CD & Release',
   observability: 'Observability',
   accessibility: 'Accessibility',
+  http: 'HTTP & Web APIs',
 };
 
 // ---- HTML auto-close completions -------------------------------------------

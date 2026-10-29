@@ -632,6 +632,18 @@ function StepApiKey({ value, onChange, provider, onProviderChange, onBack, onFin
   const [clipboardKey, setClipboardKey] = useState(null);
   const meta = getAiProvider(provider);
 
+  // Key pages open in the system browser — Google blocks sign-in inside the
+  // embedded Electron window, so the in-app browser cannot be used here.
+  const openKeyPage = (event) => {
+    event.preventDefault();
+    const bridge = window.seecode?.app;
+    if (bridge?.openExternal) {
+      bridge.openExternal(meta.getKeyUrl).catch(() => { window.open(meta.getKeyUrl, '_blank'); });
+    } else {
+      window.open(meta.getKeyUrl, '_blank');
+    }
+  };
+
   // Switching provider clears the field — a Gemini key is not a Groq key.
   const chooseProvider = (id) => {
     if (id === provider) return;
@@ -723,6 +735,7 @@ function StepApiKey({ value, onChange, provider, onProviderChange, onBack, onFin
         href={meta.getKeyUrl}
         target="_blank"
         rel="noreferrer"
+        onClick={openKeyPage}
       >
         <KeyRound size={14} /> {meta.getKeyLabel}
       </a>

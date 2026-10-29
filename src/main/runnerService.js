@@ -42,8 +42,9 @@ const MAX_OUTPUT_BYTES   = 1_000_000;
 const IS_WINDOWS         = process.platform === 'win32';
 
 // Interactive runs need longer so a learner can read a prompt and type
-// input without the process being killed mid-thought.
-const INTERACTIVE_TIMEOUT_MS = 60_000;
+// input without the process being killed mid-thought — and so a game loop
+// (the pygame build project) can play several rounds before the cap.
+const INTERACTIVE_TIMEOUT_MS = 5 * 60_000;
 const MAX_ACTIVE_RUNS = 4;
 
 // ---------------------------------------------------------------------------

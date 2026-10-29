@@ -15,6 +15,7 @@ import ProfileGate from './components/ProfileGate';
 import HomeScreen from './components/HomeScreen';
 import LearnHomeScreen from './components/LearnHomeScreen';
 import LearningLibraryModal from './components/LearningLibraryModal';
+import FeedbackModal from './components/FeedbackModal';
 import LearningPulseBar from './components/LearningPulseBar';
 import WorkspaceTour from './components/WorkspaceTour';
 import { generateCode, matchesTemplate, findTemplateMatch } from './engine/codeGenerator';
@@ -162,6 +163,7 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => !loadSettings().onboardingComplete);
   const [showSettings, setShowSettings] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [feedbackKind, setFeedbackKind] = useState(null);
   const [certificateTrack, setCertificateTrack] = useState(null);
   const [showInterview, setShowInterview] = useState(false);
   const [showProfileManager, setShowProfileManager] = useState(false);
@@ -989,7 +991,7 @@ export default function App() {
     if (!project) return null;
     const step = project.steps.find((s) => !session.completedStepIds.includes(s.id)) || null;
     if (!step) return null;
-    return { step, projectId: project.id };
+    return { step, projectId: project.id, project };
   }, []);
 
   // Confetti + fanfare when the learner finishes a project.
@@ -1148,11 +1150,11 @@ export default function App() {
   // Runs shell commands inside the build's project folder and surfaces live
   // progress in BuildPanel. Used for project-level `setup` (once, at start)
   // and per-step `setup` (the first time a step becomes current).
-  const execInProject = useCallback(async (command, projectDir) => {
+  const execInProject = useCallback(async (command, projectDir, timeoutMs) => {
     if (!rootPath) return { stdout: '', stderr: '[seec0de] no project folder', exitCode: -1 };
     const cwd = projectDir ? joinPath(rootPath, projectDir) : rootPath;
     try {
-      return await window.seecode.terminal.exec({ command, cwd });
+      return await window.seecode.terminal.exec({ command, cwd, timeoutMs });
     } catch (err) {
       return { stdout: '', stderr: `[seec0de] ${err.message}`, exitCode: -1 };
     }
@@ -1171,7 +1173,9 @@ export default function App() {
     const emit = () => setBuildSetup({ running: true, label, stepId: stepId ?? null, lines: [...lines] });
     emit();
     for (const command of commands) {
-      const res = await execInProject(command, projectDir);
+      // Installs (pip, npm, winget) routinely take longer than the terminal's
+      // 30-second default; give setup commands ten minutes.
+      const res = await execInProject(command, projectDir, 10 * 60_000);
       lines.push({ command, exitCode: res.exitCode });
       if ((res.stdout || '').trim()) lines.push({ text: res.stdout.trim() });
       if ((res.stderr || '').trim()) lines.push({ text: res.stderr.trim() });
@@ -1275,11 +1279,20 @@ export default function App() {
     if (!buildSession || !rootPath) return undefined;
     const info = currentBuildStepInfo();
     if (!info) return undefined;
-    const { step } = info;
+    const { step, project } = info;
     const timer = setTimeout(async () => {
       const result = await evaluateStep(step, { resolveFile: resolveBuildFile, output: null, contentOnly: true });
       if (buildSessionRef.current?.projectId !== buildSession.projectId) return;
-      setBuildCheck({ stepId: step.id, pass: result.pass, details: result.details });
+      // Did the learner touch the target file yet? A starter scaffold can
+      // already satisfy a content check (it imports the module, it ships a
+      // package.json), so the UI must not claim "the shape looks right"
+      // before anything has been written.
+      const scaffold = project?.scaffold?.find((s) => s.file === step.file);
+      const current = scaffold ? await resolveBuildFile(step.file) : null;
+      const normalize = (text) => String(text ?? '').replace(/\r\n/g, '\n');
+      const untouched = !!scaffold && current != null
+        && normalize(current) === normalize(scaffold.content);
+      setBuildCheck({ stepId: step.id, pass: result.pass, details: result.details, untouched });
       if (result.pass) completeBuildStep(step.id);
     }, 800);
     return () => clearTimeout(timer);
@@ -2189,6 +2202,7 @@ const beginExplanationResize = useCallback((event) => {
         terminalVisible={terminalVisible}
         onToggleTerminal={showHome || learnMode ? undefined : () => setTerminalVisible((v) => !v)}
         onStartTour={startWorkspaceTour}
+        onOpenFeedback={() => setFeedbackKind('bug')}
         onOpenSettings={() => setShowSettings(true)}
         activeProfile={settings.activeProfileId ? { username: settings.username, avatar: settings.avatar } : null}
         onSwitchProfile={handleSwitchProfile}
@@ -2524,6 +2538,7 @@ const beginExplanationResize = useCallback((event) => {
         onRerunOnboarding={handleRerunOnboarding}
         onRunInTerminal={handleRunInTerminal}
         onUpgrade={() => { setShowSettings(false); setShowUpgrade(true); }}
+        onOpenFeedback={(kind) => { setShowSettings(false); setFeedbackKind(kind || 'bug'); }}
       />
 
       <UpgradeModal
@@ -2567,6 +2582,14 @@ const beginExplanationResize = useCallback((event) => {
         onCreatePostcard={handleCreatePostcard}
         onDeletePostcard={handleDeletePostcard}
         onSchedulePostcard={handleSchedulePostcard}
+      />
+
+      <FeedbackModal
+        open={!!feedbackKind}
+        initialKind={feedbackKind || 'bug'}
+        settings={settings}
+        mode={showHome ? 'home' : learnMode ? 'learn' : 'workspace'}
+        onClose={() => setFeedbackKind(null)}
       />
 
       {/* Auth gate — the "who's learning?" picker + PIN unlock. Sits above

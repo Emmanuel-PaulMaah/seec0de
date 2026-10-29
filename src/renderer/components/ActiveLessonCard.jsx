@@ -410,7 +410,7 @@ function ProjectStepBlock({ lesson, check, projectDir, examplesShown, onToggleEx
               <span style={{ marginLeft: 6 }}>Code shape checks out.</span>
             </div>
           )}
-          {anyPending && (
+          {anyPending && failures.length === 0 && (
             <div style={styles.stepCheckLine}>
               <Play size={11} style={{ flexShrink: 0 }} />
               <span style={{ marginLeft: 6 }}>Code shape looks right — press Run to verify the output.</span>

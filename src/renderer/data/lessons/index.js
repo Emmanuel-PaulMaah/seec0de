@@ -20,6 +20,7 @@ import systemDesignLessons from './systemdesign.json';
 import cicdLessons from './cicd.json';
 import observabilityLessons from './observability.json';
 import accessibilityLessons from './accessibility.json';
+import httpLessons from './http.json';
 
 export default {
   schemaVersion: 2,
@@ -46,5 +47,6 @@ export default {
     ...cicdLessons.tracks,
     ...observabilityLessons.tracks,
     ...accessibilityLessons.tracks,
+    ...httpLessons.tracks,
   ]
 };

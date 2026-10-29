@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   PanelLeft, PanelLeftClose, Terminal as TermIcon,
   Settings as SettingsIcon, ChevronDown, Users, UserPlus, Pencil, GraduationCap, House, CircleHelp,
-  Bell, Clock3, Code2,
+  Bell, Clock3, Code2, MessageSquarePlus,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Tooltip } from './motion/tooltip';
@@ -20,6 +20,7 @@ export default function TitleBar({
   terminalVisible = false,
   onToggleTerminal,
   onStartTour,
+  onOpenFeedback,
   onOpenSettings,
   activeProfile = null,
   onSwitchProfile,
@@ -112,6 +113,15 @@ export default function TitleBar({
             ariaLabel="Start workspace tour"
           >
             <CircleHelp size={14} />
+          </ToolBtn>
+        )}
+        {onOpenFeedback && (
+          <ToolBtn
+            onClick={onOpenFeedback}
+            title="Report a bug or suggest a feature by email"
+            ariaLabel="Send feedback"
+          >
+            <MessageSquarePlus size={14} />
           </ToolBtn>
         )}
         <UpdatePill />

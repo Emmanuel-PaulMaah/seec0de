@@ -16,7 +16,7 @@ import {
 import lessonsData from '../data/lessons/index.js';
 import { challengeTypesFor, flattenExercises } from '../data/exerciseCatalog';
 import projects, { projectCheckpoint } from '../data/projects';
-import { languageBlurb, languageLabel } from '../data/languages';
+import { COURSE_GROUPS, languageBlurb, languageLabel } from '../data/languages';
 import { renderInline } from './InlineCode';
 
 // One tone per section, carried by the card's glyph. Projects matches the
@@ -62,8 +62,17 @@ export default function LearnHomeScreen({
   const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
     const available = Array.from(new Set(tracks.map((track) => track.language).filter(Boolean)));
-    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'git', 'nodejs', 'mongodb', 'express', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'].filter((language) => available.includes(language));
+    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'http', 'git', 'nodejs', 'mongodb', 'express', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'].filter((language) => available.includes(language));
   }, [tracks]);
+  // Group the available languages so the picker reads as a curriculum
+  // (frontend → backend → tools → quality → architecture) instead of one
+  // long undifferentiated wall of courses.
+  const courseGroups = useMemo(() => COURSE_GROUPS
+    .map((group) => ({
+      ...group,
+      languages: group.languages.filter((language) => languages.includes(language)),
+    }))
+    .filter((group) => group.languages.length > 0), [languages]);
   const languageTracks = tracks.filter((track) => track.language === selectedLanguage);
   const languageExercises = exercises.filter((exercise) => exercise.language === selectedLanguage);
   const challengeTypes = challengeTypesFor(exercises, selectedLanguage);
@@ -140,31 +149,44 @@ export default function LearnHomeScreen({
       <p style={{ maxWidth: 540, margin: '14px 0 0', color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.6 }}>
         Your lessons, exercises, and progress are saved here.
       </p>
-      <div className="learn-home-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 28 }}>
-        {languages.map((language) => {
-          const matchingTracks = tracks.filter((t) => t.language === language);
-          const lessons = matchingTracks.flatMap((t) => t.lessons || []);
-          const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
-          const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
-          return (
-            <button key={language} type="button" className="learn-card learn-opt-card" onClick={() => chooseLanguage(language)}>
-              <span className="learn-opt-head">
-                <span className="learn-opt-name">{languageLabel(language)}</span>
-                <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />
-              </span>
-              <span className="learn-opt-meta">
-                {matchingTracks.length} {matchingTracks.length === 1 ? 'course' : 'courses'} · {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
-              </span>
-              <span className="learn-opt-progress">
-                <span className="learn-progress-track">
-                  <span className="learn-progress-fill" style={{ width: `${pct}%` }} />
-                </span>
-                <span className="learn-opt-count">{done}/{lessons.length}</span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {courseGroups.map((group) => (
+        <section key={group.id} aria-labelledby={`course-group-${group.id}`} style={{ marginTop: 28 }}>
+          <h3
+            id={`course-group-${group.id}`}
+            style={{ margin: 0, fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}
+          >
+            {group.name}
+          </h3>
+          {group.description && (
+            <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{group.description}</p>
+          )}
+          <div className="learn-home-card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 12 }}>
+            {group.languages.map((language) => {
+              const matchingTracks = tracks.filter((t) => t.language === language);
+              const lessons = matchingTracks.flatMap((t) => t.lessons || []);
+              const done = lessons.filter((l) => completedLessons.includes(l.id)).length;
+              const pct = lessons.length > 0 ? Math.round((done / lessons.length) * 100) : 0;
+              return (
+                <button key={language} type="button" className="learn-card learn-opt-card" onClick={() => chooseLanguage(language)}>
+                  <span className="learn-opt-head">
+                    <span className="learn-opt-name">{languageLabel(language)}</span>
+                    <ArrowRight size={14} className="learn-opt-go" aria-hidden="true" />
+                  </span>
+                  <span className="learn-opt-meta">
+                    {matchingTracks.length} {matchingTracks.length === 1 ? 'course' : 'courses'} · {lessons.length} {lessons.length === 1 ? 'lesson' : 'lessons'}
+                  </span>
+                  <span className="learn-opt-progress">
+                    <span className="learn-progress-track">
+                      <span className="learn-progress-fill" style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className="learn-opt-count">{done}/{lessons.length}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </>
   );
 

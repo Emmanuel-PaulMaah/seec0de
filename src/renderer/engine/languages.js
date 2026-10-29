@@ -595,6 +595,33 @@ export const LANGUAGES = {
       'panic!': { definition: 'Macro that aborts the current thread with an error message.', example: 'panic!("unreachable");' },
     },
   },
+
+  http: {
+    label: 'HTTP & Web APIs',
+    monacoId: 'javascript',
+    glossary: {
+      'fetch': { definition: 'Makes an HTTP request and returns a Promise for the Response.', example: "const response = await fetch('/api/users');" },
+      'await': { definition: 'Waits for a Promise — such as a fetch — to resolve before the next line runs.', example: 'const response = await fetch(url);' },
+      'method': { definition: 'The HTTP verb: GET reads, POST creates, PUT replaces, PATCH updates, DELETE removes.', example: "fetch(url, { method: 'POST', body: JSON.stringify(data) });" },
+      'headers': { definition: 'Metadata sent with a request or response, such as Content-Type and Authorization.', example: "fetch(url, { headers: { 'Content-Type': 'application/json' } });" },
+      'body': { definition: 'The payload of a request or response. Use JSON.stringify for a JSON body.', example: "body: JSON.stringify({ title: 'Ship it' })" },
+      'Content-Type': { definition: 'Header that names the body format, so the server knows how to parse it.', example: "headers: { 'Content-Type': 'application/json' }" },
+      'status': { definition: 'The three-digit HTTP result code: 2xx success, 3xx redirect, 4xx client error, 5xx server error.', example: 'if (response.status === 404) showNotFound();' },
+      'ok': { definition: 'True when the response status is 200–299. A 404 resolves normally with ok false.', example: 'if (!response.ok) throw new Error(`HTTP ${response.status}`);' },
+      'Response': { definition: 'The object fetch resolves to: status, headers and a body stream.', example: 'const response = await fetch(url);\nconst data = await response.json();' },
+      'Request': { definition: 'The object describing an outgoing HTTP request: URL, method, headers and body.', example: "const request = new Request(url, { method: 'GET' });" },
+      'signal': { definition: 'An AbortSignal that cancels the request when aborted or when its timeout fires.', example: 'fetch(url, { signal: AbortSignal.timeout(5000) });' },
+      'AbortController': { definition: 'Creates a signal you can abort manually, for example when a component unmounts.', example: 'const controller = new AbortController();\nfetch(url, { signal: controller.signal });\ncontroller.abort();' },
+      'AbortSignal': { definition: 'The signal object passed to fetch; AbortSignal.timeout(ms) aborts after a deadline.', example: 'fetch(url, { signal: AbortSignal.timeout(5000) });' },
+      'credentials': { definition: "Controls whether cookies cross origins; use 'include' for a cross-origin session.", example: "fetch(url, { credentials: 'include' });" },
+      'URLSearchParams': { definition: 'Builds and encodes query strings safely, escaping user text for you.', example: "const query = new URLSearchParams({ q: 'cats & dogs' }).toString();" },
+      'JSON': { definition: 'The text format used by most APIs. JSON.stringify writes it; response.json() parses it.', example: 'const body = JSON.stringify({ id: 1 });' },
+      'setHeader': { definition: 'Sets a response header, such as CORS or caching rules, before the body is sent.', example: "res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');" },
+      'redirect': { definition: 'A 3xx response that points the client at another URL; fetch follows it by default.', example: "fetch(url, { redirect: 'manual' });" },
+      'createHmac': { definition: 'Creates a keyed hash used to verify webhook signatures.', example: "const expected = createHmac('sha256', secret).update(rawBody).digest('hex');" },
+      'timingSafeEqual': { definition: 'Compares two buffers in constant time, so a signature check cannot be timed.', example: 'timingSafeEqual(Buffer.from(expected), Buffer.from(signature));' },
+    },
+  },
 };
 
 export const LANGUAGE_LIST = Object.entries(LANGUAGES).map(([id, lang]) => ({

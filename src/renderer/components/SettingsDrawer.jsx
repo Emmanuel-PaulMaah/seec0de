@@ -4,7 +4,7 @@ import {
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
   UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
-  Volume2, VolumeX, ClipboardPaste, CreditCard, Search,
+  Volume2, VolumeX, ClipboardPaste, CreditCard, Search, MessageSquarePlus, Bug, Lightbulb,
 } from 'lucide-react';
 import { Loader } from './motion/loader';
 import { motion, useReducedMotion } from 'motion/react';
@@ -54,6 +54,7 @@ import BillingSettings from './BillingSettings';
 //     · Plan & billing       — subscription
 //   App — maintenance
 //     · Onboarding           — "Rerun onboarding"
+//     · Feedback             — report a bug / suggest a feature by email
 //     · About & Updates      — version, last-checked, "Check now"
 //
 // A search field above the list filters these sections by title, group, and
@@ -70,7 +71,7 @@ const SETTINGS_GROUPS = [
   { id: 'workspace', label: 'Workspace', sections: ['appearance', 'workspace', 'keyboardShortcuts', 'toolchains'] },
   { id: 'learn',     label: 'Learn',     sections: ['learnMode', 'practiceReminders', 'languages', 'sounds'] },
   { id: 'ai',        label: 'AI & plan', sections: ['ai', 'billing'] },
-  { id: 'app',       label: 'App',       sections: ['onboarding', 'about'] },
+  { id: 'app',       label: 'App',       sections: ['onboarding', 'feedback', 'about'] },
 ];
 
 // Extra search terms per section. Section titles alone are too narrow — the
@@ -89,6 +90,7 @@ const SECTION_SEARCH_TERMS = {
   ai:                 'ai key api gemini google groq provider openai generation explanation',
   billing:            'plan billing subscription upgrade payment credits pro',
   onboarding:         'onboarding setup rerun restart profile',
+  feedback:           'feedback bug report issue feature request suggestion idea email contact',
   about:              'about updates update version check now install',
 };
 
@@ -139,7 +141,7 @@ const PLATFORM_LABEL = (() => {
 })();
 
 export default function SettingsDrawer({
-  open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal, onUpgrade,
+  open, onClose, onSettingsChange, onRerunOnboarding, onRunInTerminal, onUpgrade, onOpenFeedback,
 }) {
   const [settings, setSettings] = useState(loadSettings());
   const confirm = useConfirm();
@@ -183,6 +185,19 @@ export default function SettingsDrawer({
   // Placeholder shown when a key exists. Never saved — see handleSaveKey.
   const KEY_MASK = '••••••••••••••••';
   const providerMeta = getAiProvider(provider);
+
+  // Always hand key pages to the system browser. Google refuses sign-in inside
+  // the embedded Electron window, so the in-app browser is not an option here.
+  const openKeyPage = (event) => {
+    event.preventDefault();
+    const url = providerMeta.getKeyUrl;
+    const bridge = window.seecode?.app;
+    if (bridge?.openExternal) {
+      bridge.openExternal(url).catch(() => { window.open(url, '_blank'); });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
 
   // Switch providers without touching stored keys. Each provider keeps its
   // own key, so flipping back and forth never loses one.
@@ -522,7 +537,7 @@ export default function SettingsDrawer({
                       {keySaved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save'}
                     </button>
                   </div>
-                  <a style={styles.link} href={providerMeta.getKeyUrl} target="_blank" rel="noreferrer">{providerMeta.getKeyLabel} →</a>
+                  <a style={styles.link} href={providerMeta.getKeyUrl} target="_blank" rel="noreferrer" onClick={openKeyPage}>{providerMeta.getKeyLabel} →</a>
                   <p style={styles.fieldHint} aria-live="polite">
                     {keyChecking && `Checking the key with ${providerMeta.shortLabel}…`}
                     {!keyChecking && keySaved && keyError == null && 'Key saved.'}
@@ -559,6 +574,29 @@ export default function SettingsDrawer({
             if (id === 'about') return (
               <Section key={id} {...props} icon={<Info size={13} />} title="About & Updates">
                 <UpdatePanel update={update} />
+              </Section>
+            );
+            if (id === 'feedback') return (
+              <Section key={id} {...props} icon={<MessageSquarePlus size={13} />} title="Feedback">
+                <p style={styles.hint}>Found a bug or have an idea? Write it here and send it to yottalium@gmail.com from your email app. Nothing is sent until you review it.</p>
+                <div style={styles.profileBtnRow}>
+                  <button
+                    type="button"
+                    style={styles.ghostBtn}
+                    onClick={() => onOpenFeedback?.('bug')}
+                  >
+                    <Bug size={13} style={{ marginRight: 6 }} />
+                    Report a bug
+                  </button>
+                  <button
+                    type="button"
+                    style={styles.ghostBtn}
+                    onClick={() => onOpenFeedback?.('idea')}
+                  >
+                    <Lightbulb size={13} style={{ marginRight: 6 }} />
+                    Suggest a feature
+                  </button>
+                </div>
               </Section>
             );
             if (id === 'onboarding') return (

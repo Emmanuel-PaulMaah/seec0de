@@ -16,6 +16,8 @@ import shopfront from './shopfront';
 import linkbox from './linkbox';
 import ledger from './ledger';
 import gatehouse from './gatehouse';
+import starfall from './starfall';
+import orbitRunner from './orbitRunner';
 
 // The sample library is grouped by experience level. Every hand-written
 // project declares one of these ids; unknown/missing levels fall back to
@@ -1486,6 +1488,8 @@ if (require.main === module) {
   gatehouse,
   shopfront,
   chatter,
+  starfall,
+  orbitRunner,
 ];
 
 // ---------------------------------------------------------------------------

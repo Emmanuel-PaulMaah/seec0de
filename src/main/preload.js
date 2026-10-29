@@ -6,6 +6,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('seecode', {
+  app: {
+    // Open a URL in the user's real browser. Required for sign-in / API-key
+    // pages: Google refuses OAuth inside the embedded Electron window.
+    openExternal: (url) => ipcRenderer.invoke('app:open-external', url),
+  },
   zoom: {
     in:  ()   => ipcRenderer.send('zoom:in'),
     out: ()   => ipcRenderer.send('zoom:out'),
@@ -88,6 +93,10 @@ contextBridge.exposeInMainWorld('seecode', {
       ipcRenderer.on('update:status', listener);
       return () => ipcRenderer.removeListener('update:status', listener);
     },
+  },
+  feedback: {
+    // Opens the system mail client with a prefilled report to the project inbox.
+    sendEmail: (payload) => ipcRenderer.invoke('feedback:open-email', payload),
   },
   preview: {
     startServer: (rootPath) => ipcRenderer.invoke('preview:start-server', rootPath),

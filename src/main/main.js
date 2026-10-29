@@ -52,14 +52,52 @@ function setStatus(patch) {
 }
 
 // ---- In-app browser window for external links -----------------------------
-// Bulletin articles, "Get a free key", and toolchain download links open in a
-// reusable seec0de window (stock Chromium, no Node, no address bar) instead of
-// handing the URL to the system browser. The default session is shared, so
-// logins (e.g. Google AI Studio) survive app restarts.
+// Bulletin articles and toolchain download links open in a reusable seec0de
+// window (stock Chromium, no Node, no address bar) instead of taking over the
+// system browser.
+//
+// Sign-in and API-key pages are the exception: they go to the user's real
+// browser. Google (and most identity providers) refuse OAuth inside embedded
+// Chromium — the "This browser or app may not be secure" wall — and a spoofed
+// user agent no longer gets around it. The system browser also already has the
+// user's Google session, so "Get a free key" is one click instead of a fresh
+// sign-in that fails.
 let browserWindow = null;
 
-// Google sign-in refuses Electron's default user agent, so the in-app browser
-// identifies as plain Chrome for the current platform.
+// Hosts that must never load inside the in-app window. Matched against the
+// hostname and its subdomains, so `console.groq.com` covers every key page
+// under it without opening unrelated Groq properties.
+const EXTERNAL_ONLY_HOSTS = [
+  'accounts.google.com',
+  'aistudio.google.com',
+  'mail.google.com',
+  'myaccount.google.com',
+  'console.cloud.google.com',
+  'console.groq.com',
+  'platform.openai.com',
+  'openrouter.ai',
+  'console.anthropic.com',
+];
+
+function isExternalOnlyUrl(url) {
+  try {
+    const { hostname } = new URL(url);
+    const host = hostname.toLowerCase();
+    return EXTERNAL_ONLY_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+  } catch {
+    return false;
+  }
+}
+
+function openInSystemBrowser(url) {
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return { ok: false };
+  shell.openExternal(url).catch((err) => log.warn('Could not open system browser:', err.message));
+  return { ok: true, external: true, url };
+}
+
+// Google sign-in still refuses Electron's default user agent on pages that are
+// not gated above, so the in-app browser identifies as plain Chrome for the
+// current platform.
 const BROWSER_UA = process.platform === 'darwin'
   ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   : process.platform === 'linux'
@@ -68,6 +106,9 @@ const BROWSER_UA = process.platform === 'darwin'
 
 function openInBrowserWindow(url) {
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return { ok: false };
+
+  // Key and sign-in pages belong in the real browser (see above).
+  if (isExternalOnlyUrl(url)) return openInSystemBrowser(url);
 
   if (browserWindow && !browserWindow.isDestroyed()) {
     browserWindow.loadURL(url);
@@ -100,6 +141,11 @@ function openInBrowserWindow(url) {
     return { action: 'deny' };
   });
   browserWindow.webContents.on('will-navigate', (event, target) => {
+    if (isExternalOnlyUrl(target)) {
+      event.preventDefault();
+      openInSystemBrowser(target);
+      return;
+    }
     if (!/^https?:\/\//i.test(target)) event.preventDefault();
   });
   // Keep a stable, trustworthy title rather than whatever the page sets.
@@ -110,6 +156,9 @@ function openInBrowserWindow(url) {
 
   return { ok: true, url };
 }
+
+// Renderer-initiated "open this in my browser" (Settings/Onboarding key links).
+ipcMain.handle('app:open-external', (_e, url) => openInSystemBrowser(url));
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -132,6 +181,15 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     openInBrowserWindow(url);
     return { action: 'deny' };
+  });
+
+  // Hand mailto: links to the system mail client instead of letting Chromium
+  // try to navigate the app window to them.
+  mainWindow.webContents.on('will-navigate', (event, target) => {
+    if (/^mailto:/i.test(target)) {
+      event.preventDefault();
+      shell.openExternal(target).catch((err) => log.warn('Could not open mail client:', err.message));
+    }
   });
 
   if (!app.isPackaged) {
@@ -274,6 +332,39 @@ ipcMain.handle('update:install-now', () => {
   });
 
   return true;
+});
+
+// ---- feedback email -------------------------------------------------
+// Feedback goes to one inbox. There is no mail server in the app, so this
+// hands a prefilled mailto: URL to whatever mail client the system has.
+const FEEDBACK_EMAIL = 'yottalium@gmail.com';
+
+ipcMain.handle('feedback:open-email', async (_e, payload = {}) => {
+  const subject = typeof payload?.subject === 'string'
+    ? payload.subject.slice(0, 240)
+    : 'seec0de feedback';
+  const body = typeof payload?.body === 'string'
+    ? payload.body.slice(0, 12000)
+    : '';
+  // Mail handlers on Windows are happiest with CRLF line breaks.
+  const crlfBody = body.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+  const url = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(crlfBody)}`;
+
+  try {
+    await shell.openExternal(url);
+    return { ok: true, via: 'mailto' };
+  } catch (err) {
+    log.warn('Feedback mailto failed:', err?.message || err);
+
+    // No mail handler on this machine. Gmail compose still gets the report
+    // out of the app without asking the user to install anything — it opens
+    // in the system browser, where their Google session already exists.
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(FEEDBACK_EMAIL)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(crlfBody)}`;
+    const fallback = openInBrowserWindow(gmailUrl);
+    if (fallback.ok) return { ok: true, via: 'gmail' };
+
+    return { ok: false, error: err?.message || String(err) };
+  }
 });
 
 // ---- zoom handlers --------------------------------------------------

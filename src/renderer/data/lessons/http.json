@@ -1,0 +1,489 @@
+{
+  "tracks": [
+    {
+      "id": "http-protocol",
+      "name": "Requests & Responses",
+      "language": "http",
+      "description": "One request, one response. Learn to read and write both.",
+      "lessons": [
+        {
+          "id": "http-01-request",
+          "title": "1. Anatomy of a request",
+          "concept": "method, URL, headers",
+          "summary": "A request is a method, a URL, some headers and sometimes a body.",
+          "activities": [
+            {
+              "id": "http-01-see",
+              "type": "worked-example",
+              "title": "Say exactly what you are sending",
+              "instruction": "`fetch` defaults to `GET` with no body. A write needs three things: the method, a `Content-Type` header that tells the server how to parse the body, and a body that is already text. `JSON.stringify` produces that text; the header names the format. Without the header, Express's `express.json()` skips the body and `req.body` is empty — a bug that looks like the client sent nothing at all.",
+              "example": "const response = await fetch('/api/tasks', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    Authorization: `Bearer ${token}`,\n  },\n  body: JSON.stringify({ title: 'Ship it' }),\n});"
+            },
+            {
+              "id": "http-01-predict",
+              "type": "prediction",
+              "title": "An object is not a body",
+              "question": "What reaches the server if you pass `body: { title: 'Ship it' }` to fetch?",
+              "choices": [
+                "The string `[object Object]`",
+                "Valid JSON",
+                "A TypeError before the request is sent"
+              ],
+              "answer": "The string `[object Object]`",
+              "explanation": "`fetch` accepts strings, `Blob`, `FormData`, `URLSearchParams` and streams. A plain object is coerced with `toString()`, so you get `[object Object]` and a confused server. Stringify it yourself and name the format in `Content-Type`."
+            },
+            {
+              "id": "http-01-edit",
+              "type": "edit",
+              "title": "Send JSON properly",
+              "instruction": "Write `postJson(url, payload)`: send a POST with a JSON content type and the stringified payload, then return the parsed response."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Every HTTP message has the same four parts: a start line, headers, a blank line, and an optional body. `fetch` is a JavaScript-shaped way to fill in those parts, and the server reads them exactly as written." },
+            { "type": "code", "text": "await fetch('/api/tasks', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(payload),\n});" },
+            { "type": "note", "text": "Query strings belong in the URL and need `encodeURIComponent` for user text. Bodies carry structured data. Both are untrusted input on the server." }
+          ],
+          "task": "Write postJson(url, payload) that sends JSON and returns the parsed response.",
+          "starterCode": "async function postJson(url, payload) {\n  // Send the payload as JSON and return the parsed response\n}\n",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "await fetch\\(",
+            "method:\\s*['\"]POST['\"]",
+            "content-type['\"]?\\s*:\\s*['\"]application/json",
+            "body:\\s*JSON\\.stringify\\(\\s*payload",
+            "\\.json\\(\\)"
+          ],
+          "hints": [
+            "The second argument to `fetch` is an options object: `method`, `headers` and `body`.",
+            "const response = await fetch(url, {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(payload),\n});\nreturn response.json();"
+          ],
+          "solution": "async function postJson(url, payload) {\n  const response = await fetch(url, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify(payload),\n  });\n  return response.json();\n}\n",
+          "reflectionPrompt": "Why does the server need `Content-Type` to understand a body it already received?"
+        },
+        {
+          "id": "http-02-status",
+          "title": "2. Status codes are control flow",
+          "concept": "response.ok, 4xx vs 5xx",
+          "summary": "The status decides whether you use the body, fix the request, or try again.",
+          "activities": [
+            {
+              "id": "http-02-see",
+              "type": "worked-example",
+              "title": "A 404 is not an exception",
+              "instruction": "`fetch` only rejects when the network fails. A 404, 422 or 500 is a successful HTTP exchange with a bad result, so the promise resolves and `response.ok` is `false`. Check `response.ok` before parsing. 4xx means the request is wrong — retrying it unchanged cannot help. 5xx and 429 mean the server or the moment is wrong, and those are the only statuses worth retrying. 3xx redirects are followed for you unless you pass `redirect: 'manual'`.",
+              "example": "const response = await fetch('/api/users/42');\n\nif (!response.ok) {\n  throw new Error(`Request failed: ${response.status}`);\n}\n\nconst user = await response.json();"
+            },
+            {
+              "id": "http-02-predict",
+              "type": "prediction",
+              "title": "A missing user",
+              "question": "What does `await fetch('/api/missing')` do when the server answers 404?",
+              "choices": [
+                "Resolves with `ok === false`",
+                "Rejects with an Error",
+                "Returns null"
+              ],
+              "answer": "Resolves with `ok === false`",
+              "explanation": "Only network-level failures reject. Treating 4xx and 5xx as exceptions is a decision you make in your code, and you have to make it before reading the body."
+            },
+            {
+              "id": "http-02-edit",
+              "type": "edit",
+              "title": "Guard the request",
+              "instruction": "Throw when the response is not ok, include the status in the message, and only then parse the body."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Status codes are a three-digit contract: the first digit is the class. 2xx succeeded, 3xx moved, 4xx is your mistake, 5xx is theirs. The body is a detail; the status is the outcome." },
+            { "type": "code", "text": "if (!response.ok) {\n  throw new Error(`HTTP ${response.status}`);\n}" },
+            { "type": "note", "text": "Do not invent a 200 with `{ \"error\": ... }` inside. Every client, cache and monitoring tool will believe the call succeeded." }
+          ],
+          "task": "Add an ok check that throws with the status before parsing.",
+          "starterCode": "async function getUser(id) {\n  const response = await fetch(`/api/users/${id}`);\n  return response.json();\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["!response.ok", "response.status", "response.json()"],
+          "hints": [
+            "`response.ok` is true only for 200–299.",
+            "if (!response.ok) {\n  throw new Error(`Request failed: ${response.status}`);\n}\nreturn response.json();"
+          ],
+          "solution": "async function getUser(id) {\n  const response = await fetch(`/api/users/${id}`);\n  if (!response.ok) {\n    throw new Error(`Request failed: ${response.status}`);\n  }\n  return response.json();\n}\n",
+          "reflectionPrompt": "Why should a client retry a 503 but not a 400?"
+        },
+        {
+          "id": "http-03-body",
+          "title": "3. Read the body once",
+          "concept": "Content-Type and .json()",
+          "summary": "The body is a stream: check what it is, then read it exactly once.",
+          "activities": [
+            {
+              "id": "http-03-see",
+              "type": "worked-example",
+              "title": "The body is not a string",
+              "instruction": "A response body can be consumed one time. `json()` reads the stream and parses it; calling it again throws because the stream is already used. Check the status first, check the `Content-Type` before parsing, and remember that `204 No Content` has no body at all. When you need the bytes twice, clone the response before the first read or keep the text you read.",
+              "example": "if (response.status === 204) return null;\n\nconst type = response.headers.get('content-type') || '';\nif (!type.includes('application/json')) return null;\n\nreturn response.json();"
+            },
+            {
+              "id": "http-03-predict",
+              "type": "prediction",
+              "title": "Reading twice",
+              "question": "You call `await response.json()` on the same response twice. What happens the second time?",
+              "choices": [
+                "It throws because the body stream is already used",
+                "It returns the parsed object again",
+                "It returns null"
+              ],
+              "answer": "It throws because the body stream is already used",
+              "explanation": "The body is a stream, not a string sitting in memory. `clone()` gives you a second stream before the first read starts, which is why cloning after reading does not help."
+            },
+            {
+              "id": "http-03-edit",
+              "type": "edit",
+              "title": "Parse only JSON",
+              "instruction": "Write `readJson(response)`: return `null` for an empty or non-JSON response, otherwise parse the body."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Servers describe the body with `Content-Type`. `application/json` means parse it as JSON; `text/html` means you probably got a proxy's error page or a login redirect; `text/plain` means do not parse it." },
+            { "type": "code", "text": "const type = response.headers.get('content-type') || '';\nif (!type.includes('application/json')) return null;\nreturn response.json();" },
+            { "type": "note", "text": "A JSON body can still have the wrong shape. Parsing proves it is JSON, not that it is the object your code expects." }
+          ],
+          "task": "Return null for empty or non-JSON responses, otherwise parse the JSON.",
+          "starterCode": "async function readJson(response) {\n  // Reject an empty or non-JSON body before parsing\n  return response.json();\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["204", "headers.get(", "content-type", "includes(", "response.json()"],
+          "hints": [
+            "`response.status === 204` and a content type that is not JSON both mean there is nothing to parse.",
+            "if (response.status === 204) return null;\nconst type = response.headers.get('content-type') || '';\nif (!type.includes('application/json')) return null;\nreturn response.json();"
+          ],
+          "solution": "async function readJson(response) {\n  if (response.status === 204) return null;\n  const type = response.headers.get('content-type') || '';\n  if (!type.includes('application/json')) return null;\n  return response.json();\n}\n",
+          "reflectionPrompt": "Why is `Content-Type` the wrong place to decide whether the payload is trustworthy?"
+        }
+      ]
+    },
+    {
+      "id": "http-browser",
+      "name": "The Browser in the Middle",
+      "language": "http",
+      "description": "CORS, cookies and the Network tab — the rules the browser applies for you.",
+      "lessons": [
+        {
+          "id": "http-04-cors",
+          "title": "4. CORS in one sentence",
+          "concept": "origins and preflight",
+          "summary": "The server has to name your origin, and it answers a preflight first.",
+          "activities": [
+            {
+              "id": "http-04-see",
+              "type": "worked-example",
+              "title": "The browser asks the server first",
+              "instruction": "A browser will not let JavaScript read a cross-origin response unless the server sends `Access-Control-Allow-Origin` matching the page's origin. An origin is scheme, host and port, so `http://localhost:3000` and `http://localhost:5173` are different origins. A request with a JSON content type or an `Authorization` header is not a \"simple\" request, so the browser sends an `OPTIONS` preflight with `Access-Control-Request-Method` and `-Headers`; the server must approve them before the real request follows. CORS is a browser rule, not server security: curl and Postman ignore it, and the server still has to authenticate the caller.",
+              "example": "res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');\nres.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');\nres.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');\n\nif (req.method === 'OPTIONS') return res.status(204).end();"
+            },
+            {
+              "id": "http-04-predict",
+              "type": "prediction",
+              "title": "Works in Postman",
+              "question": "The API returns 200 in Postman, but the browser console says the response was blocked by CORS. Where is the fix?",
+              "choices": [
+                "In the server's response headers",
+                "In the fetch call: add `mode: 'no-cors'`",
+                "In the browser's security settings"
+              ],
+              "answer": "In the server's response headers",
+              "explanation": "`no-cors` gives you an opaque response with a status of 0 that you cannot read — and the request may still have run. The server has to allow the origin; the browser is enforcing the server's stated policy."
+            },
+            {
+              "id": "http-04-edit",
+              "type": "edit",
+              "title": "Allow the dev origin",
+              "instruction": "Add middleware that allows `http://localhost:5173`, permits `Content-Type` and `Authorization`, and answers preflights with 204."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The same-origin policy stops one site's script from reading another site's data. CORS is the server's explicit exception, written in response headers, and the browser enforces it on the client because the browser is what holds your cookies and your user's tabs." },
+            { "type": "code", "text": "res.setHeader('Access-Control-Allow-Origin', origin);\nres.setHeader('Access-Control-Allow-Credentials', 'true');" },
+            { "type": "note", "text": "Echoing back whatever `Origin` the request sent is fine for a public API and dangerous for one with credentials — check the origin against an allow-list instead." }
+          ],
+          "task": "Write CORS middleware for the Vite dev origin and answer preflights.",
+          "starterCode": "app.use((req, res, next) => {\n  // Allow the local dev origin and answer preflights\n});\n",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "access-control-allow-origin",
+            "http://localhost:5173",
+            "access-control-allow-headers",
+            "req\\.method\\s*===\\s*['\"]OPTIONS['\"]",
+            "204"
+          ],
+          "hints": [
+            "A preflight is an `OPTIONS` request with no body. Answer it 204 and do not call `next()`.",
+            "res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');\nres.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');\nif (req.method === 'OPTIONS') return res.status(204).end();\nnext();"
+          ],
+          "solution": "app.use((req, res, next) => {\n  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');\n  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');\n  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');\n  if (req.method === 'OPTIONS') return res.status(204).end();\n  next();\n});\n",
+          "reflectionPrompt": "Why is CORS not a substitute for authentication?"
+        },
+        {
+          "id": "http-05-cookies",
+          "title": "5. Cookies travel by themselves",
+          "concept": "credentials and SameSite",
+          "summary": "The browser attaches matching cookies; a cross-origin fetch has to ask for them.",
+          "activities": [
+            {
+              "id": "http-05-see",
+              "type": "worked-example",
+              "title": "The browser is the courier",
+              "instruction": "A cookie is set by `Set-Cookie` and then attached by the browser to requests that match its domain, path and security rules. `HttpOnly` hides it from JavaScript, `Secure` keeps it off plain HTTP, and `SameSite` decides whether another site can cause it to be sent: `Lax` allows top-level navigation, `Strict` allows only same-site requests, and `None` allows cross-site but requires `Secure`. A same-origin fetch sends cookies automatically. A cross-origin fetch does not unless you pass `credentials: 'include'`, and the server must answer with `Access-Control-Allow-Credentials: true` and an exact origin — a wildcard `*` is forbidden with credentials.",
+              "example": "const response = await fetch(`${API_ORIGIN}/api/me`, {\n  credentials: 'include',\n});\n\n// Server\nres.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');\nres.setHeader('Access-Control-Allow-Credentials', 'true');"
+            },
+            {
+              "id": "http-05-predict",
+              "type": "prediction",
+              "title": "The wildcard",
+              "question": "Your frontend on `:5173` calls the API on `:4000` with `credentials: 'include'`, but the API allows `Access-Control-Allow-Origin: *`. What does the browser do?",
+              "choices": [
+                "Blocks the response: a wildcard is not allowed with credentials",
+                "Sends the cookie and returns the response",
+                "Sends the request without the cookie"
+              ],
+              "answer": "Blocks the response: a wildcard is not allowed with credentials",
+              "explanation": "Credentialed CORS requires the server to name the exact origin and send `Access-Control-Allow-Credentials: true`. The wildcard is rejected because it would let any site read a response made with the user's cookies."
+            },
+            {
+              "id": "http-05-edit",
+              "type": "edit",
+              "title": "Send the cookie",
+              "instruction": "Write `apiFetch(path)` that calls `API_ORIGIN`, includes cookies, throws on a failed status, and returns JSON."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "HTTP is stateless, so the browser re-sends a small piece of state on every matching request. That is convenient for sessions and dangerous for cross-site requests, which is why the `SameSite` default and the credentials flag both exist." },
+            { "type": "code", "text": "await fetch(url, { credentials: 'include' });\nres.cookie('sid', token, { httpOnly: true, secure: true, sameSite: 'lax' });" },
+            { "type": "note", "text": "Never put a session token in `localStorage`. A cookie with `HttpOnly` is invisible to injected scripts; a localStorage token is one XSS away from a full account takeover." }
+          ],
+          "task": "Call the API with cookies included and fail loudly on a non-2xx response.",
+          "starterCode": "const API_ORIGIN = 'http://localhost:4000';\n\nasync function apiFetch(path) {\n  // Include cookies and fail loudly on non-2xx\n  const response = await fetch(`${API_ORIGIN}${path}`);\n  return response.json();\n}\n",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "credentials\\s*:\\s*['\"]include['\"]",
+            "!\\s*response\\.ok"
+          ],
+          "hints": [
+            "`credentials` is a top-level option next to `method` and `headers`.",
+            "const response = await fetch(`${API_ORIGIN}${path}`, {\n  credentials: 'include',\n});\nif (!response.ok) throw new Error(`HTTP ${response.status}`);\nreturn response.json();"
+          ],
+          "solution": "const API_ORIGIN = 'http://localhost:4000';\n\nasync function apiFetch(path) {\n  const response = await fetch(`${API_ORIGIN}${path}`, {\n    credentials: 'include',\n  });\n  if (!response.ok) {\n    throw new Error(`Request failed: ${response.status}`);\n  }\n  return response.json();\n}\n",
+          "reflectionPrompt": "Why does the browser need both CORS permission and a credential flag before it will send a cookie cross-origin?"
+        },
+        {
+          "id": "http-06-network",
+          "title": "6. Read the Network tab",
+          "concept": "diagnosing a failed call",
+          "summary": "Status, headers, payload and timing each point at a different layer.",
+          "activities": [
+            {
+              "id": "http-06-see",
+              "type": "worked-example",
+              "title": "Six questions, in order",
+              "instruction": "Open DevTools → Network and reload. Read in this order: (1) Is the request there at all? If not, your code never ran, or mixed content blocked it. (2) Status: `(failed)` or 0 usually means blocked, offline or aborted; 4xx is the request, 5xx is the server, 3xx is a redirect. (3) Request headers: `Content-Type`, `Authorization`, `Origin`, `Cookie` — is what you sent what you meant? (4) Response headers: the CORS headers, `Cache-Control`, `Set-Cookie`. (5) Payload and Response: is the shape what your code reads? (6) Timing: time waiting for the server is not the same as time downloading the body. **Copy as cURL** reproduces the call outside the browser, which separates your code from the network.",
+              "example": "// The error you log should survive a screenshot.\nconst requestId = response.headers.get('x-request-id');\nconst body = await response.text();\nthrow new Error(`HTTP ${response.status} · ${requestId} · ${body.slice(0, 200)}`);"
+            },
+            {
+              "id": "http-06-predict",
+              "type": "prediction",
+              "title": "Did it reach the server?",
+              "question": "A request shows `(failed)` and the console mentions CORS. Did the server receive and run it?",
+              "choices": [
+                "Maybe: a simple request is sent and only the response is withheld",
+                "No: a failed CORS request never leaves the browser",
+                "Yes: the 200 proves it ran"
+              ],
+              "answer": "Maybe: a simple request is sent and only the response is withheld",
+              "explanation": "If the browser refused a preflight, the real request was never sent. If the request was simple, it was sent and the server may have performed the write; only the response was hidden. That asymmetry is why CORS cannot protect the server."
+            },
+            {
+              "id": "http-06-edit",
+              "type": "edit",
+              "title": "Make the failure traceable",
+              "instruction": "Write `failLoudly(response)` that reads the `x-request-id` header and the body once, then throws an error containing the status and both."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A failed fetch is not one bug; it is one of five layers telling you something. The Network tab is the only place that shows which layer answered: DNS, TLS, the server, the browser's CORS check, or your own code." },
+            { "type": "code", "text": "const id = response.headers.get('x-request-id');\nconst detail = await response.text();\nthrow new Error(`HTTP ${response.status} (${id}): ${detail}`);" },
+            { "type": "note", "text": "If the response is missing from the Network tab entirely, stop reading code. Check the URL, the mixed-content warning and whether the click handler ran at all." }
+          ],
+          "task": "Throw an error with the status, request id and response body.",
+          "starterCode": "async function failLoudly(response) {\n  // Include the status, request id and body so the failure is traceable\n  throw new Error('Request failed');\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["response.status", "x-request-id", "response.text()", "throw new error("],
+          "hints": [
+            "Read headers with `response.headers.get('x-request-id')` and the body with `await response.text()`.",
+            "const requestId = response.headers.get('x-request-id') || 'unknown';\nconst detail = await response.text();\nthrow new Error(`HTTP ${response.status} (request ${requestId}): ${detail}`);"
+          ],
+          "solution": "async function failLoudly(response) {\n  const requestId = response.headers.get('x-request-id') || 'unknown';\n  const detail = await response.text();\n  throw new Error(`HTTP ${response.status} (request ${requestId}): ${detail}`);\n}\n",
+          "reflectionPrompt": "Why does a request id in the response turn a vague bug report into a traceable one?"
+        }
+      ]
+    },
+    {
+      "id": "http-clients",
+      "name": "Clients That Survive",
+      "language": "http",
+      "description": "The network is slow, flaky and sometimes lies. Build for that.",
+      "lessons": [
+        {
+          "id": "http-07-timeout",
+          "title": "7. Give every request a deadline",
+          "concept": "AbortSignal and cancellation",
+          "summary": "A request with no timeout can hang until the OS gives up.",
+          "activities": [
+            {
+              "id": "http-07-see",
+              "type": "worked-example",
+              "title": "No request without a deadline",
+              "instruction": "`fetch` has no timeout of its own; a stalled connection can leave a spinner up for minutes. `AbortSignal.timeout(ms)` aborts a request after a deadline and rejects with a `TimeoutError`. Use an `AbortController` when the request should stop for a reason other than time — a component unmounted, the user typed a new search, the route changed. Aborting is not the same as failure: the request was cancelled, so do not tell the user the server is down. Treat a timeout as one retryable attempt, not an infinite one.",
+              "example": "const controller = new AbortController();\nconst response = await fetch('/api/search?q=cats', {\n  signal: controller.signal,\n});\n\n// Later, when the query is replaced or the view unmounts:\ncontroller.abort();"
+            },
+            {
+              "id": "http-07-predict",
+              "type": "prediction",
+              "title": "The unmounted component",
+              "question": "A component unmounts while its fetch is still in flight. What should happen?",
+              "choices": [
+                "Abort the request; React does not cancel it for you",
+                "Nothing; React cancels pending effects",
+                "The browser cancels it automatically"
+              ],
+              "answer": "Abort the request; React does not cancel it for you",
+              "explanation": "Effects clean up only what you tell them to. The request keeps running and the server keeps working unless you abort it, which matters for slow endpoints and for responses that would land in dead state."
+            },
+            {
+              "id": "http-07-edit",
+              "type": "edit",
+              "title": "Add a deadline",
+              "instruction": "Write `fetchWithTimeout(url, ms)` that aborts the request after `ms` milliseconds."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A network call has three possible outcomes, not two: success, error, and never. A timeout turns \"never\" into an error your code can handle, which is what lets loading states, retries and cancellation exist at all." },
+            { "type": "code", "text": "fetch(url, { signal: AbortSignal.timeout(5000) });" },
+            { "type": "note", "text": "Catch aborts separately from failures. `error.name === 'AbortError'` or `'TimeoutError'` means cancellation; anything else is a real network or server problem." }
+          ],
+          "task": "Abort the request when the deadline passes.",
+          "starterCode": "async function fetchWithTimeout(url, ms) {\n  return fetch(url);\n}\n",
+          "matchType": "source-regex",
+          "sourceChecks": ["abortsignal\\.timeout\\(\\s*ms", "signal\\s*:"],
+          "hints": [
+            "The signal is an option on the same object as `method` and `headers`.",
+            "return fetch(url, { signal: AbortSignal.timeout(ms) });"
+          ],
+          "solution": "async function fetchWithTimeout(url, ms) {\n  return fetch(url, { signal: AbortSignal.timeout(ms) });\n}\n",
+          "reflectionPrompt": "Why is a timeout a correctness feature rather than a performance tweak?"
+        },
+        {
+          "id": "http-08-retry",
+          "title": "8. Retry only what is safe",
+          "concept": "backoff, jitter and idempotency",
+          "summary": "Retry network errors, 429 and 5xx with backoff. Never blind-retry a 400 or a charge.",
+          "activities": [
+            {
+              "id": "http-08-see",
+              "type": "worked-example",
+              "title": "Temporary is not the same as wrong",
+              "instruction": "Retry when the failure is temporary: a network error, 408, 429, 502, 503 or 504. Do not retry 400, 401, 403, 404 or 422 — the request itself is wrong and will fail again. Back off exponentially with jitter so a thousand clients do not return in lockstep, cap the delay, and honour `Retry-After` when the server sends it. A POST needs an idempotency key before it can be retried, because a 503 does not mean the write did not happen. Three attempts is usually enough; after that, fail with a message a human can act on.",
+              "example": "const delay = Math.min(2000, 2 ** attempt * 250);\nawait new Promise((resolve) => setTimeout(resolve, delay + Math.random() * 100));"
+            },
+            {
+              "id": "http-08-predict",
+              "type": "prediction",
+              "title": "The double charge",
+              "question": "A `POST /payments` returns 503 after the server charged the card. You retry immediately. What is the risk?",
+              "choices": [
+                "A double charge, unless the API deduplicates on an idempotency key",
+                "No risk: a 503 means nothing was written",
+                "No risk: POST is idempotent"
+              ],
+              "answer": "A double charge, unless the API deduplicates on an idempotency key",
+              "explanation": "The response failed, not necessarily the work. A 503 can arrive after the write committed. Without a key, the server cannot tell a retry from a second purchase."
+            },
+            {
+              "id": "http-08-edit",
+              "type": "edit",
+              "title": "Retry with backoff",
+              "instruction": "Write `fetchWithRetry(url, attempts)` that retries 429 and 5xx with exponential backoff and returns the first good response."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Retries convert a transient failure into a success, and they convert a non-idempotent write into a duplicate. The status code tells you which case you are in; the method and an idempotency key tell you whether a repeat is safe." },
+            { "type": "code", "text": "const retryable = response.status === 429 || response.status >= 500;\nif (!retryable) return response;" },
+            { "type": "note", "text": "Every retry multiplies load during an outage. Backoff plus jitter is not politeness; it is what stops a recovering service from being knocked over again by its own clients." }
+          ],
+          "task": "Retry 429 and 5xx responses with exponential backoff.",
+          "starterCode": "async function fetchWithRetry(url, attempts = 3) {\n  for (let attempt = 0; attempt < attempts; attempt += 1) {\n    const response = await fetch(url);\n    return response;\n  }\n}\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["429", ">= 500", "setTimeout("],
+          "hints": [
+            "Return early for a non-retryable status, wait, then let the loop try again.",
+            "const retryable = response.status === 429 || response.status >= 500;\nif (!retryable) return response;\nconst delay = Math.min(2000, 2 ** attempt * 250);\nawait new Promise((resolve) => setTimeout(resolve, delay));"
+          ],
+          "solution": "async function fetchWithRetry(url, attempts = 3) {\n  for (let attempt = 0; attempt < attempts; attempt += 1) {\n    try {\n      const response = await fetch(url);\n      const retryable = response.status === 429 || response.status >= 500;\n      if (!retryable) return response;\n    } catch (error) {\n      if (attempt === attempts - 1) throw error;\n    }\n\n    if (attempt === attempts - 1) break;\n\n    const delay = Math.min(2000, 2 ** attempt * 250);\n    await new Promise((resolve) => setTimeout(resolve, delay));\n  }\n  throw new Error(`Request failed after ${attempts} attempts`);\n}\n",
+          "reflectionPrompt": "Why does jitter matter when an API comes back after an outage?"
+        },
+        {
+          "id": "http-09-webhooks",
+          "title": "9. Webhooks are untrusted requests",
+          "concept": "signatures, replay and dedupe",
+          "summary": "Anyone can POST to the URL. Verify the signature, then act exactly once.",
+          "activities": [
+            {
+              "id": "http-09-see",
+              "type": "worked-example",
+              "title": "A public URL is a public door",
+              "instruction": "Your webhook endpoint is public: anyone who learns the URL can send a convincing JSON body. Providers sign the raw request body with a shared secret, usually an HMAC plus a timestamp header. Recompute it over the exact bytes you received, compare in constant time, and reject timestamps older than a few minutes so a captured request cannot be replayed. Deliveries repeat and can arrive out of order, so record the event id and ignore one you have already handled. Acknowledge with 2xx quickly and do the slow work in a queue, or the provider will time out and send it again.",
+              "example": "const expected = createHmac('sha256', secret).update(rawBody).digest('hex');\nconst ok = expected.length === signature.length\n  && timingSafeEqual(Buffer.from(expected), Buffer.from(signature));"
+            },
+            {
+              "id": "http-09-predict",
+              "type": "prediction",
+              "title": "The duplicate delivery",
+              "question": "Two deliveries arrive with the same event id. What should the handler do?",
+              "choices": [
+                "Acknowledge the second without repeating the side effect",
+                "Process both, because the provider sent both",
+                "Return 409 so the provider stops retrying"
+              ],
+              "answer": "Acknowledge the second without repeating the side effect",
+              "explanation": "At-least-once delivery is the norm. Deduplicate on the event id, store that id in the same transaction as the effect, and return 2xx for a duplicate so the provider stops retrying."
+            },
+            {
+              "id": "http-09-edit",
+              "type": "edit",
+              "title": "Verify the signature",
+              "instruction": "Write `verifyWebhook(rawBody, signature, secret)` that returns true only when the HMAC matches, using a constant-time comparison."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A webhook is an inbound API call from a machine you do not control. The signature proves the sender knew the secret; the timestamp limits how long a captured request is useful; the event id lets you make at-least-once delivery behave like exactly-once." },
+            { "type": "code", "text": "const expected = createHmac('sha256', secret).update(rawBody).digest('hex');\ntimingSafeEqual(Buffer.from(expected), Buffer.from(signature));" },
+            { "type": "note", "text": "Verify the raw bytes, not `JSON.stringify(req.body)`. Re-serialising can change key order and whitespace, and then a valid signature fails — or a forger learns which parts you skip." }
+          ],
+          "task": "Verify an HMAC signature over the raw body in constant time.",
+          "starterCode": "import { createHmac, timingSafeEqual } from 'node:crypto';\n\nfunction verifyWebhook(rawBody, signature, secret) {\n  // Compare the expected HMAC with the signature in constant time\n  return false;\n}\n",
+          "matchType": "source-regex",
+          "sourceChecks": [
+            "createhmac\\(\\s*['\"]sha256",
+            "update\\(\\s*rawBody",
+            "digest\\(\\s*['\"]hex",
+            "timingsafeequal\\("
+          ],
+          "hints": [
+            "Compute the expected hex digest, then compare buffers with `timingSafeEqual`.",
+            "const expected = createHmac('sha256', secret).update(rawBody).digest('hex');\nreturn timingSafeEqual(Buffer.from(expected), Buffer.from(signature));"
+          ],
+          "solution": "import { createHmac, timingSafeEqual } from 'node:crypto';\n\nfunction verifyWebhook(rawBody, signature, secret) {\n  const expected = createHmac('sha256', secret).update(rawBody).digest('hex');\n  const a = Buffer.from(expected);\n  const b = Buffer.from(signature);\n  return a.length === b.length && timingSafeEqual(a, b);\n}\n",
+          "reflectionPrompt": "Why must a signature be checked against the raw bytes instead of the parsed object?"
+        }
+      ]
+    }
+  ]
+}
