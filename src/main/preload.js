@@ -61,11 +61,14 @@ contextBridge.exposeInMainWorld('seecode', {
     checkToolchains: () => ipcRenderer.invoke('runner:check-toolchains'),
   },
   ai: {
-    setKey: (key) => ipcRenderer.invoke('ai:set-key', key),
-    hasKey: ()    => ipcRenderer.invoke('ai:has-key'),
+    setKey: (key, providerId) => ipcRenderer.invoke('ai:set-key', key, providerId),
+    setProvider: (providerId) => ipcRenderer.invoke('ai:set-provider', providerId),
+    // { active, hasKey, providers: [{ id, label, kind, hasKey }] }
+    status: ()    => ipcRenderer.invoke('ai:status'),
+    hasKey: (providerId) => ipcRenderer.invoke('ai:has-key', providerId),
     call:   (payload) => ipcRenderer.invoke('ai:call', payload),
-    // Probe a candidate key against the API without storing it.
-    validateKey: (key) => ipcRenderer.invoke('ai:validate-key', key),
+    // Probe a candidate key against the provider's API without storing it.
+    validateKey: (key, providerId) => ipcRenderer.invoke('ai:validate-key', key, providerId),
   },
   updates: {
     // One-shot: fetch the current updater status.

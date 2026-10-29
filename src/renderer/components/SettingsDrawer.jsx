@@ -3,7 +3,7 @@ import {
   X, Check, Eye, EyeOff, RefreshCw, CheckCircle2,
   AlertCircle, Info, Sparkles, FolderTree, Terminal as TermIcon, Layers,
   Cpu, Play, Copy, Download, ChevronDown, ChevronUp,
-  Users, UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
+  UserPlus, Lock, Trash2, GraduationCap, Keyboard, Bell,
   Volume2, VolumeX, ClipboardPaste, CreditCard, Search,
 } from 'lucide-react';
 import { Loader } from './motion/loader';
@@ -21,12 +21,14 @@ import {
   resetOnboarding,
   getSettingsApiKey,
   setSettingsApiKey,
+  setSettingsAiProvider,
   usernameExists,
   setProfilePin,
   clearProfilePin,
 } from '../engine/settings';
 import { ProfileFields } from './ProfileForm';
 import { keyFromClipboard, looksLikeApiKey, validateApiKey } from '../engine/aiService';
+import { AI_PROVIDERS, DEFAULT_AI_PROVIDER, getAiProvider } from '../engine/aiProviders';
 import { Drawer } from './motion/drawer';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
 import { useConfirm } from './ui/dialog';
@@ -48,7 +50,7 @@ import BillingSettings from './BillingSettings';
 //     · Languages            — practical + comparison
 //     · Sounds               — lesson pass/fail sounds
 //   AI & plan — AI access and what you're on
-//     · AI                   — Gemini key
+//     · AI                   — provider + AI key
 //     · Plan & billing       — subscription
 //   App — maintenance
 //     · Onboarding           — "Rerun onboarding"
@@ -84,7 +86,7 @@ const SECTION_SEARCH_TERMS = {
   practiceReminders:  'practice reminders pulse notification notifications time reminder',
   languages:          'languages practical comparison python javascript code',
   sounds:             'sounds sound audio volume mute lesson pass fail',
-  ai:                 'ai key api gemini google generation explanation',
+  ai:                 'ai key api gemini google groq provider openai generation explanation',
   billing:            'plan billing subscription upgrade payment credits pro',
   onboarding:         'onboarding setup rerun restart profile',
   about:              'about updates update version check now install',
@@ -119,6 +121,16 @@ function groupRows(groups, query = '') {
 // the per-group first/last flags the Section component needs.
 const SETTINGS_ROWS = groupRows(SETTINGS_GROUPS);
 
+const SETTINGS_SECTION_IDS = new Set(SETTINGS_GROUPS.flatMap((group) => group.sections));
+const DEFAULT_SETTINGS_SECTION = 'appearance';
+
+// The drawer reopens on whatever section was last opened. Stored ids can outlive
+// a section (renamed or removed), so fall back to the default rather than
+// opening nothing.
+function normaliseSettingsSection(id) {
+  return id && SETTINGS_SECTION_IDS.has(id) ? id : DEFAULT_SETTINGS_SECTION;
+}
+
 const PLATFORM_LABEL = (() => {
   const p = (typeof navigator !== 'undefined' ? navigator.platform : '') || '';
   if (/win/i.test(p)) return 'win';
@@ -133,12 +145,15 @@ export default function SettingsDrawer({
   const confirm = useConfirm();
   const [apiKey, setApiKey]     = useState('');
   const [hasKey, setHasKey]     = useState(false);
+  const [provider, setProvider] = useState(DEFAULT_AI_PROVIDER);
   const [showKey, setShowKey]   = useState(false);
   const [keySaved, setKeySaved] = useState(false);
   const [keyChecking, setKeyChecking] = useState(false);
   const [keyError, setKeyError] = useState(null);
   const [notificationPermission, setNotificationPermission] = useState(() => getNotificationPermission());
-  const [expandedSection, setExpandedSection] = useState('appearance');
+  const [expandedSection, setExpandedSection] = useState(
+    () => normaliseSettingsSection(loadSettings().settingsSection),
+  );
   const [query, setQuery] = useState('');
   const update = useUpdateStatus();
 
@@ -152,12 +167,45 @@ export default function SettingsDrawer({
 
   // Accordion: clicking the open section's header collapses it; clicking a
   // closed section's header opens it and closes whichever was open before.
+  // Opening a section is remembered so the next visit lands on it; collapsing
+  // keeps the remembered section, so closing the drawer straight after a
+  // collapse doesn't lose the learner's place.
   const toggleSection = (id) => {
-    setExpandedSection((current) => (current === id ? null : id));
+    if (expandedSection === id) {
+      setExpandedSection(null);
+      return;
+    }
+    setExpandedSection(id);
+    const next = updateSettings({ settingsSection: id });
+    setSettings(next);
   };
 
   // Placeholder shown when a key exists. Never saved — see handleSaveKey.
   const KEY_MASK = '••••••••••••••••';
+  const providerMeta = getAiProvider(provider);
+
+  // Switch providers without touching stored keys. Each provider keeps its
+  // own key, so flipping back and forth never loses one.
+  const switchProvider = async (id) => {
+    if (id === provider) return;
+    setProvider(id);
+    setKeyError(null);
+    setShowKey(false);
+    try {
+      await setSettingsAiProvider(id);
+    } catch {
+      // The switch still applies in-session; persistence is best-effort.
+    }
+    let exists = false;
+    try {
+      const status = await window.seecode.ai.status();
+      exists = !!status?.providers?.find((p) => p.id === id)?.hasKey;
+    } catch {
+      // ignore — fall back to "no key" and let the user paste one
+    }
+    setHasKey(exists);
+    setApiKey(exists ? KEY_MASK : '');
+  };
 
   // Refresh local copy whenever the drawer opens.
   useEffect(() => {
@@ -165,11 +213,18 @@ export default function SettingsDrawer({
       setSettings(loadSettings());
       setKeySaved(false);
       setNotificationPermission(getNotificationPermission());
-      setExpandedSection('appearance');
+      setExpandedSection(normaliseSettingsSection(loadSettings().settingsSection));
       setQuery('');
-      window.seecode.ai.hasKey().then((exists) => {
+      window.seecode.ai.status().then((status) => {
+        const active = status?.active || DEFAULT_AI_PROVIDER;
+        const exists = !!status?.providers?.find((p) => p.id === active)?.hasKey;
+        setProvider(active);
         setHasKey(exists);
         setApiKey(exists ? KEY_MASK : '');
+      }).catch(() => {
+        setProvider(DEFAULT_AI_PROVIDER);
+        setHasKey(false);
+        setApiKey('');
       });
     }
   }, [open]);
@@ -204,8 +259,8 @@ export default function SettingsDrawer({
     const trimmed = apiKey.trim();
     // Guard: the field is pre-filled with mask bullets when a key
     // already exists. If the user clicks Save without editing, we'd
-    // otherwise overwrite their real key with "••••••••" — Gemini then
-    // rightly rejects every subsequent call with "API key not valid".
+    // otherwise overwrite their real key with "••••••••" — the provider
+    // then rightly rejects every subsequent call with "API key not valid".
     // Treat "unchanged mask" as a no-op confirm.
     if (hasKey && (trimmed === KEY_MASK || /^[•*]+$/.test(trimmed))) {
       setKeySaved(true);
@@ -220,20 +275,20 @@ export default function SettingsDrawer({
     }
     // Validate before saving: a local format gate, then a live probe so a
     // wrong key is rejected here — not on the learner's first AI action.
-    if (!looksLikeApiKey(trimmed)) {
-      setKeyError('Keys start with “AIza” (legacy) or “AQ.” (new). Make sure you copied the whole key.');
+    if (!looksLikeApiKey(trimmed, provider)) {
+      setKeyError(providerMeta.keyHint);
       return;
     }
     setKeyChecking(true);
     setKeyError(null);
-    const result = await validateApiKey(trimmed);
+    const result = await validateApiKey(trimmed, provider);
     setKeyChecking(false);
     if (!result.ok) {
-      setKeyError(result.message || "Google didn't accept that key. Get a fresh one and try again.");
+      setKeyError(result.message || `${providerMeta.label} didn't accept that key. Get a fresh one and try again.`);
       return;
     }
-    await setSettingsApiKey(trimmed);
-    const exists = await window.seecode.ai.hasKey();
+    await setSettingsApiKey(trimmed, provider);
+    const exists = await window.seecode.ai.hasKey(provider);
     setHasKey(exists);
     setApiKey(exists ? KEY_MASK : '');
     setKeySaved(true);
@@ -248,8 +303,8 @@ export default function SettingsDrawer({
       danger: true,
     });
     if (!ok) return;
-    await setSettingsApiKey('');
-    const exists = await window.seecode.ai.hasKey();
+    await setSettingsApiKey('', provider);
+    const exists = await window.seecode.ai.hasKey(provider);
     setHasKey(exists);
     setApiKey(exists ? KEY_MASK : '');
   };
@@ -262,17 +317,31 @@ export default function SettingsDrawer({
   };
 
   // One-click fill from the clipboard (the user usually just came back
-  // from AI Studio with the key on their clipboard).
+  // from the provider's key page with the key on their clipboard). If the
+  // clipboard holds another provider's key, switch to that provider too.
   const handlePasteKey = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      const key = keyFromClipboard(text);
-      if (key) {
-        setApiKey(key);
-        setKeyError(null);
-      } else {
-        setKeyError('No AI key found on the clipboard. Copy the key first, then click Paste.');
+      let key = keyFromClipboard(text, provider);
+      let target = provider;
+      if (!key) {
+        for (const candidate of AI_PROVIDERS) {
+          if (candidate.id === provider) continue;
+          const found = keyFromClipboard(text, candidate.id);
+          if (found) {
+            key = found;
+            target = candidate.id;
+            break;
+          }
+        }
       }
+      if (!key) {
+        setKeyError('No AI key found on the clipboard. Copy the key first, then click Paste.');
+        return;
+      }
+      if (target !== provider) await switchProvider(target);
+      setApiKey(key);
+      setKeyError(null);
     } catch {
       setKeyError("Couldn't read the clipboard — paste with Ctrl+V instead.");
     }
@@ -431,9 +500,18 @@ export default function SettingsDrawer({
             );
             if (id === 'ai') return (
               <Section key={id} {...props} icon={<Sparkles size={13} />} title="AI">
-                <Field label="AI key" hint="Your own free key from Google AI Studio, stored on this device only. Optional if your plan includes AI.">
+                <Field label="Provider" hint="Where AI requests go. Each provider keeps its own key, so you can switch back anytime.">
+                  <Tabs value={provider} onValueChange={switchProvider} variant="pill">
+                    <TabsList>
+                      {AI_PROVIDERS.map((p) => (
+                        <TabsTrigger key={p.id} value={p.id}>{p.label}</TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </Field>
+                <Field label="AI key" hint={`Your own free key from ${providerMeta.label}, stored on this device only. Optional if your plan includes AI.`}>
                   <div style={styles.keyRow}>
-                    <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={(e) => { setApiKey(e.target.value); setKeyError(null); }} onFocus={handleKeyFocus} placeholder="AIza… or AQ…" style={styles.input} autoComplete="off" spellCheck={false} />
+                    <input type={showKey ? 'text' : 'password'} value={apiKey} onChange={(e) => { setApiKey(e.target.value); setKeyError(null); }} onFocus={handleKeyFocus} placeholder={providerMeta.keyPlaceholder} style={styles.input} autoComplete="off" spellCheck={false} />
                     <button style={styles.iconBtn} onClick={handlePasteKey} title="Paste key from clipboard" aria-label="Paste key from clipboard">
                       <ClipboardPaste size={14} />
                     </button>
@@ -444,9 +522,9 @@ export default function SettingsDrawer({
                       {keySaved ? <><Check size={12} style={{ marginRight: 4 }} /> Saved</> : 'Save'}
                     </button>
                   </div>
-                  <a style={styles.link} href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Get a free key →</a>
+                  <a style={styles.link} href={providerMeta.getKeyUrl} target="_blank" rel="noreferrer">{providerMeta.getKeyLabel} →</a>
                   <p style={styles.fieldHint} aria-live="polite">
-                    {keyChecking && 'Checking the key with Google…'}
+                    {keyChecking && `Checking the key with ${providerMeta.shortLabel}…`}
                     {!keyChecking && keySaved && keyError == null && 'Key saved.'}
                     {!keyChecking && keyError && (
                       <span style={{ color: 'var(--danger-text, #e5484d)' }} role="alert">{keyError}</span>
@@ -499,7 +577,7 @@ export default function SettingsDrawer({
 
         {!normalizedQuery && (
           <p style={styles.footnote}>
-            Settings live on this device only. With an AI key added, your prompts and code are sent to Google to generate AI results.
+            Settings live on this device only. With an AI key added, your prompts and code are sent to {providerMeta.privacyLabel} to generate AI results.
           </p>
         )}
         </div>

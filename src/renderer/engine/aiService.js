@@ -1,14 +1,15 @@
 // Renderer-side AI bridge.
 //
-// The actual Gemini call and the API key live in the main process (see
-// src/main/aiService.js — uses Electron `safeStorage` to encrypt the key
-// on disk, and runs the HTTPS request from Node so the renderer never
-// touches the network directly).
+// The actual model call and every API key live in the main process (see
+// src/main/aiService.js — uses Electron `safeStorage` to encrypt keys on
+// disk, and runs the HTTPS request from Node so the renderer never touches
+// the network directly).
 //
 // This module exposes a small façade so the rest of the renderer can
 // keep its existing call sites unchanged:
 //
-//   hasApiKey()                     → sync boolean   (cached)
+//   hasApiKey()                     → sync boolean   (cached, active provider)
+//   getActiveProviderId()           → sync id        (cached)
 //   refreshHasApiKey()              → async, re-reads from main
 //   generateCodeWithAI(...)         → async string-of-JSON parsed
 //   explainCodeWithAI(...)          → async string-of-JSON parsed
@@ -16,11 +17,19 @@
 //
 // `hasApiKey()` is intentionally synchronous because dozens of UI sites
 // branch on it during render. We hydrate the cache on module load and
-// also refresh it whenever the key is saved (see engine/settings.js).
+// also refresh it whenever a key is saved or the provider is switched
+// (see engine/settings.js).
 
 import { getEntitlementState } from './entitlements';
+import { AI_PROVIDERS, DEFAULT_AI_PROVIDER, getAiProvider } from './aiProviders';
 
-let cachedHasKey = false;
+// Active provider + per-provider key presence. Hydrated from the main
+// process on load; every save/switch refreshes it.
+let cachedStatus = {
+  active: DEFAULT_AI_PROVIDER,
+  hasKey: false,
+  providers: AI_PROVIDERS.map((provider) => ({ id: provider.id, hasKey: false })),
+};
 const subscribers = new Set();
 
 function notify() {
@@ -47,17 +56,45 @@ async function migrateLegacyKey() {
   }
 }
 
-// Hydrate on module load. Best-effort: the first render may see
-// `false` even when a key exists, but the second tick fixes it and
-// any subscriber (SettingsDrawer, InstructionPanel) re-renders.
+// Hydrate the cached provider status from the main process. Best-effort:
+// older preload builds only expose `hasKey()`, so we fall back to that.
+async function hydrateStatus() {
+  try {
+    const status = await window.seecode.ai.status();
+    if (status && Array.isArray(status.providers)) {
+      cachedStatus = {
+        active: status.active || DEFAULT_AI_PROVIDER,
+        hasKey: !!status.hasKey,
+        providers: status.providers.map(({ id, hasKey }) => ({ id, hasKey: !!hasKey })),
+      };
+      return cachedStatus;
+    }
+  } catch {
+    // fall through to the legacy probe
+  }
+  try {
+    const hasKey = !!(await window.seecode.ai.hasKey());
+    cachedStatus = {
+      active: DEFAULT_AI_PROVIDER,
+      hasKey,
+      providers: AI_PROVIDERS.map((provider) => ({
+        id: provider.id,
+        hasKey: provider.id === DEFAULT_AI_PROVIDER ? hasKey : false,
+      })),
+    };
+  } catch {
+    cachedStatus = { ...cachedStatus, hasKey: false };
+  }
+  return cachedStatus;
+}
+
+// Hydrate on module load. Best-effort: the first render may see `false`
+// even when a key exists, but the second tick fixes it and any subscriber
+// (SettingsDrawer, InstructionPanel) re-renders.
 if (typeof window !== 'undefined' && window.seecode?.ai) {
   (async () => {
     await migrateLegacyKey();
-    try {
-      cachedHasKey = !!(await window.seecode.ai.hasKey());
-    } catch {
-      cachedHasKey = false;
-    }
+    await hydrateStatus();
     notify();
   })();
 }
@@ -68,47 +105,48 @@ function hasManagedAi() {
 }
 
 export function hasApiKey() {
-  return cachedHasKey || hasManagedAi();
+  return cachedStatus.hasKey || hasManagedAi();
+}
+
+export function getActiveProviderId() {
+  return cachedStatus.active || DEFAULT_AI_PROVIDER;
+}
+
+export function getActiveProvider() {
+  return getAiProvider(getActiveProviderId());
 }
 
 // ---- key onboarding helpers -------------------------------------------
-// Gemini has two key shapes: legacy standard keys ("AIza" + word characters)
-// and the authorization keys AI Studio now issues ("AQ." + chars, dots
-// included). The pattern is a fast local gate so obviously-partial pastes
-// never hit the network.
-const KEY_PATTERN = /^(?:AIza[\w-]{10,}|AQ\.[\w.-]{10,})$/;
-
-export function looksLikeApiKey(text) {
-  return KEY_PATTERN.test(String(text || '').trim());
+// Each provider has its own key shape; the pattern is a fast local gate so
+// obviously-partial pastes never hit the network.
+export function looksLikeApiKey(text, providerId = getActiveProviderId()) {
+  return getAiProvider(providerId).keyPattern.test(String(text || '').trim());
 }
 
 // Best-effort pull of a key out of arbitrary clipboard text, so the UI can
-// offer a one-click paste right after the user returns from AI Studio.
-export function keyFromClipboard(text) {
-  const match = /AIza[\w-]{10,}|AQ\.[\w.-]{10,}/.exec(String(text || ''));
+// offer a one-click paste right after the user returns from the key page.
+export function keyFromClipboard(text, providerId = getActiveProviderId()) {
+  const match = getAiProvider(providerId).keyFromText.exec(String(text || ''));
   return match ? match[0] : null;
 }
 
 // Format gate + live probe. Always resolves to
 // { ok: true } or { ok: false, reason: 'format'|'invalid'|'unreachable', message? }.
-export async function validateApiKey(key) {
+export async function validateApiKey(key, providerId = getActiveProviderId()) {
+  const provider = getAiProvider(providerId);
   const trimmed = String(key || '').trim();
-  if (!KEY_PATTERN.test(trimmed)) {
-    return { ok: false, reason: 'format', message: 'Keys start with "AIza" (legacy) or "AQ." (new). Make sure you copied the whole key.' };
+  if (!provider.keyPattern.test(trimmed)) {
+    return { ok: false, reason: 'format', message: provider.keyHint };
   }
   try {
-    return await window.seecode.ai.validateKey(trimmed);
+    return await window.seecode.ai.validateKey(trimmed, provider.id);
   } catch {
     return { ok: false, reason: 'unreachable', message: "Couldn't check the key right now. Check your internet and try again." };
   }
 }
 
 export async function refreshHasApiKey() {
-  try {
-    cachedHasKey = !!(await window.seecode.ai.hasKey());
-  } catch {
-    cachedHasKey = false;
-  }
+  await hydrateStatus();
   notify();
   return hasApiKey();
 }
@@ -121,7 +159,7 @@ export function subscribeHasApiKey(fn) {
   return () => subscribers.delete(fn);
 }
 
-async function callGemini(prompt, systemInstruction) {
+async function callAi(prompt, systemInstruction) {
   return await window.seecode.ai.call({ prompt, systemInstruction });
 }
 
@@ -316,7 +354,7 @@ ${String(question || '').slice(0, 4000)}
 
 Respond with ONLY the JSON object described in your instructions.`;
 
-  const raw = await callGemini(prompt, TUTOR_SYSTEM_PROMPT);
+  const raw = await callAi(prompt, TUTOR_SYSTEM_PROMPT);
   const parsed = parseJsonReply(raw);
   const answer = typeof parsed.answer === 'string' ? parsed.answer.trim() : '';
   if (!answer) throw new Error('The tutor sent an empty reply. Try asking again.');
@@ -343,7 +381,7 @@ LEARNER ANSWER:
 ${String(answer || '').slice(0, 6000)}
 
 Evaluate this answer and return ONLY the JSON object described in your instructions.`;
-  const raw = await callGemini(prompt, INTERVIEW_SYSTEM_PROMPT);
+  const raw = await callAi(prompt, INTERVIEW_SYSTEM_PROMPT);
   const parsed = parseJsonReply(raw);
   const score = Math.max(1, Math.min(5, Math.round(Number(parsed.score) || 3)));
   const strengths = Array.isArray(parsed.strengths) ? parsed.strengths.map(String).filter(Boolean).slice(0, 3) : [];
@@ -365,7 +403,7 @@ Instruction: "${instruction}"
 
 Remember: respond with ONLY valid JSON matching the required format. Include pseudocode and code for each of these languages: ${langList}.`;
 
-  const raw = await callGemini(prompt, CODE_SYSTEM_PROMPT);
+  const raw = await callAi(prompt, CODE_SYSTEM_PROMPT);
 
   const parsed = parseJsonReply(raw);
   return {
@@ -402,7 +440,7 @@ ${trimmedErr || '(empty stderr)'}
 
 Remember: respond with ONLY valid JSON matching the required {title, plain, fixes} format. Reference the learner's actual names and line numbers — no generic textbook explanations.`;
 
-  const raw = await callGemini(prompt, ERROR_SYSTEM_PROMPT);
+  const raw = await callAi(prompt, ERROR_SYSTEM_PROMPT);
 
   const parsed = parseJsonReply(raw);
   return {
@@ -488,7 +526,7 @@ export async function generateBuildProjectWithAI(prompt) {
 
 Remember: respond with ONLY valid JSON matching the required format.`;
 
-  const raw = await callGemini(p, BUILD_PROJECT_SYSTEM_PROMPT);
+  const raw = await callAi(p, BUILD_PROJECT_SYSTEM_PROMPT);
 
   return parseJsonReply(raw);
 }
@@ -502,7 +540,7 @@ ${code}
 
 Remember: respond with ONLY valid JSON matching the required format.`;
 
-  const raw = await callGemini(prompt, EXPLAIN_SYSTEM_PROMPT);
+  const raw = await callAi(prompt, EXPLAIN_SYSTEM_PROMPT);
 
   const parsed = parseJsonReply(raw);
 
@@ -586,7 +624,7 @@ export async function explainTerminalWithAI(input, kind = 'command') {
       ? `Explain this terminal ${label} in one brief sentence:\n\n${text}`
       : `Explain what this terminal ${label} does in one brief sentence:\n\n${text}`;
 
-    const raw = await callGemini(prompt, TERMINAL_EXPLAIN_SYSTEM_PROMPT);
+    const raw = await callAi(prompt, TERMINAL_EXPLAIN_SYSTEM_PROMPT);
     const parsed = parseJsonReply(raw);
     const explanation = typeof parsed.explanation === 'string' && parsed.explanation.trim()
       ? parsed.explanation.trim()

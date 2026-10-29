@@ -703,8 +703,10 @@ function dedupeLangs(list) {
 }
 
 // ---------------------------------------------------------------------------
-// API key passthrough — stored securely in the main process via safeStorage.
-// The key is machine-level (shared by every local profile), not per-profile.
+// AI provider passthrough — keys are stored securely in the main process via
+// safeStorage, one per provider, and the active provider decides where
+// requests go. Keys are machine-level (shared by every local profile), not
+// per-profile.
 
 export function getSettingsApiKey() {
   // We no longer return the raw key to the renderer for security.
@@ -713,6 +715,12 @@ export function getSettingsApiKey() {
 
 // Async under the hood but safe to call without `await` — fires the IPC then
 // refreshes the sync `hasApiKey()` cache so the UI updates on next render.
-export function setSettingsApiKey(key) {
-  return window.seecode.ai.setKey(key || '').then(() => refreshHasApiKey());
+// Saving a key also makes that provider active (see main/aiService.js).
+export function setSettingsApiKey(key, providerId) {
+  return window.seecode.ai.setKey(key || '', providerId).then(() => refreshHasApiKey());
+}
+
+// Switch which provider AI requests use, without touching stored keys.
+export function setSettingsAiProvider(providerId) {
+  return window.seecode.ai.setProvider(providerId).then(() => refreshHasApiKey());
 }
