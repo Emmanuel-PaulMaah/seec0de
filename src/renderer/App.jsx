@@ -1875,17 +1875,25 @@ export default function App() {
     setGate('launch');
   }, [hydrateLearningProfile]);
 
-  // Used by Settings → Toolchains "Install" buttons: pops the bottom
-  // terminal open (so the user actually sees it work), then pushes the
-  // install command into it as if they had typed it. Walks them through
-  // the link between Settings and the Terminal.
+  // Used by Settings → Toolchains "Install" buttons and the onboarding
+  // runtime step: pops the bottom terminal open (so the user actually sees it
+  // work), then pushes the install command into it as if they had typed it.
+  //
+  // `revealWorkspace` is for callers that may be running over Home or Learn
+  // (onboarding): the terminal only mounts in the workspace view, so we switch
+  // there first and give it a beat longer to mount.
   const handleRunInTerminal = useCallback((command, options) => {
     if (!command) return;
+    const revealWorkspace = !!options?.revealWorkspace;
+    if (revealWorkspace) {
+      setShowHome(false);
+      setLearnMode(false);
+    }
     setTerminalVisible(true);
     // Give the terminal a tick to mount before we drive it.
     setTimeout(() => {
       terminalApi.current?.runCommand?.(command, options);
-    }, 60);
+    }, revealWorkspace ? 320 : 60);
   }, []);
 
 const beginInstructionResize = useCallback((event) => {
@@ -2504,6 +2512,7 @@ const beginExplanationResize = useCallback((event) => {
         onComplete={handleOnboardingComplete}
         onCancel={() => { setShowOnboarding(false); setOnboardingMode('setup'); }}
         mode={onboardingMode}
+        onRunInTerminal={handleRunInTerminal}
       />
 
       <WorkspaceTour open={showWorkspaceTour} onClose={handleCloseWorkspaceTour} />
