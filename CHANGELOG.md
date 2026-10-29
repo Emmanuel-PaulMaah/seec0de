@@ -16,6 +16,13 @@ Section conventions:
 
 ## [Unreleased]
 
+## [4.4.2] - 2026-10-29
+
+### Added
+- **Onboarding now walks beginners through installing Python and Node.js.** A new step between the language picker and the AI-key step ([`OnboardingModal.jsx`](src/renderer/components/OnboardingModal.jsx)) probes both runtimes, shows the detected version when one is already there, and for anything missing gives the exact platform command with a **Copy command** button plus the instruction to paste it into the Terminal and where that Terminal is. **Run it for me** starts the install with a ten-minute budget and docks the card into a corner so the terminal stays visible while it runs, and the row turns green with the detected version by itself once the installer finishes — no restart, no hidden Re-check. PCs without winget get the python.org / nodejs.org download route instead of a command that would only fail, and the step is skippable: the button reads **Continue without these** until both are installed. Commands come from the same `TOOLCHAIN_GUIDES` table Settings → Toolchains uses, so the two can't drift apart, and `handleRunInTerminal` gained a `revealWorkspace` option so an install started over Home or Learn opens the workspace first.
+
+- **Groq joins Google Gemini as an AI provider.** Settings → AI and the onboarding AI-key step now open with a provider picker ([`engine/aiProviders.js`](src/renderer/engine/aiProviders.js)): **Google Gemini** (the native adapter) or **Groq** (an OpenAI-compatible adapter in [`main/aiService.js`](src/main/aiService.js)). Each provider keeps its own key, the active one is remembered, and switching back and forth never loses the other. One-click paste recognises `AIza…`, `AQ.…` and `gsk_…` and even switches provider when it spots the other provider's key, and every candidate is validated live before **Save** unlocks (`models.list` for Gemini, `{base}/models` for Groq), so bad keys are rejected at entry and network failures are told apart from them. Adding a fourth registry entry is enough for any other `/chat/completions` endpoint — OpenRouter, Cerebras, Mistral, DeepSeek or a local Ollama/LM Studio server.
+
 ## [4.4.1] - 2026-10-25
 
 ### Added
