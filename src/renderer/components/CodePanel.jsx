@@ -3,6 +3,7 @@ import Editor from '@monaco-editor/react';
 import { Lock, Pencil, X, Play, Lightbulb, Check, ChevronRight, Search, Square } from 'lucide-react';
 import KeywordTooltip from './KeywordTooltip';
 import SandboxTerminal from './SandboxTerminal';
+import EditorFindWidget from './EditorFindWidget';
 import { Tabs, TabsList, TabsTrigger } from './motion/tabs';
 import { MorphingFileTabs } from './motion/morphing-file-tabs';
 import { StatefulButton } from './motion/button/stateful';
@@ -47,6 +48,8 @@ const LANGUAGE_MONACO_MAP = {
   nodejs: 'javascript',
   mongodb: 'javascript',
   express: 'javascript',
+  django: 'python',
+  threejs: 'javascript',
   sql: 'sql',
   nextjs: 'javascript',
   auth: 'javascript',
@@ -61,12 +64,20 @@ const LANGUAGE_MONACO_MAP = {
   http: 'javascript',
 };
 
+// Framework courses reuse the glossary of the language they are written in.
+const GLOSSARY_FALLBACK = {
+  django: 'python',
+  threejs: 'javascript',
+};
+
 const LANGUAGE_LABELS = {
   python: 'Python', javascript: 'JavaScript', java: 'Java', cpp: 'C++',
   csharp: 'C#', go: 'Go', rust: 'Rust', typescript: 'TypeScript', c: 'C', react: 'React',
   nodejs: 'Node.js',
   mongodb: 'MongoDB',
   express: 'Express',
+  django: 'Django',
+  threejs: 'Three.js',
   sql: 'SQL & PostgreSQL',
   nextjs: 'Next.js',
   auth: 'Auth & Sessions',
@@ -284,6 +295,10 @@ export default function CodePanel({
   const [selection, setSelection] = useState(null);
   const [btnPos, setBtnPos] = useState(null);
   const editorRef = useRef(null);
+  const findWidgetRef = useRef(null);
+  // Mirror of editorRef in state so the find widget re-renders when a tab
+  // switch mounts a fresh Monaco instance.
+  const [editorInstance, setEditorInstance] = useState(null);
   const [lastSandboxCommand, setLastSandboxCommand] = useState('');
   const selectionCleanupRef = useRef(null);
   const canExplainRef = useRef(false);
@@ -353,8 +368,27 @@ export default function CodePanel({
   // which re-registers via onMount.)
   useEffect(() => () => { unregisterEditor(); selectionCleanupRef.current?.(); }, []);
 
-  const handleEditorMount = useCallback((editor) => {
+  const handleEditorMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
+    setEditorInstance(editor);
+
+    // The native find widget is hidden (global.css) and its shortcuts are
+    // re-bound here to the beUI widget — otherwise Ctrl+F would open an
+    // invisible widget and F3 would silently search the wrong one.
+    if (monaco) {
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
+        findWidgetRef.current?.open('find');
+      });
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
+        findWidgetRef.current?.open('replace');
+      });
+      editor.addCommand(monaco.KeyCode.F3, () => {
+        findWidgetRef.current?.step(1);
+      });
+      editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F3, () => {
+        findWidgetRef.current?.step(-1);
+      });
+    }
     // Leaf UI (inline code chips, Build panel example/solution blocks)
     // inserts into this editor via the shared bridge — the live instance is
     // always the most recently mounted one (tabs remount the Editor). The
@@ -423,7 +457,10 @@ export default function CodePanel({
       const word = model.getWordAtPosition(pos);
       if (!word) return;
 
-      const lang = LANGUAGES[tooltipLanguage];
+      const lang = LANGUAGES[tooltipLanguage]
+        || (GLOSSARY_FALLBACK[tooltipLanguage]
+          ? LANGUAGES[GLOSSARY_FALLBACK[tooltipLanguage]]
+          : null);
       if (!lang || !lang.glossary[word.word]) return;
 
       const entry = lang.glossary[word.word];
@@ -638,11 +675,7 @@ export default function CodePanel({
             type="button"
             className="ui-toolbar-button"
             style={styles.iconBtn}
-            onClick={() => {
-              const editor = editorRef.current;
-              if (!editor) return;
-              editor.getAction('actions.find')?.run();
-            }}
+            onClick={() => findWidgetRef.current?.open('find')}
             title="Find in file (Ctrl+F)"
             aria-label="Find in file"
           >
@@ -793,6 +826,13 @@ export default function CodePanel({
             onFocus={() => setFocusTarget('editor')}
             onChange={handleChange}
             options={editorOptions}
+          />
+        )}
+        {!showEmptyState && !(lessonMode && lessonLanguage === 'git') && (
+          <EditorFindWidget
+            ref={findWidgetRef}
+            editor={editorInstance}
+            readOnly={isReadOnly}
           />
         )}
         {showExplainButtons && (
