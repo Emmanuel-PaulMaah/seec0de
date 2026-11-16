@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RefreshCw, Download, X } from 'lucide-react';
 import { useUpdateStatus } from '../hooks/useUpdateStatus';
 import { useFocusTrap } from '../lib/hooks/use-focus-trap';
@@ -57,6 +58,7 @@ export default function UpdatePill() {
   const [expanded, setExpanded] = useState(false);
   const popRef = useRef(null);
   const confirm = useConfirm();
+  const reduce = useReducedMotion();
 
   // Close popover on outside click.
   useEffect(() => {
@@ -80,84 +82,112 @@ export default function UpdatePill() {
   }, [expanded]);
   useFocusTrap(popRef, expanded);
 
-  // Only surface the pill in the title bar for two states:
-  // mid-download (subtle) and ready-to-install (prominent).
-  if (status !== 'downloading' && status !== 'downloaded') return null;
+  // Only surface the pill in the title bar for two states: mid-download
+  // (subtle) and ready-to-install (prominent). Every other status — including
+  // a failed download or the install that follows — means "no pill", but the
+  // pill leaves by fading instead of vanishing between two frames.
+  const active = status === 'downloading' || status === 'downloaded';
+
+  useEffect(() => {
+    if (!active) setExpanded(false);
+  }, [active]);
+
+  let pill = null;
 
   if (status === 'downloading') {
     const pct = progress && progress.percent ? Math.round(progress.percent) : 0;
-    return (
+    pill = (
       <div style={styles.pillDownloading}>
         <Download size={11} />
         <span>Downloading update… {pct}%</span>
       </div>
     );
+  } else if (status === 'downloaded') {
+    const version = info && info.version ? `v${info.version}` : 'update';
+    pill = (
+      <div ref={popRef} style={styles.wrapper}>
+        <button
+          type="button"
+          style={styles.pillReady}
+          onClick={() => setExpanded((v) => !v)}
+          title={`Click to see what's new in ${version}`}
+        >
+          <RefreshCw size={11} />
+          <span>Update {version} ready</span>
+        </button>
+
+        {expanded && (
+          <div ref={popRef} style={styles.popover} role="dialog" aria-modal="true" aria-label={`What's new in ${version}`}>
+            <div style={styles.popHeader}>
+              <span style={styles.popTitle}>What's new in {version}</span>
+              <button
+                type="button"
+                style={styles.closeBtn}
+                onClick={() => setExpanded(false)}
+                aria-label="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
+
+            <div style={styles.popBody}>
+              {releaseNotes
+                ? renderNotes(releaseNotes)
+                : <div style={notesStyles.paragraph}>Release notes are unavailable. Restart anyway to apply the update.</div>}
+            </div>
+
+            <div style={styles.popFooter}>
+              <button type="button" style={styles.laterBtn} onClick={() => setExpanded(false)}>
+                Later
+              </button>
+              <button
+                type="button"
+                style={styles.restartBtn}
+                onClick={async () => {
+                  // Restart closes the app outright — any editor buffer not yet
+                  // through the autosave debounce goes with it.
+                  const ok = await confirm({
+                    title: 'Restart and install now?',
+                    description: 'seec0de will quit to install the update. Files you just edited may not have been saved yet — give autosave a moment or save first.',
+                    confirmLabel: 'Restart & install',
+                    danger: true,
+                  });
+                  if (ok) installNow();
+                }}
+              >
+                Restart & install
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
-  // status === 'downloaded'
-  const version = info && info.version ? `v${info.version}` : 'update';
-
   return (
-    <div ref={popRef} style={styles.wrapper}>
-      <button
-        type="button"
-        style={styles.pillReady}
-        onClick={() => setExpanded((v) => !v)}
-        title={`Click to see what's new in ${version}`}
-      >
-        <RefreshCw size={11} />
-        <span>Update {version} ready</span>
-      </button>
-
-      {expanded && (
-        <div ref={popRef} style={styles.popover} role="dialog" aria-modal="true" aria-label={`What's new in ${version}`}>
-          <div style={styles.popHeader}>
-            <span style={styles.popTitle}>What's new in {version}</span>
-            <button
-              type="button"
-              style={styles.closeBtn}
-              onClick={() => setExpanded(false)}
-              aria-label="Close"
-            >
-              <X size={12} />
-            </button>
-          </div>
-
-          <div style={styles.popBody}>
-            {releaseNotes
-              ? renderNotes(releaseNotes)
-              : <div style={notesStyles.paragraph}>Release notes are unavailable. Restart anyway to apply the update.</div>}
-          </div>
-
-          <div style={styles.popFooter}>
-            <button type="button" style={styles.laterBtn} onClick={() => setExpanded(false)}>
-              Later
-            </button>
-            <button
-              type="button"
-              style={styles.restartBtn}
-              onClick={async () => {
-                // Restart closes the app outright — any editor buffer not yet
-                // through the autosave debounce goes with it.
-                const ok = await confirm({
-                  title: 'Restart and install now?',
-                  description: 'seec0de will quit to install the update. Files you just edited may not have been saved yet — give autosave a moment or save first.',
-                  confirmLabel: 'Restart & install',
-                  danger: true,
-                });
-                if (ok) installNow();
-              }}
-            >
-              Restart & install
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    <AnimatePresence initial={false}>
+      {active ? (
+        <motion.div
+          key="update-pill"
+          style={styles.animator}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={reduce ? { duration: 0.15 } : { duration: 0.35, ease: 'easeOut' }}
+        >
+          {pill}
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
 const styles = {
+  animator: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    WebkitAppRegion: 'no-drag',
+  },
   wrapper: {
     position: 'relative',
     WebkitAppRegion: 'no-drag',

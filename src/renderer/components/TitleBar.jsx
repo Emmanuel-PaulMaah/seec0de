@@ -96,14 +96,16 @@ export default function TitleBar({
       <div style={{ ...styles.side, justifyContent: 'flex-end' }}>
         {onToggleColorMode && (
           <span style={{ WebkitAppRegion: 'no-drag', display: 'inline-flex' }}>
-            <ThemeToggle
-              variant="circle"
-              start="bottom-right"
-              colorMode={colorMode}
-              onColorModeChange={onToggleColorMode}
-              className="h-7 w-7 rounded-full border border-[var(--border)] bg-[var(--bg-tertiary)] p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              iconClassName="h-3.5 w-3.5"
-            />
+            <Tooltip content={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} side="bottom">
+              <ThemeToggle
+                variant="circle"
+                start="bottom-right"
+                colorMode={colorMode}
+                onColorModeChange={onToggleColorMode}
+                className="h-7 w-7 rounded-full border border-[var(--border)] bg-[var(--bg-tertiary)] p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                iconClassName="h-3.5 w-3.5"
+              />
+            </Tooltip>
           </span>
         )}
         {onStartTour && (
@@ -185,24 +187,25 @@ function ReminderMenu({ reminders, now, onDismiss, onSnooze, onContinue }) {
 
   return (
     <div ref={wrapRef} style={styles.reminderWrap}>
-      <button
-        type="button"
-        ref={triggerRef}
-        className="ui-icon-button"
-        onClick={() => setOpen((value) => !value)}
-        title="Learning Pulse reminders"
-        aria-label={`Learning Pulse reminders${reminders.length ? `, ${reminders.length} active` : ''}`}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        style={{ ...styles.toggleBtn, ...(open ? styles.toggleBtnActive : {}), position: 'relative' }}
-      >
-        <Bell size={14} />
-        {reminders.length > 0 && (
-          <span style={{ ...styles.reminderBadge, ...(dueCount > 0 ? styles.reminderBadgeDue : {}) }}>
-            {reminders.length > 9 ? '9+' : reminders.length}
-          </span>
-        )}
-      </button>
+      <Tooltip content="Learning Pulse reminders" side="bottom">
+        <button
+          type="button"
+          ref={triggerRef}
+          className="ui-icon-button"
+          onClick={() => setOpen((value) => !value)}
+          aria-label={`Learning Pulse reminders${reminders.length ? `, ${reminders.length} active` : ''}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          style={{ ...styles.toggleBtn, ...(open ? styles.toggleBtnActive : {}), position: 'relative' }}
+        >
+          <Bell size={14} />
+          {reminders.length > 0 && (
+            <span style={{ ...styles.reminderBadge, ...(dueCount > 0 ? styles.reminderBadgeDue : {}) }}>
+              {reminders.length > 9 ? '9+' : reminders.length}
+            </span>
+          )}
+        </button>
+      </Tooltip>
 
       {open && (
         <section ref={menuRef} style={styles.reminderMenu} role="dialog" aria-label="Learning Pulse reminders">
@@ -269,7 +272,9 @@ function ToolBtn({ onClick, active = false, title, ariaLabel, children }) {
     </motion.button>
   );
   if (!title) return btn;
-  return <Tooltip content={title}>{btn}</Tooltip>;
+  // The bar sits at the top of the window, so the label opens downward —
+  // a default "top" tooltip would render above the window and be clipped.
+  return <Tooltip content={title} side="bottom">{btn}</Tooltip>;
 }
 
 // ProfileMenu — the signed-in identity chip + dropdown. Shows the active

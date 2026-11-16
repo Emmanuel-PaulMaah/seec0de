@@ -28,6 +28,9 @@ const K = {
 const RAIL = 32;
 const MIN_EDITOR_WIDTH = 520;
 
+// How long the "moved aside" toast stays up before dismissing itself.
+const TOAST_MS = 3000;
+
 export const PANEL_LABELS = {
   instruction: 'Guide',
   preview: 'Preview',
@@ -191,6 +194,15 @@ export function useWorkspaceLayout(defaultTerminalOpen, budgetEnabled = true) {
   }, [movedAside]);
 
   const dismissMovedAside = useCallback(() => setMovedAside(null), []);
+
+  // The "moved aside" toast is informational: give it three seconds, then take
+  // it away on its own. A new panel moving aside restarts the clock because
+  // the state object is freshly created.
+  useEffect(() => {
+    if (!movedAside) return undefined;
+    const timer = setTimeout(() => setMovedAside(null), TOAST_MS);
+    return () => clearTimeout(timer);
+  }, [movedAside]);
 
   // Focus mode hides the side panels for rendering only; raw state (and its
   // persistence) is untouched, so toggling back restores the exact layout.
