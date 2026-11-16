@@ -25,6 +25,7 @@
     "electron-updater": "^6.8.3",
     "html-to-image": "^1.11.13",
     "jsdom": "^29.1.1",
+    "lottie-react": "^3.1.2",
     "lucide-react": "^1.9.0",
     "monaco-editor": "^0.45.0",
     "motion": "^13.1.1",

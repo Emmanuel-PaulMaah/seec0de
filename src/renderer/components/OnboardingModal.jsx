@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   ArrowRight, Check, X, Code2, KeyRound, ClipboardPaste, ShieldCheck,
   AlertCircle, CheckCircle2, Copy, Download, RefreshCw, Terminal,
@@ -16,6 +16,8 @@ import {
 } from '../engine/settings';
 import { ProfileFields } from './ProfileForm';
 import { useFocusTrap } from '../lib/hooks/use-focus-trap';
+import LottieStage, { STAGE_SCENE_BY_STEP, keySceneFor } from './LottieStage';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { getActiveProviderId, keyFromClipboard, looksLikeApiKey, validateApiKey } from '../engine/aiService';
 import { AI_PROVIDERS, DEFAULT_AI_PROVIDER, getAiProvider } from '../engine/aiProviders';
 
@@ -46,6 +48,27 @@ import { AI_PROVIDERS, DEFAULT_AI_PROVIDER, getAiProvider } from '../engine/aiPr
 const STEPS = ['profile', 'experience', 'language', 'runtime', 'apikey'];
 // Adding a profile is not a first-run setup: skip the install walkthrough.
 const STEPS_NEW_PROFILE = STEPS.filter((s) => s !== 'runtime');
+
+// The eyebrow labels the active step. The number in front of it is composed
+// from the live index, so the "add profile" flow (which skips `runtime`)
+// numbers 01–04 instead of showing a gap.
+const STEP_LABELS = {
+  profile: 'Identity',
+  experience: 'Starting point',
+  language: 'Your language',
+  runtime: 'Runtime',
+  apikey: 'AI, optional',
+};
+
+// Stage tab filenames for the language step: the file the learner's choice will
+// actually be saved as.
+const LANG_EXT = Object.freeze({
+  python: 'py',
+  javascript: 'js',
+  typescript: 'ts',
+  c: 'c',
+  cpp: 'cpp',
+});
 
 const emptyProfile = () => ({
   username: '', avatar: null, bio: '', languagesUsing: [], languagesLearning: [],
@@ -152,11 +175,132 @@ export default function OnboardingModal({
   // Docking releases the trap so the learner can click into the Terminal.
   const rootRef = useRef(null);
   useFocusTrap(rootRef, open && !minimized);
-
-  if (!open) return null;
+  const reduced = useReducedMotion();
 
   const steps = mode === 'new-profile' ? STEPS_NEW_PROFILE : STEPS;
   const step = steps[stepIdx];
+
+  // The runtime probe lives here rather than inside StepRuntime, so the stage's
+  // status line and the install step can never report different readings.
+  const [runtimeStatus, setRuntimeStatus] = useState(null); // null = not probed yet
+  const [checkingRuntime, setCheckingRuntime] = useState(false);
+
+  const probeRuntime = useCallback(async () => {
+    setCheckingRuntime(true);
+    try {
+      const result = window.seecode?.runner?.checkToolchains
+        ? await window.seecode.runner.checkToolchains()
+        : {};
+      setRuntimeStatus(result && !result.error ? result : {});
+    } catch {
+      setRuntimeStatus({});
+    } finally {
+      setCheckingRuntime(false);
+    }
+  }, []);
+
+  const runtimeInstalled = !!runtimeStatus
+    && RUNTIME_IDS.every((id) => runtimeStatus[id]?.installed);
+
+  useEffect(() => {
+    if (open && step === 'runtime') probeRuntime();
+  }, [open, step, probeRuntime]);
+
+  // Installers finish outside the app, so polling is the only signal available.
+  useEffect(() => {
+    if (!open || step !== 'runtime' || runtimeInstalled) return undefined;
+    const timer = setInterval(probeRuntime, 5000);
+    return () => clearInterval(timer);
+  }, [open, step, runtimeInstalled, probeRuntime]);
+
+  // Key validation is lifted for the same reason: the stage reports checking /
+  // works / rejected, which has to be the exact reading the step gates Save on.
+  const [keyStatus, setKeyStatus] = useState(null); // null | 'checking' | 'valid' | { reason, message }
+
+  useEffect(() => {
+    if (!open || step !== 'apikey') return undefined;
+    const typed = apiKey.trim();
+    if (!typed || !looksLikeApiKey(typed, aiProvider)) {
+      setKeyStatus(null);
+      return undefined;
+    }
+    setKeyStatus('checking');
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const result = await validateApiKey(typed, aiProvider);
+      if (!cancelled) setKeyStatus(result.ok ? 'valid' : result);
+    }, 600);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [open, step, apiKey, aiProvider]);
+
+  // Scenes follow state, not position: the runtime step tracks the probe, and
+  // the key step tracks validation (the lock only opens for a valid key).
+  const typedKey = apiKey.trim();
+  const sceneName = step === 'runtime'
+    ? (runtimeInstalled ? 'terminalReady' : 'terminal')
+    : step === 'apikey'
+      ? keySceneFor({
+        status: keyStatus,
+        typed: typedKey,
+        looksValid: !typedKey || looksLikeApiKey(typedKey, aiProvider),
+      })
+      : (STAGE_SCENE_BY_STEP[step] || 'english');
+
+  // What the stage's tab row reports. Every value here is state the user has
+  // actually set (or the probe has actually detected) — no decorative captions.
+  const stageReadout = useMemo(() => {
+    switch (step) {
+      case 'profile': {
+        const name = (profile.username || '').trim();
+        return { status: name ? `${name} \u00b7 this device` : 'no account needed' };
+      }
+      case 'experience':
+        if (experienceLevel === 'none') return { status: 'explains everything' };
+        if (experienceLevel === 'some') return { status: 'short and direct' };
+        return { status: 'pick a starting point' };
+      case 'language': {
+        const label = RUNNABLE_LANGUAGES.find((l) => l.id === practicalLanguage)?.label;
+        return {
+          file: `main.${LANG_EXT[practicalLanguage] || 'py'}`,
+          status: label ? `${label} selected` : 'defaulting to python',
+        };
+      }
+      case 'runtime': {
+        const found = [];
+        if (runtimeStatus?.python?.installed) {
+          found.push(runtimeStatus.python.version || 'python ready');
+        }
+        if (runtimeStatus?.javascript?.installed) {
+          found.push(runtimeStatus.javascript.version || 'node ready');
+        }
+        if (found.length) return { status: found.join(' \u00b7 ') };
+        if (!runtimeStatus) return { status: 'probing runtimes' };
+        return { status: checkingRuntime ? 'probing runtimes' : 'none found yet' };
+      }
+      case 'apikey': {
+        if (!apiKey.trim()) return { status: 'optional \u00b7 works offline' };
+        const meta = getAiProvider(aiProvider);
+        const label = meta.shortLabel || 'AI';
+        const typed = apiKey.trim();
+        if (keyStatus === 'checking') return { status: `checking ${label} key`, tone: 'busy' };
+        if (keyStatus === 'valid') return { status: `${label} key works`, tone: 'ok' };
+        if (keyStatus && typeof keyStatus === 'object') {
+          return { status: `${label} key rejected`, tone: 'bad' };
+        }
+        if (typed.length >= 12 && !looksLikeApiKey(typed, aiProvider)) {
+          return { status: 'check the key format', tone: 'bad' };
+        }
+        return { status: 'not checked yet' };
+      }
+      default:
+        return {};
+    }
+  }, [
+    step, profile.username, experienceLevel, practicalLanguage,
+    runtimeStatus, checkingRuntime, apiKey, aiProvider, keyStatus,
+  ]);
+
+  if (!open) return null;
 
   // Username validation. Editing the active profile (setup rerun) keeps its
   // own name, so exclude it from the taken-check.
@@ -177,31 +321,80 @@ export default function OnboardingModal({
       aria-modal={minimized ? 'false' : 'true'}
       aria-labelledby="onboarding-title"
     >
-      <div style={minimized ? styles.dockCard : styles.card}>
-        {/* Top bar: progress dots + skip */}
+      <div style={minimized ? styles.dockShell : styles.shell}>
+        {/* Chrome: brand, step rail, skip. Docked mode drops all of it. */}
         {!minimized && (
-        <div style={styles.topBar}>
-          <div style={styles.dots}>
-            {steps.map((s, i) => (
-              <span
-                key={s}
-                style={{ ...styles.dot, ...(i === stepIdx ? styles.dotActive : {}) }}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
-          <button
-            style={styles.skipBtn}
-            onClick={skip}
-            title={mode === 'new-profile' ? 'Cancel (Esc)' : 'Skip onboarding (Esc)'}
-          >
-            {mode === 'new-profile' ? 'Cancel' : 'Skip'} <X size={12} style={{ marginLeft: 4 }} />
-          </button>
-        </div>
+          <>
+            <header style={styles.header}>
+              <Brand />
+              <div style={styles.rail} aria-hidden="true">
+                {steps.map((s, i) => (
+                  <span
+                    key={s}
+                    style={{
+                      ...styles.railSeg,
+                      ...(i < stepIdx ? styles.railSegDone : {}),
+                      ...(i === stepIdx ? styles.railSegActive : {}),
+                    }}
+                  />
+                ))}
+              </div>
+              <button
+                style={styles.skipBtn}
+                onClick={skip}
+                title={mode === 'new-profile' ? 'Cancel (Esc)' : 'Skip onboarding (Esc)'}
+              >
+                {mode === 'new-profile' ? 'Cancel' : 'Skip'}
+                <X size={11} style={{ marginLeft: 4 }} />
+              </button>
+            </header>
+            <div style={styles.headerRule} />
+          </>
         )}
 
-        {/* Step body */}
-        <div style={styles.body}>
+        <div style={minimized ? styles.dockInner : styles.split}>
+          {/* The stage is the product's own thesis, drawn: one idea, three
+              representations. Decorative, so it is hidden from a11y tree. */}
+          {!minimized && (
+            <div style={styles.stagePane} className="onboarding-stage-pane">
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={sceneName}
+                  style={styles.stageFill}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: reduced ? 0.1 : 0.22 }}
+                >
+                  <LottieStage
+                    scene={sceneName}
+                    file={stageReadout.file}
+                    status={stageReadout.status}
+                    tone={stageReadout.tone}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
+
+          <div style={minimized ? styles.dockContent : styles.contentPane}>
+            {!minimized && (
+              <div style={styles.eyebrow}>
+                <span style={styles.eyebrowDot} />
+                {`${String(stepIdx + 1).padStart(2, '0')} · ${STEP_LABELS[step] || ''}`}
+              </div>
+            )}
+
+            {/* Step body */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={step}
+                style={styles.body}
+                initial={{ opacity: 0, y: reduced ? 0 : 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reduced ? 0 : -6 }}
+                transition={{ duration: reduced ? 0.12 : 0.24, ease: [0.16, 1, 0.3, 1] }}
+              >
           {step === 'profile' && (
             <StepProfile
               mode={mode}
@@ -240,6 +433,9 @@ export default function OnboardingModal({
               minimized={minimized}
               onMinimize={() => setMinimized(true)}
               onRestore={() => setMinimized(false)}
+              status={runtimeStatus}
+              checking={checkingRuntime}
+              onRecheck={probeRuntime}
             />
           )}
 
@@ -249,11 +445,15 @@ export default function OnboardingModal({
               onChange={setApiKey}
               provider={aiProvider}
               onProviderChange={setAiProvider}
+              status={keyStatus}
               onBack={back}
               onFinish={() => finish({ skipped: false })}
               onSkip={() => finish({ skipped: true })}
             />
           )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
@@ -266,7 +466,6 @@ export default function OnboardingModal({
 function StepProfile({ mode, value, onChange, usernameError, canContinue, onNext }) {
   return (
     <>
-      <Brand />
       <h1 id="onboarding-title" style={styles.title}>
         {mode === 'new-profile' ? 'Add a profile.' : 'Create your profile.'}
       </h1>
@@ -343,7 +542,7 @@ function StepExperience({ value, onChange, onBack, onNext }) {
 function StepLanguage({ value, onChange, onBack, onNext }) {
   return (
     <>
-      <h2 style={styles.title}>Which language will you build in?</h2>
+      <h2 id="onboarding-title" style={styles.title}>Which language will you build in?</h2>
       <p style={styles.subtitle}>
         Used to run and save your work. You'll see plain English first, plus a comparison language.
       </p>
@@ -401,37 +600,14 @@ function runtimeCommand(id) {
 
 function StepRuntime({
   focusLanguage, onRunInTerminal, onBack, onNext, minimized, onMinimize, onRestore,
+  status, checking, onRecheck,
 }) {
-  const [status, setStatus] = useState(null);   // null = first probe still running
-  const [checking, setChecking] = useState(true);
   const [copied, setCopied] = useState(null);
   const [runningId, setRunningId] = useState(null);
 
-  const probe = useCallback(async () => {
-    setChecking(true);
-    try {
-      const result = window.seecode?.runner?.checkToolchains
-        ? await window.seecode.runner.checkToolchains()
-        : {};
-      setStatus(result && !result.error ? result : {});
-    } catch {
-      setStatus({});
-    } finally {
-      setChecking(false);
-    }
-  }, []);
-
-  useEffect(() => { probe(); }, [probe]);
-
-  // Installers run for minutes outside the app (winget, an .exe wizard).
-  // Polling is what turns "I think it finished" into a green check without
-  // asking the learner to hunt for a Re-check button.
+  // The probe and its polling live in OnboardingModal, so the status line on
+  // the stage and the rows in this step share one reading.
   const allInstalled = !!status && RUNTIME_IDS.every((id) => status[id]?.installed);
-  useEffect(() => {
-    if (allInstalled) return undefined;
-    const timer = setInterval(probe, 5000);
-    return () => clearInterval(timer);
-  }, [probe, allInstalled]);
 
   const handleCopy = useCallback(async (id) => {
     const command = runtimeCommand(id);
@@ -503,7 +679,7 @@ function StepRuntime({
           <button
             type="button"
             style={styles.ghostBtn}
-            onClick={probe}
+            onClick={onRecheck}
             disabled={checking}
             title="Check again now"
           >
@@ -624,11 +800,12 @@ function StepRuntime({
 // ---------------------------------------------------------------------------
 // Step 5 — optional AI key (Gemini or Groq)
 
-function StepApiKey({ value, onChange, provider, onProviderChange, onBack, onFinish, onSkip }) {
-  // null | 'checking' | 'valid' | { reason, message } — the key must prove
-  // itself against the API before Finish unlocks, so a wrong key is caught
-  // here instead of on the learner's first AI action.
-  const [status, setStatus] = useState(null);
+function StepApiKey({
+  value, onChange, provider, onProviderChange, onBack, onFinish, onSkip, status,
+}) {
+  // `status` is owned by OnboardingModal, so this step's Save gate and the
+  // stage's status line always report the same reading.
+  // null | 'checking' | 'valid' | { reason, message }
   const [clipboardKey, setClipboardKey] = useState(null);
   const meta = getAiProvider(provider);
 
@@ -649,7 +826,6 @@ function StepApiKey({ value, onChange, provider, onProviderChange, onBack, onFin
     if (id === provider) return;
     onProviderChange(id);
     onChange('');
-    setStatus(null);
     setClipboardKey(null);
   };
 
@@ -685,23 +861,6 @@ function StepApiKey({ value, onChange, provider, onProviderChange, onBack, onFin
     return () => window.removeEventListener('focus', onFocus);
   }, [provider]);
 
-  // Well-formed keys are probed live (debounced); anything shorter or
-  // mis-shaped just waits — the format hint covers it.
-  useEffect(() => {
-    const trimmed = value.trim();
-    if (!trimmed || !looksLikeApiKey(trimmed, provider)) {
-      setStatus(null);
-      return undefined;
-    }
-    setStatus('checking');
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      const result = await validateApiKey(trimmed, provider);
-      if (!cancelled) setStatus(result.ok ? 'valid' : result);
-    }, 600);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [value, provider]);
-
   const trimmed = value.trim();
   const checking = status === 'checking';
   const valid = status === 'valid';
@@ -711,7 +870,7 @@ function StepApiKey({ value, onChange, provider, onProviderChange, onBack, onFin
 
   return (
     <>
-      <h2 style={styles.title}>Add an AI key (optional).</h2>
+      <h2 id="onboarding-title" style={styles.title}>Add an AI key (optional).</h2>
       <p style={styles.subtitle}>
         Everything works offline. A free AI key adds smarter code generation and error explanations.
       </p>
@@ -840,72 +999,107 @@ const styles = {
   scrim: {
     position: 'fixed', inset: 0, zIndex: 1000,
     background: 'var(--scrim)',
+    backdropFilter: 'blur(3px)',
+    WebkitBackdropFilter: 'blur(3px)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 24,
     animation: 'seec0de-fade-in var(--motion-base) var(--ease-out)',
   },
-  card: {
-    width: '100%',
-    maxWidth: 520,
+  // Two panes, deliberately lopsided: the stage is a fixed dark well, the form
+  // takes whatever is left. The proportion is the design.
+  shell: {
+    display: 'flex', flexDirection: 'column',
+    width: 'min(100%, 880px)',
+    maxHeight: 'min(92vh, 680px)',
     background: 'var(--bg-elevated)',
     border: '1px solid var(--border-strong)',
-    borderRadius: 12,
+    borderRadius: 'var(--radius-xl)',
     boxShadow: 'var(--shadow-lg)',
-    padding: '20px 28px 24px',
+    overflow: 'hidden',
     animation: 'seec0de-pop-in var(--motion-slow) var(--ease-out)',
   },
-  topBar: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 24,
+  header: {
+    display: 'flex', alignItems: 'center', gap: 14,
+    padding: '12px 18px',
+    flexShrink: 0,
   },
-  dots: { display: 'flex', gap: 6 },
-  dot: {
-    width: 6, height: 6, borderRadius: 999,
+  headerRule: {
+    height: 1, flexShrink: 0,
+    background: 'linear-gradient(90deg, transparent, var(--accent-soft), transparent)',
+  },
+  rail: { display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' },
+  railSeg: {
+    width: 18, height: 2, borderRadius: 999,
     background: 'var(--border-strong)',
     transition: 'background var(--motion-base) var(--ease-out), width var(--motion-base) var(--ease-out)',
   },
-  dotActive: {
-    background: 'var(--accent)',
-    width: 18,
-  },
+  railSegDone: { background: 'color-mix(in srgb, var(--accent) 38%, transparent)' },
+  railSegActive: { background: 'var(--accent)', width: 26 },
   skipBtn: {
     display: 'inline-flex', alignItems: 'center',
-    background: 'transparent', border: 'none',
-    color: 'var(--text-muted)', fontSize: 12,
-    padding: '4px 6px',
+    background: 'transparent',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--text-muted)',
+    fontSize: 11.5,
+    padding: '4px 8px',
+    cursor: 'pointer',
   },
+  split: { display: 'flex', flex: 1, minHeight: 0 },
+  stagePane: {
+    width: 304, flexShrink: 0,
+    display: 'flex', flexDirection: 'column',
+    minHeight: 0,
+    borderRight: '1px solid var(--border)',
+  },
+  stageFill: { display: 'flex', flex: 1, minHeight: 0 },
+  contentPane: {
+    flex: 1, minWidth: 0,
+    display: 'flex', flexDirection: 'column',
+    padding: '26px 32px 24px',
+    overflowY: 'auto',
+  },
+  eyebrow: {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    fontFamily: '"JetBrains Mono", Consolas, monospace',
+    fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase',
+    color: 'var(--accent)',
+    marginBottom: 12,
+    flexShrink: 0,
+  },
+  eyebrowDot: { width: 4, height: 4, borderRadius: 999, background: 'var(--accent)' },
   body: { display: 'flex', flexDirection: 'column' },
+  dockInner: { display: 'flex', flexDirection: 'column', minHeight: 0 },
+  dockContent: { display: 'flex', flexDirection: 'column', minHeight: 0 },
 
-  brand: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    marginBottom: 14,
-  },
+  brand: { display: 'flex', alignItems: 'center', gap: 8 },
   brandMark: {
-    width: 30, height: 30, borderRadius: 8,
+    width: 24, height: 24, borderRadius: 6,
     background: 'var(--accent-soft)',
     color: 'var(--accent)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   brandWord: {
     fontFamily: '"JetBrains Mono", Consolas, monospace',
-    fontSize: 13,
-    letterSpacing: 1,
+    fontSize: 12,
+    letterSpacing: 1.2,
     color: 'var(--text-secondary)',
   },
 
   title: {
-    fontSize: 22,
-    lineHeight: 1.25,
+    fontSize: 25,
+    lineHeight: 1.22,
     fontWeight: 600,
     color: 'var(--text-primary)',
-    letterSpacing: '-0.01em',
-    marginBottom: 8,
+    letterSpacing: '-0.02em',
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 13.5,
-    lineHeight: 1.55,
+    lineHeight: 1.6,
     color: 'var(--text-secondary)',
-    marginBottom: 20,
+    marginBottom: 22,
+    maxWidth: 420,
   },
   em: { fontStyle: 'italic', color: 'var(--text-primary)' },
   strong: { color: 'var(--algorithm)', fontWeight: 600 },
@@ -1090,7 +1284,7 @@ const styles = {
     padding: '72px 24px 24px',
     pointerEvents: 'none',
   },
-  dockCard: {
+  dockShell: {
     pointerEvents: 'auto',
     width: 320,
     background: 'var(--bg-elevated)',
