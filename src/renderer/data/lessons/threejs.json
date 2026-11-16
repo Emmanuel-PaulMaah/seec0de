@@ -1,0 +1,616 @@
+{
+  "tracks": [
+    {
+      "id": "threejs-foundations",
+      "name": "Scene Foundations",
+      "language": "threejs",
+      "description": "Build the renderer, camera, meshes, lights, and a steady frame loop.",
+      "lessons": [
+        {
+          "id": "threejs-01-renderer",
+          "title": "1. Scene, camera, renderer",
+          "concept": "WebGLRenderer / PerspectiveCamera",
+          "summary": "A three.js app always needs a renderer, a scene graph, and a camera.",
+          "activities": [
+            {
+              "id": "threejs-01-see",
+              "type": "worked-example",
+              "title": "The three core objects",
+              "instruction": "The renderer draws into a canvas. The scene holds meshes, lights, and groups. The camera decides which part of the scene is visible and how perspective is projected.",
+              "example": "import * as THREE from 'three';\n\nconst renderer = new THREE.WebGLRenderer({ antialias: true });\nrenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));\nrenderer.setSize(window.innerWidth, window.innerHeight);\ndocument.body.appendChild(renderer.domElement);\n\nconst scene = new THREE.Scene();\nscene.background = new THREE.Color(0x101820);\n\nconst camera = new THREE.PerspectiveCamera(\n  60,\n  window.innerWidth / window.innerHeight,\n  0.1,\n  100,\n);\ncamera.position.set(0, 2, 5);\ncamera.lookAt(0, 0, 0);\n\nrenderer.render(scene, camera);"
+            },
+            {
+              "id": "threejs-01-predict",
+              "type": "prediction",
+              "title": "What the camera controls",
+              "question": "What does the camera control in a three.js scene?",
+              "choices": [
+                "Which meshes are stored in memory",
+                "What part of the scene is visible and how it is projected",
+                "How many draw calls the GPU receives"
+              ],
+              "answer": "What part of the scene is visible and how it is projected",
+              "explanation": "The scene stores objects; the camera supplies the view and projection matrices used to render them. A mesh outside the camera frustum is not drawn."
+            },
+            {
+              "id": "threejs-01-edit",
+              "type": "edit",
+              "title": "Create the three core objects",
+              "instruction": "Create a `WebGLRenderer`, a `Scene`, and a `PerspectiveCamera`, then render once."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Set up the renderer once, then treat the scene and camera as the inputs to every frame. `antialias: true` smooths edges; capping pixel ratio at 2 keeps high-DPI screens from rendering four times the pixels." },
+            { "type": "code", "text": "const renderer = new THREE.WebGLRenderer({ antialias: true });\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);\nrenderer.setSize(width, height);\nrenderer.render(scene, camera);" },
+            { "type": "note", "text": "`PerspectiveCamera` takes field of view in degrees, aspect ratio, near plane, and far plane. Keep the near plane as large as your scene allows; tiny near values waste depth precision." }
+          ],
+          "task": "Create the renderer, scene, and perspective camera, then render one frame.",
+          "starterCode": "import * as THREE from 'three';\n\n// Create the renderer, scene, and camera\n// Render one frame when they are ready\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new THREE.WebGLRenderer(", "new THREE.Scene(", "new THREE.PerspectiveCamera(", "renderer.render(scene, camera)"],
+          "hints": [
+            "Create the renderer first, then the scene and camera.",
+            "Call `renderer.render(scene, camera)` after all three exist."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst renderer = new THREE.WebGLRenderer({ antialias: true });\nrenderer.setSize(window.innerWidth, window.innerHeight);\ndocument.body.appendChild(renderer.domElement);\n\nconst scene = new THREE.Scene();\nscene.background = new THREE.Color(0x101820);\n\nconst camera = new THREE.PerspectiveCamera(\n  60,\n  window.innerWidth / window.innerHeight,\n  0.1,\n  100,\n);\ncamera.position.set(0, 2, 5);\ncamera.lookAt(0, 0, 0);\n\nrenderer.render(scene, camera);\n",
+          "reflectionPrompt": "Why cap `devicePixelRatio` instead of rendering at the screen's full physical resolution?"
+        },
+        {
+          "id": "threejs-02-mesh",
+          "title": "2. Geometry, material, mesh",
+          "concept": "Mesh / BoxGeometry / MeshStandardMaterial",
+          "summary": "Geometry defines shape, material defines surface, and a Mesh binds them together.",
+          "activities": [
+            {
+              "id": "threejs-02-see",
+              "type": "worked-example",
+              "title": "One cube, one ground",
+              "instruction": "`BoxGeometry` stores vertices for a box. `MeshStandardMaterial` describes how light interacts with the surface. `Mesh` combines the two and can be positioned in the scene.",
+              "example": "const geometry = new THREE.BoxGeometry(1, 1, 1);\nconst material = new THREE.MeshStandardMaterial({\n  color: 0x8ecae6,\n  roughness: 0.35,\n  metalness: 0.1,\n});\nconst cube = new THREE.Mesh(geometry, material);\ncube.position.set(0, 0.5, 0);\nscene.add(cube);\n\nconst ground = new THREE.Mesh(\n  new THREE.PlaneGeometry(12, 12),\n  new THREE.MeshStandardMaterial({ color: 0x2a2f3a }),\n);\nground.rotation.x = -Math.PI / 2;\nground.receiveShadow = true;\nscene.add(ground);"
+            },
+            {
+              "id": "threejs-02-predict",
+              "type": "prediction",
+              "title": "Which object binds shape to surface?",
+              "question": "Which object combines a geometry and a material into something you can add to a scene?",
+              "choices": [
+                "Scene",
+                "Mesh",
+                "PerspectiveCamera"
+              ],
+              "answer": "Mesh",
+              "explanation": "A mesh is the drawable pairing of geometry and material. A scene is the container; a camera is the viewpoint."
+            },
+            {
+              "id": "threejs-02-edit",
+              "type": "edit",
+              "title": "Build a lit cube",
+              "instruction": "Create a box geometry and a standard material, combine them in a mesh, and add the mesh to the scene."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Think of geometry as vertex data and material as shader settings. Meshes share both freely: one geometry can back a hundred meshes, which saves memory and upload work." },
+            { "type": "code", "text": "const cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x8ecae6 }),\n);\nscene.add(cube);" },
+            { "type": "note", "text": "`MeshStandardMaterial` needs light. `MeshBasicMaterial` ignores lights, which is useful for unlit UI helpers but makes a scene look flat." }
+          ],
+          "task": "Build a cube from a box geometry and a standard material, then add it to the scene.",
+          "starterCode": "import * as THREE from 'three';\n\nconst scene = new THREE.Scene();\n// Add a cube built from geometry and material\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new THREE.BoxGeometry(", "new THREE.MeshStandardMaterial(", "new THREE.Mesh(", "scene.add(cube)"],
+          "hints": [
+            "Create the geometry and material separately, then pass both to `new THREE.Mesh(...)`.",
+            "Assign the mesh to `cube` and call `scene.add(cube)`."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst scene = new THREE.Scene();\nconst cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x8ecae6 }),\n);\ncube.position.set(0, 0.5, 0);\nscene.add(cube);\n",
+          "reflectionPrompt": "Why is sharing one geometry across many meshes usually better than creating a new geometry for each?"
+        },
+        {
+          "id": "threejs-03-lights",
+          "title": "3. Lights and shadows",
+          "concept": "DirectionalLight / shadowMap",
+          "summary": "Lights make standard materials visible, and shadow maps make depth readable.",
+          "activities": [
+            {
+              "id": "threejs-03-see",
+              "type": "worked-example",
+              "title": "A key light with a shadow camera",
+              "instruction": "Enable the renderer's shadow map, set `castShadow` on objects that block light, and `receiveShadow` on surfaces that catch it. A directional light's shadow camera has a limited box, so keep its range tight.",
+              "example": "renderer.shadowMap.enabled = true;\nrenderer.shadowMap.type = THREE.PCFSoftShadowMap;\n\nconst ambient = new THREE.AmbientLight(0xffffff, 0.4);\nscene.add(ambient);\n\nconst key = new THREE.DirectionalLight(0xffffff, 2.2);\nkey.position.set(5, 8, 4);\nkey.castShadow = true;\nkey.shadow.mapSize.set(1024, 1024);\nkey.shadow.camera.left = -8;\nkey.shadow.camera.right = 8;\nkey.shadow.camera.top = 8;\nkey.shadow.camera.bottom = -8;\nscene.add(key);\n\ncube.castShadow = true;\nground.receiveShadow = true;"
+            },
+            {
+              "id": "threejs-03-predict",
+              "type": "prediction",
+              "title": "Why is the cube black?",
+              "question": "A cube uses `MeshStandardMaterial` but the scene has no lights. What does the camera show?",
+              "choices": [
+                "The material's base color",
+                "A black or nearly black cube",
+                "A warning that materials need a camera"
+              ],
+              "answer": "A black or nearly black cube",
+              "explanation": "Standard materials are lit. With no ambient, directional, point, or environment light there is nothing for the surface to reflect."
+            },
+            {
+              "id": "threejs-03-edit",
+              "type": "edit",
+              "title": "Light the scene and enable shadows",
+              "instruction": "Enable shadow maps, add a directional light that casts shadows, and make the cube cast one."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A three-point setup is a good default: a key light for shape, a softer fill for detail, and a rim or environment light to separate objects from the background. Start with one key light and add only what the scene needs." },
+            { "type": "code", "text": "renderer.shadowMap.enabled = true;\nrenderer.shadowMap.type = THREE.PCFSoftShadowMap;\n\nconst key = new THREE.DirectionalLight(0xffffff, 2.2);\nkey.position.set(5, 8, 4);\nkey.castShadow = true;\nscene.add(key);" },
+            { "type": "note", "text": "Shadows cost a second render from the light's point of view. Large shadow maps and several shadow-casting lights are common causes of mobile slowdown." }
+          ],
+          "task": "Enable shadows, add a directional key light, and make the cube cast a shadow.",
+          "starterCode": "import * as THREE from 'three';\n\nconst scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nconst cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x8ecae6 }),\n);\nscene.add(cube);\n\n// Enable shadows and add a directional light\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["renderer.shadowMap.enabled = true", "new THREE.DirectionalLight(", "key.castShadow = true"],
+          "hints": [
+            "Turn on `renderer.shadowMap.enabled` first.",
+            "Set `castShadow = true` on the light and on the cube."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nrenderer.shadowMap.enabled = true;\nrenderer.shadowMap.type = THREE.PCFSoftShadowMap;\n\nconst cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x8ecae6 }),\n);\ncube.castShadow = true;\nscene.add(cube);\n\nconst key = new THREE.DirectionalLight(0xffffff, 2.2);\nkey.position.set(5, 8, 4);\nkey.castShadow = true;\nscene.add(key);\n",
+          "reflectionPrompt": "What makes a shadow map expensive, and how would you reduce that cost on a phone?"
+        },
+        {
+          "id": "threejs-04-loop",
+          "title": "4. Render loop and resize",
+          "concept": "setAnimationLoop / updateProjectionMatrix",
+          "summary": "Render continuously with an animation loop, and update the camera and renderer whenever the canvas size changes.",
+          "activities": [
+            {
+              "id": "threejs-04-see",
+              "type": "worked-example",
+              "title": "A loop that survives resizing",
+              "instruction": "`setAnimationLoop` runs once per animation frame and works with WebXR. A resize handler updates the camera aspect, rebuilds the projection matrix, and resizes the renderer.",
+              "example": "const container = document.querySelector('#scene');\n\nfunction resize() {\n  const width = container.clientWidth;\n  const height = container.clientHeight;\n  camera.aspect = width / height;\n  camera.updateProjectionMatrix();\n  renderer.setSize(width, height);\n}\n\nconst observer = new ResizeObserver(resize);\nobserver.observe(container);\nresize();\n\nrenderer.setAnimationLoop(() => {\n  renderer.render(scene, camera);\n});"
+            },
+            {
+              "id": "threejs-04-predict",
+              "type": "prediction",
+              "title": "Why rebuild the projection matrix?",
+              "question": "After changing `camera.aspect`, why call `camera.updateProjectionMatrix()`?",
+              "choices": [
+                "It reloads the camera's JavaScript file",
+                "It bakes the new aspect into the projection matrix used for rendering",
+                "It resizes the canvas automatically"
+              ],
+              "answer": "It bakes the new aspect into the projection matrix used for rendering",
+              "explanation": "The projection matrix is derived from the camera's current settings. Changing a property does not rebuild it for you."
+            },
+            {
+              "id": "threejs-04-edit",
+              "type": "edit",
+              "title": "Keep the canvas in sync",
+              "instruction": "Start an animation loop, update the camera aspect on resize, and rebuild the projection matrix."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The loop is the heartbeat of the scene: update controls, animate objects, then render. Keep the work inside it small and predictable; allocate objects outside the loop whenever possible." },
+            { "type": "code", "text": "function resize() {\n  const width = container.clientWidth;\n  const height = container.clientHeight;\n  camera.aspect = width / height;\n  camera.updateProjectionMatrix();\n  renderer.setSize(width, height);\n}\n\nrenderer.setAnimationLoop(() => {\n  controls.update();\n  renderer.render(scene, camera);\n});" },
+            { "type": "note", "text": "Observe the canvas container, not always the window. A scene embedded in a resizable panel needs the panel's dimensions." }
+          ],
+          "task": "Add an animation loop and a resize handler that keeps the camera and renderer in sync.",
+          "starterCode": "import * as THREE from 'three';\n\nconst renderer = new THREE.WebGLRenderer();\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);\n\n// Start the loop\n// Keep the camera aspect and renderer size in sync\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["renderer.setAnimationLoop(", "camera.aspect =", "camera.updateProjectionMatrix()"],
+          "hints": [
+            "`renderer.setAnimationLoop(() => { ... })` starts the frame loop.",
+            "Inside a resize function, set `camera.aspect = width / height`, update the projection matrix, then call `renderer.setSize(width, height)`."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst renderer = new THREE.WebGLRenderer();\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);\n\nfunction resize() {\n  const width = window.innerWidth;\n  const height = window.innerHeight;\n  camera.aspect = width / height;\n  camera.updateProjectionMatrix();\n  renderer.setSize(width, height);\n}\n\nwindow.addEventListener('resize', resize);\nresize();\n\nrenderer.setAnimationLoop(() => {\n  renderer.render(scene, camera);\n});\n",
+          "reflectionPrompt": "Why is it risky to create new vectors or geometries inside the animation loop on every frame?"
+        }
+      ]
+    },
+    {
+      "id": "threejs-motion",
+      "name": "Motion & Interaction",
+      "language": "threejs",
+      "description": "Animate with time, orbit the camera, pick objects, and load real models.",
+      "lessons": [
+        {
+          "id": "threejs-05-delta",
+          "title": "5. Frame-rate-independent motion",
+          "concept": "Clock / delta",
+          "summary": "Multiply movement by elapsed time so the scene behaves the same at 60, 120, or 30 fps.",
+          "activities": [
+            {
+              "id": "threejs-05-see",
+              "type": "worked-example",
+              "title": "One radian per second",
+              "instruction": "`Clock.getDelta()` returns seconds since the previous call. Multiplying by delta turns a per-frame guess into a real speed. Clamp large deltas after a tab switch so objects do not jump.",
+              "example": "const clock = new THREE.Clock();\n\nrenderer.setAnimationLoop(() => {\n  const delta = Math.min(clock.getDelta(), 0.1);\n  cube.rotation.y += delta;\n  renderer.render(scene, camera);\n});"
+            },
+            {
+              "id": "threejs-05-predict",
+              "type": "prediction",
+              "title": "Why not add a fixed amount?",
+              "question": "Why is `cube.rotation.y += 0.01` a problem compared with using delta time?",
+              "choices": [
+                "It rotates in the wrong direction",
+                "The speed changes with the display's refresh rate",
+                "It disables the renderer's animation loop"
+              ],
+              "answer": "The speed changes with the display's refresh rate",
+              "explanation": "A 120 Hz screen runs the loop twice as often as a 60 Hz screen. Delta time makes the motion depend on seconds, not frame count."
+            },
+            {
+              "id": "threejs-05-edit",
+              "type": "edit",
+              "title": "Rotate at one radian per second",
+              "instruction": "Create a clock and rotate the cube by `delta` each frame inside an animation loop."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Delta time is the bridge between game logic and hardware. Movement, decay, and cooldowns should all be expressed per second, then scaled by the actual time that passed." },
+            { "type": "code", "text": "const clock = new THREE.Clock();\n\nrenderer.setAnimationLoop(() => {\n  const delta = Math.min(clock.getDelta(), 0.1);\n  cube.rotation.y += delta * 0.8;\n  renderer.render(scene, camera);\n});" },
+            { "type": "note", "text": "`Math.min(clock.getDelta(), 0.1)` prevents a huge jump when the browser tab was backgrounded or the machine hiccuped." }
+          ],
+          "task": "Rotate the cube at one radian per second using a clock and delta time.",
+          "starterCode": "import * as THREE from 'three';\n\nconst cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x8ecae6 }),\n);\n\n// Rotate once per second, independent of frame rate\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new THREE.Clock(", "clock.getDelta()", "cube.rotation.y += delta"],
+          "hints": [
+            "Create the clock once, outside the loop.",
+            "Read `const delta = clock.getDelta()` each frame and add it to `cube.rotation.y`."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst cube = new THREE.Mesh(\n  new THREE.BoxGeometry(1, 1, 1),\n  new THREE.MeshStandardMaterial({ color: 0x8ecae6 }),\n);\nconst clock = new THREE.Clock();\n\nrenderer.setAnimationLoop(() => {\n  const delta = Math.min(clock.getDelta(), 0.1);\n  cube.rotation.y += delta;\n  renderer.render(scene, camera);\n});\n",
+          "reflectionPrompt": "What visual bug appears when a long pause produces a very large delta?"
+        },
+        {
+          "id": "threejs-06-controls",
+          "title": "6. OrbitControls",
+          "concept": "OrbitControls / damping",
+          "summary": "Orbit controls turn the camera into a navigable object without writing pointer math yourself.",
+          "activities": [
+            {
+              "id": "threejs-06-see",
+              "type": "worked-example",
+              "title": "Import, attach, update",
+              "instruction": "`OrbitControls` attaches to the renderer's canvas and updates the camera's position around a target. With damping on, call `update()` every frame so the motion eases to a stop.",
+              "example": "import { OrbitControls } from 'three/addons/controls/OrbitControls.js';\n\nconst controls = new OrbitControls(camera, renderer.domElement);\ncontrols.enableDamping = true;\ncontrols.dampingFactor = 0.08;\ncontrols.target.set(0, 1, 0);\n\nrenderer.setAnimationLoop(() => {\n  controls.update();\n  renderer.render(scene, camera);\n});"
+            },
+            {
+              "id": "threejs-06-predict",
+              "type": "prediction",
+              "title": "Why call update?",
+              "question": "Why does `enableDamping = true` require `controls.update()` every frame?",
+              "choices": [
+                "The controls need to reload the model",
+                "Damping eases the camera toward its target over several frames",
+                "It recompiles the material"
+              ],
+              "answer": "Damping eases the camera toward its target over several frames",
+              "explanation": "Without `update()`, the easing never advances. The camera only follows the pointer's final delta."
+            },
+            {
+              "id": "threejs-06-edit",
+              "type": "edit",
+              "title": "Add orbit controls",
+              "instruction": "Create `OrbitControls` for the camera and canvas, enable damping, and update them in the loop."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "`OrbitControls` is in the addons entry point, not the core `three` module. Browsers need an import map so both `three` and `three/addons/` resolve to the same installed version." },
+            { "type": "code", "text": "const controls = new OrbitControls(camera, renderer.domElement);\ncontrols.enableDamping = true;\ncontrols.minDistance = 2;\ncontrols.maxDistance = 20;\n\n// inside the animation loop\ncontrols.update();" },
+            { "type": "note", "text": "Controls listen for pointer and wheel events on the canvas. If your own click handler also uses the canvas, decide which one should own the gesture." }
+          ],
+          "task": "Add OrbitControls with damping and update them every frame.",
+          "starterCode": "import * as THREE from 'three';\nimport { OrbitControls } from 'three/addons/controls/OrbitControls.js';\n\n// Create controls for the camera and canvas\n// Update them in the animation loop\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new OrbitControls(", "enableDamping = true", "controls.update()"],
+          "hints": [
+            "Pass the camera and `renderer.domElement` to `new OrbitControls(...)`.",
+            "Set `controls.enableDamping = true` and call `controls.update()` in the loop."
+          ],
+          "solution": "import * as THREE from 'three';\nimport { OrbitControls } from 'three/addons/controls/OrbitControls.js';\n\nconst controls = new OrbitControls(camera, renderer.domElement);\ncontrols.enableDamping = true;\ncontrols.dampingFactor = 0.08;\ncontrols.target.set(0, 1, 0);\n\nrenderer.setAnimationLoop(() => {\n  controls.update();\n  renderer.render(scene, camera);\n});\n",
+          "reflectionPrompt": "When would orbit controls compete with a click-to-select interaction, and how would you resolve it?"
+        },
+        {
+          "id": "threejs-07-raycaster",
+          "title": "7. Picking with a raycaster",
+          "concept": "Raycaster / pointer coordinates",
+          "summary": "Convert pointer coordinates to normalized device coordinates, then shoot a ray through the camera.",
+          "activities": [
+            {
+              "id": "threejs-07-see",
+              "type": "worked-example",
+              "title": "From click to hit",
+              "instruction": "`Raycaster.setFromCamera` expects x and y in the -1..1 range. Use the canvas bounding rect, not the whole window, so the math still works when the canvas is embedded.",
+              "example": "const raycaster = new THREE.Raycaster();\nconst pointer = new THREE.Vector2();\n\nfunction onPointerDown(event) {\n  const rect = renderer.domElement.getBoundingClientRect();\n  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;\n  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;\n\n  raycaster.setFromCamera(pointer, camera);\n  const hits = raycaster.intersectObjects(scene.children, true);\n\n  if (hits.length > 0) {\n    hits[0].object.material.color.set(0xff6b6b);\n  }\n}\n\nrenderer.domElement.addEventListener('pointerdown', onPointerDown);"
+            },
+            {
+              "id": "threejs-07-predict",
+              "type": "prediction",
+              "title": "What range does the raycaster expect?",
+              "question": "What coordinate range does `raycaster.setFromCamera(pointer, camera)` expect?",
+              "choices": [
+                "0 to canvas width and 0 to canvas height",
+                "-1 to 1 on both axes",
+                "0 to 1 on both axes"
+              ],
+              "answer": "-1 to 1 on both axes",
+              "explanation": "It uses normalized device coordinates: x runs -1 (left) to 1 (right), and y runs -1 (bottom) to 1 (top)."
+            },
+            {
+              "id": "threejs-07-edit",
+              "type": "edit",
+              "title": "Pick the cube",
+              "instruction": "Create a raycaster, set it from the pointer and camera, and intersect the scene's meshes."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Picking is a CPU-side ray cast against object bounds, not a GPU color read. Keep the candidate list small and pass `recursive` only when child objects should be tested too." },
+            { "type": "code", "text": "pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;\npointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;\nraycaster.setFromCamera(pointer, camera);\nconst hits = raycaster.intersectObjects([cube], false);" },
+            { "type": "note", "text": "A click that both selects an object and orbits the camera can feel ambiguous. Use pointerup, drag thresholds, or separate UI affordances." }
+          ],
+          "task": "Shoot a ray from the pointer and intersect the scene's meshes.",
+          "starterCode": "import * as THREE from 'three';\n\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);\nconst renderer = new THREE.WebGLRenderer();\n\n// Create the raycaster and pointer state\n// Pick meshes on click\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new THREE.Raycaster(", "setFromCamera(pointer, camera)", "intersectObjects("],
+          "hints": [
+            "Create `new THREE.Raycaster()` and a `THREE.Vector2()` for the pointer.",
+            "Call `raycaster.setFromCamera(pointer, camera)` and then `raycaster.intersectObjects(scene.children, true)`."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);\nconst renderer = new THREE.WebGLRenderer();\n\nconst raycaster = new THREE.Raycaster();\nconst pointer = new THREE.Vector2();\n\nfunction onPointerDown(event) {\n  const rect = renderer.domElement.getBoundingClientRect();\n  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;\n  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;\n\n  raycaster.setFromCamera(pointer, camera);\n  const hits = raycaster.intersectObjects(scene.children, true);\n\n  if (hits.length > 0) {\n    hits[0].object.material.color.set(0xff6b6b);\n  }\n}\n\nrenderer.domElement.addEventListener('pointerdown', onPointerDown);\n",
+          "reflectionPrompt": "Why should a pick test use the canvas bounding rect instead of `window.innerWidth`?"
+        },
+        {
+          "id": "threejs-08-loaders",
+          "title": "8. Loading a glTF model",
+          "concept": "GLTFLoader / traverse",
+          "summary": "Load a model asynchronously, add its root to the scene, and configure its meshes for shadows.",
+          "activities": [
+            {
+              "id": "threejs-08-see",
+              "type": "worked-example",
+              "title": "Load, inspect, add",
+              "instruction": "`gltf.scene` is a group containing the imported model. `traverse` visits every child so you can set shadows or swap materials without knowing the model's internal structure.",
+              "example": "import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';\n\nconst loader = new GLTFLoader();\n\nloader.load(\n  '/models/robot.glb',\n  (gltf) => {\n    gltf.scene.traverse((object) => {\n      if (object.isMesh) {\n        object.castShadow = true;\n        object.receiveShadow = true;\n      }\n    });\n    scene.add(gltf.scene);\n  },\n  undefined,\n  (error) => console.error('Model failed to load', error),\n);"
+            },
+            {
+              "id": "threejs-08-predict",
+              "type": "prediction",
+              "title": "What is gltf.scene?",
+              "question": "What is `gltf.scene` in a `GLTFLoader` callback?",
+              "choices": [
+                "A single mesh",
+                "The root Object3D of the loaded model",
+                "The raw binary file"
+              ],
+              "answer": "The root Object3D of the loaded model",
+              "explanation": "The model may contain many meshes, cameras, and nested groups. `gltf.scene` is the root you add to your own scene."
+            },
+            {
+              "id": "threejs-08-edit",
+              "type": "edit",
+              "title": "Load and add the model",
+              "instruction": "Use `GLTFLoader` to load `/models/robot.glb`, configure its meshes, and add `gltf.scene` to the scene."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Models load over the network, so the rest of the scene must render while they are missing. Add a loading indicator, handle failures, and do not block the animation loop waiting for a file." },
+            { "type": "code", "text": "const loader = new GLTFLoader();\nconst gltf = await loader.loadAsync('/models/robot.glb');\ngltf.scene.traverse((object) => {\n  if (object.isMesh) object.castShadow = true;\n});\nscene.add(gltf.scene);" },
+            { "type": "note", "text": "Compressed models need `DRACOLoader` or `MeshoptDecoder` configured before loading. Check the file size and texture budget on a mid-range phone, not only on your desktop." }
+          ],
+          "task": "Load `/models/robot.glb`, configure its meshes, and add it to the scene.",
+          "starterCode": "import * as THREE from 'three';\nimport { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';\n\nconst scene = new THREE.Scene();\n\n// Load /models/robot.glb and add it to the scene\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new GLTFLoader(", "gltf.scene", "scene.add(gltf.scene)"],
+          "hints": [
+            "Create `const loader = new GLTFLoader()` and call `loader.load(...)`.",
+            "Inside the success callback, add `gltf.scene` to the scene."
+          ],
+          "solution": "import * as THREE from 'three';\nimport { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';\n\nconst scene = new THREE.Scene();\nconst loader = new GLTFLoader();\n\nloader.load(\n  '/models/robot.glb',\n  (gltf) => {\n    gltf.scene.traverse((object) => {\n      if (object.isMesh) {\n        object.castShadow = true;\n        object.receiveShadow = true;\n      }\n    });\n    scene.add(gltf.scene);\n  },\n  undefined,\n  (error) => console.error('Model failed to load', error),\n);\n",
+          "reflectionPrompt": "What should the user see while a large model is still downloading?"
+        }
+      ]
+    },
+    {
+      "id": "threejs-production",
+      "name": "Production Scenes",
+      "language": "threejs",
+      "description": "Use textures correctly, cut draw calls, add post-processing, and release GPU memory.",
+      "lessons": [
+        {
+          "id": "threejs-09-textures",
+          "title": "9. Textures and color space",
+          "concept": "TextureLoader / SRGBColorSpace",
+          "summary": "Color textures need the sRGB color space and sensible wrapping, filtering, and anisotropy.",
+          "activities": [
+            {
+              "id": "threejs-09-see",
+              "type": "worked-example",
+              "title": "Load, color, tile",
+              "instruction": "Mark photographic or painted color maps as sRGB. Data maps such as normal, roughness, and metalness are linear and must not be marked as sRGB. Set wrapping before tiling with `repeat`.",
+              "example": "const texture = new THREE.TextureLoader().load('/textures/grid.png');\ntexture.colorSpace = THREE.SRGBColorSpace;\ntexture.wrapS = THREE.RepeatWrapping;\ntexture.wrapT = THREE.RepeatWrapping;\ntexture.repeat.set(4, 4);\ntexture.anisotropy = renderer.capabilities.getMaxAnisotropy();\n\nconst material = new THREE.MeshStandardMaterial({\n  map: texture,\n  roughness: 0.7,\n});"
+            },
+            {
+              "id": "threejs-09-predict",
+              "type": "prediction",
+              "title": "Washed-out color",
+              "question": "A color texture looks washed out compared with the source image. What is the likely cause?",
+              "choices": [
+                "The texture is not marked as `SRGBColorSpace`",
+                "The camera has no shadows",
+                "The mesh is using too many vertices"
+              ],
+              "answer": "The texture is not marked as `SRGBColorSpace`",
+              "explanation": "Color textures are authored in sRGB. Without that tag, three.js treats the values as linear and the output looks too bright or washed out."
+            },
+            {
+              "id": "threejs-09-edit",
+              "type": "edit",
+              "title": "Load and tile a texture",
+              "instruction": "Load `/textures/grid.png`, mark it as sRGB, and tile it 4 by 4."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Color management is the difference between a render that matches the artist's file and one that looks muddy. Set the texture's color space at load time, not after the material first renders." },
+            { "type": "code", "text": "texture.colorSpace = THREE.SRGBColorSpace;\ntexture.wrapS = THREE.RepeatWrapping;\ntexture.wrapT = THREE.RepeatWrapping;\ntexture.repeat.set(4, 4);\ntexture.anisotropy = renderer.capabilities.getMaxAnisotropy();" },
+            { "type": "note", "text": "High anisotropy improves tilted-surface detail but costs memory bandwidth. `getMaxAnisotropy()` reports the GPU limit; clamp it to a value your budget allows." }
+          ],
+          "task": "Load the grid texture, mark it as sRGB color data, and tile it 4 by 4.",
+          "starterCode": "import * as THREE from 'three';\n\n// Load /textures/grid.png, mark it as color, and tile it 4 by 4\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new THREE.TextureLoader(", "colorSpace = THREE.SRGBColorSpace", "texture.repeat.set(4, 4)"],
+          "hints": [
+            "Start with `new THREE.TextureLoader().load('/textures/grid.png')`.",
+            "Set `texture.colorSpace`, both wrap modes, then `texture.repeat.set(4, 4)`."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst texture = new THREE.TextureLoader().load('/textures/grid.png');\ntexture.colorSpace = THREE.SRGBColorSpace;\ntexture.wrapS = THREE.RepeatWrapping;\ntexture.wrapT = THREE.RepeatWrapping;\ntexture.repeat.set(4, 4);\nconst material = new THREE.MeshStandardMaterial({ map: texture });\n",
+          "reflectionPrompt": "Which texture maps should stay linear instead of sRGB, and why?"
+        },
+        {
+          "id": "threejs-10-instancing",
+          "title": "10. Instancing and draw calls",
+          "concept": "InstancedMesh / setMatrixAt",
+          "summary": "Draw hundreds of copies of one geometry in a single call instead of creating hundreds of meshes.",
+          "activities": [
+            {
+              "id": "threejs-10-see",
+              "type": "worked-example",
+              "title": "One mesh, many transforms",
+              "instruction": "`InstancedMesh` stores one geometry and one material plus a per-instance transform matrix. Update the matrices once, then mark the instance matrix as needing an upload.",
+              "example": "const geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);\nconst material = new THREE.MeshStandardMaterial({ color: 0x8ecae6 });\nconst count = 500;\nconst field = new THREE.InstancedMesh(geometry, material, count);\nconst dummy = new THREE.Object3D();\n\nfor (let i = 0; i < count; i += 1) {\n  dummy.position.set((i % 25) - 12, 0, Math.floor(i / 25) - 10);\n  dummy.updateMatrix();\n  field.setMatrixAt(i, dummy.matrix);\n}\n\nfield.instanceMatrix.needsUpdate = true;\nfield.castShadow = true;\nscene.add(field);"
+            },
+            {
+              "id": "threejs-10-predict",
+              "type": "prediction",
+              "title": "Fewer draw calls",
+              "question": "You need 1,000 identical trees. Which approach produces fewer draw calls?",
+              "choices": [
+                "1,000 separate Mesh objects",
+                "One InstancedMesh with 1,000 instances",
+                "One Group containing 1,000 meshes"
+              ],
+              "answer": "One InstancedMesh with 1,000 instances",
+              "explanation": "A group does not merge draws. Instancing sends one geometry and one material with many transforms, so the GPU can draw the copies in one call."
+            },
+            {
+              "id": "threejs-10-edit",
+              "type": "edit",
+              "title": "Build an instanced field",
+              "instruction": "Create an `InstancedMesh` of 500 cubes, set each instance matrix, and mark the matrix for upload."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Draw calls are often the bottleneck before triangle count is. Instancing helps when objects share geometry and material; it hurts when each copy needs different geometry, unique materials, or per-instance CPU logic every frame." },
+            { "type": "code", "text": "const dummy = new THREE.Object3D();\nfor (let i = 0; i < count; i += 1) {\n  dummy.position.set(x, 0, z);\n  dummy.updateMatrix();\n  mesh.setMatrixAt(i, dummy.matrix);\n}\nmesh.instanceMatrix.needsUpdate = true;" },
+            { "type": "note", "text": "Moving one instance means updating its matrix and setting `instanceMatrix.needsUpdate` again. Recomputing all instances every frame gives back much of the CPU saving." }
+          ],
+          "task": "Create an InstancedMesh of 500 cubes and set every instance matrix.",
+          "starterCode": "import * as THREE from 'three';\n\nconst count = 500;\n// Build one InstancedMesh of cubes\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new THREE.InstancedMesh(", "setMatrixAt(", "instanceMatrix.needsUpdate = true"],
+          "hints": [
+            "Pass geometry, material, and the count to `new THREE.InstancedMesh(...)`.",
+            "Use a dummy `Object3D`, call `updateMatrix()`, then `setMatrixAt(i, dummy.matrix)`."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);\nconst material = new THREE.MeshStandardMaterial({ color: 0x8ecae6 });\nconst count = 500;\nconst field = new THREE.InstancedMesh(geometry, material, count);\nconst dummy = new THREE.Object3D();\n\nfor (let i = 0; i < count; i += 1) {\n  dummy.position.set((i % 25) - 12, 0, Math.floor(i / 25) - 10);\n  dummy.updateMatrix();\n  field.setMatrixAt(i, dummy.matrix);\n}\n\nfield.instanceMatrix.needsUpdate = true;\nfield.castShadow = true;\nscene.add(field);\n",
+          "reflectionPrompt": "When is instancing a bad optimization compared with a handful of ordinary meshes?"
+        },
+        {
+          "id": "threejs-11-composer",
+          "title": "11. Post-processing",
+          "concept": "EffectComposer / OutputPass",
+          "summary": "Render through a composer when the final image needs bloom, depth of field, or color grading.",
+          "activities": [
+            {
+              "id": "threejs-11-see",
+              "type": "worked-example",
+              "title": "Render through passes",
+              "instruction": "`EffectComposer` replaces a direct `renderer.render` call. Add a `RenderPass`, then effect passes, then `OutputPass` last so tone mapping and output color space are applied to the final image.",
+              "example": "import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';\nimport { RenderPass } from 'three/addons/postprocessing/RenderPass.js';\nimport { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';\nimport { OutputPass } from 'three/addons/postprocessing/OutputPass.js';\n\nconst composer = new EffectComposer(renderer);\ncomposer.addPass(new RenderPass(scene, camera));\n\nconst bloom = new UnrealBloomPass(\n  new THREE.Vector2(width, height),\n  0.7,\n  0.4,\n  0.85,\n);\ncomposer.addPass(bloom);\ncomposer.addPass(new OutputPass());\ncomposer.setSize(width, height);\n\nrenderer.setAnimationLoop(() => {\n  controls.update();\n  composer.render();\n});"
+            },
+            {
+              "id": "threejs-11-predict",
+              "type": "prediction",
+              "title": "Why OutputPass last?",
+              "question": "Why should `OutputPass` be the final pass in the composer?",
+              "choices": [
+                "It adds the most color",
+                "It applies tone mapping and the renderer's output color space to the final image",
+                "It makes the scene load faster"
+              ],
+              "answer": "It applies tone mapping and the renderer's output color space to the final image",
+              "explanation": "Earlier passes work in linear space. `OutputPass` performs the conversion the display expects, so it needs to come after the effects."
+            },
+            {
+              "id": "threejs-11-edit",
+              "type": "edit",
+              "title": "Add a bloom pass",
+              "instruction": "Create an `EffectComposer`, add a `RenderPass`, then add an `UnrealBloomPass`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Post-processing is a full-screen cost. Bloom renders bright areas into smaller buffers and blurs them; depth of field samples the scene repeatedly. Add one effect at a time and measure on the weakest device you support." },
+            { "type": "code", "text": "const composer = new EffectComposer(renderer);\ncomposer.addPass(new RenderPass(scene, camera));\ncomposer.addPass(new UnrealBloomPass(new THREE.Vector2(width, height), 0.7, 0.4, 0.85));\ncomposer.addPass(new OutputPass());\ncomposer.setSize(width, height);" },
+            { "type": "note", "text": "If the whole scene is soft or dim, fix lighting and materials before adding a corrective post effect. Effects amplify a good render; they rarely rescue a flat one." }
+          ],
+          "task": "Build a composer with a RenderPass and an UnrealBloomPass.",
+          "starterCode": "import * as THREE from 'three';\n\n// Create the composer, add a RenderPass, then a UnrealBloomPass\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["new EffectComposer(", "new RenderPass(", "new UnrealBloomPass("],
+          "hints": [
+            "The composer takes the renderer: `new EffectComposer(renderer)`.",
+            "Add `new RenderPass(scene, camera)` before the bloom pass."
+          ],
+          "solution": "import * as THREE from 'three';\nimport { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';\nimport { RenderPass } from 'three/addons/postprocessing/RenderPass.js';\nimport { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';\nimport { OutputPass } from 'three/addons/postprocessing/OutputPass.js';\n\nconst composer = new EffectComposer(renderer);\ncomposer.addPass(new RenderPass(scene, camera));\n\nconst bloom = new UnrealBloomPass(\n  new THREE.Vector2(window.innerWidth, window.innerHeight),\n  0.7,\n  0.4,\n  0.85,\n);\ncomposer.addPass(bloom);\ncomposer.addPass(new OutputPass());\ncomposer.setSize(window.innerWidth, window.innerHeight);\n\nrenderer.setAnimationLoop(() => {\n  composer.render();\n});\n",
+          "reflectionPrompt": "How would you decide whether a blurry, low-contrast image needs post-processing or better lighting?"
+        },
+        {
+          "id": "threejs-12-cleanup",
+          "title": "12. Disposal and shipping",
+          "concept": "dispose / setAnimationLoop(null)",
+          "summary": "Stop the loop and release geometries, materials, textures, and the renderer when a scene is torn down.",
+          "activities": [
+            {
+              "id": "threejs-12-see",
+              "type": "worked-example",
+              "title": "Release what the GPU owns",
+              "instruction": "Removing a mesh from the scene does not free its GPU buffers. Dispose geometries, materials, and textures; stop the animation loop; remove listeners; and dispose the renderer when the view unmounts.",
+              "example": "function disposeScene() {\n  renderer.setAnimationLoop(null);\n  window.removeEventListener('resize', onResize);\n\n  scene.traverse((object) => {\n    if (!object.isMesh) return;\n    object.geometry.dispose();\n    const materials = Array.isArray(object.material) ? object.material : [object.material];\n    materials.forEach((material) => material.dispose());\n  });\n\n  renderer.dispose();\n}\n\nwindow.addEventListener('beforeunload', disposeScene);"
+            },
+            {
+              "id": "threejs-12-predict",
+              "type": "prediction",
+              "title": "Does removal free memory?",
+              "question": "You call `scene.remove(cube)`. Are the cube's geometry and material GPU buffers freed?",
+              "choices": [
+                "Yes, removing always frees them",
+                "No, you must dispose the geometry and material",
+                "Only if the cube cast a shadow"
+              ],
+              "answer": "No, you must dispose the geometry and material",
+              "explanation": "The scene graph is a reference graph. GPU resources live until `dispose()` is called, so a long-lived page that swaps scenes leaks without cleanup."
+            },
+            {
+              "id": "threejs-12-edit",
+              "type": "edit",
+              "title": "Write a cleanup function",
+              "instruction": "Stop the animation loop, remove the resize listener, dispose the scene's geometries and materials, and dispose the renderer."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A three.js view is an application with a lifecycle. In a single-page app, mounting and unmounting routes can create and destroy many renderers. Treat cleanup as part of the feature, not an afterthought." },
+            { "type": "code", "text": "function disposeScene() {\n  renderer.setAnimationLoop(null);\n  window.removeEventListener('resize', onResize);\n  scene.traverse((object) => {\n    if (!object.isMesh) return;\n    object.geometry.dispose();\n    object.material.dispose();\n  });\n  renderer.dispose();\n}" },
+            { "type": "note", "text": "Dispose only resources your code owns. A shared geometry or texture used by another live view should stay alive until every user is done with it." }
+          ],
+          "task": "Write a cleanup function that stops rendering and releases GPU resources.",
+          "starterCode": "import * as THREE from 'three';\n\nconst renderer = new THREE.WebGLRenderer();\nconst scene = new THREE.Scene();\n\n// Stop the loop, remove listeners, and release GPU resources\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["setAnimationLoop(null)", "removeEventListener(", ".dispose()"],
+          "hints": [
+            "Call `renderer.setAnimationLoop(null)` to stop frames.",
+            "Traverse the scene, then call `dispose()` on geometry, material, and the renderer."
+          ],
+          "solution": "import * as THREE from 'three';\n\nconst renderer = new THREE.WebGLRenderer();\nconst scene = new THREE.Scene();\n\nfunction disposeScene() {\n  renderer.setAnimationLoop(null);\n  window.removeEventListener('resize', onResize);\n\n  scene.traverse((object) => {\n    if (!object.isMesh) return;\n    object.geometry.dispose();\n    const materials = Array.isArray(object.material) ? object.material : [object.material];\n    materials.forEach((material) => material.dispose());\n  });\n\n  renderer.dispose();\n}\n",
+          "reflectionPrompt": "What leaks when a single-page app mounts a new three.js scene on every route change without cleanup?"
+        }
+      ]
+    }
+  ]
+}

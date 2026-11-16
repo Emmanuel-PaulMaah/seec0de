@@ -74,6 +74,10 @@ const PATTERNS = {
 
 function detectOverallPattern(code, language) {
   const lines = code.split('\n');
+  // Django views, models and settings are Python files; Three.js code is
+  // JavaScript. Reuse those heuristics instead of falling through to a
+  // generic summary.
+  language = language === 'django' ? 'python' : language === 'threejs' ? 'javascript' : language;
 
   // CSS: describe the selectors and properties used
   if (language === 'css') {
@@ -207,6 +211,9 @@ function describeExpressionBody(expr) {
 }
 
 function explainLine(line, language) {
+  // Django files are Python and Three.js files are JavaScript, so use the
+  // matching patterns for comments, imports, functions and assignments.
+  language = language === 'django' ? 'python' : language === 'threejs' ? 'javascript' : language;
   const trimmed = line.trim();
   if (!trimmed) return null;
 
@@ -1014,7 +1021,7 @@ export function traceSimpleJavaScript(code) {
 // Language-dispatching entry point used by ActiveLessonCard and any
 // future callers that need language-aware tracing.
 export function traceCode(code, language) {
-  if (language === 'python') return traceSimplePython(code);
+  if (language === 'python' || language === 'django') return traceSimplePython(code);
   // Default to JS tracer for javascript/typescript/all others that share
   // the C-style for-loop syntax.
   return traceSimpleJS(code);

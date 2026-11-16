@@ -9,6 +9,8 @@ import gitLessons from './git.json';
 import nodeLessons from './nodejs.json';
 import mongoLessons from './mongodb.json';
 import expressLessons from './express.json';
+import djangoLessons from './django.json';
+import threejsLessons from './threejs.json';
 import sqlLessons from './sql.json';
 import nextLessons from './nextjs.json';
 import authLessons from './auth.json';
@@ -36,6 +38,8 @@ export default {
     ...nodeLessons.tracks,
     ...mongoLessons.tracks,
     ...expressLessons.tracks,
+    ...djangoLessons.tracks,
+    ...threejsLessons.tracks,
     ...sqlLessons.tracks,
     ...nextLessons.tracks,
     ...authLessons.tracks,

@@ -34,6 +34,8 @@ const LANGUAGE_LABELS = {
   nodejs: 'Node.js',
   mongodb: 'MongoDB',
   express: 'Express',
+  django: 'Django',
+  threejs: 'Three.js',
   sql: 'SQL & PostgreSQL',
   nextjs: 'Next.js',
   http: 'HTTP & Web APIs',
@@ -59,7 +61,7 @@ export default function LessonsPanel({
 
   const uniqueLanguages = useMemo(() => {
     const available = Array.from(new Set(tracks.map(t => t.language).filter(Boolean)));
-    const preferredOrder = ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'http', 'git', 'nodejs', 'mongodb', 'express', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'];
+    const preferredOrder = ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'threejs', 'http', 'git', 'nodejs', 'mongodb', 'express', 'django', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'];
     return available.sort((left, right) => {
       const leftIndex = preferredOrder.indexOf(left);
       const rightIndex = preferredOrder.indexOf(right);

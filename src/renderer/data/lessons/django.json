@@ -1,0 +1,616 @@
+{
+  "tracks": [
+    {
+      "id": "django-foundations",
+      "name": "Django Foundations",
+      "language": "django",
+      "description": "Create a project, connect URLs, write views, and render templates.",
+      "lessons": [
+        {
+          "id": "django-01-project-apps",
+          "title": "1. Projects and apps",
+          "concept": "startproject / startapp",
+          "summary": "A project holds settings and URLs; each app is a focused bundle of models, views, and migrations.",
+          "activities": [
+            {
+              "id": "django-01-see",
+              "type": "worked-example",
+              "title": "Two commands, two scopes",
+              "instruction": "`django-admin startproject config .` creates the project: settings, root URLs, and `manage.py`. `python manage.py startapp blog` creates one app. Django only loads an app's models and templates after the app is listed in `INSTALLED_APPS`.",
+              "example": "django-admin startproject config .\npython manage.py startapp blog\n\n# config/settings.py\nINSTALLED_APPS = [\n    # ...Django's own apps...\n    'blog',\n]"
+            },
+            {
+              "id": "django-01-predict",
+              "type": "prediction",
+              "title": "What does startapp create?",
+              "question": "What does `python manage.py startapp blog` create?",
+              "choices": [
+                "A database table named blog",
+                "An app package with models, views, tests, and a migrations folder",
+                "A second settings module"
+              ],
+              "answer": "An app package with models, views, tests, and a migrations folder",
+              "explanation": "An app is Python code. Its tables appear later, when you write models and run `migrate`."
+            },
+            {
+              "id": "django-01-edit",
+              "type": "edit",
+              "title": "Register the blog app",
+              "instruction": "Add `'blog'` to `INSTALLED_APPS` so Django loads the app's models and templates."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A Django project is the whole site: settings, database configuration, root URLconf, and `manage.py`. An app is a reusable slice of that site, such as `blog` or `accounts`." },
+            { "type": "code", "text": "INSTALLED_APPS = [\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    'blog',\n]" },
+            { "type": "note", "text": "Forgetting to register an app causes confusing errors: its models are not discovered, and its templates may not be found." }
+          ],
+          "task": "Add `'blog'` to `INSTALLED_APPS` so Django loads the app.",
+          "starterCode": "INSTALLED_APPS = [\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    # Register the blog app here\n]\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["'blog'"],
+          "hints": [
+            "Add the app's import name, `'blog'`, as a string in the list.",
+            "Put `'blog',` after `'django.contrib.staticfiles',`."
+          ],
+          "solution": "INSTALLED_APPS = [\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    'blog',\n]\n",
+          "reflectionPrompt": "Why does each app keep its own models, migrations, and templates instead of one giant shared folder?"
+        },
+        {
+          "id": "django-02-first-view",
+          "title": "2. Your first view",
+          "concept": "HttpResponse / views.py",
+          "summary": "A view is a Python callable that receives a request and returns a response.",
+          "activities": [
+            {
+              "id": "django-02-see",
+              "type": "worked-example",
+              "title": "Request in, response out",
+              "instruction": "Every view takes an `HttpRequest` and returns an `HttpResponse`. `HttpResponse` writes the body directly; templates and JSON are built on top of it.",
+              "example": "from django.http import HttpResponse\n\ndef hello(request):\n    return HttpResponse('Hello from Django')"
+            },
+            {
+              "id": "django-02-predict",
+              "type": "prediction",
+              "title": "What must a view return?",
+              "question": "What must a Django view return?",
+              "choices": [
+                "A dictionary of context values",
+                "An HttpResponse, or raise an exception",
+                "A template file name"
+              ],
+              "answer": "An HttpResponse, or raise an exception",
+              "explanation": "A dictionary is context for a template, not a response. A view must produce something the HTTP layer can send, or raise an exception such as `Http404`."
+            },
+            {
+              "id": "django-02-edit",
+              "type": "edit",
+              "title": "Write a health view",
+              "instruction": "Write a view named `health` that accepts `request` and returns the plain text `ok`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The request object carries the method, headers, query string, body, and user. The response carries the status, headers, and body. Everything else in Django is a way of building one from the other." },
+            { "type": "code", "text": "from django.http import HttpResponse\n\ndef health(request):\n    return HttpResponse('ok')" },
+            { "type": "note", "text": "Views live in `views.py` by convention, but Django only needs an importable function. URLconf decides which URL calls it." }
+          ],
+          "task": "Write a `health` view that returns `ok`.",
+          "starterCode": "from django.http import HttpResponse\n\n# Add a view named health here\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["def health(request", "HttpResponse(", "ok"],
+          "hints": [
+            "The function signature is `def health(request):`.",
+            "Return `HttpResponse('ok')`."
+          ],
+          "solution": "from django.http import HttpResponse\n\ndef health(request):\n    return HttpResponse('ok')\n",
+          "reflectionPrompt": "Why does Django pass a request object to every view, even when this view ignores it?"
+        },
+        {
+          "id": "django-03-urls",
+          "title": "3. URL routing",
+          "concept": "path() / include()",
+          "summary": "URLconf maps a path to a view, and include() forwards a prefix to an app's own routes.",
+          "activities": [
+            {
+              "id": "django-03-see",
+              "type": "worked-example",
+              "title": "Project routes, app routes",
+              "instruction": "The project URLconf handles site-wide prefixes. `include('blog.urls')` delegates everything after `blog/` to the app, which keeps app routes portable.",
+              "example": "# config/urls.py\nfrom django.contrib import admin\nfrom django.urls import include, path\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    path('blog/', include('blog.urls')),\n]\n\n# blog/urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.post_list, name='post_list'),\n]"
+            },
+            {
+              "id": "django-03-predict",
+              "type": "prediction",
+              "title": "What does include do?",
+              "question": "What does `include('blog.urls')` do?",
+              "choices": [
+                "Imports a single view function",
+                "Forwards paths beginning with `blog/` to the app's URLconf",
+                "Creates the blog database tables"
+              ],
+              "answer": "Forwards paths beginning with `blog/` to the app's URLconf",
+              "explanation": "`include()` composes URLconfs. The prefix is stripped before the app's patterns are matched, so the app does not hardcode its mount point."
+            },
+            {
+              "id": "django-03-edit",
+              "type": "edit",
+              "title": "Wire the blog app",
+              "instruction": "Add the `blog/` prefix to the project URLconf and point the app root at `views.post_list`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Django tries patterns in order and stops at the first match. Put specific routes before catch-all patterns, and give each route a `name` so templates can build URLs without hardcoding them." },
+            { "type": "code", "text": "urlpatterns = [\n    path('admin/', admin.site.urls),\n    path('blog/', include('blog.urls')),\n]\n\n# blog/urls.py\nurlpatterns = [\n    path('', views.post_list, name='post_list'),\n]" },
+            { "type": "note", "text": "Trailing slashes matter. `blog/` and `blog` are different URLs unless `APPEND_SLASH` redirects one to the other." }
+          ],
+          "task": "Wire `blog/` to the app URLconf and the app root to `views.post_list`.",
+          "starterCode": "from django.contrib import admin\nfrom django.urls import include, path\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    # Add the blog routes here\n]\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["include('blog.urls')", "views.post_list"],
+          "hints": [
+            "The project route is `path('blog/', include('blog.urls'))`.",
+            "In `blog/urls.py`, map `''` to `views.post_list`."
+          ],
+          "solution": "# config/urls.py\nfrom django.contrib import admin\nfrom django.urls import include, path\n\nurlpatterns = [\n    path('admin/', admin.site.urls),\n    path('blog/', include('blog.urls')),\n]\n\n# blog/urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('', views.post_list, name='post_list'),\n]\n",
+          "reflectionPrompt": "Why is `include()` better than listing every app route in the project URLconf?"
+        },
+        {
+          "id": "django-04-templates",
+          "title": "4. Templates",
+          "concept": "render() / context",
+          "summary": "render() combines the request, a template, and a context dictionary into an HTML response.",
+          "activities": [
+            {
+              "id": "django-04-see",
+              "type": "worked-example",
+              "title": "Build HTML from data",
+              "instruction": "`render()` loads the template, evaluates its tags against the context, and returns an `HttpResponse`. The context is a normal dictionary keyed by the names the template uses.",
+              "example": "from django.shortcuts import render\nfrom .models import Post\n\ndef post_list(request):\n    posts = Post.objects.order_by('-created_at')\n    return render(request, 'blog/index.html', {'posts': posts})\n\n# blog/templates/blog/index.html\n{% for post in posts %}\n  <h2>{{ post.title }}</h2>\n{% endfor %}"
+            },
+            {
+              "id": "django-04-predict",
+              "type": "prediction",
+              "title": "Autoescaping",
+              "question": "A post title contains `<script>alert(1)</script>`. What does `{{ post.title }}` render?",
+              "choices": [
+                "A working script tag",
+                "Escaped text that displays the markup safely",
+                "A template syntax error"
+              ],
+              "answer": "Escaped text that displays the markup safely",
+              "explanation": "Django autoescapes variables by default. Use `|safe` only on trusted HTML, never on user input."
+            },
+            {
+              "id": "django-04-edit",
+              "type": "edit",
+              "title": "Render a list page",
+              "instruction": "Return `blog/index.html` with the posts available as `posts`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Templates keep presentation out of Python. The view fetches and prepares data; the template loops, formats, and escapes it. `APP_DIRS: True` lets Django find each app's `templates/` folder." },
+            { "type": "code", "text": "return render(request, 'blog/index.html', {\n    'posts': Post.objects.order_by('-created_at'),\n})" },
+            { "type": "note", "text": "Template paths inside an app include the app name: `blog/templates/blog/index.html`. That namespacing prevents two apps from silently overriding each other." }
+          ],
+          "task": "Render `blog/index.html` with the posts available as `posts`.",
+          "starterCode": "from django.shortcuts import render\nfrom .models import Post\n\ndef post_list(request):\n    posts = Post.objects.order_by('-created_at')\n    # Return the template with posts in the context\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["render(request", "'blog/index.html'", "'posts'"],
+          "hints": [
+            "Call `render` with the request, the template path, and a context dictionary.",
+            "The context is `{'posts': posts}`."
+          ],
+          "solution": "from django.shortcuts import render\nfrom .models import Post\n\ndef post_list(request):\n    posts = Post.objects.order_by('-created_at')\n    return render(request, 'blog/index.html', {'posts': posts})\n",
+          "reflectionPrompt": "Why should the view pass a queryset instead of building an HTML string in Python?"
+        }
+      ]
+    },
+    {
+      "id": "django-models-orm",
+      "name": "Models & the ORM",
+      "language": "django",
+      "description": "Describe data once, migrate it, query it, and validate user input.",
+      "lessons": [
+        {
+          "id": "django-05-models",
+          "title": "5. Models and migrations",
+          "concept": "models.Model / makemigrations",
+          "summary": "A model class describes a table; migrations record how that description changes over time.",
+          "activities": [
+            {
+              "id": "django-05-see",
+              "type": "worked-example",
+              "title": "A class that becomes a table",
+              "instruction": "Each field becomes a column. `makemigrations` compares the model to the migration history and writes a migration file; `migrate` applies it to the database.",
+              "example": "from django.db import models\n\nclass Post(models.Model):\n    title = models.CharField(max_length=200)\n    slug = models.SlugField(unique=True)\n    body = models.TextField()\n    published = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now_add=True)\n\n    def __str__(self):\n        return self.title\n\n# python manage.py makemigrations\n# python manage.py migrate"
+            },
+            {
+              "id": "django-05-predict",
+              "type": "prediction",
+              "title": "Which command writes the file?",
+              "question": "Which command writes a new migration file?",
+              "choices": [
+                "python manage.py migrate",
+                "python manage.py makemigrations",
+                "python manage.py runserver"
+              ],
+              "answer": "python manage.py makemigrations",
+              "explanation": "`makemigrations` writes the plan; `migrate` applies it. Keeping them separate lets you review schema changes before touching the database."
+            },
+            {
+              "id": "django-05-edit",
+              "type": "edit",
+              "title": "Model a blog post",
+              "instruction": "Define a `Post` model with a title, slug, body, published flag, and an auto-set created_at timestamp."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Models are the single source of truth for your data shape. Django derives forms, the admin, and SQL from them, so field types and constraints are worth getting right the first time." },
+            { "type": "code", "text": "class Post(models.Model):\n    title = models.CharField(max_length=200)\n    slug = models.SlugField(unique=True)\n    body = models.TextField()\n    published = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now_add=True)" },
+            { "type": "note", "text": "Commit migrations with the code that needs them. Recreating the database from models hides drift that will break the next deploy." }
+          ],
+          "task": "Define a `Post` model with the five fields described in the lesson.",
+          "starterCode": "from django.db import models\n\n# Define the Post model here\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["class Post(models.Model)", "models.CharField(", "models.BooleanField(", "models.DateTimeField("],
+          "hints": [
+            "A model is a class that inherits from `models.Model`.",
+            "Use `CharField` for title, `SlugField` for slug, `TextField` for body, `BooleanField` for published, and `DateTimeField` for created_at."
+          ],
+          "solution": "from django.db import models\n\nclass Post(models.Model):\n    title = models.CharField(max_length=200)\n    slug = models.SlugField(unique=True)\n    body = models.TextField()\n    published = models.BooleanField(default=False)\n    created_at = models.DateTimeField(auto_now_add=True)\n\n    def __str__(self):\n        return self.title\n",
+          "reflectionPrompt": "Why should migrations live in version control instead of rebuilding the database from models on every machine?"
+        },
+        {
+          "id": "django-06-orm",
+          "title": "6. Querying with the ORM",
+          "concept": "objects.filter / get",
+          "summary": "The ORM turns Python method calls into SQL and returns model instances or querysets.",
+          "activities": [
+            {
+              "id": "django-06-see",
+              "type": "worked-example",
+              "title": "Build a queryset lazily",
+              "instruction": "`filter()` returns a lazy queryset: the SQL runs when you iterate, slice, or evaluate it. `get()` is for exactly one row and raises `DoesNotExist` or `MultipleObjectsReturned`.",
+              "example": "published = Post.objects.filter(published=True).order_by('-created_at')\nlatest = published.first()\npost = Post.objects.get(slug='hello-django')\ncount = Post.objects.filter(published=True).count()"
+            },
+            {
+              "id": "django-06-predict",
+              "type": "prediction",
+              "title": "When get finds two rows",
+              "question": "`Post.objects.get(published=True)` matches three rows. What happens?",
+              "choices": [
+                "It returns the first row",
+                "It raises MultipleObjectsReturned",
+                "It returns a queryset of three rows"
+              ],
+              "answer": "It raises MultipleObjectsReturned",
+              "explanation": "`get()` promises exactly one row. Use `filter()` plus `first()` when several rows are valid."
+            },
+            {
+              "id": "django-06-edit",
+              "type": "edit",
+              "title": "Query published posts",
+              "instruction": "Build a queryset of published posts, newest first."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Field lookups are keyword arguments: `title__icontains`, `created_at__gte`, `author__username`. Django composes them into one SQL query, so keep filtering in the database rather than in Python loops." },
+            { "type": "code", "text": "Post.objects.filter(published=True).order_by('-created_at')\nPost.objects.filter(title__icontains='django')\nPost.objects.filter(created_at__year=2026)" },
+            { "type": "note", "text": "Each item access can trigger another query. Use `select_related()` for foreign keys and `prefetch_related()` for many-to-many relations to avoid N+1 queries." }
+          ],
+          "task": "Build a queryset of published posts ordered newest first.",
+          "starterCode": "from .models import Post\n\n# Query published posts, newest first\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["Post.objects.filter(", "published=True", "order_by('-created_at')"],
+          "hints": [
+            "Start with `Post.objects.filter(published=True)`.",
+            "Chain `.order_by('-created_at')`; the leading minus means descending."
+          ],
+          "solution": "from .models import Post\n\nposts = Post.objects.filter(published=True).order_by('-created_at')\n",
+          "reflectionPrompt": "Why is filtering in the ORM usually better than loading every row and filtering in Python?"
+        },
+        {
+          "id": "django-07-relationships",
+          "title": "7. Relationships",
+          "concept": "ForeignKey / related_name",
+          "summary": "A ForeignKey links rows, and related_name gives the reverse side a readable name.",
+          "activities": [
+            {
+              "id": "django-07-see",
+              "type": "worked-example",
+              "title": "Posts belong to an author",
+              "instruction": "`ForeignKey` stores the related row's primary key. `on_delete` decides what happens when that row is deleted, and `related_name` names the reverse accessor.",
+              "example": "class Author(models.Model):\n    name = models.CharField(max_length=120)\n\nclass Post(models.Model):\n    title = models.CharField(max_length=200)\n    author = models.ForeignKey(\n        Author,\n        on_delete=models.CASCADE,\n        related_name='posts',\n    )\n\n# author.posts.all()\n# post.author.name"
+            },
+            {
+              "id": "django-07-predict",
+              "type": "prediction",
+              "title": "CASCADE deletes",
+              "question": "A post uses `on_delete=models.CASCADE`. What happens when its author is deleted?",
+              "choices": [
+                "The post keeps a null author",
+                "The post is deleted too",
+                "Django refuses to delete the author"
+              ],
+              "answer": "The post is deleted too",
+              "explanation": "CASCADE deletes dependent rows. Use `PROTECT` when losing the parent should be blocked, or `SET_NULL` with `null=True` when the child should survive."
+            },
+            {
+              "id": "django-07-edit",
+              "type": "edit",
+              "title": "Link posts to authors",
+              "instruction": "Add an `author` ForeignKey to `Post` with CASCADE deletion and the reverse name `posts`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Relationships are part of the schema, not an afterthought. Choose the delete behaviour deliberately: CASCADE for owned data, PROTECT for important references, SET_NULL for optional links." },
+            { "type": "code", "text": "author = models.ForeignKey(\n    Author,\n    on_delete=models.CASCADE,\n    related_name='posts',\n)" },
+            { "type": "note", "text": "Without `related_name`, the reverse accessor is `post_set`. A clear name like `posts` reads better in templates and queries." }
+          ],
+          "task": "Add an `author` ForeignKey with CASCADE and `related_name='posts'`.",
+          "starterCode": "from django.db import models\n\nclass Post(models.Model):\n    title = models.CharField(max_length=200)\n    # Add the author relationship here\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["models.ForeignKey(", "on_delete=models.CASCADE", "related_name='posts'"],
+          "hints": [
+            "A ForeignKey takes the related model first, then `on_delete` and `related_name`.",
+            "`author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='posts')`."
+          ],
+          "solution": "from django.db import models\n\nclass Post(models.Model):\n    title = models.CharField(max_length=200)\n    author = models.ForeignKey(\n        Author,\n        on_delete=models.CASCADE,\n        related_name='posts',\n    )\n",
+          "reflectionPrompt": "When would `PROTECT` be a better choice than `CASCADE` for a foreign key?"
+        },
+        {
+          "id": "django-08-forms",
+          "title": "8. Forms and validation",
+          "concept": "ModelForm / is_valid()",
+          "summary": "A ModelForm validates request data and saves a model instance in one step.",
+          "activities": [
+            {
+              "id": "django-08-see",
+              "type": "worked-example",
+              "title": "Bind, validate, save",
+              "instruction": "Binding a form to `request.POST` lets it validate that data. `is_valid()` runs field and model validation; only then should you call `save()`.",
+              "example": "from django.shortcuts import redirect, render\nfrom .forms import PostForm\n\ndef create_post(request):\n    if request.method == 'POST':\n        form = PostForm(request.POST)\n        if form.is_valid():\n            form.save()\n            return redirect('post_list')\n    else:\n        form = PostForm()\n    return render(request, 'blog/create.html', {'form': form})"
+            },
+            {
+              "id": "django-08-predict",
+              "type": "prediction",
+              "title": "What is_valid does",
+              "question": "What does `form.is_valid()` do?",
+              "choices": [
+                "Saves the object to the database",
+                "Runs validation, fills cleaned_data, and returns True or False",
+                "Renders the form as HTML"
+              ],
+              "answer": "Runs validation, fills cleaned_data, and returns True or False",
+              "explanation": "Validation and saving are separate steps. `save()` is safe only after `is_valid()` returns True."
+            },
+            {
+              "id": "django-08-edit",
+              "type": "edit",
+              "title": "Handle a create form",
+              "instruction": "Bind `PostForm` to `request.POST`, validate it, save on success, and render the empty form otherwise."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "A `ModelForm` derives fields and validation from the model. Override `clean_<field>()` for extra rules, and use `fields = [...]` to avoid exposing sensitive model fields." },
+            { "type": "code", "text": "class PostForm(forms.ModelForm):\n    class Meta:\n        model = Post\n        fields = ['title', 'slug', 'body', 'published']" },
+            { "type": "note", "text": "Every POST form needs `{% csrf_token %}` in the template. Django rejects POST requests without a valid CSRF token." }
+          ],
+          "task": "Bind, validate, and save a `PostForm` from `request.POST`.",
+          "starterCode": "from django.shortcuts import render\nfrom .forms import PostForm\n\ndef create_post(request):\n    # Handle POST, then fall back to an empty form\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["PostForm(request.POST)", "form.is_valid()", "form.save()"],
+          "hints": [
+            "Only bind the form when `request.method == 'POST'`.",
+            "Call `form.save()` inside the `if form.is_valid():` block."
+          ],
+          "solution": "from django.shortcuts import redirect, render\nfrom .forms import PostForm\n\ndef create_post(request):\n    if request.method == 'POST':\n        form = PostForm(request.POST)\n        if form.is_valid():\n            form.save()\n            return redirect('post_list')\n    else:\n        form = PostForm()\n    return render(request, 'blog/create.html', {'form': form})\n",
+          "reflectionPrompt": "Why is it unsafe to save a form before checking `is_valid()`?"
+        }
+      ]
+    },
+    {
+      "id": "django-views-apis",
+      "name": "Views, APIs & Production",
+      "language": "django",
+      "description": "Accept input, reuse generic views, expose JSON, and ship with safe settings.",
+      "lessons": [
+        {
+          "id": "django-09-request-data",
+          "title": "9. Request data and 404s",
+          "concept": "request.GET / get_object_or_404",
+          "summary": "Read query parameters with defaults and turn a missing row into a clean 404.",
+          "activities": [
+            {
+              "id": "django-09-see",
+              "type": "worked-example",
+              "title": "Search, then look up",
+              "instruction": "`request.GET.get('q', '')` returns a string or the default. `get_object_or_404` fetches one row or raises `Http404`, which Django renders as a 404 page.",
+              "example": "from django.shortcuts import get_object_or_404, render\nfrom .models import Post\n\ndef search(request):\n    q = request.GET.get('q', '')\n    posts = Post.objects.filter(title__icontains=q) if q else Post.objects.none()\n    return render(request, 'blog/search.html', {'posts': posts, 'q': q})\n\ndef post_detail(request, slug):\n    post = get_object_or_404(Post, slug=slug)\n    return render(request, 'blog/detail.html', {'post': post})"
+            },
+            {
+              "id": "django-09-predict",
+              "type": "prediction",
+              "title": "Missing query key",
+              "question": "What does `request.GET.get('q')` return when the URL has no `q` parameter?",
+              "choices": [
+                "An empty string",
+                "None",
+                "It raises KeyError"
+              ],
+              "answer": "None",
+              "explanation": "`.get()` returns None when the key is absent. Pass a second argument, such as `''` or `'0'`, when the rest of the code expects a string."
+            },
+            {
+              "id": "django-09-edit",
+              "type": "edit",
+              "title": "Search posts by title",
+              "instruction": "Read `q` with an empty-string default and filter post titles case-insensitively."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Path parameters identify a resource; query parameters tune a collection. Both arrive as strings, so parse numbers explicitly and clamp pagination values before using them." },
+            { "type": "code", "text": "q = request.GET.get('q', '')\npage = max(1, int(request.GET.get('page', 1)))\nposts = Post.objects.filter(title__icontains=q)" },
+            { "type": "note", "text": "`get_object_or_404` is the honest default for detail pages. Returning a 200 with an empty object makes a missing resource look like a successful one." }
+          ],
+          "task": "Read `q` with a default and filter titles case-insensitively.",
+          "starterCode": "from django.shortcuts import render\nfrom .models import Post\n\ndef search(request):\n    # Read q and filter post titles\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["request.GET.get('q', '')", "title__icontains=q"],
+          "hints": [
+            "`request.GET.get('q', '')` gives you a string even when the parameter is missing.",
+            "Filter with `Post.objects.filter(title__icontains=q)`."
+          ],
+          "solution": "from django.shortcuts import render\nfrom .models import Post\n\ndef search(request):\n    q = request.GET.get('q', '')\n    posts = Post.objects.filter(title__icontains=q) if q else Post.objects.none()\n    return render(request, 'blog/search.html', {'posts': posts, 'q': q})\n",
+          "reflectionPrompt": "Why should a page that takes `?page=` defend against zero, negative, and non-numeric values?"
+        },
+        {
+          "id": "django-10-class-views",
+          "title": "10. Class-based views",
+          "concept": "ListView / DetailView",
+          "summary": "Generic views package the list and detail patterns behind class attributes.",
+          "activities": [
+            {
+              "id": "django-10-see",
+              "type": "worked-example",
+              "title": "Attributes instead of boilerplate",
+              "instruction": "`ListView` fetches a queryset and puts it in the context. `DetailView` fetches one object by `pk` or `slug`. Override methods only when the defaults do not fit.",
+              "example": "from django.views.generic import DetailView, ListView\nfrom .models import Post\n\nclass PostListView(ListView):\n    model = Post\n    template_name = 'blog/post_list.html'\n    context_object_name = 'posts'\n\nclass PostDetailView(DetailView):\n    model = Post\n    template_name = 'blog/post_detail.html'\n    context_object_name = 'post'"
+            },
+            {
+              "id": "django-10-predict",
+              "type": "prediction",
+              "title": "Which attribute selects the data?",
+              "question": "Which `ListView` attribute tells it which model to query?",
+              "choices": [
+                "template_name",
+                "context_object_name",
+                "model"
+              ],
+              "answer": "model",
+              "explanation": "`model` drives the default queryset. `template_name` chooses the HTML, and `context_object_name` names the list in the template."
+            },
+            {
+              "id": "django-10-edit",
+              "type": "edit",
+              "title": "Build a post list view",
+              "instruction": "Create `PostListView` using `ListView`, with model `Post`, template `blog/post_list.html`, and context name `posts`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "Class-based views are ordinary Python classes with mixins for HTTP methods. They remove repetition, but a short function view is still the clearer choice for one-off logic." },
+            { "type": "code", "text": "class PostListView(ListView):\n    model = Post\n    template_name = 'blog/post_list.html'\n    context_object_name = 'posts'\n\n    def get_queryset(self):\n        return Post.objects.filter(published=True)" },
+            { "type": "note", "text": "Override `get_queryset()` to filter, not `get()`: the built-in `get()` already handles the response and 404." }
+          ],
+          "task": "Create a `PostListView` with the model, template, and context name set.",
+          "starterCode": "from django.views.generic import ListView\nfrom .models import Post\n\n# Create PostListView here\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["class PostListView(ListView)", "model = Post", "context_object_name = 'posts'"],
+          "hints": [
+            "Subclass `ListView` and set `model = Post`.",
+            "Add `template_name = 'blog/post_list.html'` and `context_object_name = 'posts'`."
+          ],
+          "solution": "from django.views.generic import ListView\nfrom .models import Post\n\nclass PostListView(ListView):\n    model = Post\n    template_name = 'blog/post_list.html'\n    context_object_name = 'posts'\n",
+          "reflectionPrompt": "When is a function view easier to read than a class-based view?"
+        },
+        {
+          "id": "django-11-drf",
+          "title": "11. JSON APIs with DRF",
+          "concept": "ModelSerializer / APIView",
+          "summary": "Django REST Framework serializes models and validates JSON in both directions.",
+          "activities": [
+            {
+              "id": "django-11-see",
+              "type": "worked-example",
+              "title": "One serializer, two directions",
+              "instruction": "A serializer turns model instances into JSON for responses and validates incoming JSON for writes. `many=True` serializes a queryset; `raise_exception=True` turns invalid input into a 400 response.",
+              "example": "from rest_framework import serializers\nfrom rest_framework.response import Response\nfrom rest_framework.views import APIView\nfrom .models import Post\n\nclass PostSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Post\n        fields = ['id', 'title', 'slug', 'body', 'published']\n\nclass PostList(APIView):\n    def get(self, request):\n        posts = Post.objects.filter(published=True)\n        serializer = PostSerializer(posts, many=True)\n        return Response(serializer.data)\n\n    def post(self, request):\n        serializer = PostSerializer(data=request.data)\n        serializer.is_valid(raise_exception=True)\n        serializer.save()\n        return Response(serializer.data, status=201)"
+            },
+            {
+              "id": "django-11-predict",
+              "type": "prediction",
+              "title": "Why not dump the model?",
+              "question": "Why use a serializer instead of `json.dumps(post.__dict__)`?",
+              "choices": [
+                "Serializers are faster than json.dumps",
+                "They choose exposed fields and validate incoming data",
+                "Django models cannot be converted to JSON at all"
+              ],
+              "answer": "They choose exposed fields and validate incoming data",
+              "explanation": "`__dict__` leaks internal fields and accepts anything. A serializer defines the public contract and checks writes before they reach the database."
+            },
+            {
+              "id": "django-11-edit",
+              "type": "edit",
+              "title": "Serialize posts",
+              "instruction": "Create a `PostSerializer` for `Post` and return published posts from `PostList.get`."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "DRF adds serializers, request parsing, authentication, permissions, and browsable responses. Add `'rest_framework'` to `INSTALLED_APPS` and keep the API surface explicit with `fields`." },
+            { "type": "code", "text": "class PostSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Post\n        fields = ['id', 'title', 'slug', 'body', 'published']\n\nserializer = PostSerializer(posts, many=True)\nreturn Response(serializer.data)" },
+            { "type": "note", "text": "Never use `fields = '__all__'` on a model with ownership or private fields. List the fields the client is allowed to see and change." }
+          ],
+          "task": "Add a `PostSerializer` and return published posts as JSON.",
+          "starterCode": "from rest_framework import serializers\nfrom rest_framework.response import Response\nfrom rest_framework.views import APIView\nfrom .models import Post\n\n# Add PostSerializer and PostList.get\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["serializers.ModelSerializer", "class PostSerializer", "Response(serializer.data)"],
+          "hints": [
+            "A `ModelSerializer` needs a nested `Meta` with `model` and `fields`.",
+            "Build `serializer = PostSerializer(posts, many=True)` and return `Response(serializer.data)`."
+          ],
+          "solution": "from rest_framework import serializers\nfrom rest_framework.response import Response\nfrom rest_framework.views import APIView\nfrom .models import Post\n\nclass PostSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = Post\n        fields = ['id', 'title', 'slug', 'body', 'published']\n\nclass PostList(APIView):\n    def get(self, request):\n        posts = Post.objects.filter(published=True)\n        serializer = PostSerializer(posts, many=True)\n        return Response(serializer.data)\n",
+          "reflectionPrompt": "Which fields should never be writable through a public serializer, even if they exist on the model?"
+        },
+        {
+          "id": "django-12-admin-production",
+          "title": "12. Admin and production settings",
+          "concept": "admin.site.register / DEBUG",
+          "summary": "The admin gives you a working back office; production settings keep it from leaking internals.",
+          "activities": [
+            {
+              "id": "django-12-see",
+              "type": "worked-example",
+              "title": "Register the model, harden the site",
+              "instruction": "`admin.site.register()` exposes a model in the built-in admin. In production, `DEBUG` must be off, `SECRET_KEY` must come from the environment, and `ALLOWED_HOSTS` must list the domains Django will answer for.",
+              "example": "# blog/admin.py\nfrom django.contrib import admin\nfrom .models import Post\n\nclass PostAdmin(admin.ModelAdmin):\n    list_display = ('title', 'published', 'created_at')\n\nadmin.site.register(Post, PostAdmin)\n\n# config/settings.py\nimport os\n\nDEBUG = False\nSECRET_KEY = os.environ['DJANGO_SECRET_KEY']\nALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')"
+            },
+            {
+              "id": "django-12-predict",
+              "type": "prediction",
+              "title": "Why DEBUG must be off",
+              "question": "Why must `DEBUG` be `False` in production?",
+              "choices": [
+                "It makes the server faster",
+                "Debug pages expose settings, SQL, source paths, and tracebacks",
+                "The admin refuses to load otherwise"
+              ],
+              "answer": "Debug pages expose settings, SQL, source paths, and tracebacks",
+              "explanation": "A production traceback can reveal secrets and internal structure. With DEBUG off, Django returns a generic 500 page and logs the details server-side."
+            },
+            {
+              "id": "django-12-edit",
+              "type": "edit",
+              "title": "Register the model and harden settings",
+              "instruction": "Register `Post` in the admin and set `DEBUG = False` with the allowed hosts read from the environment."
+            }
+          ],
+          "teaching": [
+            { "type": "p", "text": "The admin is a staff-only CRUD interface generated from your models. It is powerful, so protect it with strong accounts, HTTPS, and access controls instead of leaving it at `/admin/` with a weak password." },
+            { "type": "code", "text": "DEBUG = False\nSECRET_KEY = os.environ['DJANGO_SECRET_KEY']\nALLOWED_HOSTS = ['example.com', 'www.example.com']\nCSRF_TRUSTED_ORIGINS = ['https://example.com']" },
+            { "type": "note", "text": "Run `python manage.py check --deploy` before shipping. It flags missing HTTPS, cookie, HSTS, and secret-key settings that are easy to forget." }
+          ],
+          "task": "Register `Post` in the admin and set safe production settings.",
+          "starterCode": "# blog/admin.py\nfrom django.contrib import admin\nfrom .models import Post\n\n# Register Post here\n\n# config/settings.py\nimport os\n\n# Harden the production settings here\n",
+          "matchType": "source-contains",
+          "sourceChecks": ["admin.site.register(Post", "DEBUG = False", "ALLOWED_HOSTS"],
+          "hints": [
+            "`admin.site.register(Post, PostAdmin)` exposes the model.",
+            "Set `DEBUG = False` and read `ALLOWED_HOSTS` from an environment variable."
+          ],
+          "solution": "# blog/admin.py\nfrom django.contrib import admin\nfrom .models import Post\n\nclass PostAdmin(admin.ModelAdmin):\n    list_display = ('title', 'published', 'created_at')\n\nadmin.site.register(Post, PostAdmin)\n\n# config/settings.py\nimport os\n\nDEBUG = False\nSECRET_KEY = os.environ['DJANGO_SECRET_KEY']\nALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')\n",
+          "reflectionPrompt": "Which deployment checks would you run before exposing the admin to the public internet?"
+        }
+      ]
+    }
+  ]
+}

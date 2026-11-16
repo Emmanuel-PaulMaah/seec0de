@@ -101,6 +101,26 @@ const LANGUAGE_PROFILES = {
       'production hardening',
     ],
   },
+  django: {
+    topics: [
+      'projects, apps and the URLconf',
+      'models and migrations',
+      'querysets and the N+1 problem',
+      'forms and validation',
+      'class-based views',
+      'Django REST Framework serializers',
+    ],
+  },
+  threejs: {
+    topics: [
+      'scene graph, cameras and renderers',
+      'geometry, materials and lights',
+      'frame-rate-independent animation',
+      'raycasting and pointer picking',
+      'glTF loading and asset budgets',
+      'draw calls, instancing and GPU disposal',
+    ],
+  },
   sql: {
     topics: [
       'joins and relationships',

@@ -54,6 +54,16 @@ const LANGUAGES = {
     blurb: 'Express is a minimal web framework for Node.js. It provides routing and middleware for building APIs and web servers.',
     group: 'backend',
   },
+  django: {
+    label: 'Django',
+    blurb: 'Django is a batteries-included Python web framework. It ships an ORM, migrations, forms, authentication, and an admin so you can build a production-ready website backend without assembling every piece yourself.',
+    group: 'backend',
+  },
+  threejs: {
+    label: 'Three.js',
+    blurb: 'Three.js is a JavaScript library for real-time 3D on the web. It wraps WebGL with a scene graph, cameras, materials, loaders, and post-processing so you can build interactive scenes without writing raw shaders.',
+    group: 'frontend',
+  },
   sql: {
     label: 'SQL & PostgreSQL',
     blurb: 'SQL is the standard language for querying and changing relational databases. It is used to model relationships, filter data, and keep transactions consistent.',
@@ -134,14 +144,14 @@ export const COURSE_GROUPS = [
     id: 'web-frontend',
     name: 'Web Frontend',
     description: 'Foundational web technologies and frameworks',
-    languages: ['html', 'css', 'javascript', 'typescript', 'react', 'nextjs'],
+    languages: ['html', 'css', 'javascript', 'typescript', 'react', 'threejs', 'nextjs'],
     icon: 'Palette',
   },
   {
     id: 'backend-services',
     name: 'Backend Services',
     description: 'Server-side languages, APIs and databases',
-    languages: ['http', 'python', 'nodejs', 'mongodb', 'express', 'sql'],
+    languages: ['http', 'python', 'django', 'nodejs', 'mongodb', 'express', 'sql'],
     icon: 'Server',
   },
   {

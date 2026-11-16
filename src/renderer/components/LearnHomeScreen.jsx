@@ -62,7 +62,7 @@ export default function LearnHomeScreen({
   const exercises = useMemo(() => flattenExercises(lessonsData), []);
   const languages = useMemo(() => {
     const available = Array.from(new Set(tracks.map((track) => track.language).filter(Boolean)));
-    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'http', 'git', 'nodejs', 'mongodb', 'express', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'].filter((language) => available.includes(language));
+    return ['python', 'javascript', 'typescript', 'react', 'html', 'css', 'threejs', 'http', 'git', 'nodejs', 'mongodb', 'express', 'django', 'sql', 'nextjs', 'auth', 'docker', 'testing', 'security', 'performance', 'systemdesign', 'cicd', 'observability', 'accessibility'].filter((language) => available.includes(language));
   }, [tracks]);
   // Group the available languages so the picker reads as a curriculum
   // (frontend → backend → tools → quality → architecture) instead of one
