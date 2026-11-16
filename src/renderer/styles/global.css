@@ -132,6 +132,10 @@
   --border-strong:  rgba(255, 255, 255, 0.10);
   --border-subtle:  rgba(255, 255, 255, 0.04);
   --border-focus:   #c8ff4d;
+  /* Text fields get a neutral ring instead of the accent one: lime around a
+   * plain input reads as a warning, not a caret position. Kept pale rather
+   * than pure white so it sits at ~3.2:1 against --bg-input. */
+  --border-focus-field: rgba(255, 255, 255, 0.34);
 
   /* ── Text ────────────────────────────────────────────────────────────── */
   --text-primary:   #f0f0f0;
@@ -215,6 +219,9 @@
   --border-strong:  rgba(0, 0, 0, 0.14);
   --border-subtle:  rgba(0, 0, 0, 0.05);
   --border-focus:   #4f46e5;
+  /* White would vanish on the light surfaces, so the neutral field ring flips
+   * to ink here. Same ~3:1 non-text contrast against --bg-input. */
+  --border-focus-field: rgba(21, 21, 24, 0.34);
 
   /* ── Text ────────────────────────────────────────────────────────────── */
   --text-primary:   #151518;
@@ -432,16 +439,17 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
-/* Text fields get a faded version of the ring — full-strength accent reads
- * as an alert around a plain text box. !important beats the inline
- * `outline: none` many components still set. Monaco draws its own focus
- * state, composite fields (.ui-focus-within) ring their container instead,
- * and .ui-focus-none is for an input that owns focus by itself (an open
- * popover's search, the terminal's command line). */
+/* Text fields get a neutral ring, never the accent — an accent outline around
+ * a plain text box reads as an alert. The ring is the pale --border-focus-field
+ * white (ink, on the light theme). !important beats the inline `outline: none`
+ * many components still set. Monaco draws its own focus state, composite
+ * fields (.ui-focus-within) ring their container instead, and .ui-focus-none
+ * is for an input that owns focus by itself (an open popover's search, the
+ * terminal's command line). */
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--border-focus) 45%, transparent) !important;
+  outline: 2px solid var(--border-focus-field) !important;
   outline-offset: -1px;
 }
 
@@ -453,7 +461,7 @@ input.ui-focus-none:focus-visible,
 }
 
 .ui-focus-within:has(input:focus-visible, textarea:focus-visible) {
-  outline: 2px solid color-mix(in srgb, var(--border-focus) 45%, transparent);
+  outline: 2px solid var(--border-focus-field);
   outline-offset: -1px;
 }
 
@@ -572,8 +580,8 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 /* ── Animations ──────────────────────────────────────────────────────── */
 
 @keyframes textarea-focus-glow {
-  0%   { box-shadow: 0 0 0 0 var(--accent-soft); }
-  50%  { box-shadow: 0 0 0 4px var(--accent-soft); }
+  0%   { box-shadow: 0 0 0 0 transparent; }
+  50%  { box-shadow: 0 0 0 4px color-mix(in srgb, var(--border-focus-field) 18%, transparent); }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
@@ -1016,8 +1024,8 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 /* ── AI prompt card ──────────────────────────────────────────────────── */
 
 .ai-prompt-card:focus-within {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--border-focus-field) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--border-focus-field) 16%, transparent);
 }
 
 .ai-lang-dropdown:hover {
@@ -1025,7 +1033,7 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 }
 
 .ai-lang-dropdown:focus {
-  border-color: var(--accent) !important;
+  border-color: var(--border-focus-field) !important;
   outline: none;
 }
 
@@ -1102,6 +1110,17 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
+}
+
+/* ── Onboarding shell ────────────────────────────────────────────────── */
+
+/* At narrow widths — or high Ctrl+/- zoom, which shrinks the CSS viewport —
+ * the Lottie stage would squeeze the form, so it drops out and the card
+ * falls back to a single column. */
+@media (max-width: 780px) {
+  .onboarding-stage-pane {
+    display: none !important;
+  }
 }
 
 /* ── Reduced motion ──────────────────────────────────────────────────── */
@@ -1707,7 +1726,7 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 
 .interview-answer:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--border-focus-field);
 }
 
 .interview-actions {
@@ -2035,7 +2054,7 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 
 .lesson-tutor__composer textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--border-focus-field);
 }
 
 .lesson-tutor__send {
@@ -2119,4 +2138,56 @@ textarea.ui-input { height: auto; min-height: 72px; padding: var(--space-2) var(
 :root[data-theme="light"] .lesson-tutor__composer textarea::placeholder {
   color: var(--text-muted);
   font-weight: 500;
+}
+
+/* ============================================================================
+ * WORKSPACE TOUR — spotlight + card chrome (components/WorkspaceTour.jsx)
+ *
+ * The card's art panel is fixed dark in both themes, so its close button keeps
+ * light-on-dark colours instead of the theme's icon tokens.
+ * ========================================================================== */
+
+.workspace-tour__spotlight {
+  animation: workspace-tour-pulse 2.6s var(--ease-in-out) infinite;
+}
+
+@keyframes workspace-tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08), 0 0 24px var(--accent-soft); }
+  50%      { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.10), 0 0 34px var(--accent-soft); }
+}
+
+.workspace-tour__close:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+}
+
+.workspace-tour__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+ * EDITOR FIND — beUI widget (components/EditorFindWidget.jsx)
+ *
+ * The native Monaco find widget is hidden: CodePanel re-binds Ctrl+F / Ctrl+H
+ * / F3 to the React widget, so leaving it visible would only create a second,
+ * unstyled search surface. Half-hidden native controls are worse than none.
+ * ========================================================================== */
+
+.monaco-editor .find-widget,
+.monaco-editor .findOptionsWidget {
+  display: none !important;
+}
+
+/* Match highlights. `inlineClassName` is applied to the matched text spans,
+   so the tint follows the glyphs rather than the whole line. */
+.seec0de-find-match {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-radius: 2px;
+}
+
+.seec0de-find-match-active {
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 2px;
 }

@@ -479,7 +479,7 @@ const styles = {
     transition: 'border-color var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out)',
   },
   textareaFocus: {
-    borderColor: 'var(--accent)',
+    borderColor: 'var(--border-focus-field)',
     animation: 'textarea-focus-glow 0.6s ease-out 1',
   },
 
