@@ -61,8 +61,14 @@ function decryptText(buf) {
       // (written as base64), so try that encoding below.
     }
   }
+  // safeStorage may not be ready yet (the store is loaded after app.whenReady).
+  // A still-encrypted Windows blob is binary, not base64: decoding it would
+  // hand back garbage that JSON.parse then reports as a corrupt store. Only
+  // accept the fallback when the buffer really is base64 text.
+  const raw = buf.toString('utf8');
+  if (!/^[A-Za-z0-9+/=\r\n]+$/.test(raw)) return null;
   try {
-    return Buffer.from(buf.toString('utf8'), 'base64').toString('utf8');
+    return Buffer.from(raw, 'base64').toString('utf8');
   } catch {
     return null;
   }
@@ -139,8 +145,8 @@ function migrateLegacyGeminiKey() {
 
 function loadStore() {
   const raw = readFirst([PRIMARY_STORE_PATH, FALLBACK_STORE_PATH]);
-  if (raw) {
-    const text = decryptText(raw);
+  const text = raw ? decryptText(raw) : null;
+  if (text) {
     try {
       const parsed = JSON.parse(text);
       if (parsed && typeof parsed === 'object' && parsed.keys && typeof parsed.keys === 'object') {
@@ -160,7 +166,10 @@ function loadStore() {
   migrateLegacyGeminiKey();
 }
 
-loadStore();
+// safeStorage is only dependable after the app is ready. Loading at require
+// time made an encrypted Windows blob look like corrupt base64, so the store
+// appeared empty and every launch logged a JSON parse error.
+app.whenReady().then(loadStore);
 
 function setApiKey(key, providerId) {
   const id = normaliseProviderId(providerId);

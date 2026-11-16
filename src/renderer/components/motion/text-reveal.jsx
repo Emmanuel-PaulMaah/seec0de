@@ -2,7 +2,7 @@
 // CSS-animation variant for Electron (motion/react mount animations unreliable here).
 
 import { useReducedMotion } from 'motion/react';
-import { useRef } from 'react';
+import { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
 function toWordGroups(line) {
@@ -13,7 +13,7 @@ function toWordGroups(line) {
   });
 }
 
-export function TextReveal({
+export const TextReveal = forwardRef(function TextReveal({
   text,
   as: Comp = 'span',
   className,
@@ -26,8 +26,7 @@ export function TextReveal({
   whileInView = false,
   children,
   ...rest
-}) {
-  const ref = useRef(null);
+}, ref) {
   const reduce = useReducedMotion();
 
   const lines = Array.isArray(text) ? text : [text];
@@ -94,7 +93,7 @@ export function TextReveal({
       {children}
     </Comp>
   );
-}
+});
 
 // Inject keyframes once
 if (typeof document !== 'undefined' && !document.getElementById('beui-text-reveal-keyframes')) {
